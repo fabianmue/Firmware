@@ -80,6 +80,16 @@ then
         set MODE custom
 fi
 
+## Changed: Marco Tranzatto, 14/10/2014
+# Autonomous sailing boat 
+# -> not technically a standard plane, but we don't want to be picky, do we?
+if param compare SYS_AUTOSTART 2999 999
+then
+	sh /etc/init.d/2999_eth_sailing_boat
+
+fi
+## End of change
+
 #
 # Flying wing
 #

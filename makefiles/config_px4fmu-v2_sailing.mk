@@ -96,6 +96,11 @@ MODULES		+= modules/uavcan
 #MODULES		+= modules/mc_pos_control
 
 #
+# Autonomous Sailing
+#
+MODULES		+= modules/autonomous_sailing	
+MODULES		+= modules/parser_200WX			
+#
 # Logging
 #
 MODULES		+= modules/sdlog2

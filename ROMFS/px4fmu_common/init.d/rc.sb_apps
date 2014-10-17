@@ -1,0 +1,16 @@
+#!nsh
+#
+# Standard apps for autonomous sailing:
+#
+
+#
+# start the parser_200WX.c script:
+#
+parser_200WX start
+
+#
+# start the autonomous_sailing.c script:
+#
+autonomous_sailing start
+
+# [commented out 13/10/2014]

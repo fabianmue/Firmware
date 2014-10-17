@@ -569,6 +569,40 @@ then
 			sh /etc/init.d/rc.mc_apps
 		fi
 	fi
+	
+	
+	# ADDED by Marco Tranzatto, 13/10/2014
+	#
+	# Sailboat setup
+	#
+	if [ $VEHICLE_TYPE == sb ]
+	then
+		echo "[init] Vehicle type: Sailing Boat"
+		
+		if [ $MIXER == none ]
+		then
+			# Set to IO_pass if not defined
+			set MIXER IO_pass
+		fi
+		
+		if [ $MAV_TYPE == none ]
+
+
+		then
+			# Use MAV_TYPE = 1 (fixed wing) if not defined
+			set MAV_TYPE 1
+
+		fi
+		
+		param set MAV_TYPE $MAV_TYPE
+		
+		# Load mixer and configure outputs
+		sh /etc/init.d/rc.interface
+		
+		# Start standard sailing apps
+		sh /etc/init.d/rc.sb_apps
+	fi
+	# END OF ADD by by Marco Tranzatto, 13/10/2014
 
 	#
 	# Start the navigator
