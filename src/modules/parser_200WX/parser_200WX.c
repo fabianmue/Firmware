@@ -221,7 +221,7 @@ int parser_200WX_main(int argc, char *argv[])
 			//indoor parser
 			daemon_task = task_spawn_cmd("daemon",
 										SCHED_DEFAULT,
-										SCHED_PRIORITY_MAX,	
+                                        SCHED_PRIORITY_MAX,
 										4096,
 										parser_200WX_indoor_daemon_thread_main,
 					 	(argv) ? (const char **)&argv[2] : (const char **)NULL);
@@ -231,7 +231,7 @@ int parser_200WX_main(int argc, char *argv[])
 			//outdoor parser
 			daemon_task = task_spawn_cmd("daemon",
 										SCHED_DEFAULT,
-										SCHED_PRIORITY_MAX,	
+                                        SCHED_PRIORITY_MAX,
 										4096,
                                         parser_200WX_indoor_daemon_thread_main,//TODO: METTERE OUTDOOR
 					 	(argv) ? (const char **)&argv[2] : (const char **)NULL);
@@ -257,6 +257,7 @@ int parser_200WX_main(int argc, char *argv[])
 	usage("unrecognized command");
 	exit(1);
 }
+
 
 
 /**
@@ -319,7 +320,7 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
                     //publish attituide data
                     att_raw.timestamp = hrt_absolute_time();
                     orb_publish(ORB_ID(vehicle_attitude), att_pub_fd, &att_raw);
-				
+
 				}
 			}
         }
@@ -385,7 +386,7 @@ bool extract_until_coma(int *index_pointer, char *buffer, int buffer_length, flo
 
 bool weather_station_init(int *wx_port_pointer){
 
-    char raw_buffer[250];
+    char raw_buffer[350];
 
 	*wx_port_pointer = open("/dev/ttyS5", O_RDWR); // Serial 5, read works, write works
 	// This is serial port 4 according to: pixhawk.org/dev/wiring
@@ -532,7 +533,7 @@ bool retrieve_indoor_data(int *wx_port_pointer,
                           struct airspeed_s *air_vel_raw_pointer){
 
 	struct sensor_combined_s sensor_combined_raw;
-	int buffer_length;
+    int buffer_length;
     char buffer[250];
 
 	// copy sensors raw data into local buffer, actually this action is need only to apply downsampling time
@@ -541,11 +542,15 @@ bool retrieve_indoor_data(int *wx_port_pointer,
 	// read UART when px4 sensors are updated
     buffer_length = read(*wx_port_pointer, buffer, sizeof(buffer));
 
-	 if(buffer_length < 1)
-	 	return false;
+    //prova
+    warnx("buff leng: %d \n", buffer_length);
+    //fine prova
 
-     // see if buffer there is one (or more) YXXDR message(s)
-     xdr_parser(buffer, buffer_length, att_raw_pointer);
+    if(buffer_length < 1)
+        return false;
+
+    // see if buffer there is one (or more) YXXDR message(s)
+    xdr_parser(buffer, buffer_length, att_raw_pointer);
 
 
     return true;
@@ -649,58 +654,3 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
     }
 
 }
-/*
-bool parse_transducer_message(int *index_pointer, char *raw_buffer_pointer, int *att_pub_fd_pointer){
-
-	struct vehicle_attitude_s att;
-	double temp_val;
-
-	att.timestamp = hrt_absolute_time();
-
-	// see if we received a YXXDR command 
-	if(find_string(*index_pointer, raw_buffer_pointer, "YXXDR")){
-
-		// index+5 is the comma ','
-		// index+6 is 'A' to symbolize angular displacement
-		// index+7 is the comma ','
-
-		(*index_pointer) += 8;	// position to first digit of first value
-
-		//extract value from buffer
-		temp_val = extract_until_coma(index_pointer, raw_buffer_pointer);
-
-		(*index_pointer) += 1;	// position *index_pointer to next position after ','
-
-		if (raw_buffer_pointer[*index_pointer] == 'D'){	
-			// then it means we are parsing either attitude or RPY rate
-			(*index_pointer) += 2;//we are after the ',' that is after 'D'
-
-			if(find_string(index_pointer, raw_buffer_pointer, "PTCH")){
-				// we are parsing YXXDR command type B
-				att.pitch = temp_val;
-
-				// index+1 is the comma ','
-				// index+2 is 'A' to symbolize angular displacement
-				// index+3 is the comma ','
-
-				(*index_pointer) += 4;	// position to first digit of roll value
-
-				att.roll = extract_until_coma(index_pointer, raw_buffer_pointer);
-			}
-			else{
-				// we are parsing YXXDR command type E
-				att.rollspeed = temp_val;
-
-				// i+3 is 'R' |
-				// i+4 is 'R' |
-				// i+5 is 'T' |
-				// i+6 is 'R' |--> ID indicating roll rate of vessel
-				// i+7 is the comma ','
-				// i+8 is 'A' to symbolize angular displacement
-				// i+9 is the comma ','
-
-				i += 10;	// position to first digit of pitch rate
-			}
-		}
-	}
-}*/

@@ -55,6 +55,8 @@
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/actuator_armed.h>
 
+#include <uORB/topics/vehicle_attitude.h>
+
 
 // To be able to use the "parameter function" from Q ground control:
 #include <systemlib/param/param.h>
@@ -209,6 +211,15 @@ int as_daemon_thread_main(int argc, char *argv[]){
 	struct actuator_controls_s actuators; 
 	orb_advert_t actuator_pub;
 
+    //pool return value
+    int poll_ret;
+
+    // file descriptor and struct for attitude topic
+    int att_pub_fd;
+    struct vehicle_attitude_s att_raw;
+
+    att_pub_fd = orb_subscribe(ORB_ID(vehicle_attitude));
+
 	warnx("[as_daemon_thread_main] starting\n");
 
 	thread_running = true;
@@ -220,19 +231,45 @@ int as_daemon_thread_main(int argc, char *argv[]){
 		warnx("[as_daemon_thread_main] Problem in initializing actuators\n");
 	}
 
+    // polling management
+    struct pollfd fds[] = {
+            { .fd = att_pub_fd,   .events = POLLIN }
+    };
+
 	while (!thread_should_exit) {
 
-		//prova
-		/*actuators.timestamp = hrt_absolute_time();
-		actuators.control[0] = 0.3;
-		actuators.control[3] = 0.5;
+        poll_ret = poll(fds, 1, 1000);
 
-		orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
+        // handle the poll result
+        if (poll_ret == 0) {
+            // this means none of our providers is giving us data
+            warnx("[as_daemon_thread_main] Got no data within a second\n");
+        }
+        else{
+            if (poll_ret < 0) {
+                // this is seriously bad - should be an emergency
+                warnx("[as_daemon_thread_main] Terrible error!\n");
+            }
+            else{
+                // evrything is ok, at least so far (i.e. pool_ret > 0)
+                if (fds[0].revents & POLLIN) {
 
-        */
+                    //provo a perdere un po'di tempo
+                    orb_copy(ORB_ID(vehicle_attitude), att_pub_fd, &att_raw);
 
-        //prova
-        sleep(1);
+                    actuators.timestamp = hrt_absolute_time();
+                    actuators.control[0] = 0.3;// send command to rudder (-1:1)
+                    actuators.control[3] = 0.5;
+
+                }
+            }
+        }
+
+        // Send out commands:
+        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
+        // actuators.control[0] -> output channel 1
+        // actuators.control[2] -> output channel 3
+        // actuators.control[3] -> output channel 4
 	}
 
 	warnx("[as_daemon_thread_main] exiting.\n");
