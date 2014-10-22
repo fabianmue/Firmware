@@ -38,3 +38,8 @@ tags
 .pydevproject
 .ropeproject
 *.orig
+Firmware_feature_autonomous_sailing.config
+Firmware_feature_autonomous_sailing.creator
+Firmware_feature_autonomous_sailing.creator.user
+Firmware_feature_autonomous_sailing.files
+Firmware_feature_autonomous_sailing.includes

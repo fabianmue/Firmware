@@ -47,6 +47,7 @@
 #include <nuttx/sched.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <poll.h>
 
@@ -120,8 +121,8 @@ bool pixhawk_baudrate_set(int wx_port, int baudrate);
 */
 bool indoor_variables_init(int *wx_port_pointer,
 	                       int *sensor_sub_fd_pointer,
-						   int *att_pub_fd_pointer,
-                           int *airs_pub_fd_pointer);
+                           int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
+                           int *airs_pub_fd_pointer, struct airspeed_s *air_vel_raw_pointer);
 
 /**
 * retrieve indoor data(by readings from UART) when pool() returns correctly.
@@ -286,7 +287,8 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
 
 	// initialize all the indoor variables
 	indoor_variables_init(&wx_port, 	&sensor_sub_fd,
-						  &att_pub_fd, 	&airs_pub_fd);
+                          &att_pub_fd, 	&att_raw,
+                          &airs_pub_fd, &air_vel_raw);
 
 	// polling management
 	struct pollfd fds[] = {
@@ -321,7 +323,6 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
 				}
 			}
         }
-		sleep(20);
 	}
 
 	warnx("[parser_200WX_indoor] exiting.\n");
@@ -337,8 +338,9 @@ int find_string(int start_index, char *buffer, int buffer_length, char *str){
     int i;
     int str_len = strlen(str);
     char temp_str[10]; /**< str cannot be greater than 9 charachter! */
+    int stop_index = buffer_length - str_len +1;
 
-    for (i = start_index; i < buffer_length; i++){
+    for (i = start_index; i < stop_index; i++){
 
         strncpy(temp_str, &buffer[i], str_len);
         //add null-characther at the end
@@ -495,7 +497,8 @@ bool pixhawk_baudrate_set(int wx_port, int baudrate){		// Set the baud rate of t
 }
 
 bool indoor_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
-                           int *att_pub_fd_pointer, int *airs_pub_fd_pointer){
+                           int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
+                           int *airs_pub_fd_pointer, struct airspeed_s *air_vel_raw_pointer){
 
     // try to open COM port to talk with wather 200WX station
     if(!weather_station_init(wx_port_pointer))
@@ -509,14 +512,15 @@ bool indoor_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
 	//orb_set_interval(*sensor_sub_fd_pointer, 80);	// set px4 sensors update every 0.08 [second] = 12 Hz
 
 	// advertise attitude topic (ATT)
-    struct vehicle_attitude_s att_raw;
-    memset(&att_raw, 0, sizeof(att_raw));
-    *att_pub_fd_pointer = orb_advertise(ORB_ID(vehicle_attitude), &att_raw);
+    memset(att_raw_pointer, 0, sizeof(*att_raw_pointer));
+    att_raw_pointer->timestamp = hrt_absolute_time();
+    *att_pub_fd_pointer = orb_advertise(ORB_ID(vehicle_attitude), att_raw_pointer);
+
 
 	// advertise airspeed topic (AIRS) 
-    struct airspeed_s air_vel_raw;
-    memset(&air_vel_raw, 0, sizeof(air_vel_raw));
-    *airs_pub_fd_pointer = orb_advertise(ORB_ID(airspeed), &air_vel_raw);
+    memset(air_vel_raw_pointer, 0, sizeof(*air_vel_raw_pointer));
+    air_vel_raw_pointer->timestamp = hrt_absolute_time();
+    *airs_pub_fd_pointer = orb_advertise(ORB_ID(airspeed), air_vel_raw_pointer);
 
     return true;
 }
@@ -559,7 +563,7 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
 
             i = find_string(i, buffer, buffer_length, "YXXDR");
 
-            if(i = -1)
+            if(i == -1)
                 return; //no YXXDR found in buffer
 
             /*found YXXDR message in buffer, starting from i
@@ -599,6 +603,8 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
                     //set value in topic's structure
                     att_raw_pointer->roll = temp_val;
                     att_raw_pointer->pitch = pitch;
+
+                    //warnx("r: %f \t p: %f \n", (double)temp_val, (double)pitch);
                 }
                 else{
                     //we're parsng YXXDR message type E. set roll rate

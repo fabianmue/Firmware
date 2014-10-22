@@ -229,7 +229,10 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
 		orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
 
-		sleep(1);*/
+        */
+
+        //prova
+        sleep(1);
 	}
 
 	warnx("[as_daemon_thread_main] exiting.\n");
