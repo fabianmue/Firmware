@@ -47,6 +47,7 @@
 #include <nuttx/sched.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <poll.h>
 
@@ -115,13 +116,14 @@ bool pixhawk_baudrate_set(int wx_port, int baudrate);
 * @param wx_port_pointer		pointer to COM file descriptor
 * @param sensor_sub_fd_pointer	pointer to sensor combined topic
 * @param att_pub_fd_pointer		pointer to handler returnd by orb_advertise
+* @param att_raw_pointer        pointer tu struct for attitude topic
 * @param airs_pub_fd_pointer	pointer to handler returnd by orb_advertise
+* @param air_vel_pointer        pointer tu struct for airspeed topic
 * @return 						true is evrything is ok
 */
-bool indoor_variables_init(int *wx_port_pointer,
-	                       int *sensor_sub_fd_pointer,
-						   int *att_pub_fd_pointer,
-                           int *airs_pub_fd_pointer);
+bool indoor_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
+                           int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
+                           int *airs_pub_fd_pointer, struct airspeed_s *air_vel_pointer);
 
 /**
 * retrieve indoor data(by readings from UART) when pool() returns correctly.
@@ -179,7 +181,7 @@ int find_string(int start_index, char *buffer, int buffer_length, char *str);
 * @param ret_val_pointer    pointer to variable with the final result
 * @return 	true if no error
 */
-bool extract_until_coma(int *index_pointer, char *buffer, int buffer_length, float *ret_val_pointer);
+bool extract_until_coma(int *index_pointer, char *buffer, int buffer_length, double *ret_val_pointer);
 
 /**
  * print the correct usage.
@@ -271,7 +273,7 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
 
 	// Indoor variables
 
-	// file descriptor to read and write on com port
+    // file descriptor to read and write on com port
 	int wx_port;
     // file descriptor for sensor_combined topic
 	int sensor_sub_fd;
@@ -286,14 +288,19 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
 
 	// initialize all the indoor variables
 	indoor_variables_init(&wx_port, 	&sensor_sub_fd,
-						  &att_pub_fd, 	&airs_pub_fd);
+                          &att_pub_fd, 	&att_raw,
+                          &airs_pub_fd, &air_vel_raw);
 
 	// polling management
-	struct pollfd fds[] = {
+    struct pollfd fds[] = {
             { .fd = sensor_sub_fd,   .events = POLLIN }
     };
 
+    warnx("[parser_200WX_indoor] entering main loop.\n");
+
 	while (!thread_should_exit) {
+
+
         // wait for sensor update of 1 file descriptor up to 1000 ms (1 sec = 1 Hz)
 		poll_ret = poll(fds, 1, 1000);	
 
@@ -308,7 +315,7 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
 				warnx("[parser_200WX_indoor] Terrible error!\n");
 			}
 			else{
-				// evrything is ok, at least so far (i.e. pool_ret > 0)
+                // everything is ok, at least so far (i.e. pool_ret > 0)
 				if (fds[0].revents & POLLIN) {	
 
 					// read UART and retrieve indoor data 
@@ -316,12 +323,11 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
                                          &att_raw, 	&air_vel_raw);
                     //publish attituide data
                     att_raw.timestamp = hrt_absolute_time();
-                    orb_publish(ORB_ID(vehicle_attitude), att_pub_fd, &att_raw);
-				
+                    orb_publish(ORB_ID(vehicle_attitude), att_pub_fd, &att_raw);				
 				}
 			}
         }
-		sleep(20);
+
 	}
 
 	warnx("[parser_200WX_indoor] exiting.\n");
@@ -337,10 +343,11 @@ int find_string(int start_index, char *buffer, int buffer_length, char *str){
     int i;
     int str_len = strlen(str);
     char temp_str[10]; /**< str cannot be greater than 9 charachter! */
+    int stop_index = buffer_length - str_len + 1;
 
-    for (i = start_index; i < buffer_length; i++){
+    for (i = start_index; i < stop_index; i++){
 
-        strncpy(temp_str, &buffer[i], str_len);
+        strncpy(temp_str, &(buffer[i]), str_len);
         //add null-characther at the end
         temp_str[str_len] = '\0';
 
@@ -348,6 +355,7 @@ int find_string(int start_index, char *buffer, int buffer_length, char *str){
             //found str in buffer, starting from i
             return i;
         }
+
     }
 
     //str not found in buffer
@@ -355,7 +363,7 @@ int find_string(int start_index, char *buffer, int buffer_length, char *str){
 }
 
 
-bool extract_until_coma(int *index_pointer, char *buffer, int buffer_length, float *ret_val_pointer){
+bool extract_until_coma(int *index_pointer, char *buffer, int buffer_length, double *ret_val_pointer){
 
 	int counter = 0;
     char temp_char[12];
@@ -495,7 +503,8 @@ bool pixhawk_baudrate_set(int wx_port, int baudrate){		// Set the baud rate of t
 }
 
 bool indoor_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
-                           int *att_pub_fd_pointer, int *airs_pub_fd_pointer){
+                           int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
+                           int *airs_pub_fd_pointer, struct airspeed_s *air_vel_pointer){
 
     // try to open COM port to talk with wather 200WX station
     if(!weather_station_init(wx_port_pointer))
@@ -509,14 +518,14 @@ bool indoor_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
 	//orb_set_interval(*sensor_sub_fd_pointer, 80);	// set px4 sensors update every 0.08 [second] = 12 Hz
 
 	// advertise attitude topic (ATT)
-    struct vehicle_attitude_s att_raw;
-    memset(&att_raw, 0, sizeof(att_raw));
-    *att_pub_fd_pointer = orb_advertise(ORB_ID(vehicle_attitude), &att_raw);
+    memset(att_raw_pointer, 0, sizeof(*att_raw_pointer));
+    att_raw_pointer->timestamp = hrt_absolute_time();
+    *att_pub_fd_pointer = orb_advertise(ORB_ID(vehicle_attitude), att_raw_pointer);
 
 	// advertise airspeed topic (AIRS) 
-    struct airspeed_s air_vel_raw;
-    memset(&air_vel_raw, 0, sizeof(air_vel_raw));
-    *airs_pub_fd_pointer = orb_advertise(ORB_ID(airspeed), &air_vel_raw);
+    memset(air_vel_pointer, 0, sizeof(*air_vel_pointer));
+    air_vel_pointer->timestamp = hrt_absolute_time();
+    *airs_pub_fd_pointer = orb_advertise(ORB_ID(airspeed), air_vel_pointer);
 
     return true;
 }
@@ -540,6 +549,9 @@ bool retrieve_indoor_data(int *wx_port_pointer,
 	 if(buffer_length < 1)
 	 	return false;
 
+     //prova
+     //warnx("buff leng %d \n \n", buffer_length);
+
      // see if buffer there is one (or more) YXXDR message(s)
      xdr_parser(buffer, buffer_length, att_raw_pointer);
 
@@ -551,16 +563,21 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
 
     int i = 0;
     int app_i = 0;
-    float temp_val;
+    double temp_val;
 
     for (i = 0; i < buffer_length; i++){ // run through the chars in the buffer
         // Start by looking for the start of the NMEA sentence:
         if (buffer_length - i > 50){// it's worthless to check if there won't be enough data anyway..
 
+
+            //warnx("cerco XDR \n");
+
             i = find_string(i, buffer, buffer_length, "YXXDR");
 
-            if(i = -1)
+            if(i == -1)
                 return; //no YXXDR found in buffer
+
+            //warnx("trovata XDR \n");
 
             /*found YXXDR message in buffer, starting from i
              * |Y|X|X|D|R|,|A|,|byte1 of first value|byte2 of first value| etc.
@@ -572,6 +589,8 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
             //extract first value
             if(!extract_until_coma(&i, buffer, buffer_length, &temp_val))
                     return; //got some error in extracting value, return
+
+            //warnx("first value %f \n", (double)temp_val);
 
             //everything is ok, i is the comma ','
             i++;//now i is the after the above ','
@@ -599,6 +618,10 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
                     //set value in topic's structure
                     att_raw_pointer->roll = temp_val;
                     att_raw_pointer->pitch = pitch;
+
+
+                    //printf("[xdr_parser] roll: %f \n", (double)temp_val);
+                    //printf("[xdr_parser] roll: %f \n", (double)pitch);
                 }
                 else{
                     //we're parsng YXXDR message type E. set roll rate
@@ -643,58 +666,3 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
     }
 
 }
-/*
-bool parse_transducer_message(int *index_pointer, char *raw_buffer_pointer, int *att_pub_fd_pointer){
-
-	struct vehicle_attitude_s att;
-	double temp_val;
-
-	att.timestamp = hrt_absolute_time();
-
-	// see if we received a YXXDR command 
-	if(find_string(*index_pointer, raw_buffer_pointer, "YXXDR")){
-
-		// index+5 is the comma ','
-		// index+6 is 'A' to symbolize angular displacement
-		// index+7 is the comma ','
-
-		(*index_pointer) += 8;	// position to first digit of first value
-
-		//extract value from buffer
-		temp_val = extract_until_coma(index_pointer, raw_buffer_pointer);
-
-		(*index_pointer) += 1;	// position *index_pointer to next position after ','
-
-		if (raw_buffer_pointer[*index_pointer] == 'D'){	
-			// then it means we are parsing either attitude or RPY rate
-			(*index_pointer) += 2;//we are after the ',' that is after 'D'
-
-			if(find_string(index_pointer, raw_buffer_pointer, "PTCH")){
-				// we are parsing YXXDR command type B
-				att.pitch = temp_val;
-
-				// index+1 is the comma ','
-				// index+2 is 'A' to symbolize angular displacement
-				// index+3 is the comma ','
-
-				(*index_pointer) += 4;	// position to first digit of roll value
-
-				att.roll = extract_until_coma(index_pointer, raw_buffer_pointer);
-			}
-			else{
-				// we are parsing YXXDR command type E
-				att.rollspeed = temp_val;
-
-				// i+3 is 'R' |
-				// i+4 is 'R' |
-				// i+5 is 'T' |
-				// i+6 is 'R' |--> ID indicating roll rate of vessel
-				// i+7 is the comma ','
-				// i+8 is 'A' to symbolize angular displacement
-				// i+9 is the comma ','
-
-				i += 10;	// position to first digit of pitch rate
-			}
-		}
-	}
-}*/

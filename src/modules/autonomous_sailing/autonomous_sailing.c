@@ -55,6 +55,8 @@
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/actuator_armed.h>
 
+#include <uORB/topics/vehicle_attitude.h>
+
 
 // To be able to use the "parameter function" from Q ground control:
 #include <systemlib/param/param.h>
@@ -206,8 +208,20 @@ int autonomous_sailing_main(int argc, char *argv[]){
 */
 int as_daemon_thread_main(int argc, char *argv[]){
 
+    // file descriptor and struct for actuator_control topic
 	struct actuator_controls_s actuators; 
 	orb_advert_t actuator_pub;
+    // file descriptor and struct for attitude topic
+    int att_pub_fd;
+    struct vehicle_attitude_s att_raw;
+
+    att_pub_fd = orb_subscribe(ORB_ID(vehicle_attitude));
+
+    // polling management
+    struct pollfd fds[] = {
+            { .fd = att_pub_fd,   .events = POLLIN }
+    };
+    int poll_ret;
 
 	warnx("[as_daemon_thread_main] starting\n");
 
@@ -221,15 +235,31 @@ int as_daemon_thread_main(int argc, char *argv[]){
 	}
 
 	while (!thread_should_exit) {
+        // wait for sensor update of 1 file descriptor up to 1000 ms (1 sec = 1 Hz)
+        poll_ret = poll(fds, 1, 1000);
 
-		//prova
-		/*actuators.timestamp = hrt_absolute_time();
-		actuators.control[0] = 0.3;
-		actuators.control[3] = 0.5;
+        // handle the poll result
+        if (poll_ret == 0) {
+            // this means none of our providers is giving us data
+            warnx("[as_daemon_thread_main] Got no data within a second\n");
+        }
+        else{
+            if (poll_ret < 0) {
+                // this is seriously bad - should be an emergency
+                warnx("[as_daemon_thread_main] Terrible error!\n");
+            }
+            else{
+                // everything is ok, at least so far (i.e. pool_ret > 0)
+                if (fds[0].revents & POLLIN) {
 
-		orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
+                    //prova per perdere un po di tempo
+                    // copy sensors raw data into local buffer, actually this action is need only to apply downsampling time
+                    orb_copy(ORB_ID(vehicle_attitude), att_pub_fd, &att_raw);
+                }
+            }
+        }
 
-		sleep(1);*/
+
 	}
 
 	warnx("[as_daemon_thread_main] exiting.\n");
