@@ -62,6 +62,7 @@
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/airspeed.h>
+#include <uORB/topics/wind_apparent_meas.h>
 
 
 // to open a UART port:
@@ -140,7 +141,7 @@ bool retrieve_indoor_data(int *wx_port_pointer,
 
 
 /**
-* parse transducer data received from 200WX
+* parse transducer data received from 200WX, YXXDR message
 *
 * @param buffer                 buffer with data
 * @param buffer_length          length of buffer
@@ -148,17 +149,6 @@ bool retrieve_indoor_data(int *wx_port_pointer,
 */
 void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_raw_pointer);
 
-
-
-/**
-* parse transducer data received from 200WX
-*
-* @param index_pointer			pointer to the current position analyzed in the buffer
-* @param raw_buffer_pointer		pointer to raw data buffer read from UART previously
-* @param att_pub_fd_pointer		pointer to handler returnd by orb_advertise
-* @return 						true is evrything is ok
-*/
-//bool parse_transducer_message(int *index_pointer, char *raw_buffer_pointer, int *att_pub_fd_pointer);
 
 /**
 * find if string is in buffer starting from start_index
@@ -296,6 +286,15 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
             { .fd = sensor_sub_fd,   .events = POLLIN }
     };
 
+    //****************** prova
+    struct wind_apparent_meas_s wind_apparent;
+    int wind_apparent_fd;
+
+    memset(&wind_apparent, 0, sizeof(wind_apparent));
+    wind_apparent.timestamp = hrt_absolute_time();
+    wind_apparent_fd = orb_advertise(ORB_ID(wind_apparent_meas), &wind_apparent);
+    //****************** fine prova
+
 	while (!thread_should_exit) {
         // wait for sensor update of 1 file descriptor up to 1000 ms (1 sec = 1 Hz)
 		poll_ret = poll(fds, 1, 1000);	
@@ -320,6 +319,13 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
                     //publish attituide data
                     att_raw.timestamp = hrt_absolute_time();
                     orb_publish(ORB_ID(vehicle_attitude), att_pub_fd, &att_raw);
+
+                    //****************** prova
+                    wind_apparent.timestamp = hrt_absolute_time();
+                    wind_apparent.angle_meas = 30;
+                    wind_apparent.speed_m_s = 5;
+                    orb_publish(ORB_ID(wind_apparent_meas), wind_apparent_fd, &wind_apparent);
+                    //****************** fine prova
 
 				}
 			}

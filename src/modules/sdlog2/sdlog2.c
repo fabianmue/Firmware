@@ -91,6 +91,10 @@
 #include <uORB/topics/servorail_status.h>
 #include <uORB/topics/wind_estimate.h>
 
+//Added by Marco Tranzatto
+#include <uORB/topics/wind_apparent_meas.h>
+
+
 #include <systemlib/systemlib.h>
 #include <systemlib/param/param.h>
 #include <systemlib/perf_counter.h>
@@ -954,6 +958,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		struct servorail_status_s servorail_status;
 		struct satellite_info_s sat_info;
 		struct wind_estimate_s wind_estimate;
+        struct wind_apparent_meas_s wind_app; //Added by Marco Tranzatto
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -996,6 +1001,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 			struct log_GS1B_s log_GS1B;
 			struct log_TECS_s log_TECS;
 			struct log_WIND_s log_WIND;
+            struct log_WIND_APPARENT_MEAS_s log_WIND_APPARENT_MEAS; //Added by Marco Tranzatto
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1033,6 +1039,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		int system_power_sub;
 		int servorail_status_sub;
 		int wind_sub;
+        int wind_apparent_sub; //Added by Marco Tranzatto
 	} subs;
 
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
@@ -1065,7 +1072,17 @@ int sdlog2_thread_main(int argc, char *argv[])
 	subs.tecs_status_sub = orb_subscribe(ORB_ID(tecs_status));
 	subs.system_power_sub = orb_subscribe(ORB_ID(system_power));
 	subs.servorail_status_sub = orb_subscribe(ORB_ID(servorail_status));
+
+    //****************** Added by Marco Tranzatto **************
+    //subs.wind_apparent_sub = orb_subscribe(ORB_ID(wind_apparent_meas));
+/*
+    // we need to rate-limit wind, as we do not need the full update rate
+    orb_set_interval(subs.wind_apparent_sub, 90);
+*/
+    //****************** End Add by Marco Tranzatto ************
+
 	subs.wind_sub = orb_subscribe(ORB_ID(wind_estimate));
+
 	/* we need to rate-limit wind, as we do not need the full update rate */
 	orb_set_interval(subs.wind_sub, 90);
 
@@ -1651,6 +1668,18 @@ int sdlog2_thread_main(int argc, char *argv[])
 			log_msg.body.log_WIND.cov_y = buf.wind_estimate.covariance_east;
 			LOGBUFFER_WRITE_AND_COUNT(WIND);
 		}
+
+        //********************** Added by Marco Tranzatto **************
+
+        /* --- APPARENT WIND MEASUREMENT --- */
+        /*if (copy_if_updated(ORB_ID(wind_apparent_meas), subs.wind_apparent_sub, &buf.wind_app)) {
+            log_msg.msg_type = LOG_WIND_APPARENT_MEAS_MSG;
+            log_msg.body.log_WIND_APPARENT_MEAS.angle_meas = buf.wind_app.angle_meas;
+            log_msg.body.log_WIND_APPARENT_MEAS.speed_m_s = buf.wind_app.speed_m_s;
+            LOGBUFFER_WRITE_AND_COUNT(WIND_APPARENT_MEAS);
+        }*/
+
+        //********************** End add *******************************
 
 		/* signal the other thread new data, but not yet unlock */
 		if (logbuffer_count(&lb) > MIN_BYTES_TO_WRITE) {

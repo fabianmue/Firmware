@@ -6,7 +6,6 @@
 
 /** apparent wind measuremetns */
 struct wind_apparent_meas_s {
-
     uint64_t	timestamp;
     float angle_meas; ///< measured wind angle relative to the vessel, to the nearest 0.1 degree
     float speed_m_s;  ///< measured wind speed in m/s, to the nearest 0.1 m/s
