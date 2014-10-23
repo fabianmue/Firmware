@@ -63,6 +63,7 @@
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/wind_apparent_meas.h>
+#include <uORB/topics/vehicle_gps_position.h>
 
 
 // to open a UART port:
@@ -117,13 +118,18 @@ bool pixhawk_baudrate_set(int wx_port, int baudrate);
 * @param wx_port_pointer		pointer to COM file descriptor
 * @param sensor_sub_fd_pointer	pointer to sensor combined topic
 * @param att_pub_fd_pointer		pointer to handler returnd by orb_advertise
+* @param att_raw_pointer        struct for attitude topic
 * @param airs_pub_fd_pointer	pointer to handler returnd by orb_advertise
+* @param att_raw_pointer        struct for airspeed topic
+* @param gps_pub_fd_pointer		pointer to handler returnd by orb_advertise
+* @param gps_raw_pointer        struct for vehicle_gps_position topic
 * @return 						true is evrything is ok
 */
 bool indoor_variables_init(int *wx_port_pointer,
 	                       int *sensor_sub_fd_pointer,
                            int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
-                           int *airs_pub_fd_pointer, struct airspeed_s *air_vel_raw_pointer);
+                           int *airs_pub_fd_pointer, struct airspeed_s *air_vel_raw_pointer,
+                           int *gps_pub_fd_pointer, struct vehicle_gps_position_s  *gps_raw_pointer);
 
 /**
 * retrieve indoor data(by readings from UART) when pool() returns correctly.
@@ -132,12 +138,14 @@ bool indoor_variables_init(int *wx_port_pointer,
 * @param sensor_sub_fd_pointer	pointer to sensor combined topic
 * @param att_raw_pointer		pointer to struct vehicle_attitude_s
 * @param air_vel_raw_pointer	pointer to struct airspeed_s
+* @param air_vel_raw_pointer	pointer to struct gps_raw_pointer
 * @return 						true is evrything is ok
 */
 bool retrieve_indoor_data(int *wx_port_pointer,
                           int *sensor_sub_fd_pointer,
                           struct vehicle_attitude_s *att_raw_pointer,
-                          struct airspeed_s *air_vel_raw_pointer);
+                          struct airspeed_s *air_vel_raw_pointer,
+                          struct vehicle_gps_position_s *gps_raw_pointer);
 
 
 /**
@@ -149,6 +157,14 @@ bool retrieve_indoor_data(int *wx_port_pointer,
 */
 void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_raw_pointer);
 
+/**
+* parse transducer data received from 200WX, GPGGA message
+*
+* @param buffer                 buffer with data
+* @param buffer_length          length of buffer
+* @param gps_raw_pointer		pointer to handler returnd by orb_advertise
+*/
+void gga_parser(char *buffer, int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer);
 
 /**
 * find if string is in buffer starting from start_index
@@ -170,7 +186,7 @@ int find_string(int start_index, char *buffer, int buffer_length, char *str);
 * @param ret_val_pointer    pointer to variable with the final result
 * @return 	true if no error
 */
-bool extract_until_coma(int *index_pointer, char *buffer, int buffer_length, float *ret_val_pointer);
+bool extract_until_coma(int *index_pointer, char *buffer, int buffer_length, double *ret_val_pointer);
 
 /**
  * print the correct usage.
@@ -273,13 +289,17 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
     // file descriptor and struct for airspeed topic
 	int airs_pub_fd;
     struct airspeed_s air_vel_raw;
+    // file descriptor and struct for vehicle_gps_position topic
+    int vehicle_gps_fd;
+    struct vehicle_gps_position_s  gps_raw;
 	//pool return value
     int poll_ret;
 
 	// initialize all the indoor variables
 	indoor_variables_init(&wx_port, 	&sensor_sub_fd,
                           &att_pub_fd, 	&att_raw,
-                          &airs_pub_fd, &air_vel_raw);
+                          &airs_pub_fd, &air_vel_raw,
+                          &vehicle_gps_fd, &gps_raw);
 
 	// polling management
 	struct pollfd fds[] = {
@@ -315,10 +335,14 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
 
 					// read UART and retrieve indoor data 
                     retrieve_indoor_data(&wx_port, 	&sensor_sub_fd,
-                                         &att_raw, 	&air_vel_raw);
+                                         &att_raw, 	&air_vel_raw,
+                                         &gps_raw);
                     //publish attituide data
                     att_raw.timestamp = hrt_absolute_time();
                     orb_publish(ORB_ID(vehicle_attitude), att_pub_fd, &att_raw);
+                    //publish gps data
+                    gps_raw.timestamp_time = hrt_absolute_time();
+                    orb_publish(ORB_ID(vehicle_gps_position), vehicle_gps_fd, &gps_raw);
 
                     //****************** prova
                     wind_apparent.timestamp = hrt_absolute_time();
@@ -364,7 +388,7 @@ int find_string(int start_index, char *buffer, int buffer_length, char *str){
 }
 
 
-bool extract_until_coma(int *index_pointer, char *buffer, int buffer_length, float *ret_val_pointer){
+bool extract_until_coma(int *index_pointer, char *buffer, int buffer_length, double *ret_val_pointer){
 
 	int counter = 0;
     char temp_char[12];
@@ -505,7 +529,8 @@ bool pixhawk_baudrate_set(int wx_port, int baudrate){		// Set the baud rate of t
 
 bool indoor_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
                            int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
-                           int *airs_pub_fd_pointer, struct airspeed_s *air_vel_raw_pointer){
+                           int *airs_pub_fd_pointer, struct airspeed_s *air_vel_raw_pointer,
+                           int *gps_pub_fd_pointer, struct vehicle_gps_position_s  *gps_raw_pointer){
 
     // try to open COM port to talk with wather 200WX station
     if(!weather_station_init(wx_port_pointer))
@@ -529,6 +554,11 @@ bool indoor_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
     air_vel_raw_pointer->timestamp = hrt_absolute_time();
     *airs_pub_fd_pointer = orb_advertise(ORB_ID(airspeed), air_vel_raw_pointer);
 
+    // advertise vehicle_gps_position topic
+    memset(gps_raw_pointer, 0, sizeof(*gps_raw_pointer));
+    gps_raw_pointer->timestamp_time = hrt_absolute_time();
+    *gps_pub_fd_pointer = orb_advertise(ORB_ID(vehicle_gps_position), gps_raw_pointer);
+
     return true;
 }
 
@@ -536,7 +566,8 @@ bool indoor_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
 bool retrieve_indoor_data(int *wx_port_pointer, 
 	                      int *sensor_sub_fd_pointer,
                           struct vehicle_attitude_s *att_raw_pointer,
-                          struct airspeed_s *air_vel_raw_pointer){
+                          struct airspeed_s *air_vel_raw_pointer,
+                          struct vehicle_gps_position_s  *gps_raw_pointer){
 
 	struct sensor_combined_s sensor_combined_raw;
     int buffer_length;
@@ -558,6 +589,9 @@ bool retrieve_indoor_data(int *wx_port_pointer,
     // see if buffer there is one (or more) YXXDR message(s)
     xdr_parser(buffer, buffer_length, att_raw_pointer);
 
+    // see if buffer there is one (or more) GPGGA message(s)
+    gga_parser(buffer, buffer_length, gps_raw_pointer);
+
 
     return true;
 }
@@ -566,7 +600,7 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
 
     int i = 0;
     int app_i = 0;
-    float temp_val;
+    double temp_val;
 
     for (i = 0; i < buffer_length; i++){ // run through the chars in the buffer
         // Start by looking for the start of the NMEA sentence:
@@ -592,7 +626,7 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
             i++;//now i is the after the above ','
             if (buffer[i] == 'D'){
                 // then it means we are parsing either XDR type B or type E;
-                float pitch;
+                double pitch;
                 //i+1 is ',' ; i+2 is the first charachter to analyze
                 i += 2;
 
@@ -619,8 +653,8 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
                 }
                 else{
                     //we're parsng YXXDR message type E. set roll rate
-                    float rollspeed;
-                    float pitchspeed;
+                    double rollspeed;
+                    double pitchspeed;
 
                     //save rollspeed
                     rollspeed = temp_val;
@@ -660,3 +694,92 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
     }
 
 }
+
+void gga_parser(char *buffer, int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer){
+    int i = 0;
+    int counter = 0;
+    // UTC in form of hhmmss.00 + last slot for '\0' (null that terminates string)
+    char time_char[11];
+    char hour_char[3];
+    char minute_char[3];
+    char second_char[6];
+    double latitude;
+    double longitude;
+    double gps_quality;
+    int hour;
+    int min;
+    int sec;
+
+    for (i = 0; i < buffer_length; i++){ // run through the chars in the buffer
+        // Start by looking for the start of the NMEA sentence:
+        if (buffer_length - i > 50){// it's worthless to check if there won't be enough data anyway..
+
+            i = find_string(i, buffer, buffer_length, "GPGGA");
+
+            if(i == -1)
+                return; //no GPGGA found in buffer
+
+            /*found GPGGA message in buffer, starting from i
+             * |G|P|G|G|A|,|byte1 of UTC|byte2 of UTC| etc
+             *  ^
+             *  |
+             *  i   */
+            i += 6;	// position to byte1 of UTC
+
+            while(buffer[i] != ','){
+                if(counter>=10){
+                    return;// safety
+                }
+                time_char[counter] = buffer[i];
+                i++;
+                counter++;
+            }
+
+            hour_char[0] = time_char[0];
+            hour_char[1] = time_char[1];
+            hour_char[2] = '\0';
+
+            minute_char[0] = time_char[2];
+            minute_char[1] = time_char[3];
+            minute_char[2] = '\0';
+
+            for (int j=0 ; j<5 ; j++){
+                second_char[j] = time_char[4+j];
+            }
+            second_char[5] = '\0';
+
+            hour = atoi(hour_char) ;
+            min = atoi(minute_char);
+            sec = atof(second_char);
+
+            // i is the comma ','
+            i++;// position i to byte1 of Latitude
+            if(!extract_until_coma(&i, buffer, buffer_length, &latitude))
+                    return; //got some error in extracting value, return
+
+            // i   is the comma ','
+            // i+1 is 'N' to symbolize the northern hemisphere
+            // i+2 is the comma ','
+            i += 3;	// position to byte1 of longitude
+            if(!extract_until_coma(&i, buffer, buffer_length, &longitude))
+                    return; //got some error in extracting value, return
+
+            // i   is the comma ','
+            // i+1 is 'E' to symbolize the East longitude (ok for Switzerland!!!)
+            // i+2 is the comma ','
+            i += 3;	// position to byte1 of GPS quality indicator
+            if(!extract_until_coma(&i, buffer, buffer_length, &gps_quality))
+                    return; //got some error in extracting value, return
+            //save data in the struct
+
+            // time in microseconds
+            gps_raw_pointer->time_gps_usec = ((hour+2)*3600 +
+                                              min*60 + sec)*1000000;
+            gps_raw_pointer->lat = latitude;
+            gps_raw_pointer->lon = longitude;
+            gps_raw_pointer->fix_type = gps_quality;/**< 0 = fix not available, 1 = fix valid, 2 = DGPS*/
+
+        }
+    }
+}
+
