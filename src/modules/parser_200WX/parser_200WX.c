@@ -346,7 +346,7 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
 
                     //****************** prova
                     wind_apparent.timestamp = hrt_absolute_time();
-                    wind_apparent.angle_meas = 30;
+                    wind_apparent.angle_meas = att_raw.roll;
                     wind_apparent.speed_m_s = 5;
                     orb_publish(ORB_ID(wind_apparent_meas), wind_apparent_fd, &wind_apparent);
                     //****************** fine prova
