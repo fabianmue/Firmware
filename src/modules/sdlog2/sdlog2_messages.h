@@ -409,11 +409,13 @@ struct log_VISN_s {
 
 //********************** Added by Marco Tranzatto **************
 
-/* --- WIND - APPARENT WIND MEASUREMENT --- */
-#define LOG_WAPP_MSG 55
-struct log_WAPP_s{
-    float angle_meas;
-    float speed_m_s;
+/* --- WIND SAILING - APPARENT WIND MEASUREMENT AND TRUE WIND ESTIMATE --- */
+#define LOG_WSAI_MSG 55
+struct log_WSAI_s{
+    float angle_apparent;
+    float speed_apparent;
+    float angle_true;
+    float speed_true;
 };
 //********************** End add *******************************
 
@@ -481,7 +483,7 @@ static const struct log_format_s log_formats[] = {
 	LOG_FORMAT(GS1B, "BBBBBBBBBBBBBBBB",	"s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15"),
 	LOG_FORMAT(TECS, "fffffffffffffB",	"ASP,AF,FSP,F,FF,AsSP,AsF,AsDSP,AsD,TERSP,TER,EDRSP,EDR,M"),
 	LOG_FORMAT(WIND, "ffff",	"X,Y,CovX,CovY"),
-    LOG_FORMAT(WAPP, "ff", "Angle,Speed"), //Added by Marco Tranzatto
+    LOG_FORMAT(WSAI, "ffff", "AngleApparent,SpeedApparent,AngleTrue,SpeedTrue"), //Added by Marco Tranzatto
 	/* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),

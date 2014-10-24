@@ -229,5 +229,5 @@ ORB_DEFINE(tecs_status, struct tecs_status_s);
 ORB_DEFINE(wind_estimate, struct wind_estimate_s);
 
 //Added by Marco Tranzatto
-#include "topics/wind_apparent_meas.h"
-ORB_DEFINE(wind_apparent_meas, struct wind_apparent_meas_s);
+#include "topics/wind_sailing.h"
+ORB_DEFINE(wind_sailing, struct wind_sailing_s);

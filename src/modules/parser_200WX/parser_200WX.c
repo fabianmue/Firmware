@@ -62,7 +62,7 @@
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/airspeed.h>
-#include <uORB/topics/wind_apparent_meas.h>
+#include <uORB/topics/wind_sailing.h>
 #include <uORB/topics/vehicle_gps_position.h>
 
 
@@ -307,12 +307,12 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
     };
 
     //****************** prova
-    struct wind_apparent_meas_s wind_apparent;
-    int wind_apparent_fd;
+    struct wind_sailing_s wind_sailing_raw;
+    int wind_sailing_fd;
 
-    memset(&wind_apparent, 0, sizeof(wind_apparent));
-    wind_apparent.timestamp = hrt_absolute_time();
-    wind_apparent_fd = orb_advertise(ORB_ID(wind_apparent_meas), &wind_apparent);
+    memset(&wind_sailing_raw, 0, sizeof(wind_sailing_raw));
+    wind_sailing_raw.timestamp = hrt_absolute_time();
+    wind_sailing_fd = orb_advertise(ORB_ID(wind_sailing), &wind_sailing_raw);
     //****************** fine prova
 
 	while (!thread_should_exit) {
@@ -345,10 +345,13 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
                     orb_publish(ORB_ID(vehicle_gps_position), vehicle_gps_fd, &gps_raw);
 
                     //****************** prova
-                    wind_apparent.timestamp = hrt_absolute_time();
-                    wind_apparent.angle_meas = att_raw.roll;
-                    wind_apparent.speed_m_s = 5;
-                    orb_publish(ORB_ID(wind_apparent_meas), wind_apparent_fd, &wind_apparent);
+                    wind_sailing_raw.timestamp = hrt_absolute_time();
+                    wind_sailing_raw.angle_apparent = att_raw.roll;
+                    wind_sailing_raw.speed_apparent = 5;
+
+                    wind_sailing_raw.angle_true = att_raw.pitch;
+                    wind_sailing_raw.speed_true = 25;
+                    orb_publish(ORB_ID(wind_sailing), wind_sailing_fd, &wind_sailing_raw);
                     //****************** fine prova
 
 				}
