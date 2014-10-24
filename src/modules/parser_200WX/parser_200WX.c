@@ -73,6 +73,9 @@
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
 
+//cancella
+#include <uORB/topics/wind_estimate.h>
+
 
 //Thread management variables
 static bool thread_should_exit = false;		/**< daemon exit flag */
@@ -90,10 +93,10 @@ __EXPORT int parser_200WX_main(int argc, char *argv[]);
  *
  * if TYPE_OF_ENVIRONMENT (located in ../autonomous_sailing/as_settings.h) is 0, then use indoor parser
  */
-int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]);
+int parser_200WX_daemon_thread_main(int argc, char *argv[]);
 
 /**
-* initialize weather station 200WX.
+* Initialize weather station 200WX.
 *
 * disable all the default messages from the waether station and after that enable only the messages in which
 * we are interested in.
@@ -105,7 +108,7 @@ bool weather_station_init(int *wx_port_point);
 
 
 /**
-* set baud rate between weather station 200WX and pixhawk.
+* Set baud rate between weather station 200WX and pixhawk.
 *
 * @param wx_port	name of the UART port
 * @param baudrate 	baudrate of the communication
@@ -113,61 +116,64 @@ bool weather_station_init(int *wx_port_point);
 bool pixhawk_baudrate_set(int wx_port, int baudrate);
 
 /**
-* initializes all the variables used in the indoor version of the parser
+* Initializes all the variables used in the indoor version of the parser.
+*
+* Set all fields to 0, update timestamp and advertise each topic
 *
 * @param wx_port_pointer		pointer to COM file descriptor
-* @param sensor_sub_fd_pointer	pointer to sensor combined topic
-* @param att_pub_fd_pointer		pointer to handler returnd by orb_advertise
-* @param att_raw_pointer        struct for attitude topic
-* @param airs_pub_fd_pointer	pointer to handler returnd by orb_advertise
-* @param att_raw_pointer        struct for airspeed topic
-* @param gps_pub_fd_pointer		pointer to handler returnd by orb_advertise
-* @param gps_raw_pointer        struct for vehicle_gps_position topic
 * @return 						true is evrything is ok
 */
-bool indoor_variables_init(int *wx_port_pointer,
-	                       int *sensor_sub_fd_pointer,
+bool parser_variables_init(int *wx_port_pointer,
+                           int *sensor_sub_fd_pointer,
                            int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
                            int *airs_pub_fd_pointer, struct airspeed_s *air_vel_raw_pointer,
-                           int *gps_pub_fd_pointer, struct vehicle_gps_position_s  *gps_raw_pointer);
+                           int *gps_pub_fd_pointer, struct vehicle_gps_position_s  *gps_raw_pointer,
+                           int *wind_sailing_fd_pointer, struct wind_sailing_s *wind_sailing_raw_pointer);
 
 /**
-* retrieve indoor data(by readings from UART) when pool() returns correctly.
+* Retrieve indoor data(by readings from UART) when pool() returns correctly.
 *
 * @param wx_port_pointer		pointer to COM file descriptor
 * @param sensor_sub_fd_pointer	pointer to sensor combined topic
-* @param att_raw_pointer		pointer to struct vehicle_attitude_s
-* @param air_vel_raw_pointer	pointer to struct airspeed_s
-* @param air_vel_raw_pointer	pointer to struct gps_raw_pointer
 * @return 						true is evrything is ok
 */
-bool retrieve_indoor_data(int *wx_port_pointer,
-                          int *sensor_sub_fd_pointer,
-                          struct vehicle_attitude_s *att_raw_pointer,
-                          struct airspeed_s *air_vel_raw_pointer,
-                          struct vehicle_gps_position_s *gps_raw_pointer);
+bool retrieve_data(int *wx_port_pointer,
+                  int *sensor_sub_fd_pointer,
+                  struct vehicle_attitude_s *att_raw_pointer,
+                  struct airspeed_s *air_vel_raw_pointer,
+                  struct vehicle_gps_position_s *gps_raw_pointer,
+                  struct wind_sailing_s *wind_sailing_pointer);
 
 
 /**
-* parse transducer data received from 200WX, YXXDR message
+* Parse transducer data received from 200WX, YXXDR message.
 *
 * @param buffer                 buffer with data
 * @param buffer_length          length of buffer
 * @param att_pub_fd_pointer		pointer to handler returnd by orb_advertise
 */
-void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_raw_pointer);
+void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_attitude_s *att_raw_pointer);
 
 /**
-* parse transducer data received from 200WX, GPGGA message
+* Parse transducer data received from 200WX, GPGGA message.
 *
 * @param buffer                 buffer with data
 * @param buffer_length          length of buffer
 * @param gps_raw_pointer		pointer to handler returnd by orb_advertise
 */
-void gga_parser(char *buffer, int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer);
+void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer);
 
 /**
-* find if string is in buffer starting from start_index
+* Parse transducer data received from 200WX, VWR and VWT messages.
+*
+* @param buffer                 buffer with data
+* @param buffer_length          length of buffer
+* @param wind_sailing_pointer   pointer to handler returnd by orb_advertise
+*/
+void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer);
+
+/**
+* Find if string is in buffer starting from start_index.
 *
 * @param start_index    index where start to find string
 * @param buffer         buffer where search for string
@@ -175,10 +181,10 @@ void gga_parser(char *buffer, int buffer_length, struct vehicle_gps_position_s *
 * @param str         string to find in buffer
 * @return 	the index in the buffer where 'string' begins in the buffer, -1 if not found
 */
-int find_string(int start_index, char *buffer, int buffer_length, char *str);
+int find_string(const int start_index, const char *buffer, const int buffer_length, char *str);
 
 /**
-* extract data from buffer, starting from index, until a come is found. update index
+* Extract data from buffer, starting from index, until a come is found. Update index.
 *
 * @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
 * @param buffer             buffer
@@ -186,10 +192,10 @@ int find_string(int start_index, char *buffer, int buffer_length, char *str);
 * @param ret_val_pointer    pointer to variable with the final result
 * @return 	true if no error
 */
-bool extract_until_coma(int *index_pointer, char *buffer, int buffer_length, double *ret_val_pointer);
+bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer);
 
 /**
- * print the correct usage.
+ * Print the correct usage.
  */
 static void usage(const char *reason);
 
@@ -223,25 +229,16 @@ int parser_200WX_main(int argc, char *argv[])
 
 		thread_should_exit = false;
 
-		if(TYPE_OF_ENVIRONMENT == 0){
-			//indoor parser
-			daemon_task = task_spawn_cmd("daemon",
-										SCHED_DEFAULT,
-                                        SCHED_PRIORITY_MAX,
-										4096,
-										parser_200WX_indoor_daemon_thread_main,
-					 	(argv) ? (const char **)&argv[2] : (const char **)NULL);
+
+        daemon_task = task_spawn_cmd("daemon",
+                                    SCHED_DEFAULT,
+                                    SCHED_PRIORITY_MAX,
+                                    4096,
+                                    parser_200WX_daemon_thread_main,
+                    (argv) ? (const char **)&argv[2] : (const char **)NULL);
 
 			
-		}else{
-			//outdoor parser
-			daemon_task = task_spawn_cmd("daemon",
-										SCHED_DEFAULT,
-                                        SCHED_PRIORITY_MAX,
-										4096,
-                                        parser_200WX_indoor_daemon_thread_main,//TODO: METTERE OUTDOOR
-					 	(argv) ? (const char **)&argv[2] : (const char **)NULL);
-		}
+
 
 		exit(0);
 	}
@@ -271,9 +268,18 @@ int parser_200WX_main(int argc, char *argv[])
 *
 * DESCRIVERE FUNZIONAMENTO
 */
-int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
+int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 
-	warnx("[parser_200WX_indoor] starting\n");
+    if(AS_TYPE_OF_ENVIRONMENT == 1)
+        warnx("[parser_200WX] starting outdoor version\n");
+    else
+        if(AS_TYPE_OF_ENVIRONMENT == 0)
+            warnx("[parser_200WX] starting indoor version\n");
+        else{
+            warnx("[parser_200WX] ERROR, set 'AS_TYPE_OF_ENVIRONMENT' in autonomous_sailing/as_settings.h\n");
+            thread_should_exit = true;
+        }
+
 
 	thread_running = true;
 
@@ -292,28 +298,33 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
     // file descriptor and struct for vehicle_gps_position topic
     int vehicle_gps_fd;
     struct vehicle_gps_position_s  gps_raw;
+    // file descriptor and struct for wind_sailing topic
+    struct wind_sailing_s wind_sailing_raw;
+    int wind_sailing_fd;
 	//pool return value
     int poll_ret;
 
 	// initialize all the indoor variables
-	indoor_variables_init(&wx_port, 	&sensor_sub_fd,
+    parser_variables_init(&wx_port, 	&sensor_sub_fd,
                           &att_pub_fd, 	&att_raw,
                           &airs_pub_fd, &air_vel_raw,
-                          &vehicle_gps_fd, &gps_raw);
+                          &vehicle_gps_fd, &gps_raw,
+                          &wind_sailing_fd, &wind_sailing_raw);
 
 	// polling management
 	struct pollfd fds[] = {
             { .fd = sensor_sub_fd,   .events = POLLIN }
     };
 
-    //****************** prova
-    struct wind_sailing_s wind_sailing_raw;
-    int wind_sailing_fd;
+    //cancella
+    /*struct wind_estimate_s wind;
+    int wind_fd;
 
-    memset(&wind_sailing_raw, 0, sizeof(wind_sailing_raw));
-    wind_sailing_raw.timestamp = hrt_absolute_time();
-    wind_sailing_fd = orb_advertise(ORB_ID(wind_sailing), &wind_sailing_raw);
-    //****************** fine prova
+    memset(&wind, 0, sizeof(wind));
+    wind.timestamp = hrt_absolute_time();
+    wind_fd = orb_advertise(ORB_ID(wind_estimate), &wind);*/
+    //fine cancella
+
 
 	while (!thread_should_exit) {
         // wait for sensor update of 1 file descriptor up to 1000 ms (1 sec = 1 Hz)
@@ -334,25 +345,31 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
 				if (fds[0].revents & POLLIN) {	
 
 					// read UART and retrieve indoor data 
-                    retrieve_indoor_data(&wx_port, 	&sensor_sub_fd,
-                                         &att_raw, 	&air_vel_raw,
-                                         &gps_raw);
+                    retrieve_data(&wx_port, 	&sensor_sub_fd,
+                                 &att_raw, 	&air_vel_raw,
+                                 &gps_raw,  &wind_sailing_raw);
+
                     //publish attituide data
-                    att_raw.timestamp = hrt_absolute_time();
                     orb_publish(ORB_ID(vehicle_attitude), att_pub_fd, &att_raw);
-                    //publish gps data
-                    gps_raw.timestamp_time = hrt_absolute_time();
-                    orb_publish(ORB_ID(vehicle_gps_position), vehicle_gps_fd, &gps_raw);
 
-                    //****************** prova
-                    wind_sailing_raw.timestamp = hrt_absolute_time();
-                    wind_sailing_raw.angle_apparent = att_raw.roll;
-                    wind_sailing_raw.speed_apparent = 5;
-
-                    wind_sailing_raw.angle_true = att_raw.pitch;
-                    wind_sailing_raw.speed_true = 25;
+                    //publish wind_sailing data
                     orb_publish(ORB_ID(wind_sailing), wind_sailing_fd, &wind_sailing_raw);
-                    //****************** fine prova
+
+                    if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
+                        //publish gps data
+                        orb_publish(ORB_ID(vehicle_gps_position), vehicle_gps_fd, &gps_raw);
+                    }
+
+                    //cancella
+                    /*wind.timestamp = hrt_absolute_time();
+                    wind.windspeed_north = wind_sailing_raw.angle_apparent;
+                    wind.windspeed_east = wind_sailing_raw.speed_apparent;
+                    wind.covariance_north = wind_sailing_raw.angle_true;
+                    wind.covariance_east = wind_sailing_raw.speed_true;
+
+                    orb_publish(ORB_ID(wind_estimate), wind_fd, &wind);*/
+
+                    //fine cancella
 
 				}
 			}
@@ -367,7 +384,7 @@ int parser_200WX_indoor_daemon_thread_main(int argc, char *argv[]) {
 
 }
 
-int find_string(int start_index, char *buffer, int buffer_length, char *str){
+int find_string(const int start_index, const char *buffer, const int buffer_length, char *str){
 
     int i;
     int str_len = strlen(str);
@@ -391,7 +408,7 @@ int find_string(int start_index, char *buffer, int buffer_length, char *str){
 }
 
 
-bool extract_until_coma(int *index_pointer, char *buffer, int buffer_length, double *ret_val_pointer){
+bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer){
 
 	int counter = 0;
     char temp_char[12];
@@ -530,10 +547,11 @@ bool pixhawk_baudrate_set(int wx_port, int baudrate){		// Set the baud rate of t
 	return true;
 }
 
-bool indoor_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
+bool parser_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
                            int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
                            int *airs_pub_fd_pointer, struct airspeed_s *air_vel_raw_pointer,
-                           int *gps_pub_fd_pointer, struct vehicle_gps_position_s  *gps_raw_pointer){
+                           int *gps_pub_fd_pointer, struct vehicle_gps_position_s  *gps_raw_pointer,
+                           int *wind_sailing_fd_pointer, struct wind_sailing_s  *wind_sailing_raw_pointer){
 
     // try to open COM port to talk with wather 200WX station
     if(!weather_station_init(wx_port_pointer))
@@ -562,19 +580,25 @@ bool indoor_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
     gps_raw_pointer->timestamp_time = hrt_absolute_time();
     *gps_pub_fd_pointer = orb_advertise(ORB_ID(vehicle_gps_position), gps_raw_pointer);
 
+    // advertise wind_sailing topic
+    memset(wind_sailing_raw_pointer, 0, sizeof(*wind_sailing_raw_pointer));
+    wind_sailing_raw_pointer->timestamp = hrt_absolute_time();
+    *wind_sailing_fd_pointer = orb_advertise(ORB_ID(wind_sailing), wind_sailing_raw_pointer);
+
     return true;
 }
 
 
-bool retrieve_indoor_data(int *wx_port_pointer, 
+bool retrieve_data(int *wx_port_pointer,
 	                      int *sensor_sub_fd_pointer,
                           struct vehicle_attitude_s *att_raw_pointer,
                           struct airspeed_s *air_vel_raw_pointer,
-                          struct vehicle_gps_position_s  *gps_raw_pointer){
+                          struct vehicle_gps_position_s  *gps_raw_pointer,
+                          struct wind_sailing_s *wind_sailing_pointer){
 
 	struct sensor_combined_s sensor_combined_raw;
     int buffer_length;
-    char buffer[250];
+    char buffer[250]; //TODO renderlo globale cosi' risparmi tempo
 
 	// copy sensors raw data into local buffer, actually this action is need only to apply downsampling time
     orb_copy(ORB_ID(sensor_combined), *sensor_sub_fd_pointer, &sensor_combined_raw);
@@ -583,7 +607,7 @@ bool retrieve_indoor_data(int *wx_port_pointer,
     buffer_length = read(*wx_port_pointer, buffer, sizeof(buffer));
 
     //prova
-    warnx("buff leng: %d \n", buffer_length);
+    //warnx("buff leng: %d \n", buffer_length);
     //fine prova
 
     if(buffer_length < 1)
@@ -592,40 +616,43 @@ bool retrieve_indoor_data(int *wx_port_pointer,
     // see if buffer there is one (or more) YXXDR message(s)
     xdr_parser(buffer, buffer_length, att_raw_pointer);
 
-    // see if buffer there is one (or more) GPGGA message(s)
-    gga_parser(buffer, buffer_length, gps_raw_pointer);
+    if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
+        // see if buffer there is one (or more) GPGGA message(s)
+        gga_parser(buffer, buffer_length, gps_raw_pointer);
+    }
+
+    // see if buffer there is one (or more) WIVW_ message(s)
+    vw_parser(buffer, buffer_length, wind_sailing_pointer);
 
 
     return true;
 }
 
-void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_raw_pointer){
+void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_attitude_s *att_raw_pointer){
 
     int i = 0;
     int app_i = 0;
     double temp_val;
 
-    for (i = 0; i < buffer_length; i++){ // run through the chars in the buffer
-        // Start by looking for the start of the NMEA sentence:
-        if (buffer_length - i > 50){// it's worthless to check if there won't be enough data anyway..
+    // it's worthless to check if there won't be enough data anyway..
+    while((buffer_length - i) > 50){
 
-            i = find_string(i, buffer, buffer_length, "YXXDR");
+        i = find_string(i, buffer, buffer_length, "YXXDR");
 
-            if(i == -1)
-                return; //no YXXDR found in buffer
+        if(i == -1)
+            return; //no YXXDR found in buffer
 
-            /*found YXXDR message in buffer, starting from i
-             * |Y|X|X|D|R|,|A|,|byte1 of first value|byte2 of first value| etc.
-             *  ^
-             *  |
-             *  i   */
-            i += 8;	// position to byte1 of first value
+        /*found YXXDR message in buffer, starting from i
+         * |Y|X|X|D|R|,|A|,|byte1 of first value|byte2 of first value| etc.
+         *  ^
+         *  |
+         *  i   */
+        i += 8;	// position to byte1 of first value
 
-            //extract first value
-            if(!extract_until_coma(&i, buffer, buffer_length, &temp_val))
-                    return; //got some error in extracting value, return
+        //extract first value, on error go next iteration and see in buffer for another YXXDR string
+        if(extract_until_coma(&i, buffer, buffer_length, &temp_val)){
 
-            //everything is ok, i is the comma ','
+            //first value extracted, everything is ok, i is the comma ','
             i++;//now i is the after the above ','
             if (buffer[i] == 'D'){
                 // then it means we are parsing either XDR type B or type E;
@@ -634,6 +661,7 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
                 i += 2;
 
                 app_i = find_string(i, buffer, buffer_length, "PTCH");
+
                 if(app_i != -1){
                     //we're parsng YXXDR message type B. update i
                     i = app_i;
@@ -646,13 +674,12 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
                      * */
                     i += 7;	// position to byte1 of second value
                     //extract second value
-                    if(!extract_until_coma(&i, buffer, buffer_length, &temp_val))
-                            return; //got some error in extracting value, return
-                    //set value in topic's structure
-                    att_raw_pointer->roll = temp_val;
-                    att_raw_pointer->pitch = pitch;
-
-                    //warnx("r: %f \t p: %f \n", (double)temp_val, (double)pitch);
+                    if(extract_until_coma(&i, buffer, buffer_length, &temp_val)){
+                        //second value extracted, set value in topic's structure
+                        att_raw_pointer->timestamp = hrt_absolute_time();
+                        att_raw_pointer->roll = temp_val;
+                        att_raw_pointer->pitch = pitch;
+                    }
                 }
                 else{
                     //we're parsng YXXDR message type E. set roll rate
@@ -669,24 +696,25 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
                      * */
                     i += 7;	// position to byte1 of second value
                     //extract second value
-                    if(!extract_until_coma(&i, buffer, buffer_length, &temp_val))
-                            return; //got some error in extracting value, return
-                    //save pitchspeed
-                    pitchspeed = temp_val;
+                    if(extract_until_coma(&i, buffer, buffer_length, &temp_val)){
+                        //save pitchspeed
+                        pitchspeed = temp_val;
 
-                    i++;
-                    /* |D|,|P|R|T|R|,|A|,|byte1 of third value|byte2 of third value| etc.
-                     *  ^
-                     *  |
-                     *  i
-                     * */
-                    i += 9;	// position to byte1 of third value
-                    if(!extract_until_coma(&i, buffer, buffer_length, &temp_val))
-                            return; //got some error in extracting value, return
-                    //set value in topic's structure
-                    att_raw_pointer->rollspeed = rollspeed;
-                    att_raw_pointer->pitchspeed = pitchspeed;
-                    att_raw_pointer->yawspeed = temp_val;
+                        i++;
+                        /* |D|,|P|R|T|R|,|A|,|byte1 of third value|byte2 of third value| etc.
+                         *  ^
+                         *  |
+                         *  i
+                         * */
+                        i += 9;	// position to byte1 of third value
+                        if(extract_until_coma(&i, buffer, buffer_length, &temp_val)){
+                            //set value in topic's structure
+                            att_raw_pointer->timestamp = hrt_absolute_time();
+                            att_raw_pointer->rollspeed = rollspeed;
+                            att_raw_pointer->pitchspeed = pitchspeed;
+                            att_raw_pointer->yawspeed = temp_val;
+                        }
+                    }
                 }
             }
             else{
@@ -698,7 +726,8 @@ void xdr_parser(char *buffer, int buffer_length, struct vehicle_attitude_s *att_
 
 }
 
-void gga_parser(char *buffer, int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer){
+void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer){
+
     int i = 0;
     int counter = 0;
     // UTC in form of hhmmss.00 + last slot for '\0' (null that terminates string)
@@ -709,80 +738,182 @@ void gga_parser(char *buffer, int buffer_length, struct vehicle_gps_position_s *
     double latitude;
     double longitude;
     double gps_quality;
+    double satellites_used;
     int hour;
     int min;
     int sec;
 
-    for (i = 0; i < buffer_length; i++){ // run through the chars in the buffer
-        // Start by looking for the start of the NMEA sentence:
-        if (buffer_length - i > 50){// it's worthless to check if there won't be enough data anyway..
+    // it's worthless to check if there won't be enough data anyway..
+    while((buffer_length - i) > 50){
 
-            i = find_string(i, buffer, buffer_length, "GPGGA");
+        i = find_string(i, buffer, buffer_length, "GPGGA");
 
-            if(i == -1)
-                return; //no GPGGA found in buffer
+        if(i == -1)
+            return; //no GPGGA found in buffer
 
-            /*found GPGGA message in buffer, starting from i
-             * |G|P|G|G|A|,|byte1 of UTC|byte2 of UTC| etc
-             *  ^
-             *  |
-             *  i   */
-            i += 6;	// position to byte1 of UTC
+        //prova
+        //warnx("\n Trovata GPGGA %f \n");
+        //fine prova
 
-            while(buffer[i] != ','){
-                if(counter>=10){
-                    return;// safety
-                }
-                time_char[counter] = buffer[i];
-                i++;
-                counter++;
+        /*found GPGGA message in buffer, starting from i
+         * |G|P|G|G|A|,|byte1 of UTC|byte2 of UTC| etc
+         *  ^
+         *  |
+         *  i   */
+        i += 6;	// position to byte1 of UTC
+
+        while(buffer[i] != ','){
+            if(counter>=10){//TODO da parametrizzare
+                return;// safety
             }
+            time_char[counter] = buffer[i];
+            i++;
+            counter++;
+        }
 
-            hour_char[0] = time_char[0];
-            hour_char[1] = time_char[1];
-            hour_char[2] = '\0';
+        hour_char[0] = time_char[0];
+        hour_char[1] = time_char[1];
+        hour_char[2] = '\0';
 
-            minute_char[0] = time_char[2];
-            minute_char[1] = time_char[3];
-            minute_char[2] = '\0';
+        minute_char[0] = time_char[2];
+        minute_char[1] = time_char[3];
+        minute_char[2] = '\0';
 
-            for (int j=0 ; j<5 ; j++){
-                second_char[j] = time_char[4+j];
-            }
-            second_char[5] = '\0';
+        for (int j=0 ; j<5 ; j++){
+            second_char[j] = time_char[4+j];
+        }
+        second_char[5] = '\0';
 
-            hour = atoi(hour_char) ;
-            min = atoi(minute_char);
-            sec = atof(second_char);
+        hour = atoi(hour_char) ;
+        min = atoi(minute_char);
+        sec = atof(second_char);
 
-            // i is the comma ','
-            i++;// position i to byte1 of Latitude
-            if(!extract_until_coma(&i, buffer, buffer_length, &latitude))
-                    return; //got some error in extracting value, return
+        // i is the comma ','
+        i++;// position i to byte1 of Latitude
+        if(extract_until_coma(&i, buffer, buffer_length, &latitude)){
 
             // i   is the comma ','
             // i+1 is 'N' to symbolize the northern hemisphere
             // i+2 is the comma ','
             i += 3;	// position to byte1 of longitude
-            if(!extract_until_coma(&i, buffer, buffer_length, &longitude))
-                    return; //got some error in extracting value, return
+            if(extract_until_coma(&i, buffer, buffer_length, &longitude)){
+                // i   is the comma ','
+                // i+1 is 'E' to symbolize the East longitude (ok for Switzerland!!!)
+                // i+2 is the comma ','
+                i += 3;	// position to byte1 of GPS quality indicator
+                if(extract_until_coma(&i, buffer, buffer_length, &gps_quality)){
 
-            // i   is the comma ','
-            // i+1 is 'E' to symbolize the East longitude (ok for Switzerland!!!)
-            // i+2 is the comma ','
-            i += 3;	// position to byte1 of GPS quality indicator
-            if(!extract_until_coma(&i, buffer, buffer_length, &gps_quality))
-                    return; //got some error in extracting value, return
-            //save data in the struct
+                    // i   is the comma ','
+                    i ++;	// position to byte1 of number of satellites in use
+                    if(extract_until_coma(&i, buffer, buffer_length, &satellites_used)){
+                        //save data in the struct
+                        gps_raw_pointer->timestamp_time = hrt_absolute_time();
 
-            // time in microseconds
-            gps_raw_pointer->time_gps_usec = ((hour+2)*3600 +
-                                              min*60 + sec)*1000000;
-            gps_raw_pointer->lat = latitude;
-            gps_raw_pointer->lon = longitude;
-            gps_raw_pointer->fix_type = gps_quality;/**< 0 = fix not available, 1 = fix valid, 2 = DGPS*/
+                        // time in microseconds
+                        gps_raw_pointer->time_gps_usec = ((hour+2)*3600 +
+                                                          min*60 + sec)*1000000;
+                        gps_raw_pointer->lat = latitude;
+                        gps_raw_pointer->lon = longitude;
+                        gps_raw_pointer->satellites_used = satellites_used;
+                        gps_raw_pointer->fix_type = gps_quality;/**< 0 = fix not available, 1 = fix valid, 2 = DGPS*/
 
+                        //prova
+                        //warnx("\n lat %f \n", (double)latitude);
+                        //warnx("long %f \n", (double)longitude);
+                        //warnx("satellites_used %f \n", (double)satellites_used);
+                        //warnx("gps_quality %f \n", (double)gps_quality);
+                        //fine prova
+
+                    }
+
+                }
+            }
         }
     }
 }
 
+
+void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer){
+
+    int i = 0;
+    double temp_angle;
+    double temp_speed;
+
+    // it's worthless to check if there won't be enough data anyway..
+    while((buffer_length - i) > 50){
+        // see if we have a relative wind information OR true wind estimate
+        i = find_string(i, buffer, buffer_length, "WIVW");
+
+        if(i == -1)
+            return;//no message found
+
+        /*
+         * |W|I|V|W|_|
+         *  ^
+         *  |
+         *  i If _ is R, then we have WIVWR message, if _ si T then we have WIVWT message  */
+
+        if(buffer[i+4] == 'R'){
+            //we have WIVWR message
+            /*
+             * |W|I|V|W|R|,|byte1 of first value|byte2 of first value| etc.
+             *  ^
+             *  |
+             *  i   */
+            i += 6;	// position to byte1 of first value
+
+            //extract first value
+            if(extract_until_coma(&i, buffer, buffer_length, &temp_angle)){
+                //i is ','
+                //i+1 is L or R to indicate from wich direction the wind is blowing wrt vessel heading
+                i++;
+                if(buffer[i] == 'L')//TODO check if ok
+                    temp_angle = -temp_angle; /// CHECK IF OK
+
+                //i+1 is ','
+                //i+2 is the first byte of wind speed (in knot)
+                i +=2;
+                //extract second value
+                if(extract_until_coma(&i, buffer, buffer_length, &temp_speed)){
+                    //set value in topic's structure
+                    wind_sailing_pointer->timestamp = hrt_absolute_time();
+                    wind_sailing_pointer->angle_apparent = temp_angle;
+                    wind_sailing_pointer->speed_apparent = temp_speed;
+                }
+            }
+
+        }
+        else if(buffer[i+4] == 'T'){
+            //we have WIVWT message
+            /*
+             * |W|I|V|W|T|,|byte1 of first value|byte2 of first value| etc.
+             *  ^
+             *  |
+             *  i   */
+            i += 6;	// position to byte1 of first value
+
+            //extract first value
+            if(extract_until_coma(&i, buffer, buffer_length, &temp_angle)){
+                //i is ','
+                //i+1 is L or R to indicate from wich direction the wind is blowing wrt vessel heading
+                i++;
+                if(buffer[i] == 'L')//TODO check if ok
+                    temp_angle = -temp_angle; /// CHECK IF OK
+
+                //i+1 is ','
+                //i+2 is the first byte of wind speed (in knot)
+                i +=2;
+                //extract second value
+                if(extract_until_coma(&i, buffer, buffer_length, &temp_speed)){
+                    //set value in topic's structure
+                    wind_sailing_pointer->timestamp = hrt_absolute_time();
+                    wind_sailing_pointer->angle_true = temp_angle;
+                    wind_sailing_pointer->speed_true = temp_speed;
+                }
+            }
+
+        }
+
+    }
+
+}
