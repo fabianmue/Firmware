@@ -73,8 +73,6 @@
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
 
-//cancella
-#include <uORB/topics/wind_estimate.h>
 
 
 //Thread management variables
@@ -316,14 +314,6 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
             { .fd = sensor_sub_fd,   .events = POLLIN }
     };
 
-    //cancella
-    /*struct wind_estimate_s wind;
-    int wind_fd;
-
-    memset(&wind, 0, sizeof(wind));
-    wind.timestamp = hrt_absolute_time();
-    wind_fd = orb_advertise(ORB_ID(wind_estimate), &wind);*/
-    //fine cancella
 
 
 	while (!thread_should_exit) {
@@ -333,12 +323,12 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 		// handle the poll result 
 		if (poll_ret == 0) {
 			// this means none of our providers is giving us data 
-			warnx("[parser_200WX_indoor] Got no data within a second\n");
+            warnx("[parser_200WX] Got no data within a second\n");
 		}
 		else{
 			if (poll_ret < 0) {
 				// this is seriously bad - should be an emergency
-				warnx("[parser_200WX_indoor] Terrible error!\n");
+                warnx("[parser_200WX] Terrible error!\n");
 			}
 			else{
 				// evrything is ok, at least so far (i.e. pool_ret > 0)
@@ -348,6 +338,13 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
                     retrieve_data(&wx_port, 	&sensor_sub_fd,
                                  &att_raw, 	&air_vel_raw,
                                  &gps_raw,  &wind_sailing_raw);
+
+                    //cancella
+//                    att_raw.yaw = wind_sailing_raw.angle_apparent;
+//                    att_raw.rollspeed = wind_sailing_raw.speed_apparent;
+//                    att_raw.pitchspeed = 5;
+//                    att_raw.yawspeed = wind_sailing_raw.speed_true;
+                    //fine cancella
 
                     //publish attituide data
                     orb_publish(ORB_ID(vehicle_attitude), att_pub_fd, &att_raw);
@@ -360,23 +357,12 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
                         orb_publish(ORB_ID(vehicle_gps_position), vehicle_gps_fd, &gps_raw);
                     }
 
-                    //cancella
-                    /*wind.timestamp = hrt_absolute_time();
-                    wind.windspeed_north = wind_sailing_raw.angle_apparent;
-                    wind.windspeed_east = wind_sailing_raw.speed_apparent;
-                    wind.covariance_north = wind_sailing_raw.angle_true;
-                    wind.covariance_east = wind_sailing_raw.speed_true;
-
-                    orb_publish(ORB_ID(wind_estimate), wind_fd, &wind);*/
-
-                    //fine cancella
-
 				}
 			}
         }
 	}
 
-	warnx("[parser_200WX_indoor] exiting.\n");
+    warnx("[parser_200WX] exiting.\n");
 
 	thread_running = false;
 
