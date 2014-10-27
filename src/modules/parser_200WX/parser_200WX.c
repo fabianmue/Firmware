@@ -154,14 +154,10 @@ bool retrieve_data(int *wx_port_pointer,
 */
 void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_attitude_s *att_raw_pointer);
 
-/**
-* Parse transducer data received from 200WX, GPGGA message.
-*
-* @param buffer                 buffer with data
-* @param buffer_length          length of buffer
-* @param gps_raw_pointer		pointer to handler returnd by orb_advertise
-*/
+
 void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer);
+
+double nmea_ndeg2degree(double val);
 
 /**
 * Parse transducer data received from 200WX, VWR and VWT messages.
@@ -413,6 +409,9 @@ bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer
         }
 	}
 
+    //null terminate string
+    temp_char[counter] = '\0';
+
     //update index
     *index_pointer = i;
     *ret_val_pointer = atof(temp_char);
@@ -632,13 +631,22 @@ bool retrieve_data(int *wx_port_pointer,
     // see if buffer there is one (or more) YXXDR message(s)
     xdr_parser(buffer, buffer_length, att_raw_pointer);
 
+    // see if buffer there is one (or more) WIVW_ message(s)
+    vw_parser(buffer, buffer_length, wind_sailing_pointer);
+
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
+
+        //cancellare
+        /*char buf[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,52,55,50,50,46,
+                     55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,49,44,55,44,50,46,52,
+                     44,53,50,51,46,52,44,52,57,46,49,44,77,44,44,42,53,67,13,10};
+
+        gga_parser(buf, sizeof(buf), gps_raw_pointer);*/
+        //fine cancellare
+
         // see if buffer there is one (or more) GPGGA message(s)
         gga_parser(buffer, buffer_length, gps_raw_pointer);
     }
-
-    // see if buffer there is one (or more) WIVW_ message(s)
-    vw_parser(buffer, buffer_length, wind_sailing_pointer);
 
 
     return true;
@@ -742,6 +750,13 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
 
 }
 
+/**
+* Parse transducer data received from 200WX, GPGGA message.
+*
+* @param buffer                 buffer with data
+* @param buffer_length          length of buffer
+* @param gps_raw_pointer		pointer to handler returnd by orb_advertise
+*/
 void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer){
 
     int i = 0;
@@ -757,7 +772,7 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
     double satellites_used;
     int hour;
     int min;
-    int sec;
+    float sec;
 
     // it's worthless to check if there won't be enough data anyway..
     for(i = 0; (buffer_length - i) > 50; i++){
@@ -822,21 +837,26 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
                         //save data in the struct
                         gps_raw_pointer->timestamp_time = hrt_absolute_time();
 
+                        //TODO cosa mettere qui visto che 200WX non ci da tempo totale per sdlo2 ?
+                        gps_raw_pointer->time_gps_usec = 1414368000l;
+
                         // time in microseconds
-                        gps_raw_pointer->time_gps_usec = ((hour+2) * 3600 +
-                                                          min * 60 + sec) * 1000000;
-                        gps_raw_pointer->lat = latitude;
-                        gps_raw_pointer->lon = longitude;
+                        gps_raw_pointer->timestamp_position = (hour * 3600 +
+                                                            min * 60 + sec) * 1000000;
+
+                        //convert lat and long in degrees and multiple for 1E7 as required in vehicle_gps_position topic
+                        gps_raw_pointer->lat = nmea_ndeg2degree(latitude) * 1e7d;
+                        gps_raw_pointer->lon = nmea_ndeg2degree(longitude) * 1e7d;
                         gps_raw_pointer->satellites_used = satellites_used;
                         gps_raw_pointer->fix_type = gps_quality;/**< 0 = fix not available, 1 = fix valid, 2 = DGPS*/
 
                         //prova
+                        //warnx("\n time %f \n", (double)gps_raw_pointer->time_gps_usec);
 //                        warnx("\n lat %f \n", (double)latitude);
 //                        warnx("long %f \n", (double)longitude);
 //                        warnx("satellites_used %f \n", (double)satellites_used);
 //                        warnx("gps_quality %f \n", (double)gps_quality);
                         //fine prova
-
                     }
 
                 }
@@ -845,6 +865,15 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
     }
 }
 
+/**
+ *  Convert NDEG (NMEA degree: [degree][min].[sec/60]) to fractional degree
+*/
+double nmea_ndeg2degree(double val)
+{
+    double deg = ((int)(val / 100));
+    val = deg + (val - deg * 100) / 60;
+    return val;
+}
 
 void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer){
 
