@@ -74,6 +74,8 @@
 #include <systemlib/err.h>
 
 
+//if extract_until coma doesn't find a ',' for SAFETY_COUNTER_EXTRACT, exit
+#define SAFETY_COUNTER_EXTRACT 15
 
 //Thread management variables
 static bool thread_should_exit = false;		/**< daemon exit flag */
@@ -342,7 +344,7 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
                     //cancella
 //                    att_raw.yaw = wind_sailing_raw.angle_apparent;
 //                    att_raw.rollspeed = wind_sailing_raw.speed_apparent;
-//                    att_raw.pitchspeed = 5;
+//                    att_raw.pitchspeed = wind_sailing_raw.speed_true;
 //                    att_raw.yawspeed = wind_sailing_raw.speed_true;
                     //fine cancella
 
@@ -397,7 +399,7 @@ int find_string(const int start_index, const char *buffer, const int buffer_leng
 bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer){
 
 	int counter = 0;
-    char temp_char[12];
+    char temp_char[SAFETY_COUNTER_EXTRACT];
     int i = *index_pointer;
 
     while(buffer[i] != ',' && i < buffer_length){
@@ -407,7 +409,7 @@ bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer
         i++;
 		counter++;
         // TODO da mettere ?!
-        if(counter>11){
+        if(counter >= SAFETY_COUNTER_EXTRACT){
             return false;
         }
 	}
@@ -461,13 +463,19 @@ bool weather_station_init(int *wx_port_pointer){
 	// wait for 2 seconds for stability
 	sleep(2); 
 
-	// enable relative wind speed measurement
-	uint8_t enable_wind[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'M', 'W', 'V', 'R', ',', '1', ',', '1', '\r', '\n'}; 
-	write(*wx_port_pointer, enable_wind, sizeof(enable_wind));
-	write(*wx_port_pointer, enable_wind, sizeof(enable_wind));
-	write(*wx_port_pointer, enable_wind, sizeof(enable_wind));
+    // enable relative wind  measurement
+    uint8_t enable_rel_wind[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'W', 'R', ',', '1', ',', '1', '\r', '\n'};
+    write(*wx_port_pointer, enable_rel_wind, sizeof(enable_rel_wind));
+    write(*wx_port_pointer, enable_rel_wind, sizeof(enable_rel_wind));
+    write(*wx_port_pointer, enable_rel_wind, sizeof(enable_rel_wind));
 
-	// enable vessel attitude (pitch and roll)
+    // enable true wind  estimate
+    uint8_t enable_true_wind[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'W', 'T', ',', '1', ',', '1', '\r', '\n'};
+    write(*wx_port_pointer, enable_true_wind, sizeof(enable_true_wind));
+    write(*wx_port_pointer, enable_true_wind, sizeof(enable_true_wind));
+    write(*wx_port_pointer, enable_true_wind, sizeof(enable_true_wind));
+
+    // enable vessel attitude (pitch and roll)
 	uint8_t enable_attitude[] = {'$','P','A','M','T','C',',','E','N',',','X','D','R','B',',','1',',','1', '\r', '\n'};  
 	write(*wx_port_pointer, enable_attitude, sizeof(enable_attitude));
 	write(*wx_port_pointer, enable_attitude, sizeof(enable_attitude));
@@ -483,7 +491,7 @@ bool weather_station_init(int *wx_port_pointer){
 	uint8_t enable_IMU[] = {'$','P','A','M','T','C',',','E','N',',','X','D','R','C',',','1',',','1', '\r', '\n'};  
 	write(*wx_port_pointer, enable_IMU, sizeof(enable_IMU));
 	write(*wx_port_pointer, enable_IMU, sizeof(enable_IMU));
-	write(*wx_port_pointer, enable_IMU, sizeof(enable_IMU));
+    write(*wx_port_pointer, enable_IMU, sizeof(enable_IMU));
 
 	// switch to 38400 baud (the highest possible baud rate):
 	uint8_t high_baud[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'B', 'A', 'U', 'D', ',', '3', '8', '4', '0', '0', '\r', '\n'}; 
@@ -596,6 +604,13 @@ bool retrieve_data(int *wx_port_pointer,
     //warnx("buff leng: %d \n", buffer_length);
     //fine prova
 
+    //prova
+    /*for(int j=0; j<buffer_length; j++){
+
+        warnx("%c \n", buffer[j]);
+    }*/
+    //fine prova
+
     if(buffer_length < 1)
         return false;
 
@@ -621,7 +636,7 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
     double temp_val;
 
     // it's worthless to check if there won't be enough data anyway..
-    while((buffer_length - i) > 50){
+    for(i = 0; (buffer_length - i) > 50; i++){
 
         i = find_string(i, buffer, buffer_length, "YXXDR");
 
@@ -730,7 +745,7 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
     int sec;
 
     // it's worthless to check if there won't be enough data anyway..
-    while((buffer_length - i) > 50){
+    for(i = 0; (buffer_length - i) > 50; i++){
 
         i = find_string(i, buffer, buffer_length, "GPGGA");
 
@@ -826,20 +841,29 @@ void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_
     double temp_speed;
 
     // it's worthless to check if there won't be enough data anyway..
-    while((buffer_length - i) > 50){
+    for(i = 0; (buffer_length - i) > 50; i++){
         // see if we have a relative wind information OR true wind estimate
         i = find_string(i, buffer, buffer_length, "WIVW");
 
         if(i == -1)
             return;//no message found
 
+        //prova
+        //warnx("vento b_l: %d \t type: %c \n", buffer_length, buffer[i+5]);
+//        for(int j=0;j<8;j++){
+//           warnx("%c", buffer[i+j]);
+//        }
+//        warnx("\n");
+        //fine prova
+
         /*
          * |W|I|V|W|_|
          *  ^
          *  |
-         *  i If _ is R, then we have WIVWR message, if _ si T then we have WIVWT message  */
+         *  i; If _ is R, then we have WIVWR message, if _ si T then we have WIVWT message  */
 
         if(buffer[i+4] == 'R'){
+
             //we have WIVWR message
             /*
              * |W|I|V|W|R|,|byte1 of first value|byte2 of first value| etc.
@@ -858,7 +882,7 @@ void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_
 
                 //i+1 is ','
                 //i+2 is the first byte of wind speed (in knot)
-                i +=2;
+                i += 2;
                 //extract second value
                 if(extract_until_coma(&i, buffer, buffer_length, &temp_speed)){
                     //set value in topic's structure
@@ -869,37 +893,38 @@ void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_
             }
 
         }
-        else if(buffer[i+4] == 'T'){
-            //we have WIVWT message
-            /*
-             * |W|I|V|W|T|,|byte1 of first value|byte2 of first value| etc.
-             *  ^
-             *  |
-             *  i   */
-            i += 6;	// position to byte1 of first value
+        else
+            if(buffer[i+4] == 'T'){
 
-            //extract first value
-            if(extract_until_coma(&i, buffer, buffer_length, &temp_angle)){
-                //i is ','
-                //i+1 is L or R to indicate from wich direction the wind is blowing wrt vessel heading
-                i++;
-                if(buffer[i] == 'L')//TODO check if ok
-                    temp_angle = -temp_angle; /// CHECK IF OK
+                //we have WIVWT message
+                /*
+                 * |W|I|V|W|T|,|byte1 of first value|byte2 of first value| etc.
+                 *  ^
+                 *  |
+                 *  i   */
+                i += 6;	// position to byte1 of first value
 
-                //i+1 is ','
-                //i+2 is the first byte of wind speed (in knot)
-                i +=2;
-                //extract second value
-                if(extract_until_coma(&i, buffer, buffer_length, &temp_speed)){
-                    //set value in topic's structure
-                    wind_sailing_pointer->timestamp = hrt_absolute_time();
-                    wind_sailing_pointer->angle_true = temp_angle;
-                    wind_sailing_pointer->speed_true = temp_speed;
+                //extract first value
+                if(extract_until_coma(&i, buffer, buffer_length, &temp_angle)){
+                    //i is ','
+                    //i+1 is L or R to indicate from wich direction the wind is blowing wrt vessel heading
+                    i++;
+                    if(buffer[i] == 'L')//TODO check if ok
+                        temp_angle = -temp_angle; /// CHECK IF OK
+
+                    //i+1 is ','
+                    //i+2 is the first byte of wind speed (in knot)
+                    i += 2;
+                    //extract second value
+                    if(extract_until_coma(&i, buffer, buffer_length, &temp_speed)){
+                        //set value in topic's structure
+                        wind_sailing_pointer->timestamp = hrt_absolute_time();
+                        wind_sailing_pointer->angle_true = temp_angle;
+                        wind_sailing_pointer->speed_true = temp_speed;
+                    }
                 }
+
             }
-
-        }
-
     }
 
 }
