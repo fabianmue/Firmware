@@ -379,7 +379,7 @@ int find_string(const int start_index, const char *buffer, const int buffer_leng
     char temp_str[10]; /**< str cannot be greater than 9 charachter! */
     int stop_index = buffer_length - str_len +1;
 
-    for (i = start_index; i < stop_index; i++){
+    for(i = start_index; i < stop_index; i++){
 
         strncpy(temp_str, &buffer[i], str_len);
         //add null-characther at the end
@@ -408,7 +408,6 @@ bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer
 
         i++;
 		counter++;
-        // TODO da mettere ?!
         if(counter >= SAFETY_COUNTER_EXTRACT){
             return false;
         }
@@ -432,11 +431,11 @@ bool weather_station_init(int *wx_port_pointer){
 	        errx(1, "failed to open port: /dev/ttyS5");
            return false;
 	    }
-    warnx("[weather_station_init] UART port open.\n");
+    warnx("[weather_station_init] starting initialization.\n");
 
 	// Set baud rate of wx_port to 4800 baud
     pixhawk_baudrate_set(*wx_port_pointer, 4800);
-    warnx("[weather_station_init] baud rate of UART port set to 4800.\n");
+    //warnx("[weather_station_init] baud rate of UART port set to 4800.\n");
 
 	// wait 5 [seconds] for the WX to power up before sending commands (SYS 2999)
 	sleep(5); 
@@ -463,17 +462,32 @@ bool weather_station_init(int *wx_port_pointer){
 	// wait for 2 seconds for stability
 	sleep(2); 
 
+    if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
+        // enable the GPS
+        uint8_t enable_gps[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'G', 'G', 'A', ',', '1', ',', '1', '\r', '\n'}; // Enable gps string
+        write(*wx_port_pointer, enable_gps, sizeof(enable_gps));
+        write(*wx_port_pointer, enable_gps, sizeof(enable_gps));
+        write(*wx_port_pointer, enable_gps, sizeof(enable_gps));
+
+        //TODO fix this problem!!!
+        // enable the course and speed over ground string:
+        /*uint8_t enable_gcgs[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'T', 'G', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
+        write(*wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));
+        write(*wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));
+        write(*wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));*/
+
+        // enable true wind  estimate
+        uint8_t enable_true_wind[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'W', 'T', ',', '1', ',', '1', '\r', '\n'};
+        write(*wx_port_pointer, enable_true_wind, sizeof(enable_true_wind));
+        write(*wx_port_pointer, enable_true_wind, sizeof(enable_true_wind));
+        write(*wx_port_pointer, enable_true_wind, sizeof(enable_true_wind));
+    }
+
     // enable relative wind  measurement
     uint8_t enable_rel_wind[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'W', 'R', ',', '1', ',', '1', '\r', '\n'};
     write(*wx_port_pointer, enable_rel_wind, sizeof(enable_rel_wind));
     write(*wx_port_pointer, enable_rel_wind, sizeof(enable_rel_wind));
     write(*wx_port_pointer, enable_rel_wind, sizeof(enable_rel_wind));
-
-    // enable true wind  estimate
-    uint8_t enable_true_wind[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'W', 'T', ',', '1', ',', '1', '\r', '\n'};
-    write(*wx_port_pointer, enable_true_wind, sizeof(enable_true_wind));
-    write(*wx_port_pointer, enable_true_wind, sizeof(enable_true_wind));
-    write(*wx_port_pointer, enable_true_wind, sizeof(enable_true_wind));
 
     // enable vessel attitude (pitch and roll)
 	uint8_t enable_attitude[] = {'$','P','A','M','T','C',',','E','N',',','X','D','R','B',',','1',',','1', '\r', '\n'};  
@@ -514,7 +528,8 @@ bool weather_station_init(int *wx_port_pointer){
 	for (int i=0; i<4; i++)
 		read(*wx_port_pointer, &raw_buffer, sizeof(raw_buffer));
 	sleep(0.5);		// collect enough data for first parsing
-    warnx("[weather_station_init] serial buffer cleaned.\n");
+    //warnx("[weather_station_init] serial buffer cleaned.\n");
+    warnx("[weather_station_init] ending initialization.\n");
 
 	return true;
 }
@@ -732,7 +747,7 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
     int i = 0;
     int counter = 0;
     // UTC in form of hhmmss.00 + last slot for '\0' (null that terminates string)
-    char time_char[11];
+    char time_char[SAFETY_COUNTER_EXTRACT];
     char hour_char[3];
     char minute_char[3];
     char second_char[6];
@@ -752,10 +767,6 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
         if(i == -1)
             return; //no GPGGA found in buffer
 
-        //prova
-        //warnx("\n Trovata GPGGA %f \n");
-        //fine prova
-
         /*found GPGGA message in buffer, starting from i
          * |G|P|G|G|A|,|byte1 of UTC|byte2 of UTC| etc
          *  ^
@@ -764,7 +775,7 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
         i += 6;	// position to byte1 of UTC
 
         while(buffer[i] != ','){
-            if(counter>=10){//TODO da parametrizzare
+            if(counter >= SAFETY_COUNTER_EXTRACT){
                 return;// safety
             }
             time_char[counter] = buffer[i];
@@ -794,12 +805,13 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
         if(extract_until_coma(&i, buffer, buffer_length, &latitude)){
 
             // i   is the comma ','
-            // i+1 is 'N' to symbolize the northern hemisphere
+            /// i+1 is 'N' to symbolize the northern hemisphere (ok for Switzerland!!!)
             // i+2 is the comma ','
             i += 3;	// position to byte1 of longitude
             if(extract_until_coma(&i, buffer, buffer_length, &longitude)){
+
                 // i   is the comma ','
-                // i+1 is 'E' to symbolize the East longitude (ok for Switzerland!!!)
+                /// i+1 is 'E' to symbolize the East longitude (ok for Switzerland!!!)
                 // i+2 is the comma ','
                 i += 3;	// position to byte1 of GPS quality indicator
                 if(extract_until_coma(&i, buffer, buffer_length, &gps_quality)){
@@ -811,18 +823,18 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
                         gps_raw_pointer->timestamp_time = hrt_absolute_time();
 
                         // time in microseconds
-                        gps_raw_pointer->time_gps_usec = ((hour+2)*3600 +
-                                                          min*60 + sec)*1000000;
+                        gps_raw_pointer->time_gps_usec = ((hour+2) * 3600 +
+                                                          min * 60 + sec) * 1000000;
                         gps_raw_pointer->lat = latitude;
                         gps_raw_pointer->lon = longitude;
                         gps_raw_pointer->satellites_used = satellites_used;
                         gps_raw_pointer->fix_type = gps_quality;/**< 0 = fix not available, 1 = fix valid, 2 = DGPS*/
 
                         //prova
-                        //warnx("\n lat %f \n", (double)latitude);
-                        //warnx("long %f \n", (double)longitude);
-                        //warnx("satellites_used %f \n", (double)satellites_used);
-                        //warnx("gps_quality %f \n", (double)gps_quality);
+//                        warnx("\n lat %f \n", (double)latitude);
+//                        warnx("long %f \n", (double)longitude);
+//                        warnx("satellites_used %f \n", (double)satellites_used);
+//                        warnx("gps_quality %f \n", (double)gps_quality);
                         //fine prova
 
                     }

@@ -1,6 +1,7 @@
 /****************************************************************************
  *
  *   Copyright (c) 2014 PX4 Development Team. All rights reserved.
+ *   Author: Marco Tranzatto <marco.tranzatto@gmail.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
