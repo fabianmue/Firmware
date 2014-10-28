@@ -727,8 +727,38 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
                 }
             }
             else{
-                //we're parsng YXXDR message type C. set acceleration on x axes
-                //TODO da completare questa parte dopo che hai creato l'apposito topic!!!
+                //we're parsng YXXDR message type C
+                double lat_acc;
+                double lon_acc;
+                double vert_acc;
+
+                //i+1 is ',' ; i+2 is byte1 of acceleretion on latitudinal axis
+                i += 2;
+
+                if(extract_until_coma(&i, buffer, buffer_length, &lat_acc)){
+                    //i is the ','
+                    /*|,|G|,|X|A|C|C|,|A|,|byte1 of acc on longitudinal axis|etc..
+                     * ^
+                     * |
+                     * i
+                    */
+                    i += 10;
+                    if(extract_until_coma(&i, buffer, buffer_length, &lon_acc)){
+                        //i is the ','
+                        /*|,|G|,|Y|A|C|C|,|A|,|byte1 of acc on longitudinal axis|etc..
+                         * ^
+                         * |
+                         * i
+                        */
+                        i += 10;
+                        if(extract_until_coma(&i, buffer, buffer_length, &vert_acc)){
+                            //set value in topic's structure
+
+                            //TODO da completare questa parte dopo che hai creato l'apposito topic!!!
+                        }
+
+                    }
+                }
             }
         }
     }
@@ -998,6 +1028,10 @@ void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_
         }
         else
             if(buffer[i+4] == 'T'){
+
+                //cancella
+                //warnx("vento T \n");
+                //fine cancella
 
                 //we have WIVWT message
                 /*
