@@ -617,7 +617,7 @@ bool retrieve_data(int *wx_port_pointer,
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
 
         //Simulazione dati GPS, COMMENTA IN UTILIZZO VERO
-        gps_bad_simulator(buffer, &buffer_length);
+        //gps_bad_simulator(buffer, &buffer_length);
         //fine simulazione
 
         // see if buffer there is one (or more) GPGGA message(s)
@@ -647,9 +647,6 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
         i = find_string(i, buffer, buffer_length, "YXXDR");
 
         if(i == -1){
-            //prova
-            //warnx("no YXXDR found in buffer");
-            //fine prova
             return; //no YXXDR found in buffer
         }
 
@@ -659,10 +656,6 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
          *  |
          *  i   */
         i += 8;	// position to byte1 of first value
-
-        //prova
-        //warnx("p0: b[i-2] %c b[i-1] %c b[i] %c", buffer[i-2], buffer[i-1], buffer[i]);
-        //fine prova
 
         //extract first value, on error go next iteration and see in buffer for another YXXDR string
         if(extract_until_coma(&i, buffer, buffer_length, &temp_val)){
@@ -688,10 +681,6 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
                      *  i
                      * */
                     i += 7;	// position to byte1 of second value
-
-                    //prova
-                    //warnx("p1: b[i-2] %c b[i-1] %c b[i] %c", buffer[i-2], buffer[i-1], buffer[i]);
-                    //fine prova
 
                     //extract second value
                     if(extract_until_coma(&i, buffer, buffer_length, &temp_val)){
@@ -766,6 +755,8 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
     double longitude;
     double gps_quality;
     double satellites_used;
+    double eph;
+    double alt;
     int hour;
     int min;
     float sec;
@@ -784,6 +775,8 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
          *  |
          *  i   */
         i += 6;	// position to byte1 of UTC
+
+        //--- handle time ---
 
         while(buffer[i] != ','){
             if(counter >= SAFETY_COUNTER_EXTRACT){
@@ -818,9 +811,13 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
             sec = atof(second_char);
         }
 
+        //--- latitude ---
+
         // i is the comma ','
         i++;// position i to byte1 of Latitude
         if(extract_until_coma(&i, buffer, buffer_length, &latitude)){
+
+            //--- Longitude ---
 
             // i   is the comma ','
             /// i+1 is 'N' to symbolize the northern hemisphere (ok for Switzerland!!!)
@@ -828,40 +825,64 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
             i += 3;	// position to byte1 of longitude
             if(extract_until_coma(&i, buffer, buffer_length, &longitude)){
 
+                //--- gps quality ---
+
                 // i   is the comma ','
                 /// i+1 is 'E' to symbolize the East longitude (ok for Switzerland!!!)
                 // i+2 is the comma ','
                 i += 3;	// position to byte1 of GPS quality indicator
                 if(extract_until_coma(&i, buffer, buffer_length, &gps_quality)){
 
+                    //--- satellites_used ---
+
                     // i   is the comma ','
                     i ++;	// position to byte1 of number of satellites in use
                     if(extract_until_coma(&i, buffer, buffer_length, &satellites_used)){
-                        //save data in the struct
-                        gps_raw_pointer->timestamp_time = hrt_absolute_time();
 
-                        //TODO cosa mettere qui visto che 200WX non ci da tempo totale per sdlo2 ?
-                        gps_raw_pointer->time_gps_usec = 1000000 * 120;
+                        //--- eph ---
 
-                        // time in microseconds
-                        gps_raw_pointer->timestamp_position = (hour * 3600 +
-                                                            min * 60 + sec) * 1000000;
+                        // i   is the comma ','
+                        i ++;	// position to byte1 of HDOP
+                        if(extract_until_coma(&i, buffer, buffer_length, &eph)){
 
-                        gps_raw_pointer->timestamp_position = hrt_absolute_time();
+                            //--- altitude ---
 
-                        //convert lat and long in degrees and multiple for 1E7 as required in vehicle_gps_position topic
-                        gps_raw_pointer->lat = nmea_ndeg2degree(latitude) * 1e7d;
-                        gps_raw_pointer->lon = nmea_ndeg2degree(longitude) * 1e7d;
-                        gps_raw_pointer->satellites_used = satellites_used;
-                        gps_raw_pointer->fix_type = gps_quality;/**< 0 = fix not available, 1 = fix valid, 2 = DGPS*/
+                            // i   is the comma ','
+                            i ++;	// position to byte1 of altitude relative to MSL
+                            if(extract_until_coma(&i, buffer, buffer_length, &alt)){
 
-                        //prova
-                        //warnx("\n time %f \n", (double)gps_raw_pointer->time_gps_usec);
-//                        warnx("\n lat %f \n", (double)latitude);
-//                        warnx("long %f \n", (double)longitude);
-//                        warnx("satellites_used %f \n", (double)satellites_used);
-//                        warnx("gps_quality %f \n", (double)gps_quality);
-                        //fine prova
+                                //save data in the struct
+                                gps_raw_pointer->timestamp_time = hrt_absolute_time();
+
+                                //TODO cosa mettere qui visto che 200WX non ci da tempo totale per sdlo2 ?
+                                gps_raw_pointer->time_gps_usec = 1000000 * 120;
+
+                                // time in microseconds TODO da levare
+                                gps_raw_pointer->timestamp_position = (hour * 3600 +
+                                                                    min * 60 + sec) * 1000000;
+
+                                gps_raw_pointer->timestamp_position = hrt_absolute_time();
+
+                                //convert lat and long in degrees and multiple for 1E7 as required in vehicle_gps_position topic
+                                gps_raw_pointer->lat = nmea_ndeg2degree(latitude) * 1e7d;
+                                gps_raw_pointer->lon = nmea_ndeg2degree(longitude) * 1e7d;
+                                gps_raw_pointer->satellites_used = satellites_used;
+                                gps_raw_pointer->fix_type = gps_quality;/**< 0 = fix not available, 1 = fix valid, 2 = DGPS*/
+                                gps_raw_pointer->eph = eph;
+                                //set altitude from meters in millimeter as requested in vehicle_gps_position topic
+                                gps_raw_pointer->alt = alt * 1000;
+
+                                //prova
+//                                warnx("\n time %f \n", (double)gps_raw_pointer->time_gps_usec);
+//                                warnx("\n lat %f \n", (double)latitude);
+//                                warnx("long %f \n", (double)longitude);
+//                                warnx("satellites_used %f \n", (double)satellites_used);
+//                                warnx("gps_quality %f \n", (double)gps_quality);
+//                                warnx("eph %f \n", (double)eph);
+//                                warnx("alt %f \n", (double)alt);
+                                //fine prova
+                            }
+                        }
                     }
 
                 }
@@ -886,7 +907,7 @@ void gps_bad_simulator(char *buff, int *buff_length){
     //dati buoni
     char good_b[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,52,55,50,50,46,
                  55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,49,44,55,44,50,46,52,
-                 44,53,50,51,46,52,44,52,57,46,49,44,77,44,44,42,53,67,13,10};
+                 44,53,50,51,46,52,44,52,57,46,49,44,77,44,44,42,53,57,13,10};
 
 
     //dati sbagliati
@@ -937,14 +958,6 @@ void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_
 
         if(i == -1)
             return;//no message found
-
-        //prova
-        //warnx("vento b_l: %d \t type: %c \n", buffer_length, buffer[i+5]);
-//        for(int j=0;j<8;j++){
-//           warnx("%c", buffer[i+j]);
-//        }
-//        warnx("\n");
-        //fine prova
 
         /*
          * |W|I|V|W|_|
