@@ -82,47 +82,15 @@ static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
 static int daemon_task;						/**< Handle of daemon task / thread */
 
-/**
- * daemon management function for indoor usage.
- *
- */
+
 __EXPORT int parser_200WX_main(int argc, char *argv[]);
 
-/**
- * mainloop of daemon.
- *
- * if TYPE_OF_ENVIRONMENT (located in ../autonomous_sailing/as_settings.h) is 0, then use indoor parser
- */
 int parser_200WX_daemon_thread_main(int argc, char *argv[]);
 
-/**
-* Initialize weather station 200WX.
-*
-* disable all the default messages from the waether station and after that enable only the messages in which
-* we are interested in.
-*
-* @param 				pointer com port file descriptor
-* @return 				true on success
-*/
 bool weather_station_init(int *wx_port_point);
 
-
-/**
-* Set baud rate between weather station 200WX and pixhawk.
-*
-* @param wx_port	name of the UART port
-* @param baudrate 	baudrate of the communication
-*/
 bool pixhawk_baudrate_set(int wx_port, int baudrate);
 
-/**
-* Initializes all the variables used in the indoor version of the parser.
-*
-* Set all fields to 0, update timestamp and advertise each topic
-*
-* @param wx_port_pointer		pointer to COM file descriptor
-* @return 						true is evrything is ok
-*/
 bool parser_variables_init(int *wx_port_pointer,
                            int *sensor_sub_fd_pointer,
                            int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
@@ -130,13 +98,6 @@ bool parser_variables_init(int *wx_port_pointer,
                            int *gps_pub_fd_pointer, struct vehicle_gps_position_s  *gps_raw_pointer,
                            int *wind_sailing_fd_pointer, struct wind_sailing_s *wind_sailing_raw_pointer);
 
-/**
-* Retrieve indoor data(by readings from UART) when pool() returns correctly.
-*
-* @param wx_port_pointer		pointer to COM file descriptor
-* @param sensor_sub_fd_pointer	pointer to sensor combined topic
-* @return 						true is evrything is ok
-*/
 bool retrieve_data(int *wx_port_pointer,
                   int *sensor_sub_fd_pointer,
                   struct vehicle_attitude_s *att_raw_pointer,
@@ -144,57 +105,24 @@ bool retrieve_data(int *wx_port_pointer,
                   struct vehicle_gps_position_s *gps_raw_pointer,
                   struct wind_sailing_s *wind_sailing_pointer);
 
-
-/**
-* Parse transducer data received from 200WX, YXXDR message.
-*
-* @param buffer                 buffer with data
-* @param buffer_length          length of buffer
-* @param att_pub_fd_pointer		pointer to handler returnd by orb_advertise
-*/
 void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_attitude_s *att_raw_pointer);
-
 
 void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer);
 
 double nmea_ndeg2degree(double val);
 
-/**
-* Parse transducer data received from 200WX, VWR and VWT messages.
-*
-* @param buffer                 buffer with data
-* @param buffer_length          length of buffer
-* @param wind_sailing_pointer   pointer to handler returnd by orb_advertise
-*/
 void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer);
 
-/**
-* Find if string is in buffer starting from start_index.
-*
-* @param start_index    index where start to find string
-* @param buffer         buffer where search for string
-* @param buffer_length  length of buffer
-* @param str         string to find in buffer
-* @return 	the index in the buffer where 'string' begins in the buffer, -1 if not found
-*/
 int find_string(const int start_index, const char *buffer, const int buffer_length, char *str);
 
-/**
-* Extract data from buffer, starting from index, until a come is found. Update index.
-*
-* @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
-* @param buffer             buffer
-* @param buffer_length      length of buffer
-* @param ret_val_pointer    pointer to variable with the final result
-* @return 	true if no error
-*/
 bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer);
+
+static void usage(const char *reason);
+
 
 /**
  * Print the correct usage.
  */
-static void usage(const char *reason);
-
 static void usage(const char *reason)
 {
 	if (reason)
@@ -258,12 +186,11 @@ int parser_200WX_main(int argc, char *argv[])
 }
 
 
-
 /**
-* Main thread of this indoor parser.
-*
-* DESCRIVERE FUNZIONAMENTO
-*/
+ * mainloop of daemon.
+ *
+ * if TYPE_OF_ENVIRONMENT (located in ../autonomous_sailing/as_settings.h) is 0, then use indoor parser
+ */
 int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 
     if(AS_TYPE_OF_ENVIRONMENT == 1)
@@ -368,6 +295,15 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 
 }
 
+/**
+* Find if string is in buffer starting from start_index.
+*
+* @param start_index    index where start to find string
+* @param buffer         buffer where search for string
+* @param buffer_length  length of buffer
+* @param str         string to find in buffer
+* @return 	the index in the buffer where 'string' begins in the buffer, -1 if not found
+*/
 int find_string(const int start_index, const char *buffer, const int buffer_length, char *str){
 
     int i;
@@ -391,7 +327,15 @@ int find_string(const int start_index, const char *buffer, const int buffer_leng
     return -1;
 }
 
-
+/**
+* Extract data from buffer, starting from index, until a come is found. Update index.
+*
+* @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
+* @param buffer             buffer
+* @param buffer_length      length of buffer
+* @param ret_val_pointer    pointer to variable with the final result
+* @return 	true if no error
+*/
 bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer){
 
 	int counter = 0;
@@ -426,7 +370,15 @@ bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer
     return true;
 }
 
-
+/**
+* Initialize weather station 200WX.
+*
+* disable all the default messages from the waether station and after that enable only the messages in which
+* we are interested in.
+*
+* @param 				pointer com port file descriptor
+* @return 				true on success
+*/
 bool weather_station_init(int *wx_port_pointer){
 
     char raw_buffer[350];
@@ -539,6 +491,12 @@ bool weather_station_init(int *wx_port_pointer){
 	return true;
 }
 
+/**
+* Set baud rate between weather station 200WX and pixhawk.
+*
+* @param wx_port	name of the UART port
+* @param baudrate 	baudrate of the communication
+*/
 bool pixhawk_baudrate_set(int wx_port, int baudrate){		// Set the baud rate of the pixhawk to baudrate:
 	struct termios wx_port_config;
 	tcgetattr(wx_port, &wx_port_config);
@@ -561,6 +519,14 @@ bool pixhawk_baudrate_set(int wx_port, int baudrate){		// Set the baud rate of t
 	return true;
 }
 
+/**
+* Initializes all the variables used in the indoor version of the parser.
+*
+* Set all fields to 0, update timestamp and advertise each topic
+*
+* @param wx_port_pointer		pointer to COM file descriptor
+* @return 						true is evrything is ok
+*/
 bool parser_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
                            int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
                            int *airs_pub_fd_pointer, struct airspeed_s *air_vel_raw_pointer,
@@ -602,7 +568,13 @@ bool parser_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
     return true;
 }
 
-
+/**
+* Retrieve indoor data(by readings from UART) when pool() returns correctly.
+*
+* @param wx_port_pointer		pointer to COM file descriptor
+* @param sensor_sub_fd_pointer	pointer to sensor combined topic
+* @return 						true is evrything is ok
+*/
 bool retrieve_data(int *wx_port_pointer,
 	                      int *sensor_sub_fd_pointer,
                           struct vehicle_attitude_s *att_raw_pointer,
@@ -669,6 +641,13 @@ bool retrieve_data(int *wx_port_pointer,
     return true;
 }
 
+/**
+* Parse transducer data received from 200WX, YXXDR message.
+*
+* @param buffer                 buffer with data
+* @param buffer_length          length of buffer
+* @param att_pub_fd_pointer		pointer to handler returnd by orb_advertise
+*/
 void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_attitude_s *att_raw_pointer){
 
     int i = 0;
@@ -901,6 +880,13 @@ double nmea_ndeg2degree(double val)
     return val;
 }
 
+/**
+* Parse transducer data received from 200WX, VWR and VWT messages.
+*
+* @param buffer                 buffer with data
+* @param buffer_length          length of buffer
+* @param wind_sailing_pointer   pointer to handler returnd by orb_advertise
+*/
 void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer){
 
     int i = 0;
