@@ -422,6 +422,7 @@ bool weather_station_init(int *wx_port_pointer){
 	sleep(2); 
 
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
+        warnx("[weather_station_init] enabling outdoor messages.\n");
         // enable the GPS
         uint8_t enable_gps[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'G', 'G', 'A', ',', '1', ',', '1', '\r', '\n'}; // Enable gps string
         write(*wx_port_pointer, enable_gps, sizeof(enable_gps));
@@ -594,14 +595,14 @@ bool retrieve_data(int *wx_port_pointer,
     buffer_length = read(*wx_port_pointer, buffer, sizeof(buffer));
 
     //prova
-    warnx("buff leng: %d \n", buffer_length);
+    //warnx("buff leng: %d \n", buffer_length);
     //fine prova
 
     //prova
-    for(int j=0; j<buffer_length; j++){
+//    for(int j=0; j<buffer_length; j++){
 
-        warnx("%c \n", buffer[j]);
-    }
+//        warnx("%c \n", buffer[j]);
+//    }
     //fine prova
 
     if(buffer_length < 1)
@@ -647,7 +648,7 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
 
         if(i == -1){
             //prova
-            warnx("no YXXDR found in buffer");
+            //warnx("no YXXDR found in buffer");
             //fine prova
             return; //no YXXDR found in buffer
         }
@@ -660,7 +661,7 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
         i += 8;	// position to byte1 of first value
 
         //prova
-        warnx("p0: b[i-2] %c b[i-1] %c b[i] %c", buffer[i-2], buffer[i-1], buffer[i]);
+        //warnx("p0: b[i-2] %c b[i-1] %c b[i] %c", buffer[i-2], buffer[i-1], buffer[i]);
         //fine prova
 
         //extract first value, on error go next iteration and see in buffer for another YXXDR string
@@ -689,7 +690,7 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
                     i += 7;	// position to byte1 of second value
 
                     //prova
-                    warnx("p1: b[i-2] %c b[i-1] %c b[i] %c", buffer[i-2], buffer[i-1], buffer[i]);
+                    //warnx("p1: b[i-2] %c b[i-1] %c b[i] %c", buffer[i-2], buffer[i-1], buffer[i]);
                     //fine prova
 
                     //extract second value
