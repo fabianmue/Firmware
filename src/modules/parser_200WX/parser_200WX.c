@@ -119,6 +119,7 @@ bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer
 
 static void usage(const char *reason);
 
+void gps_bad_simulator(char *buff, int *buff_length);
 
 /**
  * Print the correct usage.
@@ -485,7 +486,7 @@ bool weather_station_init(int *wx_port_pointer){
 	for (int i=0; i<4; i++)
 		read(*wx_port_pointer, &raw_buffer, sizeof(raw_buffer));
 	sleep(0.5);		// collect enough data for first parsing
-    //warnx("[weather_station_init] serial buffer cleaned.\n");
+
     warnx("[weather_station_init] ending initialization.\n");
 
 	return true;
@@ -593,14 +594,14 @@ bool retrieve_data(int *wx_port_pointer,
     buffer_length = read(*wx_port_pointer, buffer, sizeof(buffer));
 
     //prova
-    //warnx("buff leng: %d \n", buffer_length);
+    warnx("buff leng: %d \n", buffer_length);
     //fine prova
 
     //prova
-    /*for(int j=0; j<buffer_length; j++){
+    for(int j=0; j<buffer_length; j++){
 
         warnx("%c \n", buffer[j]);
-    }*/
+    }
     //fine prova
 
     if(buffer_length < 1)
@@ -614,27 +615,12 @@ bool retrieve_data(int *wx_port_pointer,
 
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
 
-        //cancellare
-        //dati buoni
-        char buf[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,52,55,50,50,46,
-                     55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,49,44,55,44,50,46,52,
-                     44,53,50,51,46,52,44,52,57,46,49,44,77,44,44,42,53,67,13,10};
-
-
-        //dati sbagliati
-        /*gps_raw_pointer->lat = 55;
-        gps_raw_pointer->lon = 25;
-        char buf[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,
-                     52,55,50,50,46,55,48,57,52,44,//lat
-                      ',',',' //prova errore
-                     };*/
-
-        gga_parser(buf, sizeof(buf), gps_raw_pointer);
-
-        //fine cancellare
+        //Simulazione dati GPS, COMMENTA IN UTILIZZO VERO
+        gps_bad_simulator(buffer, &buffer_length);
+        //fine simulazione
 
         // see if buffer there is one (or more) GPGGA message(s)
-        //gga_parser(buffer, buffer_length, gps_raw_pointer); ripristina
+        gga_parser(buffer, buffer_length, gps_raw_pointer);
     }
 
 
@@ -659,8 +645,12 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
 
         i = find_string(i, buffer, buffer_length, "YXXDR");
 
-        if(i == -1)
+        if(i == -1){
+            //prova
+            warnx("no YXXDR found in buffer");
+            //fine prova
             return; //no YXXDR found in buffer
+        }
 
         /*found YXXDR message in buffer, starting from i
          * |Y|X|X|D|R|,|A|,|byte1 of first value|byte2 of first value| etc.
@@ -668,6 +658,10 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
          *  |
          *  i   */
         i += 8;	// position to byte1 of first value
+
+        //prova
+        warnx("p0: b[i-2] %c b[i-1] %c b[i] %c", buffer[i-2], buffer[i-1], buffer[i]);
+        //fine prova
 
         //extract first value, on error go next iteration and see in buffer for another YXXDR string
         if(extract_until_coma(&i, buffer, buffer_length, &temp_val)){
@@ -693,6 +687,11 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
                      *  i
                      * */
                     i += 7;	// position to byte1 of second value
+
+                    //prova
+                    warnx("p1: b[i-2] %c b[i-1] %c b[i] %c", buffer[i-2], buffer[i-1], buffer[i]);
+                    //fine prova
+
                     //extract second value
                     if(extract_until_coma(&i, buffer, buffer_length, &temp_val)){
                         //second value extracted, set value in topic's structure
@@ -878,6 +877,43 @@ double nmea_ndeg2degree(double val)
     double deg = ((int)(val / 100));
     val = deg + (val - deg * 100) / 60;
     return val;
+}
+
+void gps_bad_simulator(char *buff, int *buff_length){
+    static int bad = 0;
+
+    //dati buoni
+    char good_b[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,52,55,50,50,46,
+                 55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,49,44,55,44,50,46,52,
+                 44,53,50,51,46,52,44,52,57,46,49,44,77,44,44,42,53,67,13,10};
+
+
+    //dati sbagliati
+
+    char evil_b[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,
+                 52,55,50,50,46,55,48,57,52,44,//lat
+                  ',',',',',' //prova errore
+                 };
+    char *b = NULL;
+    int lgt = 0;
+
+    if(bad){
+        b = evil_b;
+        lgt = sizeof(evil_b);
+        bad = 0;
+    }
+    else{
+        b = good_b;
+        lgt = sizeof(good_b);
+        bad = 1;
+    }
+
+    for(int i=0;i<lgt;i++){
+        buff[i] = b[i];
+    }
+
+    *buff_length = lgt;
+
 }
 
 /**
