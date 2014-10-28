@@ -35,7 +35,7 @@
 /**
  * @file as_settings.h
  *
- * Settings of autonomous_sailing and parser_200WX apps
+ * Settings for autonomous_sailing and parser_200WX apps
  *
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */

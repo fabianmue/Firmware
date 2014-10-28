@@ -405,9 +405,16 @@ bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer
         i++;
 		counter++;
         if(counter >= SAFETY_COUNTER_EXTRACT){
+            *ret_val_pointer = 0;
             return false;
         }
 	}
+
+    //check if we exited from while loop because we have a valid data or not
+    if(i == *index_pointer || i >= buffer_length){
+        *ret_val_pointer = 0;
+        return false; //not found valid data
+    }
 
     //null terminate string
     temp_char[counter] = '\0';
@@ -468,7 +475,6 @@ bool weather_station_init(int *wx_port_pointer){
         write(*wx_port_pointer, enable_gps, sizeof(enable_gps));
         write(*wx_port_pointer, enable_gps, sizeof(enable_gps));
 
-        //TODO fix this problem!!!
         // enable the course and speed over ground string:
         uint8_t enable_gcgs[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'T', 'G', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
         write(*wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));
@@ -637,15 +643,26 @@ bool retrieve_data(int *wx_port_pointer,
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
 
         //cancellare
-        /*char buf[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,52,55,50,50,46,
+        //dati buoni
+        char buf[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,52,55,50,50,46,
                      55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,49,44,55,44,50,46,52,
                      44,53,50,51,46,52,44,52,57,46,49,44,77,44,44,42,53,67,13,10};
 
-        gga_parser(buf, sizeof(buf), gps_raw_pointer);*/
+
+        //dati sbagliati
+        /*gps_raw_pointer->lat = 55;
+        gps_raw_pointer->lon = 25;
+        char buf[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,
+                     52,55,50,50,46,55,48,57,52,44,//lat
+                      ',',',' //prova errore
+                     };*/
+
+        gga_parser(buf, sizeof(buf), gps_raw_pointer);
+
         //fine cancellare
 
         // see if buffer there is one (or more) GPGGA message(s)
-        gga_parser(buffer, buffer_length, gps_raw_pointer);
+        //gga_parser(buffer, buffer_length, gps_raw_pointer); ripristina
     }
 
 
@@ -798,22 +815,29 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
             counter++;
         }
 
-        hour_char[0] = time_char[0];
-        hour_char[1] = time_char[1];
-        hour_char[2] = '\0';
-
-        minute_char[0] = time_char[2];
-        minute_char[1] = time_char[3];
-        minute_char[2] = '\0';
-
-        for (int j=0 ; j<5 ; j++){
-            second_char[j] = time_char[4+j];
+        if(counter < 8){
+            //failed readind time, use 00:00:00 and try to parse GPS data
+            hour =  min = sec = 0;
         }
-        second_char[5] = '\0';
+        else{
+            //convert time from string do numeric values
+            hour_char[0] = time_char[0];
+            hour_char[1] = time_char[1];
+            hour_char[2] = '\0';
 
-        hour = atoi(hour_char) ;
-        min = atoi(minute_char);
-        sec = atof(second_char);
+            minute_char[0] = time_char[2];
+            minute_char[1] = time_char[3];
+            minute_char[2] = '\0';
+
+            for (int j=0 ; j<5 ; j++){
+                second_char[j] = time_char[4+j];
+            }
+            second_char[5] = '\0';
+
+            hour = atoi(hour_char) ;
+            min = atoi(minute_char);
+            sec = atof(second_char);
+        }
 
         // i is the comma ','
         i++;// position i to byte1 of Latitude
@@ -838,11 +862,13 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
                         gps_raw_pointer->timestamp_time = hrt_absolute_time();
 
                         //TODO cosa mettere qui visto che 200WX non ci da tempo totale per sdlo2 ?
-                        gps_raw_pointer->time_gps_usec = 2000000;
+                        gps_raw_pointer->time_gps_usec = 1000000 * 120;
 
                         // time in microseconds
                         gps_raw_pointer->timestamp_position = (hour * 3600 +
                                                             min * 60 + sec) * 1000000;
+
+                        gps_raw_pointer->timestamp_position = hrt_absolute_time();
 
                         //convert lat and long in degrees and multiple for 1E7 as required in vehicle_gps_position topic
                         gps_raw_pointer->lat = nmea_ndeg2degree(latitude) * 1e7d;
