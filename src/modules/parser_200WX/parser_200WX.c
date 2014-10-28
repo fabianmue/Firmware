@@ -470,10 +470,10 @@ bool weather_station_init(int *wx_port_pointer){
 
         //TODO fix this problem!!!
         // enable the course and speed over ground string:
-        /*uint8_t enable_gcgs[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'T', 'G', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
+        uint8_t enable_gcgs[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'T', 'G', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
         write(*wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));
         write(*wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));
-        write(*wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));*/
+        write(*wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));
 
         // enable true wind  estimate
         uint8_t enable_true_wind[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'W', 'T', ',', '1', ',', '1', '\r', '\n'};
@@ -838,7 +838,7 @@ void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_
                         gps_raw_pointer->timestamp_time = hrt_absolute_time();
 
                         //TODO cosa mettere qui visto che 200WX non ci da tempo totale per sdlo2 ?
-                        gps_raw_pointer->time_gps_usec = 1414368000l;
+                        gps_raw_pointer->time_gps_usec = 2000000;
 
                         // time in microseconds
                         gps_raw_pointer->timestamp_position = (hour * 3600 +
