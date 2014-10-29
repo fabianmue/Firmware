@@ -119,7 +119,7 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
 
 double nmea_ndeg2degree(double val);
 
-void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer);
+void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer);
 
 int find_string(const int start_index, const char *buffer, const int buffer_length, char *str);
 
@@ -628,7 +628,7 @@ bool retrieve_data(int *wx_port_pointer,
     xdr_parser(buffer_global, buffer_length, att_raw_pointer);
 
     // see if buffer there is one (or more) WIVW_ message(s)
-    vw_parser(buffer_global, buffer_length, wind_sailing_pointer);
+    vr_parser(buffer_global, buffer_length, wind_sailing_pointer);
 
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
 
@@ -1034,7 +1034,7 @@ double nmea_ndeg2degree(double val)
 * @param buffer_length          length of buffer
 * @param wind_sailing_pointer   pointer to handler returnd by orb_advertise
 */
-void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer){
+void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer){
 
     int i = 0;
     double temp_angle;
@@ -1043,55 +1043,39 @@ void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_
     // it's worthless to check if there won't be enough data anyway..
     for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING; i++){
         // see if we have a relative wind information OR true wind estimate
-        i = find_string(i, buffer, buffer_length, "WIVW");
+        i = find_string(i, buffer, buffer_length, "WIVWR");
 
         if(i == -1)
             return;//no message found
 
-        //cancella
-//        for(int j=i;j<8;j++){
-//            warnx("%c", buffer[j]);
-//        }
-//        warnx("\n");
-        //fine cancella
-
+        //we have WIVWR message
         /*
-         * |W|I|V|W|_|
+         * |W|I|V|W|R|,|byte1 of first value|byte2 of first value| etc.
          *  ^
          *  |
-         *  i; If _ is R, then we have WIVWR message, if _ si T then we have WIVWT message  */
+         *  i   */
+        i += 6;	// position to byte1 of first value
 
-        if(buffer[i+4] == 'R'){
+        //extract first value
+        if(extract_until_coma(&i, buffer, buffer_length, &temp_angle)){
+            //i is ','
+            //i+1 is L or R to indicate from wich direction the wind is blowing wrt vessel heading
+            i++;
+            if(buffer[i] == 'L')//TODO check if ok
+                temp_angle = -temp_angle; /// CHECK IF OK
 
-            //we have WIVWR message
-            /*
-             * |W|I|V|W|R|,|byte1 of first value|byte2 of first value| etc.
-             *  ^
-             *  |
-             *  i   */
-            i += 6;	// position to byte1 of first value
-
-            //extract first value
-            if(extract_until_coma(&i, buffer, buffer_length, &temp_angle)){
-                //i is ','
-                //i+1 is L or R to indicate from wich direction the wind is blowing wrt vessel heading
-                i++;
-                if(buffer[i] == 'L')//TODO check if ok
-                    temp_angle = -temp_angle; /// CHECK IF OK
-
-                //i+1 is ','
-                //i+2 is the first byte of wind speed (in knot)
-                i += 2;
-                //extract second value
-                if(extract_until_coma(&i, buffer, buffer_length, &temp_speed)){
-                    //set value in topic's structure
-                    wind_sailing_pointer->timestamp = hrt_absolute_time();
-                    wind_sailing_pointer->angle_apparent = temp_angle;
-                    wind_sailing_pointer->speed_apparent = temp_speed;
-                }
+            //i+1 is ','
+            //i+2 is the first byte of wind speed (in knot)
+            i += 2;
+            //extract second value
+            if(extract_until_coma(&i, buffer, buffer_length, &temp_speed)){
+                //set value in topic's structure
+                wind_sailing_pointer->timestamp = hrt_absolute_time();
+                wind_sailing_pointer->angle_apparent = temp_angle;
+                wind_sailing_pointer->speed_apparent = temp_speed;
             }
-
         }
+
     }
 
 }
