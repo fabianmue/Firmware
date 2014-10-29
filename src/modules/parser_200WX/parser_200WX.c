@@ -434,12 +434,6 @@ bool weather_station_init(int *wx_port_pointer){
         write(*wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));
         write(*wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));
         write(*wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));
-
-        // enable true wind  estimate
-        uint8_t enable_true_wind[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'W', 'T', ',', '1', ',', '1', '\r', '\n'};
-        write(*wx_port_pointer, enable_true_wind, sizeof(enable_true_wind));
-        write(*wx_port_pointer, enable_true_wind, sizeof(enable_true_wind));
-        write(*wx_port_pointer, enable_true_wind, sizeof(enable_true_wind));
     }
 
     // enable relative wind  measurement
@@ -513,9 +507,6 @@ bool pixhawk_baudrate_set(int wx_port, int baudrate){		// Set the baud rate of t
         errx(1, "failed to set speed of: /dev/ttyS5");
         return false;
     }
-
-	//printf("_in returned: %i/n", in_return);			// Debug: both return zero -> good!
-	//printf("_out returned: %i/n", out_return);
 	tcsetattr(wx_port, TCSANOW, &wx_port_config); // Set the new configuration
 
 	return true;
@@ -989,6 +980,13 @@ void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_
         if(i == -1)
             return;//no message found
 
+        //cancella
+        for(int j=i;j<8;j++){
+            warnx("%c", buffer[j]);
+        }
+        warnx("\n");
+        //fine cancella
+
         /*
          * |W|I|V|W|_|
          *  ^
@@ -1026,42 +1024,6 @@ void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_
             }
 
         }
-        else
-            if(buffer[i+4] == 'T'){
-
-                //cancella
-                //warnx("vento T \n");
-                //fine cancella
-
-                //we have WIVWT message
-                /*
-                 * |W|I|V|W|T|,|byte1 of first value|byte2 of first value| etc.
-                 *  ^
-                 *  |
-                 *  i   */
-                i += 6;	// position to byte1 of first value
-
-                //extract first value
-                if(extract_until_coma(&i, buffer, buffer_length, &temp_angle)){
-                    //i is ','
-                    //i+1 is L or R to indicate from wich direction the wind is blowing wrt vessel heading
-                    i++;
-                    if(buffer[i] == 'L')//TODO check if ok
-                        temp_angle = -temp_angle; /// CHECK IF OK
-
-                    //i+1 is ','
-                    //i+2 is the first byte of wind speed (in knot)
-                    i += 2;
-                    //extract second value
-                    if(extract_until_coma(&i, buffer, buffer_length, &temp_speed)){
-                        //set value in topic's structure
-                        wind_sailing_pointer->timestamp = hrt_absolute_time();
-                        wind_sailing_pointer->angle_true = temp_angle;
-                        wind_sailing_pointer->speed_true = temp_speed;
-                    }
-                }
-
-            }
     }
 
 }
