@@ -89,6 +89,8 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]);
 
 bool weather_station_init(int *wx_port_point);
 
+void send_three_times(const int *wx_port_pointer, const uint8_t *msg, const int length);
+
 bool pixhawk_baudrate_set(int wx_port, int baudrate);
 
 bool parser_variables_init(int *wx_port_pointer,
@@ -107,7 +109,7 @@ bool retrieve_data(int *wx_port_pointer,
 
 void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_attitude_s *att_raw_pointer);
 
-void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer);
+void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer);
 
 double nmea_ndeg2degree(double val);
 
@@ -404,66 +406,49 @@ bool weather_station_init(int *wx_port_pointer){
 	write(*wx_port_pointer, new_line, sizeof(new_line));
 
 	// stop transmitting
-	uint8_t stop_tx[] = {'$', 'P', 'A', 'M', 'T', 'X', '\r', '\n'};			
-	write(*wx_port_pointer, stop_tx, sizeof(stop_tx));
-	write(*wx_port_pointer, stop_tx, sizeof(stop_tx));
-	write(*wx_port_pointer, stop_tx, sizeof(stop_tx)); // Marine talk, send everything 3 times
+    uint8_t stop_tx[] = {'$', 'P', 'A', 'M', 'T', 'X', '\r', '\n'};
+    send_three_times(wx_port_pointer, stop_tx, sizeof(stop_tx));
 
 	// wait for 2 seconds for stability
 	sleep(2); 
 
 	// Disable all the transmitted sentences, so that we can tell the weather station exactly what to send:
 	uint8_t disable_tx[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'A', 'L', 'L', ',', '0', ',', '1', '0', '\r', '\n'}; 
-	write(*wx_port_pointer, disable_tx, sizeof(disable_tx));
-	write(*wx_port_pointer, disable_tx, sizeof(disable_tx));
-	write(*wx_port_pointer, disable_tx, sizeof(disable_tx));
+    send_three_times(wx_port_pointer, disable_tx, sizeof(disable_tx));
 
 	// wait for 2 seconds for stability
 	sleep(2); 
 
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
         warnx("[weather_station_init] enabling outdoor messages.\n");
-        // enable the GPS
+        // enable the GPS GPGGA
         uint8_t enable_gps[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'G', 'G', 'A', ',', '1', ',', '1', '\r', '\n'}; // Enable gps string
-        write(*wx_port_pointer, enable_gps, sizeof(enable_gps));
-        write(*wx_port_pointer, enable_gps, sizeof(enable_gps));
-        write(*wx_port_pointer, enable_gps, sizeof(enable_gps));
+        send_three_times(wx_port_pointer, enable_gps, sizeof(enable_gps));
 
         // enable the course and speed over ground string:
         uint8_t enable_gcgs[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'T', 'G', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
-        write(*wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));
-        write(*wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));
-        write(*wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));
+        send_three_times(wx_port_pointer, enable_gcgs, sizeof(enable_gcgs));
     }
 
     // enable relative wind  measurement
     uint8_t enable_rel_wind[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'W', 'R', ',', '1', ',', '1', '\r', '\n'};
-    write(*wx_port_pointer, enable_rel_wind, sizeof(enable_rel_wind));
-    write(*wx_port_pointer, enable_rel_wind, sizeof(enable_rel_wind));
-    write(*wx_port_pointer, enable_rel_wind, sizeof(enable_rel_wind));
+    send_three_times(wx_port_pointer, enable_rel_wind, sizeof(enable_rel_wind));
 
     // enable vessel attitude (pitch and roll)
 	uint8_t enable_attitude[] = {'$','P','A','M','T','C',',','E','N',',','X','D','R','B',',','1',',','1', '\r', '\n'};  
-	write(*wx_port_pointer, enable_attitude, sizeof(enable_attitude));
-	write(*wx_port_pointer, enable_attitude, sizeof(enable_attitude));
-	write(*wx_port_pointer, enable_attitude, sizeof(enable_attitude));
+    send_three_times(wx_port_pointer, enable_attitude, sizeof(enable_attitude));
 
 	// enable Roll, Pitch, Yaw rate relative to the vessel frame
 	uint8_t enable_RPY_rate[] = {'$','P','A','M','T','C',',','E','N',',','X','D','R','E',',','1',',','1', '\r', '\n'};  
-	write(*wx_port_pointer, enable_RPY_rate, sizeof(enable_RPY_rate));
-	write(*wx_port_pointer, enable_RPY_rate, sizeof(enable_RPY_rate));
-	write(*wx_port_pointer, enable_RPY_rate, sizeof(enable_RPY_rate));
+    send_three_times(wx_port_pointer, enable_RPY_rate, sizeof(enable_RPY_rate));
 
 	// enable x, y, z accelerometer readings
 	uint8_t enable_IMU[] = {'$','P','A','M','T','C',',','E','N',',','X','D','R','C',',','1',',','1', '\r', '\n'};  
-	write(*wx_port_pointer, enable_IMU, sizeof(enable_IMU));
-	write(*wx_port_pointer, enable_IMU, sizeof(enable_IMU));
-    write(*wx_port_pointer, enable_IMU, sizeof(enable_IMU));
+    send_three_times(wx_port_pointer, enable_IMU, sizeof(enable_IMU));
 
 	// switch to 38400 baud (the highest possible baud rate):
 	uint8_t high_baud[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'B', 'A', 'U', 'D', ',', '3', '8', '4', '0', '0', '\r', '\n'}; 
-	write(*wx_port_pointer, high_baud, sizeof(high_baud));
-	write(*wx_port_pointer, high_baud, sizeof(high_baud));
+    send_three_times(wx_port_pointer, high_baud, sizeof(high_baud));
 
 	// wait for 2 seconds for stability
 	sleep(2); 
@@ -473,9 +458,7 @@ bool weather_station_init(int *wx_port_pointer){
 
 	// tell the weather station to start transmitting again (now at 38400 baud):
 	uint8_t start_tx[] = {'$', 'P', 'A', 'M', 'T', 'X', ',', '1', '\r', '\n'}; 
-	write(*wx_port_pointer, start_tx, sizeof(start_tx));
-	write(*wx_port_pointer, start_tx, sizeof(start_tx));
-	write(*wx_port_pointer, start_tx, sizeof(start_tx));
+    send_three_times(wx_port_pointer, start_tx, sizeof(start_tx));
 
 	// erase received but not read yet data from serial buffer 
 	for (int i=0; i<4; i++)
@@ -488,7 +471,18 @@ bool weather_station_init(int *wx_port_pointer){
 }
 
 /**
-* Set baud rate between weather station 200WX and pixhawk.
+ * Send three times the same data to 200WX station.
+ *
+*/
+void send_three_times(const int *wx_port_pointer, const uint8_t *msg, const int length){
+
+    write(*wx_port_pointer, msg, length);
+    write(*wx_port_pointer, msg, length);
+    write(*wx_port_pointer, msg, length);
+}
+
+/**
+* Set baud rate between weather station 200WX and pixhawk. (Marine talk, send everything 3 times).
 *
 * @param wx_port	name of the UART port
 * @param baudrate 	baudrate of the communication
@@ -611,8 +605,8 @@ bool retrieve_data(int *wx_port_pointer,
         //gps_bad_simulator(buffer, &buffer_length);
         //fine simulazione
 
-        // see if buffer there is one (or more) GPGGA message(s)
-        gga_parser(buffer, buffer_length, gps_raw_pointer);
+        // see if buffer there is one (or more) GPXXX message(s)
+        gp_parser(buffer, buffer_length, gps_raw_pointer);
     }
 
 
@@ -757,13 +751,13 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
 }
 
 /**
-* Parse transducer data received from 200WX, GPGGA message.
+* Parse transducer data received from 200WX, GPXXX message.
 *
 * @param buffer                 buffer with data
 * @param buffer_length          length of buffer
 * @param gps_raw_pointer		pointer to handler returnd by orb_advertise
 */
-void gga_parser(const char *buffer, const int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer){
+void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer){
 
     int i = 0;
     int counter = 0;
