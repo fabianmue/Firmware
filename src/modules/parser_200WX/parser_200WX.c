@@ -654,7 +654,7 @@ bool retrieve_data(int *wx_port_pointer,
         //fine simulazione
 
         // see if buffer there is one (or more) GPXXX message(s)
-        //gp_parser(buffer_global, buffer_length, gps_raw_pointer);
+        gp_parser(buffer_global, buffer_length, gps_raw_pointer);
     }
 
 
