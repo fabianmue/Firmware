@@ -77,8 +77,11 @@
 //if extract_until coma doesn't find a ',' for SAFETY_COUNTER_EXTRACT, exit
 #define SAFETY_COUNTER_EXTRACT 15
 
-//minimum number of available byte for starting parsing
-#define MIN_BYTE_FOR_PARSING 30
+//minimum number of available byte for starting parsing a long message
+#define MIN_BYTE_FOR_PARSING_LONG_MSG 30
+
+//minimum number of available byte for starting parsing a short message
+#define MIN_BYTE_FOR_PARSING_SHORT_MSG 8
 
 //Global buffer for data from 200WX
 char buffer_global[400];
@@ -126,6 +129,8 @@ int find_string(const int start_index, const char *buffer, const int buffer_leng
 bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer);
 
 int jump_to_next_coma(const int start_index, const char *buffer, const int buffer_length);
+
+void hdt_parser(const char *buffer, const int buffer_length, struct vehicle_attitude_s *att_raw_pointer);
 
 static void usage(const char *reason);
 
@@ -459,6 +464,10 @@ bool weather_station_init(int *wx_port_pointer){
         // enable  GPS GPVTG message
         uint8_t enable_gps_vtg[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'T', 'G', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
         send_three_times(wx_port_pointer, enable_gps_vtg, sizeof(enable_gps_vtg));
+
+        // enable heading w.r.t. True North, message HCHDT
+        uint8_t enable_hchdt[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'H', 'D', 'T', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
+        send_three_times(wx_port_pointer, enable_hchdt, sizeof(enable_hchdt));
     }
 
     // enable relative wind  measurement
@@ -655,6 +664,14 @@ bool retrieve_data(int *wx_port_pointer,
 
         // see if buffer there is one (or more) GPXXX message(s)
         gp_parser(buffer_global, buffer_length, gps_raw_pointer);
+
+
+        //Simulazione dati heading
+        //char buf[] = {"HCHDT,025.3,T,*"};
+        //hdt_parser(buf, sizeof(buf), att_raw_pointer);
+        //Fine simalazione
+
+        hdt_parser(buffer_global, buffer_length, att_raw_pointer);
     }
 
 
@@ -682,7 +699,7 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
     double vert_acc;
 
     // it's worthless to check if there won't be enough data anyway..
-    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING; i++){
+    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_LONG_MSG; i++){
 
         i = find_string(i, buffer, buffer_length, "YXXDR");
 
@@ -828,7 +845,7 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
     double speed_over_ground;
 
     // it's worthless to check if there won't be enough data anyway..
-    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING; i++){
+    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_LONG_MSG; i++){
 
         i = find_string(i, buffer, buffer_length, "GP");
 
@@ -1004,6 +1021,8 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                         //put speed ground vel in vel_n_mes beacuse vel_m_s is not saved in the SD card by sdlog2
                         gps_raw_pointer->vel_n_m_s = speed_over_ground; ///< Speed over ground in Knots
                         gps_raw_pointer->cog_rad = course_over_ground; ///< Course over ground w.r.t True North, in Degree
+
+                        //TODO vedere se usare campo 8 per validazione dei dati
                     }
                 }
             }
@@ -1041,8 +1060,8 @@ void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_
     double temp_speed;
 
     // it's worthless to check if there won't be enough data anyway..
-    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING; i++){
-        // see if we have a relative wind information OR true wind estimate
+    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_LONG_MSG; i++){
+        // see if we have a relative wind information
         i = find_string(i, buffer, buffer_length, "WIVWR");
 
         if(i == -1)
@@ -1074,6 +1093,37 @@ void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_
                 wind_sailing_pointer->angle_apparent = temp_angle;
                 wind_sailing_pointer->speed_apparent = temp_speed;
             }
+        }
+
+    }
+
+}
+
+/**
+ * Parse HCHDT message
+*/
+void hdt_parser(const char *buffer, const int buffer_length, struct vehicle_attitude_s *att_raw_pointer){
+
+    int i = 0;
+    double heading;
+
+    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_SHORT_MSG; i++){
+
+        i = find_string(i, buffer, buffer_length, "HCHDT");
+
+        if(i == -1)
+            return;//no message found
+
+        //we have HCTHS message
+        /*
+         * |H|C|H|D|T|,|byte1 of heading w.r.t. True North|
+         *  ^
+         *  |
+         *  i   */
+        i += 6;	// position to byte1
+
+        if(extract_until_coma(&i, buffer, buffer_length, &heading)){
+            att_raw_pointer->yaw = heading;
         }
 
     }
