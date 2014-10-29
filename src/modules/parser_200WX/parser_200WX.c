@@ -77,6 +77,9 @@
 //if extract_until coma doesn't find a ',' for SAFETY_COUNTER_EXTRACT, exit
 #define SAFETY_COUNTER_EXTRACT 15
 
+//minimum number of available byte for starting parsing
+#define MIN_BYTE_FOR_PARSING 30
+
 //Thread management variables
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
@@ -120,8 +123,6 @@ int find_string(const int start_index, const char *buffer, const int buffer_leng
 bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer);
 
 static void usage(const char *reason);
-
-void gps_bad_simulator(char *buff, int *buff_length);
 
 /**
  * Print the correct usage.
@@ -392,7 +393,7 @@ bool weather_station_init(int *wx_port_pointer){
 	        errx(1, "failed to open port: /dev/ttyS5");
            return false;
 	    }
-    warnx("[weather_station_init] starting initialization.\n");
+    warnx("[parser_200WX] starting initialization.\n");
 
 	// Set baud rate of wx_port to 4800 baud
     pixhawk_baudrate_set(*wx_port_pointer, 4800);
@@ -420,10 +421,14 @@ bool weather_station_init(int *wx_port_pointer){
 	sleep(2); 
 
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
-        warnx("[weather_station_init] enabling outdoor messages.\n");
-        // enable the GPS GPGGA
-        uint8_t enable_gps[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'G', 'G', 'A', ',', '1', ',', '1', '\r', '\n'}; // Enable gps string
-        send_three_times(wx_port_pointer, enable_gps, sizeof(enable_gps));
+        warnx("[parser_200WX] enabling outdoor messages.\n");
+        // enable the GPS GPGGA message
+        uint8_t enable_gps_gga[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'G', 'G', 'A', ',', '1', ',', '1', '\r', '\n'}; // Enable gps string
+        send_three_times(wx_port_pointer, enable_gps_gga, sizeof(enable_gps_gga));
+
+        // enable the GPS GPGSA message
+        uint8_t enable_gps_gsa[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'G', 'S', 'A', ',', '1', ',', '1', '\r', '\n'}; // Enable gps string
+        send_three_times(wx_port_pointer, enable_gps_gsa, sizeof(enable_gps_gsa));
 
         // enable the course and speed over ground string:
         uint8_t enable_gcgs[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'T', 'G', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
@@ -465,7 +470,7 @@ bool weather_station_init(int *wx_port_pointer){
 		read(*wx_port_pointer, &raw_buffer, sizeof(raw_buffer));
 	sleep(0.5);		// collect enough data for first parsing
 
-    warnx("[weather_station_init] ending initialization.\n");
+    warnx("[parser_200WX] ending initialization.\n");
 
 	return true;
 }
@@ -602,7 +607,17 @@ bool retrieve_data(int *wx_port_pointer,
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
 
         //Simulazione dati GPS, COMMENTA IN UTILIZZO VERO
-        //gps_bad_simulator(buffer, &buffer_length);
+        /*char good_b[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,52,55,50,50,46,
+                     55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,49,44,55,44,50,46,52,
+                     44,53,50,51,46,52,44,52,57,46,49,44,77,44,44,42,53,57,13,10,
+                        '$','G','P','G','S','A',',','A', ',','3', ',','M',
+                        55,85,65,8,9,10,55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4,//a caso
+                        55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4,//a caso
+                        55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4,//a caso
+                        55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4//a caso
+                        };
+
+        gp_parser(good_b, sizeof(good_b), gps_raw_pointer);*/
         //fine simulazione
 
         // see if buffer there is one (or more) GPXXX message(s)
@@ -627,7 +642,7 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
     double temp_val;
 
     // it's worthless to check if there won't be enough data anyway..
-    for(i = 0; (buffer_length - i) > 50; i++){
+    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING; i++){
 
         i = find_string(i, buffer, buffer_length, "YXXDR");
 
@@ -777,132 +792,161 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
     float sec;
 
     // it's worthless to check if there won't be enough data anyway..
-    for(i = 0; (buffer_length - i) > 50; i++){
+    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING; i++){
 
-        i = find_string(i, buffer, buffer_length, "GPGGA");
+        i = find_string(i, buffer, buffer_length, "GPG");
 
         if(i == -1)
-            return; //no GPGGA found in buffer
+            return; //no GPGXX found in buffer
 
-        /*found GPGGA message in buffer, starting from i
-         * |G|P|G|G|A|,|byte1 of UTC|byte2 of UTC| etc
-         *  ^
-         *  |
-         *  i   */
-        i += 6;	// position to byte1 of UTC
+        if(buffer[i+3] == 'G' && buffer[i+4] == 'A'){
+            /*found GPGGA message in buffer, starting from i
+             * |G|P|G|G|A|,|byte1 of UTC|byte2 of UTC| etc
+             *  ^
+             *  |
+             *  i   */
+            i += 6;	// position to byte1 of UTC
 
-        //--- handle time ---
+            //--- handle time ---
 
-        while(buffer[i] != ','){
-            if(counter >= SAFETY_COUNTER_EXTRACT){
-                return;// safety
+            while(buffer[i] != ','){
+                if(counter >= SAFETY_COUNTER_EXTRACT){
+                    return;// safety
+                }
+                time_char[counter] = buffer[i];
+                i++;
+                counter++;
             }
-            time_char[counter] = buffer[i];
-            i++;
-            counter++;
-        }
 
-        if(counter < 8){
-            //failed readind time, use 00:00:00 and try to parse GPS data
-            hour =  min = sec = 0;
-        }
-        else{
-            //convert time from string do numeric values
-            hour_char[0] = time_char[0];
-            hour_char[1] = time_char[1];
-            hour_char[2] = '\0';
-
-            minute_char[0] = time_char[2];
-            minute_char[1] = time_char[3];
-            minute_char[2] = '\0';
-
-            for (int j=0 ; j<5 ; j++){
-                second_char[j] = time_char[4+j];
+            if(counter < 8){
+                //failed readind time, use 00:00:00 and try to parse GPS data
+                hour =  min = sec = 0;
             }
-            second_char[5] = '\0';
+            else{
+                //convert time from string to numeric values
+                hour_char[0] = time_char[0];
+                hour_char[1] = time_char[1];
+                hour_char[2] = '\0';
 
-            hour = atoi(hour_char) ;
-            min = atoi(minute_char);
-            sec = atof(second_char);
-        }
+                minute_char[0] = time_char[2];
+                minute_char[1] = time_char[3];
+                minute_char[2] = '\0';
 
-        //--- latitude ---
+                for (int j=0 ; j<5 ; j++){
+                    second_char[j] = time_char[4+j];
+                }
+                second_char[5] = '\0';
 
-        // i is the comma ','
-        i++;// position i to byte1 of Latitude
-        if(extract_until_coma(&i, buffer, buffer_length, &latitude)){
+                hour = atoi(hour_char) ;
+                min = atoi(minute_char);
+                sec = atof(second_char);
+            }
 
-            //--- Longitude ---
+            //--- latitude ---
 
-            // i   is the comma ','
-            /// i+1 is 'N' to symbolize the northern hemisphere (ok for Switzerland!!!)
-            // i+2 is the comma ','
-            i += 3;	// position to byte1 of longitude
-            if(extract_until_coma(&i, buffer, buffer_length, &longitude)){
+            // i is the comma ','
+            i++;// position i to byte1 of Latitude
+            if(extract_until_coma(&i, buffer, buffer_length, &latitude)){
 
-                //--- gps quality ---
+                //--- longitude ---
 
                 // i   is the comma ','
-                /// i+1 is 'E' to symbolize the East longitude (ok for Switzerland!!!)
+                /// i+1 is 'N' to symbolize the northern hemisphere (ok for Switzerland!!!)
                 // i+2 is the comma ','
-                i += 3;	// position to byte1 of GPS quality indicator
-                if(extract_until_coma(&i, buffer, buffer_length, &gps_quality)){
+                i += 3;	// position to byte1 of longitude
+                if(extract_until_coma(&i, buffer, buffer_length, &longitude)){
 
-                    //--- satellites_used ---
+                    //--- gps quality ---
 
                     // i   is the comma ','
-                    i ++;	// position to byte1 of number of satellites in use
-                    if(extract_until_coma(&i, buffer, buffer_length, &satellites_used)){
+                    /// i+1 is 'E' to symbolize the East longitude (ok for Switzerland!!!)
+                    // i+2 is the comma ','
+                    i += 3;	// position to byte1 of GPS quality indicator
+                    if(extract_until_coma(&i, buffer, buffer_length, &gps_quality)){
 
-                        //--- eph ---
+                        //--- satellites_used ---
 
                         // i   is the comma ','
-                        i ++;	// position to byte1 of HDOP
-                        if(extract_until_coma(&i, buffer, buffer_length, &eph)){
+                        i ++;	// position to byte1 of number of satellites in use
+                        if(extract_until_coma(&i, buffer, buffer_length, &satellites_used)){
 
-                            //--- altitude ---
+                            //--- eph ---
 
                             // i   is the comma ','
-                            i ++;	// position to byte1 of altitude relative to MSL
-                            if(extract_until_coma(&i, buffer, buffer_length, &alt)){
+                            i ++;	// position to byte1 of HDOP
+                            if(extract_until_coma(&i, buffer, buffer_length, &eph)){
 
-                                //save data in the struct
-                                gps_raw_pointer->timestamp_time = hrt_absolute_time();
+                                //--- altitude ---
 
-                                //TODO cosa mettere qui visto che 200WX non ci da tempo totale per sdlo2 ?
-                                gps_raw_pointer->time_gps_usec = 1000000 * 120;
+                                // i   is the comma ','
+                                i ++;	// position to byte1 of altitude relative to MSL
+                                if(extract_until_coma(&i, buffer, buffer_length, &alt)){
 
-                                // time in microseconds TODO da levare
-                                gps_raw_pointer->timestamp_position = (hour * 3600 +
-                                                                    min * 60 + sec) * 1000000;
+                                    //save data in the struct
+                                    gps_raw_pointer->timestamp_time = hrt_absolute_time();
 
-                                gps_raw_pointer->timestamp_position = hrt_absolute_time();
+                                    //TODO cosa mettere qui visto che 200WX non ci da tempo totale per sdlo2 ?
+                                    gps_raw_pointer->time_gps_usec = 1000000 * 120;
 
-                                //convert lat and long in degrees and multiple for 1E7 as required in vehicle_gps_position topic
-                                gps_raw_pointer->lat = nmea_ndeg2degree(latitude) * 1e7d;
-                                gps_raw_pointer->lon = nmea_ndeg2degree(longitude) * 1e7d;
-                                gps_raw_pointer->satellites_used = satellites_used;
-                                gps_raw_pointer->fix_type = gps_quality;/**< 0 = fix not available, 1 = fix valid, 2 = DGPS*/
-                                gps_raw_pointer->eph = eph;
-                                //set altitude from meters in millimeter as requested in vehicle_gps_position topic
-                                gps_raw_pointer->alt = alt * 1000;
+                                    // time in microseconds TODO da levare
+                                    gps_raw_pointer->timestamp_position = (hour * 3600 +
+                                                                        min * 60 + sec) * 1000000;
 
-                                //prova
-//                                warnx("\n time %f \n", (double)gps_raw_pointer->time_gps_usec);
-//                                warnx("\n lat %f \n", (double)latitude);
-//                                warnx("long %f \n", (double)longitude);
-//                                warnx("satellites_used %f \n", (double)satellites_used);
-//                                warnx("gps_quality %f \n", (double)gps_quality);
-//                                warnx("eph %f \n", (double)eph);
-//                                warnx("alt %f \n", (double)alt);
-                                //fine prova
+                                    gps_raw_pointer->timestamp_position = hrt_absolute_time();
+
+                                    //convert lat and long in degrees and multiple for 1E7 as required in vehicle_gps_position topic
+                                    gps_raw_pointer->lat = nmea_ndeg2degree(latitude) * 1e7d;
+                                    gps_raw_pointer->lon = nmea_ndeg2degree(longitude) * 1e7d;
+                                    gps_raw_pointer->satellites_used = satellites_used;
+                                    //gps_raw_pointer->fix_type = gps_quality;/**< 0 = fix not available, 1 = fix valid, 2 = DGPS*/
+                                    gps_raw_pointer->eph = eph;
+                                    //set altitude from meters in millimeter as requested in vehicle_gps_position topic
+                                    gps_raw_pointer->alt = alt * 1000;
+
+                                    //prova
+    //                                warnx("\n time %f \n", (double)gps_raw_pointer->time_gps_usec);
+    //                                warnx("\n lat %f \n", (double)latitude);
+    //                                warnx("long %f \n", (double)longitude);
+    //                                warnx("satellites_used %f \n", (double)satellites_used);
+    //                                warnx("gps_quality %f \n", (double)gps_quality);
+    //                                warnx("eph %f \n", (double)eph);
+    //                                warnx("alt %f \n", (double)alt);
+                                    //fine prova
+                                }
                             }
                         }
-                    }
 
+                    }
                 }
             }
+
         }
+        else
+            if(buffer[i+3] == 'S' && buffer[i+4] == 'A'){
+                /*found GPGSA message in buffer, starting from i
+                 * |G|P|G|S|A|,|M or A|,|Type of fix|
+                 *  ^
+                 *  |
+                 *  i   */
+                i += 8;	// type of fix
+
+                switch(buffer[i]){
+                case '1':
+                    gps_raw_pointer->fix_type = 1;
+                    break;
+                case '2':
+                    gps_raw_pointer->fix_type = 2;
+                    break;
+                case '3':
+                    gps_raw_pointer->fix_type = 3;
+                    break;
+                default:
+                    gps_raw_pointer->fix_type = 1; //Error, no fix valid found in the message
+                }
+
+            }
+
+
     }
 }
 
@@ -916,42 +960,7 @@ double nmea_ndeg2degree(double val)
     return val;
 }
 
-void gps_bad_simulator(char *buff, int *buff_length){
-    static int bad = 0;
 
-    //dati buoni
-    char good_b[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,52,55,50,50,46,
-                 55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,49,44,55,44,50,46,52,
-                 44,53,50,51,46,52,44,52,57,46,49,44,77,44,44,42,53,57,13,10};
-
-
-    //dati sbagliati
-
-    char evil_b[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,
-                 52,55,50,50,46,55,48,57,52,44,//lat
-                  ',',',',',' //prova errore
-                 };
-    char *b = NULL;
-    int lgt = 0;
-
-    if(bad){
-        b = evil_b;
-        lgt = sizeof(evil_b);
-        bad = 0;
-    }
-    else{
-        b = good_b;
-        lgt = sizeof(good_b);
-        bad = 1;
-    }
-
-    for(int i=0;i<lgt;i++){
-        buff[i] = b[i];
-    }
-
-    *buff_length = lgt;
-
-}
 
 /**
 * Parse transducer data received from 200WX, VWR and VWT messages.
@@ -967,7 +976,7 @@ void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_
     double temp_speed;
 
     // it's worthless to check if there won't be enough data anyway..
-    for(i = 0; (buffer_length - i) > 50; i++){
+    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING; i++){
         // see if we have a relative wind information OR true wind estimate
         i = find_string(i, buffer, buffer_length, "WIVW");
 
@@ -975,10 +984,10 @@ void vw_parser(const char *buffer, const int buffer_length, struct wind_sailing_
             return;//no message found
 
         //cancella
-        for(int j=i;j<8;j++){
-            warnx("%c", buffer[j]);
-        }
-        warnx("\n");
+//        for(int j=i;j<8;j++){
+//            warnx("%c", buffer[j]);
+//        }
+//        warnx("\n");
         //fine cancella
 
         /*
