@@ -120,13 +120,15 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
 
 void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer);
 
-double nmea_ndeg2degree(double val);
+float nmea_ndeg2degree(float val);
 
 void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer);
 
 int find_string(const int start_index, const char *buffer, const int buffer_length, char *str);
 
-bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer);
+bool d_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer);
+
+bool f_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer);
 
 int jump_to_next_coma(const int start_index, const char *buffer, const int buffer_length);
 
@@ -342,7 +344,7 @@ int find_string(const int start_index, const char *buffer, const int buffer_leng
 }
 
 /**
-* Extract data from buffer, starting from index, until a come is found. Update index.
+* Extract data from buffer, starting from index, until a come is found. Update index. Returns a double
 *
 * @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
 * @param buffer             buffer
@@ -350,7 +352,7 @@ int find_string(const int start_index, const char *buffer, const int buffer_leng
 * @param ret_val_pointer    pointer to variable with the final result
 * @return 	true if no error
 */
-bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer){
+bool d_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer){
 
 	int counter = 0;
     char temp_char[SAFETY_COUNTER_EXTRACT];
@@ -383,6 +385,50 @@ bool extract_until_coma(int *index_pointer, const char *buffer, const int buffer
 
     return true;
 }
+
+/**
+* Extract data from buffer, starting from index, until a come is found. Update index. Returns a float
+*
+* @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
+* @param buffer             buffer
+* @param buffer_length      length of buffer
+* @param ret_val_pointer    pointer to variable with the final result
+* @return 	true if no error
+*/
+bool f_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer){
+
+    int counter = 0;
+    char temp_char[SAFETY_COUNTER_EXTRACT];
+    int i = *index_pointer;
+
+    while(i < buffer_length && buffer[i] != ','){
+
+        temp_char[counter] = buffer[i];
+
+        i++;
+        counter++;
+        if(counter >= SAFETY_COUNTER_EXTRACT){
+            *ret_val_pointer = 0;
+            return false;
+        }
+    }
+
+    //check if we exited from while loop because we have a valid data or not
+    if(i == *index_pointer || i >= buffer_length){
+        *ret_val_pointer = 0;
+        return false; //not found valid data
+    }
+
+    //null terminate string
+    temp_char[counter] = '\0';
+
+    //update index
+    *index_pointer = i;
+    *ret_val_pointer = (float)atof(temp_char);
+
+    return true;
+}
+
 
 /**
  * Jump to next the ',' in buffer. -1 on error.
@@ -689,14 +735,14 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
 
     int i = 0;
     int app_i = 0;
-    double temp_val;
+    float temp_val;
 
-    double pitch;
-    double rollspeed;
-    double pitchspeed;
-    double lat_acc;
-    double lon_acc;
-    double vert_acc;
+    float pitch;
+    float rollspeed;
+    float pitchspeed;
+    float lat_acc;
+    float lon_acc;
+    float vert_acc;
 
     // it's worthless to check if there won't be enough data anyway..
     for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_LONG_MSG; i++){
@@ -715,7 +761,7 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
         i += 8;	// position to byte1 of first value
 
         //extract first value, on error go next iteration and see in buffer for another YXXDR string
-        if(extract_until_coma(&i, buffer, buffer_length, &temp_val)){
+        if(f_extract_until_coma(&i, buffer, buffer_length, &temp_val)){
 
             //first value extracted, everything is ok, i is the comma ','
             i++;//now i is the after the above ','
@@ -739,7 +785,7 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
                     i += 7;	// position to byte1 of second value
 
                     //extract second value
-                    if(extract_until_coma(&i, buffer, buffer_length, &temp_val)){
+                    if(f_extract_until_coma(&i, buffer, buffer_length, &temp_val)){
                         //second value extracted, set value in topic's structure
                         att_raw_pointer->timestamp = hrt_absolute_time();
                         att_raw_pointer->roll = temp_val; ///< Roll in degree
@@ -758,7 +804,7 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
                      * */
                     i += 7;	// position to byte1 of second value
                     //extract second value
-                    if(extract_until_coma(&i, buffer, buffer_length, &temp_val)){
+                    if(f_extract_until_coma(&i, buffer, buffer_length, &temp_val)){
                         //save pitchspeed
                         pitchspeed = temp_val;
 
@@ -769,7 +815,7 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
                          *  i
                          * */
                         i += 9;	// position to byte1 of third value
-                        if(extract_until_coma(&i, buffer, buffer_length, &temp_val)){
+                        if(f_extract_until_coma(&i, buffer, buffer_length, &temp_val)){
                             //set value in topic's structure
                             att_raw_pointer->timestamp = hrt_absolute_time();
                             att_raw_pointer->rollspeed = rollspeed;     ///< Roll speed in degree/s
@@ -785,7 +831,7 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
                 //i+1 is ',' ; i+2 is byte1 of acceleretion on latitudinal axis
                 i += 2;
 
-                if(extract_until_coma(&i, buffer, buffer_length, &lat_acc)){
+                if(f_extract_until_coma(&i, buffer, buffer_length, &lat_acc)){
                     //i is the ','
                     /*|,|G|,|X|A|C|C|,|A|,|byte1 of acc on longitudinal axis|etc..
                      * ^
@@ -793,7 +839,7 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
                      * i
                     */
                     i += 10;
-                    if(extract_until_coma(&i, buffer, buffer_length, &lon_acc)){
+                    if(f_extract_until_coma(&i, buffer, buffer_length, &lon_acc)){
                         //i is the ','
                         /*|,|G|,|Y|A|C|C|,|A|,|byte1 of acc on longitudinal axis|etc..
                          * ^
@@ -801,7 +847,7 @@ void xdr_parser(const char *buffer, const int buffer_length, struct vehicle_atti
                          * i
                         */
                         i += 10;
-                        if(extract_until_coma(&i, buffer, buffer_length, &vert_acc)){
+                        if(f_extract_until_coma(&i, buffer, buffer_length, &vert_acc)){
                             //set value in topic's structure
 
                             //TODO da completare questa parte dopo che hai creato l'apposito topic!!!
@@ -832,17 +878,17 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
     char hour_char[3];
     char minute_char[3];
     char second_char[6];
-    double latitude;
-    double longitude;
-    double gps_quality;
-    double satellites_used;
-    double eph;
-    double alt;
+    float latitude;
+    float longitude;
+    float gps_quality;
+    float satellites_used;
+    float eph;
+    float alt;
     int hour;
     int min;
     float sec;
-    double course_over_ground;
-    double speed_over_ground;
+    float course_over_ground;
+    float speed_over_ground;
 
     // it's worthless to check if there won't be enough data anyway..
     for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_LONG_MSG; i++){
@@ -899,7 +945,7 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
 
             // i is the comma ','
             i++;// position i to byte1 of Latitude
-            if(extract_until_coma(&i, buffer, buffer_length, &latitude)){
+            if(f_extract_until_coma(&i, buffer, buffer_length, &latitude)){
 
                 //--- longitude ---
 
@@ -907,7 +953,7 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                 /// i+1 is 'N' to symbolize the northern hemisphere (ok for Switzerland!!!)
                 // i+2 is the comma ','
                 i += 3;	// position to byte1 of longitude
-                if(extract_until_coma(&i, buffer, buffer_length, &longitude)){
+                if(f_extract_until_coma(&i, buffer, buffer_length, &longitude)){
 
                     //--- gps quality ---
 
@@ -915,25 +961,25 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                     /// i+1 is 'E' to symbolize the East longitude (ok for Switzerland!!!)
                     // i+2 is the comma ','
                     i += 3;	// position to byte1 of GPS quality indicator
-                    if(extract_until_coma(&i, buffer, buffer_length, &gps_quality)){
+                    if(f_extract_until_coma(&i, buffer, buffer_length, &gps_quality)){
 
                         //--- satellites_used ---
 
                         // i   is the comma ','
                         i ++;	// position to byte1 of number of satellites in use
-                        if(extract_until_coma(&i, buffer, buffer_length, &satellites_used)){
+                        if(f_extract_until_coma(&i, buffer, buffer_length, &satellites_used)){
 
                             //--- eph ---
 
                             // i   is the comma ','
                             i ++;	// position to byte1 of HDOP
-                            if(extract_until_coma(&i, buffer, buffer_length, &eph)){
+                            if(f_extract_until_coma(&i, buffer, buffer_length, &eph)){
 
                                 //--- altitude ---
 
                                 // i   is the comma ','
                                 i ++;	// position to byte1 of altitude relative to MSL
-                                if(extract_until_coma(&i, buffer, buffer_length, &alt)){
+                                if(f_extract_until_coma(&i, buffer, buffer_length, &alt)){
 
                                     //save data in the struct
                                     gps_raw_pointer->timestamp_time = hrt_absolute_time();
@@ -996,7 +1042,7 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
 
             i += 6;
 
-            if(extract_until_coma(&i, buffer, buffer_length, &course_over_ground)){
+            if(f_extract_until_coma(&i, buffer, buffer_length, &course_over_ground)){
 
                 //i is ',', i+1 is 'T', i+2 is ',' i+3 is byte of course wrt magnetic north
                 i += 3;
@@ -1015,7 +1061,7 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
 
                     i += 3;
 
-                    if(extract_until_coma(&i, buffer, buffer_length, &speed_over_ground)){
+                    if(f_extract_until_coma(&i, buffer, buffer_length, &speed_over_ground)){
                         //save data in struct
                         gps_raw_pointer->timestamp_velocity = hrt_absolute_time();
                         //put speed ground vel in vel_n_mes beacuse vel_m_s is not saved in the SD card by sdlog2
@@ -1037,9 +1083,9 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
 /**
  *  Convert NDEG (NMEA degree: [degree][min].[sec/60]) to fractional degree
 */
-double nmea_ndeg2degree(double val)
+float nmea_ndeg2degree(float val)
 {
-    double deg = ((int)(val / 100));
+    float deg = ((int)(val / 100));
     val = deg + (val - deg * 100) / 60;
     return val;
 }
@@ -1056,8 +1102,8 @@ double nmea_ndeg2degree(double val)
 void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer){
 
     int i = 0;
-    double temp_angle;
-    double temp_speed;
+    float temp_angle;
+    float temp_speed;
 
     // it's worthless to check if there won't be enough data anyway..
     for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_LONG_MSG; i++){
@@ -1076,7 +1122,7 @@ void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_
         i += 6;	// position to byte1 of first value
 
         //extract first value
-        if(extract_until_coma(&i, buffer, buffer_length, &temp_angle)){
+        if(f_extract_until_coma(&i, buffer, buffer_length, &temp_angle)){
             //i is ','
             //i+1 is L or R to indicate from wich direction the wind is blowing wrt vessel heading
             i++;
@@ -1087,7 +1133,7 @@ void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_
             //i+2 is the first byte of wind speed (in knot)
             i += 2;
             //extract second value
-            if(extract_until_coma(&i, buffer, buffer_length, &temp_speed)){
+            if(f_extract_until_coma(&i, buffer, buffer_length, &temp_speed)){
                 //set value in topic's structure
                 wind_sailing_pointer->timestamp = hrt_absolute_time();
                 wind_sailing_pointer->angle_apparent = temp_angle;
@@ -1100,12 +1146,12 @@ void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_
 }
 
 /**
- * Parse HCHDT message
+ * Parse HCHDT message. Heading w.r.t. True North saved as yaw angle
 */
 void hdt_parser(const char *buffer, const int buffer_length, struct vehicle_attitude_s *att_raw_pointer){
 
     int i = 0;
-    double heading;
+    float heading;
 
     for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_SHORT_MSG; i++){
 
@@ -1122,7 +1168,7 @@ void hdt_parser(const char *buffer, const int buffer_length, struct vehicle_atti
          *  i   */
         i += 6;	// position to byte1
 
-        if(extract_until_coma(&i, buffer, buffer_length, &heading)){
+        if(f_extract_until_coma(&i, buffer, buffer_length, &heading)){
             att_raw_pointer->yaw = heading;
         }
 
