@@ -95,14 +95,19 @@ static int daemon_task;						/**< Handle of daemon task / thread */
 
 __EXPORT int parser_200WX_main(int argc, char *argv[]);
 
+/** @brief main loop. */
 int parser_200WX_daemon_thread_main(int argc, char *argv[]);
 
+/** @brief Initialize weather station. */
 bool weather_station_init(int *wx_port_point);
 
+/** @brief Send msg three times, marine talk. */
 void send_three_times(const int *wx_port_pointer, const uint8_t *msg, const int length);
 
+/** @brief Set baud rate. */
 bool pixhawk_baudrate_set(int wx_port, int baudrate);
 
+/** @brief Initialize all variables. */
 bool parser_variables_init(int *wx_port_pointer,
                            int *sensor_sub_fd_pointer,
                            int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
@@ -111,6 +116,7 @@ bool parser_variables_init(int *wx_port_pointer,
                            int *wind_sailing_fd_pointer, struct wind_sailing_s *wind_sailing_raw_pointer,
                            int *bodyframe_meas_fd_pointer, struct vehicle_bodyframe_meas_s *bodyframe_meas_raw_pointer);
 
+/** @brief Extract data from stream with 200WX. */
 bool retrieve_data(int *wx_port_pointer,
                   int *sensor_sub_fd_pointer,
                   struct vehicle_attitude_s *att_raw_pointer,
@@ -119,31 +125,42 @@ bool retrieve_data(int *wx_port_pointer,
                   struct wind_sailing_s *wind_sailing_pointer,
                   struct vehicle_bodyframe_meas_s *bodyframe_meas_raw_pointer);
 
+/** @brief Parser for YXXDR messages. */
 void xdr_parser(const char *buffer, const int buffer_length,
                 struct vehicle_attitude_s *att_raw_pointer,
                 struct vehicle_bodyframe_meas_s *bodyframe_meas_raw_pointer);
 
+/** @brief Parser for GPXXX messages. */
 void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_position_s *gps_raw_pointer);
 
+/** @brief Convert nmea coordinates in degree. */
 float nmea_ndeg2degree(float val);
 
+/** @brief Parser for MWVR message. */
 void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer);
 
-int find_string(const int start_index, const char *buffer, const int buffer_length, char *str);
-
-bool d_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer);
-
-bool f_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer);
-
-int jump_to_next_coma(const int start_index, const char *buffer, const int buffer_length);
-
+/** @brief Parser for HCHDT message. */
 void hdt_parser(const char *buffer, const int buffer_length, struct vehicle_attitude_s *att_raw_pointer);
 
 /** @brief Parser for WIMWD message. */
 void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer);
 
+/** @brief Find string in buffer. */
+int find_string(const int start_index, const char *buffer, const int buffer_length, char *str);
+
+/** @brief Extract double from string. */
+bool d_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer);
+
+/** @brief Extract float from string. */
+bool f_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer);
+
+/** @brief Go to buffer until next ','. */
+int jump_to_next_coma(const int start_index, const char *buffer, const int buffer_length);
+
+/** @brief Print buffer on terminal */
 void debug_print_nchar(const char *buffer, const int length, const int start, const int end);
 
+/** @brief Print buffer on terminal */
 void debug_print_until_char(const char *buffer, const int length, const int start, const char stop_char);
 
 static void usage(const char *reason);
@@ -217,7 +234,7 @@ int parser_200WX_main(int argc, char *argv[])
 /**
  * mainloop of daemon.
  *
- * if TYPE_OF_ENVIRONMENT (located in ../autonomous_sailing/as_settings.h) is 0, then use indoor parser
+ * if TYPE_OF_ENVIRONMENT (located in ../autonomous_sailing/as_settings.h) is 1 then activeted also outdoor messages
  */
 int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 
@@ -572,7 +589,7 @@ bool weather_station_init(int *wx_port_pointer){
 }
 
 /**
- * Send three times the same data to 200WX station.
+ * Send three times (according to marine talk) the same data to 200WX station.
  *
 */
 void send_three_times(const int *wx_port_pointer, const uint8_t *msg, const int length){
@@ -743,7 +760,7 @@ bool retrieve_data(int *wx_port_pointer,
 }
 
 /**
-* Parse transducer data received from 200WX, YXXDR message.
+* Parse transducer data received from 200WX, YXXDR message type B, C and E.
 *
 * @param buffer                 buffer with data
 * @param buffer_length          length of buffer
@@ -1130,7 +1147,7 @@ float nmea_ndeg2degree(float val)
 
 
 /**
-* Parse transducer data received from 200WX, VWR and VWT messages.
+* Parse transducer data received from 200WX, VWR messages.
 *
 * @param buffer                 buffer with data
 * @param buffer_length          length of buffer
@@ -1278,7 +1295,9 @@ void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing
     }
 }
 
-
+/**
+ * Print data in buffer from start to end (or end of buffer). buffer[end] is not printed.
+*/
 void debug_print_nchar(const char *buffer, const int length, const int start, const int end){
     char str[301];
     int i;
@@ -1293,6 +1312,9 @@ void debug_print_nchar(const char *buffer, const int length, const int start, co
     warnx("buf_len %d; start %d end %d real_end %d \n %s \n", length, start, end, i-1, str);
 }
 
+/**
+ * Print data in buffer from start untile stop_char is found (or end of buffer). stop_char is not printed
+*/
 void debug_print_until_char(const char *buffer, const int length, const int start, const char stop_char){
     char str[301];
     int i;
