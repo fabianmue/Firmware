@@ -578,9 +578,6 @@ bool weather_station_init(int *wx_port_pointer){
 //	uint8_t enable_IMU[] = {'$','P','A','M','T','C',',','E','N',',','X','D','R','C',',','1',',','1', '\r', '\n'};
 //    send_three_times(wx_port_pointer, enable_IMU, sizeof(enable_IMU));
 
-    //cancellare
-    //encode_msg_200WX(wx_port_pointer, "PAMTC,ATTOFF,Q");
-
 	// switch to 38400 baud (the highest possible baud rate):
     encode_msg_200WX(wx_port_pointer, "PAMTC,BAUD,38400");
 //	uint8_t high_baud[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'B', 'A', 'U', 'D', ',', '3', '8', '4', '0', '0', '\r', '\n'};
@@ -798,11 +795,21 @@ bool retrieve_data(int *wx_port_pointer,
     }
 
     //cancella
+    //cancellare
+    /*
+    encode_msg_200WX(wx_port_pointer, "PAMTC,ATTOFF,Q");
+
+    sleep(2);
+
     int i = 0;
     i = find_string(i, buffer_global, buffer_length, "PAMTR");
-    if(i != -1)
+    if(i != -1){
         debug_print_until_char(buffer_global, buffer_length, 0, '*'); //cancella
 
+    }
+    else
+        warnx("Nessuna risp \n");
+    */
     //fine cancella
 
     return true;
