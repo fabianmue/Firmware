@@ -134,6 +134,9 @@ int jump_to_next_coma(const int start_index, const char *buffer, const int buffe
 
 void hdt_parser(const char *buffer, const int buffer_length, struct vehicle_attitude_s *att_raw_pointer);
 
+/** @brief Parser for WIMWD message. */
+void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer);
+
 static void usage(const char *reason);
 
 /**
@@ -170,7 +173,7 @@ int parser_200WX_main(int argc, char *argv[])
 		thread_should_exit = false;
 
 
-        daemon_task = task_spawn_cmd("daemon",
+        daemon_task = task_spawn_cmd("Parser200WX",
                                     SCHED_DEFAULT,
                                     SCHED_PRIORITY_MAX,
                                     4096,
@@ -514,6 +517,10 @@ bool weather_station_init(int *wx_port_pointer){
         // enable heading w.r.t. True North, message HCHDT
         uint8_t enable_hchdt[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'H', 'D', 'T', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
         send_three_times(wx_port_pointer, enable_hchdt, sizeof(enable_hchdt));
+
+        // enable wind direction and speed w.r.t. True North, message WIMWD
+        uint8_t enable_wimwd[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'M', 'W', 'D', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
+        send_three_times(wx_port_pointer, enable_wimwd, sizeof(enable_wimwd));
     }
 
     // enable relative wind  measurement
@@ -709,18 +716,23 @@ bool retrieve_data(int *wx_port_pointer,
         gp_parser(good_b, sizeof(good_b), gps_raw_pointer);
 
         //Simulazione dati heading
-        char buf[] = {"HCHDT,025.3,T,*"};
-        hdt_parser(buf, sizeof(buf), att_raw_pointer);
-        */
+        char buf_hdt[] = {"HCHDT,025.3,T,*"};
+        hdt_parser(buf_hdt, sizeof(buf_hdt), att_raw_pointer);
+
+        //Simulazione true wind
+        char buf_mwd[] = {"$$$WIMWD,162.3,T,159.8,M,2.3,N,6.5,M,*"};
+        mwd_parser(buf_mwd, sizeof(buf_mwd), wind_sailing_pointer);*/
+
         //Fine simalazione
-
-
 
         // see if buffer there is one (or more) GPXXX message(s)
         gp_parser(buffer_global, buffer_length, gps_raw_pointer);
 
         // see if buffer there is one (or more) HCHDT message(s)
         hdt_parser(buffer_global, buffer_length, att_raw_pointer);
+
+        // see if buffer there is one (or more) WIMWD message(s)
+        mwd_parser(buffer_global, buffer_length, wind_sailing_pointer);
     }
 
 
@@ -1178,3 +1190,60 @@ void hdt_parser(const char *buffer, const int buffer_length, struct vehicle_atti
     }
 
 }
+
+
+/**
+  * Parses a WIMWD message, if any in the buffer. Saves wind speed and direction w.r.t. true North.
+*/
+void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer){
+
+    int i;
+    float speed;
+    float direction;
+
+    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_SHORT_MSG; i++){
+
+        i = find_string(i, buffer, buffer_length, "WIMWD");
+
+        if(i == -1)
+            return;//no message found
+
+        //we have WIMWD message
+        /*
+         * |W|I|M|W|D|,|byte1 of wind direction w.r.t. True North|
+         *  ^
+         *  |
+         *  i   */
+        i += 6;	// position to byte1
+
+        if(f_extract_until_coma(&i, buffer, buffer_length, &direction)){
+            //i is ',' i+1 is 'T' i+2 is ',' i+3 is byte1 of direction wrt magnetic north
+            i += 3;
+            //do not extract direction w.r.t. to magnetic north
+            i = jump_to_next_coma(i, buffer, buffer_length);
+
+            if(i != -1){
+                /*
+                 * |,|M|,|byte1 of wind speed in knots|
+                 *  ^
+                 *  |
+                 *  i   */
+                i += 3;
+                if(f_extract_until_coma(&i, buffer, buffer_length, &speed)){
+
+                    //save data in struct
+                    wind_sailing_pointer->timestamp = hrt_absolute_time();
+                    wind_sailing_pointer->angle_true = direction;
+                    wind_sailing_pointer->speed_true = speed;
+
+                    //cancella
+                    warnx("true speed: %3.3f", (double) speed);
+                    warnx("true direction: %3.3f\n", (double) direction);
+                    //fine cancella
+                }
+
+            }
+        }
+    }
+}
+
