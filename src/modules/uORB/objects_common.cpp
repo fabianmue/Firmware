@@ -231,3 +231,7 @@ ORB_DEFINE(wind_estimate, struct wind_estimate_s);
 //Added by Marco Tranzatto
 #include "topics/wind_sailing.h"
 ORB_DEFINE(wind_sailing, struct wind_sailing_s);
+
+//Added by Marco Tranzatto
+#include "topics/vehicle_bodyframe_meas.h"
+ORB_DEFINE(vehicle_bodyframe_meas, struct vehicle_bodyframe_meas_s);

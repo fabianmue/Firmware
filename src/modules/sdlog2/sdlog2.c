@@ -93,7 +93,8 @@
 
 //Added by Marco Tranzatto
 #include <uORB/topics/wind_sailing.h>
-
+//Added by Marco Tranzatto
+#include <uORB/topics/vehicle_bodyframe_meas.h>
 
 #include <systemlib/systemlib.h>
 #include <systemlib/param/param.h>
@@ -959,6 +960,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		struct satellite_info_s sat_info;
 		struct wind_estimate_s wind_estimate;
         struct wind_sailing_s wind_sailing; //Added by Marco Tranzatto
+        struct vehicle_bodyframe_meas_s bodyframe_meas; //Added by Marco Tranzatto
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1002,6 +1004,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 			struct log_TECS_s log_TECS;
 			struct log_WIND_s log_WIND;
             struct log_WSAI_s log_WIND_SAILING; //Added by Marco Tranzatto
+            struct log_BFME_s log_BODYFRAME_MEAS; //Added by Marco Tranzatto
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1040,6 +1043,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		int servorail_status_sub;
 		int wind_sub;
         int wind_sailing_sub; //Added by Marco Tranzatto
+        int bodyframe_meas_sub; //Added by Marco Tranzatto
 	} subs;
 
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
@@ -1080,6 +1084,8 @@ int sdlog2_thread_main(int argc, char *argv[])
 
     //****************** Added by Marco Tranzatto **************
     subs.wind_sailing_sub = orb_subscribe(ORB_ID(wind_sailing));
+
+    subs.bodyframe_meas_sub = orb_subscribe(ORB_ID(vehicle_bodyframe_meas));
 /*
     // we need to rate-limit wind, as we do not need the full update rate
     orb_set_interval(subs.wind_apparent_sub, 90);
@@ -1695,6 +1701,15 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_WIND_SAILING.angle_true = buf.wind_sailing.angle_true;
             log_msg.body.log_WIND_SAILING.speed_true = buf.wind_sailing.speed_true;
             LOGBUFFER_WRITE_AND_COUNT(WSAI);
+        }
+
+        /* --- BODY FRAME MEAUSERMENT  */
+        if (copy_if_updated(ORB_ID(vehicle_bodyframe_meas), subs.bodyframe_meas_sub, &buf.bodyframe_meas)) {
+            log_msg.msg_type = LOG_BFME_MSG;
+            log_msg.body.log_BODYFRAME_MEAS.acc_x = buf.bodyframe_meas.acc_x;
+            log_msg.body.log_BODYFRAME_MEAS.acc_y = buf.bodyframe_meas.acc_y;
+            log_msg.body.log_BODYFRAME_MEAS.acc_z = buf.bodyframe_meas.acc_z;
+            LOGBUFFER_WRITE_AND_COUNT(BFME);
         }
 
         //********************** End add *******************************
