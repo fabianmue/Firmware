@@ -101,6 +101,9 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]);
 /** @brief Initialize weather station. */
 bool weather_station_init(int *wx_port_point);
 
+/** @brief Encode str in a message for 200WX.*/
+void encode_msg_200WX(int *wx_port_point, const char *str);
+
 /** @brief Send msg three times, marine talk. */
 void send_three_times(const int *wx_port_pointer, const uint8_t *msg, const int length);
 
@@ -490,8 +493,7 @@ int jump_to_next_coma(const int start_index, const char *buffer, const int buffe
 */
 bool weather_station_init(int *wx_port_pointer){
 
-    char raw_buffer[350];
-
+    char raw_buffer[300];
 	*wx_port_pointer = open("/dev/ttyS5", O_RDWR); // Serial 5, read works, write works
 	// This is serial port 4 according to: pixhawk.org/dev/wiring
 	if (*wx_port_pointer < 0) {
@@ -512,61 +514,77 @@ bool weather_station_init(int *wx_port_pointer){
 	write(*wx_port_pointer, new_line, sizeof(new_line));
 
 	// stop transmitting
-    uint8_t stop_tx[] = {'$', 'P', 'A', 'M', 'T', 'X', '\r', '\n'};
-    send_three_times(wx_port_pointer, stop_tx, sizeof(stop_tx));
+    encode_msg_200WX(wx_port_pointer, "PAMTX,0");
+//    uint8_t stop_tx[] = {'$', 'P', 'A', 'M', 'T', 'X', '\r', '\n'};
+//    send_three_times(wx_port_pointer, stop_tx, sizeof(stop_tx));
 
 	// wait for 2 seconds for stability
 	sleep(2); 
 
-	// Disable all the transmitted sentences, so that we can tell the weather station exactly what to send:
-	uint8_t disable_tx[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'A', 'L', 'L', ',', '0', ',', '1', '0', '\r', '\n'}; 
-    send_three_times(wx_port_pointer, disable_tx, sizeof(disable_tx));
+    // Disable all the transmitted sentences.
+    encode_msg_200WX(wx_port_pointer, "PAMTC,EN,ALL,0,1");
+//	uint8_t disable_tx[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'A', 'L', 'L', ',', '0', ',', '1', '0', '\r', '\n'};
+//    send_three_times(wx_port_pointer, disable_tx, sizeof(disable_tx));
 
 	// wait for 2 seconds for stability
 	sleep(2); 
 
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
         warnx(" enabling outdoor messages.\n");
-        // enable  GPS GPGGA message
-        uint8_t enable_gps_gga[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'G', 'G', 'A', ',', '1', ',', '1', '\r', '\n'}; // Enable gps string
-        send_three_times(wx_port_pointer, enable_gps_gga, sizeof(enable_gps_gga));
 
-        // enable  GPS GPGSA message
-        uint8_t enable_gps_gsa[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'G', 'S', 'A', ',', '1', ',', '1', '\r', '\n'}; // Enable gps string
-        send_three_times(wx_port_pointer, enable_gps_gsa, sizeof(enable_gps_gsa));
+        // enable  GPS GPGGA message, set 0.1 sec as amount of time between succesive trasmission
+        encode_msg_200WX(wx_port_pointer, "PAMTC,EN,GGA,1,1");
+//        uint8_t enable_gps_gga[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'G', 'G', 'A', ',', '1', ',', '1', '\r', '\n'}; // Enable gps string
+//        send_three_times(wx_port_pointer, enable_gps_gga, sizeof(enable_gps_gga));
 
-        // enable  GPS GPVTG message
-        uint8_t enable_gps_vtg[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'T', 'G', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
-        send_three_times(wx_port_pointer, enable_gps_vtg, sizeof(enable_gps_vtg));
+        // enable  GPS GPGSA message, set 0.1 sec as amount of time between succesive trasmission
+        encode_msg_200WX(wx_port_pointer, "PAMTC,EN,GSA,1,1");
+//        uint8_t enable_gps_gsa[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'G', 'S', 'A', ',', '1', ',', '1', '\r', '\n'}; // Enable gps string
+//        send_three_times(wx_port_pointer, enable_gps_gsa, sizeof(enable_gps_gsa));
 
-        // enable heading w.r.t. True North, message HCHDT
-        uint8_t enable_hchdt[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'H', 'D', 'T', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
-        send_three_times(wx_port_pointer, enable_hchdt, sizeof(enable_hchdt));
+        // enable  GPS GPVTG message, set 0.1 sec as amount of time between succesive trasmission
+        encode_msg_200WX(wx_port_pointer, "PAMTC,EN,VTG,1,1");
+//        uint8_t enable_gps_vtg[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'T', 'G', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
+//        send_three_times(wx_port_pointer, enable_gps_vtg, sizeof(enable_gps_vtg));
 
-        // enable wind direction and speed w.r.t. True North, message WIMWD
-        uint8_t enable_wimwd[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'M', 'W', 'D', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
-        send_three_times(wx_port_pointer, enable_wimwd, sizeof(enable_wimwd));
+        // enable heading w.r.t. True North, message HCHDT, set 0.1 sec as amount of time between succesive trasmission
+        encode_msg_200WX(wx_port_pointer, "PAMTC,EN,HDT,1,1");
+//        uint8_t enable_hchdt[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'H', 'D', 'T', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
+//        send_three_times(wx_port_pointer, enable_hchdt, sizeof(enable_hchdt));
+
+        // enable wind direction and speed w.r.t. True North, message WIMWD, set 0.1 sec as amount of time between succesive trasmission
+        encode_msg_200WX(wx_port_pointer, "PAMTC,EN,MWD,1,1");
+//        uint8_t enable_wimwd[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'M', 'W', 'D', ',', '1', ',', '1', '\r', '\n'};  // Enable standard course over ground and ground speed (gcgs = ground course ground speed)
+//        send_three_times(wx_port_pointer, enable_wimwd, sizeof(enable_wimwd));
     }
 
-    // enable relative wind  measurement
-    uint8_t enable_rel_wind[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'W', 'R', ',', '1', ',', '1', '\r', '\n'};
-    send_three_times(wx_port_pointer, enable_rel_wind, sizeof(enable_rel_wind));
+    // enable relative wind  measurement, set 0.1 sec as amount of time between succesive trasmission
+    encode_msg_200WX(wx_port_pointer, "PAMTC,EN,VWR,1,1");
+//    uint8_t enable_rel_wind[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'E', 'N', ',', 'V', 'W', 'R', ',', '1', ',', '1', '\r', '\n'};
+//    send_three_times(wx_port_pointer, enable_rel_wind, sizeof(enable_rel_wind));
 
-    // enable vessel attitude (pitch and roll)
-	uint8_t enable_attitude[] = {'$','P','A','M','T','C',',','E','N',',','X','D','R','B',',','1',',','1', '\r', '\n'};  
-    send_three_times(wx_port_pointer, enable_attitude, sizeof(enable_attitude));
+    // enable vessel attitude (pitch and roll), set 0.1 sec as amount of time between succesive trasmission
+    encode_msg_200WX(wx_port_pointer, "PAMTC,EN,XDRB,1,1");
+//	uint8_t enable_attitude[] = {'$','P','A','M','T','C',',','E','N',',','X','D','R','B',',','1',',','1', '\r', '\n'};
+//    send_three_times(wx_port_pointer, enable_attitude, sizeof(enable_attitude));
 
-	// enable Roll, Pitch, Yaw rate relative to the vessel frame
-	uint8_t enable_RPY_rate[] = {'$','P','A','M','T','C',',','E','N',',','X','D','R','E',',','1',',','1', '\r', '\n'};  
-    send_three_times(wx_port_pointer, enable_RPY_rate, sizeof(enable_RPY_rate));
+    // enable Roll, Pitch, Yaw rate relative to the vessel frame, set 0.1 sec as amount of time between succesive trasmission
+    encode_msg_200WX(wx_port_pointer, "PAMTC,EN,XDRE,1,1");
+//	uint8_t enable_RPY_rate[] = {'$','P','A','M','T','C',',','E','N',',','X','D','R','E',',','1',',','1', '\r', '\n'};
+//    send_three_times(wx_port_pointer, enable_RPY_rate, sizeof(enable_RPY_rate));
 
-	// enable x, y, z accelerometer readings
-	uint8_t enable_IMU[] = {'$','P','A','M','T','C',',','E','N',',','X','D','R','C',',','1',',','1', '\r', '\n'};  
-    send_three_times(wx_port_pointer, enable_IMU, sizeof(enable_IMU));
+    // enable x, y, z accelerometer readings, set 0.1 sec as amount of time between succesive trasmission
+    encode_msg_200WX(wx_port_pointer, "PAMTC,EN,XDRC,1,1");
+//	uint8_t enable_IMU[] = {'$','P','A','M','T','C',',','E','N',',','X','D','R','C',',','1',',','1', '\r', '\n'};
+//    send_three_times(wx_port_pointer, enable_IMU, sizeof(enable_IMU));
+
+    //cancellare
+    //encode_msg_200WX(wx_port_pointer, "PAMTC,ATTOFF,Q");
 
 	// switch to 38400 baud (the highest possible baud rate):
-	uint8_t high_baud[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'B', 'A', 'U', 'D', ',', '3', '8', '4', '0', '0', '\r', '\n'}; 
-    send_three_times(wx_port_pointer, high_baud, sizeof(high_baud));
+    encode_msg_200WX(wx_port_pointer, "PAMTC,BAUD,38400");
+//	uint8_t high_baud[] = {'$', 'P', 'A', 'M', 'T', 'C', ',', 'B', 'A', 'U', 'D', ',', '3', '8', '4', '0', '0', '\r', '\n'};
+//    send_three_times(wx_port_pointer, high_baud, sizeof(high_baud));
 
 	// wait for 2 seconds for stability
 	sleep(2); 
@@ -575,17 +593,41 @@ bool weather_station_init(int *wx_port_pointer){
 	pixhawk_baudrate_set(*wx_port_pointer, 38400); 
 
 	// tell the weather station to start transmitting again (now at 38400 baud):
-	uint8_t start_tx[] = {'$', 'P', 'A', 'M', 'T', 'X', ',', '1', '\r', '\n'}; 
-    send_three_times(wx_port_pointer, start_tx, sizeof(start_tx));
+    encode_msg_200WX(wx_port_pointer, "PAMTX,1");
+//	uint8_t start_tx[] = {'$', 'P', 'A', 'M', 'T', 'X', ',', '1', '\r', '\n'};
+//    send_three_times(wx_port_pointer, start_tx, sizeof(start_tx));
 
 	// erase received but not read yet data from serial buffer 
 	for (int i=0; i<4; i++)
 		read(*wx_port_pointer, &raw_buffer, sizeof(raw_buffer));
-	sleep(0.5);		// collect enough data for first parsing
+    sleep(1);		// collect enough data for first parsing
 
     warnx(" ending initialization.\n");
 
 	return true;
+}
+
+/**
+ * Encode str between '$' and '*', add checksum at the end and \r,\n and send it to 200WX.
+ *
+*/
+void encode_msg_200WX(int *wx_port_point, const char *str){
+
+    int i;
+    uint8_t checksum;
+    char app_buff[250];
+
+    checksum = str[0];
+
+    for(i = 1; i < strlen(str); i++){
+        checksum = checksum ^ str[i];
+    }
+
+    //encode the message
+    sprintf(app_buff, "$%s*%x\r\n", str, checksum);
+
+    //send message
+    send_three_times(wx_port_point, app_buff, 6 + strlen(str));
 }
 
 /**
@@ -696,7 +738,6 @@ bool retrieve_data(int *wx_port_pointer,
 
 	struct sensor_combined_s sensor_combined_raw;
     int buffer_length;
-    //char buffer[250]; //TODO renderlo globale cosi' risparmi tempo
 
 	// copy sensors raw data into local buffer, actually this action is need only to apply downsampling time
     orb_copy(ORB_ID(sensor_combined), *sensor_sub_fd_pointer, &sensor_combined_raw);
@@ -755,6 +796,14 @@ bool retrieve_data(int *wx_port_pointer,
         // see if buffer there is one (or more) WIMWD message(s)
         mwd_parser(buffer_global, buffer_length, wind_sailing_pointer);
     }
+
+    //cancella
+    int i = 0;
+    i = find_string(i, buffer_global, buffer_length, "PAMTR");
+    if(i != -1)
+        debug_print_until_char(buffer_global, buffer_length, 0, '*'); //cancella
+
+    //fine cancella
 
     return true;
 }
