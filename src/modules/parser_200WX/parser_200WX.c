@@ -688,7 +688,8 @@ bool retrieve_data(int *wx_port_pointer,
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
 
         //Simulazione dati GPS, COMMENTA IN UTILIZZO VERO
-        /*char good_b[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,52,55,50,50,46,  //GGA
+        /*
+        char good_b[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,52,55,50,50,46,  //GGA
                      55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,49,44,55,44,50,46,52,
                      44,53,50,51,46,52,44,52,57,46,49,44,77,44,44,42,53,57,13,10,
                         '$','G','P','G','S','A',',','A', ',','3', ',','M',                      //GSA
@@ -705,18 +706,20 @@ bool retrieve_data(int *wx_port_pointer,
                         55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4//a caso
                         };
 
-        gp_parser(good_b, sizeof(good_b), gps_raw_pointer);*/
-        //fine simulazione
+        gp_parser(good_b, sizeof(good_b), gps_raw_pointer);
+
+        //Simulazione dati heading
+        char buf[] = {"HCHDT,025.3,T,*"};
+        hdt_parser(buf, sizeof(buf), att_raw_pointer);
+        */
+        //Fine simalazione
+
+
 
         // see if buffer there is one (or more) GPXXX message(s)
         gp_parser(buffer_global, buffer_length, gps_raw_pointer);
 
-
-        //Simulazione dati heading
-        //char buf[] = {"HCHDT,025.3,T,*"};
-        //hdt_parser(buf, sizeof(buf), att_raw_pointer);
-        //Fine simalazione
-
+        // see if buffer there is one (or more) HCHDT message(s)
         hdt_parser(buffer_global, buffer_length, att_raw_pointer);
     }
 
@@ -994,8 +997,8 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                                     gps_raw_pointer->timestamp_position = hrt_absolute_time();
 
                                     //convert lat and long in degrees and multiple for 1E7 as required in vehicle_gps_position topic
-                                    gps_raw_pointer->lat = nmea_ndeg2degree(latitude) * 1e7d; ///< Valid only for North latitude (for now)
-                                    gps_raw_pointer->lon = nmea_ndeg2degree(longitude) * 1e7d;///< Valid only for East longitude (for now)
+                                    gps_raw_pointer->lat = nmea_ndeg2degree(latitude) * 1e7f; ///< Valid only for North latitude (for now)
+                                    gps_raw_pointer->lon = nmea_ndeg2degree(longitude) * 1e7f;///< Valid only for East longitude (for now)
                                     gps_raw_pointer->satellites_used = satellites_used;
                                     //gps_raw_pointer->fix_type = gps_quality;/**< 0 = fix not available, 1 = fix valid, 2 = DGPS*/
                                     gps_raw_pointer->eph = eph;
