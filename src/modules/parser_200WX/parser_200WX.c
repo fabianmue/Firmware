@@ -800,7 +800,7 @@ bool retrieve_data(int *wx_port_pointer,
         hdt_parser(buffer_global, buffer_length, att_raw_pointer);
 
         // see if buffer there is one (or more) WIMWD message(s)
-        mwd_parser(buffer_global, buffer_length, wind_sailing_pointer);
+        //mwd_parser(buffer_global, buffer_length, wind_sailing_pointer);
     }
 
     //debug
@@ -1012,6 +1012,8 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
              *  ^
              *  |
              *  i   */
+
+
             i += 6;	// position to byte1 of UTC
 
             //--- handle time ---
@@ -1105,10 +1107,12 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                                     gps_raw_pointer->lat = nmea_ndeg2degree(latitude) * 1e7f; ///< Valid only for North latitude (for now)
                                     gps_raw_pointer->lon = nmea_ndeg2degree(longitude) * 1e7f;///< Valid only for East longitude (for now)
                                     gps_raw_pointer->satellites_used = satellites_used;
-                                    //gps_raw_pointer->fix_type = gps_quality;/**< 0 = fix not available, 1 = fix valid, 2 = DGPS*/
+                                    //gps_raw_pointer->fix_type = gps_quality;///< 0 = fix not available, 1 = fix valid, 2 = DGPS
                                     gps_raw_pointer->eph = eph;
                                     //set altitude from meters in millimeter as requested in vehicle_gps_position topic
                                     gps_raw_pointer->alt = alt * 1000;
+
+
                                 }
                             }
                         }
@@ -1117,6 +1121,7 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                 }
             }
 
+
         }
         else if(buffer[i+2] == 'G' && buffer[i+3] == 'S' && buffer[i+4] == 'A'){
             /*found GPGSA message in buffer, starting from i
@@ -1124,6 +1129,11 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
              *  ^
              *  |
              *  i   */
+
+            //cancella
+            //debug_print_until_char(buffer, buffer_length, i, '*');
+
+
             i += 8;	// type of fix
 
             switch(buffer[i]){
@@ -1166,6 +1176,7 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                      *  |
                      *  i
                     */
+
 
                     i += 3;
 
@@ -1308,7 +1319,7 @@ void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing
             return;//no message found
 
         //Uncomment for debug
-        //debug_print_until_char(buffer, buffer_length, i, '*');
+        debug_print_until_char(buffer, buffer_length, i, '*');
 
         //we have WIMWD message
         /*
