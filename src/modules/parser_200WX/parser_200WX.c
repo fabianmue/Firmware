@@ -762,35 +762,36 @@ bool retrieve_data(int *wx_port_pointer,
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
 
         //Simulazione dati GPS, COMMENTA IN UTILIZZO VERO
+        /*
+        char good_b[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,52,55,50,50,46,  //GGA
+                     55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,49,44,55,44,50,46,52,
+                     44,53,50,51,46,52,44,52,57,46,49,44,77,44,44,42,53,57,13,10,
+                        '$','G','P','G','S','A',',','A', ',','3', ',','M',                      //GSA
+                        '$','G','P','V','T','G',',',                                            //VTG
+                         '1','6','0',46,'8',',',
+                         'T',',',
+                         '3','4','8',46,'7',',',
+                         'M',',',
+                         '0','0','4',46,'7',',',
+                         'N', ',',
+                        55,85,65,8,9,10,55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4,//a caso
+                        55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4,//a caso
+                        55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4,//a caso
+                        55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4//a caso
+                        };
 
-//        char good_b[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,52,55,50,50,46,  //GGA
-//                     55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,49,44,55,44,50,46,52,
-//                     44,53,50,51,46,52,44,52,57,46,49,44,77,44,44,42,53,57,13,10,
-//                        '$','G','P','G','S','A',',','A', ',','3', ',','M',                      //GSA
-//                        '$','G','P','V','T','G',',',                                            //VTG
-//                         '1','6','0',46,'8',',',
-//                         'T',',',
-//                         '3','4','8',46,'7',',',
-//                         'M',',',
-//                         '0','0','4',46,'7',',',
-//                         'N', ',',
-//                        55,85,65,8,9,10,55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4,//a caso
-//                        55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4,//a caso
-//                        55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4,//a caso
-//                        55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4//a caso
-//                        };
+        gp_parser(good_b, sizeof(good_b), gps_raw_pointer);
 
-//        gp_parser(good_b, sizeof(good_b), gps_raw_pointer);
+        //Simulazione dati heading
+        char buf_hdt[] = {"HCHDT,025.3,T,*********************************************************"};
+        hdt_parser(buf_hdt, sizeof(buf_hdt), att_raw_pointer);
 
-//        //Simulazione dati heading
-//        char buf_hdt[] = {"HCHDT,025.3,T,*"};
-//        hdt_parser(buf_hdt, sizeof(buf_hdt), att_raw_pointer);
-
-//        //Simulazione true wind
-//        char buf_mwd[] = {"$$$WIMWD,162.3,T,159.8,M,2.3,N,6.5,M,************************************************"};
-//        mwd_parser(buf_mwd, sizeof(buf_mwd), wind_sailing_pointer);
-
+        //Simulazione true wind
+        char buf_mwd[] = {"$$$WIMWD,162.3,T,159.8,M,2.3,N,6.5,M,************************************************"};
+        mwd_parser(buf_mwd, sizeof(buf_mwd), wind_sailing_pointer);
+        */
         //Fine simalazione
+
 
         // see if buffer there is one (or more) GPXXX message(s)
         gp_parser(buffer_global, buffer_length, gps_raw_pointer);
@@ -800,7 +801,6 @@ bool retrieve_data(int *wx_port_pointer,
 
         // see if buffer there is one (or more) WIMWD message(s)
         mwd_parser(buffer_global, buffer_length, wind_sailing_pointer);
-
     }
 
     //debug
