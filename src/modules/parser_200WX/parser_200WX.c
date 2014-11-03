@@ -768,8 +768,8 @@ bool retrieve_data(int *wx_port_pointer,
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
 
         //Simulazione dati GPS, COMMENTA IN UTILIZZO VERO
-        /*
-        char good_b[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,52,55,50,50,46,  //GGA
+
+        /*char good_b[] = {'G','P','G','G','A',',',49,51,52,52,53,56,46,54,48,44,52,55,50,50,46,  //GGA
                      55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,49,44,55,44,50,46,52,
                      44,53,50,51,46,52,44,52,57,46,49,44,77,44,44,42,53,57,13,10,
                         '$','G','P','G','S','A',',','A', ',','3', ',','M',                      //GSA
@@ -784,7 +784,9 @@ bool retrieve_data(int *wx_port_pointer,
                         55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4,//a caso
                         55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4,//a caso
                         55,48,57,52,44,78,44,48,48,56,51,51,46,49,54,54,52,44,69,44,4//a caso
-                        };
+                        };*/
+
+        /*char good_b[] = {"GPGGA,151939.20,4722.9509,N,00833.3726,E,1,4,9.3,0.0,M,49.1,M,,*,$,GPVTG,182.9,T,181.0,M,0.0,N,15.9,K,A,*,$,GPGSA,A,3,11,17,20,4,,,,,,,,,14.0,9.3,10.5,*,55555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555"};
 
         gp_parser(good_b, sizeof(good_b), gps_raw_pointer);
 
@@ -793,7 +795,7 @@ bool retrieve_data(int *wx_port_pointer,
         hdt_parser(buf_hdt, sizeof(buf_hdt), att_raw_pointer);
 
         //Simulazione true wind
-        char buf_mwd[] = {"$$$WIMWD,162.3,T,159.8,M,2.3,N,6.5,M,************************************************"};
+        char buf_mwd[] = {"$WIMWD,134.0,T,132.1,M,5.5,N,2.8,M,*,***********************************************"};
         mwd_parser(buf_mwd, sizeof(buf_mwd), wind_sailing_pointer);
         */
         //Fine simalazione
@@ -882,8 +884,8 @@ void xdr_parser(const char *buffer, const int buffer_length,
                     if(f_extract_until_coma(&i, buffer, buffer_length, &temp_val)){
                         //second value extracted, set value in topic's structure
                         att_raw_pointer->timestamp = hrt_absolute_time();
-                        att_raw_pointer->roll = temp_val * deg2rad; /// Roll in rad
-                        att_raw_pointer->pitch = pitch * deg2rad;   /// Pitch in rad
+                        att_raw_pointer->roll = temp_val * deg2rad; /// Roll in rad.
+                        att_raw_pointer->pitch = pitch * deg2rad;   /// Pitch in rad.
 
                         //cancella
                         //warnx("Roll %2.3f \t Pitch %2.3f \n", (double)temp_val, (double)pitch);
@@ -922,9 +924,9 @@ void xdr_parser(const char *buffer, const int buffer_length,
                         if(f_extract_until_coma(&i, buffer, buffer_length, &temp_val)){
                             //set value in topic's structure
                             att_raw_pointer->timestamp = hrt_absolute_time();
-                            att_raw_pointer->rollspeed = rollspeed * deg2rad;     ///< Roll speed in rad/s
-                            att_raw_pointer->pitchspeed = pitchspeed * deg2rad;   ///< Pitch speed in rad/s
-                            att_raw_pointer->yawspeed = temp_val * deg2rad;       ///< Yaw speed in rad/s
+                            att_raw_pointer->rollspeed = rollspeed * deg2rad;     ///< Roll speed in rad/s.
+                            att_raw_pointer->pitchspeed = pitchspeed * deg2rad;   ///< Pitch speed in rad/s.
+                            att_raw_pointer->yawspeed = temp_val * deg2rad;       ///< Yaw speed in rad/s.
 
                             //cancella
                             //warnx("RR %2.3f \t PR %2.3f \t YR %2.3f \n", (double)rollspeed, (double)pitchspeed, (double)temp_val);
@@ -1101,7 +1103,7 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                                     gps_raw_pointer->timestamp_time = hrt_absolute_time();
 
                                     //TODO cosa mettere qui visto che 200WX non ci da tempo totale per sdlo2 ?
-                                    gps_raw_pointer->time_gps_usec = ((unsigned long) 3) * 24 * 3600 * 1000000;
+                                    gps_raw_pointer->time_gps_usec = 4000000l;
 
                                     // time in microseconds TODO da levare
                                     gps_raw_pointer->timestamp_position = (hour * 3600 +
@@ -1199,8 +1201,12 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                         //save data in struct
                         gps_raw_pointer->timestamp_velocity = hrt_absolute_time();
                         //put speed ground vel in vel_n_mes beacuse vel_m_s is not saved in the SD card by sdlog2
-                        gps_raw_pointer->vel_n_m_s = speed_over_ground * km_h2m_s; /// Speed over ground in m/s
-                        gps_raw_pointer->cog_rad = course_over_ground * deg2rad; /// Course over ground w.r.t True North, in rad
+                        gps_raw_pointer->vel_n_m_s = speed_over_ground * km_h2m_s; /// Speed over ground in m/s.
+                        gps_raw_pointer->cog_rad = course_over_ground * deg2rad; /// Course over ground w.r.t true North, in rad.
+
+                        //cancella
+                        //warnx("SOG %3.2f \t COG: %3.2f \n", (double)gps_raw_pointer->vel_n_m_s, (double)gps_raw_pointer->cog_rad);
+                        //fine cancella
 
                         //TODO vedere se usare campo 8 per validazione dei dati
                     }
@@ -1374,9 +1380,9 @@ void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing
              *  ^
              *  |
              *  i   */
-            i += 3;
+            app_i += 3;
             //do not extract wind speed in knots
-            app_i = jump_to_next_coma(i, buffer, buffer_length);
+            app_i = jump_to_next_coma(app_i, buffer, buffer_length);
 
             if(app_i != -1){
                 //update i
