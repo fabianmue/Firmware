@@ -75,14 +75,14 @@
 #include <systemlib/err.h>
 
 
-//if extract_until coma doesn't find a ',' for SAFETY_COUNTER_EXTRACT, exit
-#define SAFETY_COUNTER_EXTRACT 15
 
-//minimum number of available byte for starting parsing a long message
-#define MIN_BYTE_FOR_PARSING_LONG_MSG 30
+#define SAFETY_COUNTER_EXTRACT 15 ///if extract_until coma doesn't find a ',' for SAFETY_COUNTER_EXTRACT charachters, exit
 
-//minimum number of available byte for starting parsing a short message
-#define MIN_BYTE_FOR_PARSING_SHORT_MSG 8
+#define MIN_BYTE_FOR_PARSING_LONG_MSG 40 ///minimum number of available byte for starting parsing a long message
+
+#define MIN_BYTE_FOR_PARSING_MEDIUM_MSG 25 ///minimum number of available byte for starting parsing a medium message
+
+#define MIN_BYTE_FOR_PARSING_SHORT_MSG 10 ///minimum number of available byte for starting parsing a short message
 
 //Global buffer for data from 200WX
 char buffer_global[400];
@@ -149,10 +149,10 @@ void hdt_parser(const char *buffer, const int buffer_length, struct vehicle_atti
 void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer);
 
 /** @brief Find string everywhere in buffer. */
-int find_string_everywhere(const int start_index, const char *buffer, const int buffer_length, char *str);
+int find_string_everywhere(const int start_index, const char *buffer, const int buffer_length, const char *str);
 
 /** @brief Check if the strin is in the buffer starting from an exact position. */
-int find_string_here(const int start_index, const char *buffer, const int buffer_length, char *str);
+int find_string_here(const int start_index, const char *buffer, const int buffer_length, const char *str);
 
 /** @brief Extract double from string. */
 bool d_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer);
@@ -352,7 +352,7 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 * @param str         string to find in buffer
 * @return 	the index in the buffer where 'string' begins in the buffer, -1 if not found
 */
-int find_string_everywhere(const int start_index, const char *buffer, const int buffer_length, char *str){
+int find_string_everywhere(const int start_index, const char *buffer, const int buffer_length, const char *str){
 
     int i;
     int str_len = strlen(str);
@@ -384,7 +384,7 @@ int find_string_everywhere(const int start_index, const char *buffer, const int 
 * @param str         string to find in buffer
 * @return 	the index in the buffer where 'string' begins in the buffer ret == start_index on succes, -1 if not found
 */
-int find_string_here(const int start_index, const char *buffer, const int buffer_length, char *str){
+int find_string_here(const int start_index, const char *buffer, const int buffer_length, const char *str){
 
     int str_len = strlen(str);
     char temp_str[15]; /**< str cannot be greater than 14 charachter! */
@@ -799,6 +799,7 @@ bool retrieve_data(int *wx_port_pointer,
         // see if buffer there is one (or more) HCHDT message(s)
         hdt_parser(buffer_global, buffer_length, att_raw_pointer);
 
+        //TODO: FIX THIS PROBLEM
         // see if buffer there is one (or more) WIMWD message(s)
         //mwd_parser(buffer_global, buffer_length, wind_sailing_pointer);
     }
@@ -1225,7 +1226,7 @@ void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_
     float temp_speed;
 
     // it's worthless to check if there won't be enough data anyway..
-    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_LONG_MSG; i++){
+    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_MEDIUM_MSG; i++){
         // see if we have a relative wind information
         i = find_string_everywhere(i, buffer, buffer_length, "WIVWR");
 
@@ -1308,10 +1309,11 @@ void hdt_parser(const char *buffer, const int buffer_length, struct vehicle_atti
 void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer){
 
     int i;
+    int app_i;
     float speed;
     float direction;
 
-    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_SHORT_MSG; i++){
+    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_MEDIUM_MSG; i++){
 
         i = find_string_everywhere(i, buffer, buffer_length, "WIMWD");
 
@@ -1319,7 +1321,7 @@ void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing
             return;//no message found
 
         //Uncomment for debug
-        debug_print_until_char(buffer, buffer_length, i, '*');
+        //debug_print_until_char(buffer, buffer_length, i, '*');
 
         //we have WIMWD message
         /*
@@ -1333,9 +1335,11 @@ void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing
             //i is ',' i+1 is 'T' i+2 is ',' i+3 is byte1 of direction wrt magnetic north
             i += 3;
             //do not extract direction w.r.t. to magnetic north
-            i = jump_to_next_coma(i, buffer, buffer_length);
+            app_i = jump_to_next_coma(i, buffer, buffer_length);
 
-            if(i != -1){
+            if(app_i != -1){
+                //update i
+                i = app_i;
                 /*
                  * |,|M|,|byte1 of wind speed in knots|
                  *  ^
