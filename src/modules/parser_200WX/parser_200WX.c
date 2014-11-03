@@ -1320,7 +1320,10 @@ void hdt_parser(const char *buffer, const int buffer_length, struct vehicle_atti
         i += 6;	// position to byte1
 
         if(f_extract_until_coma(&i, buffer, buffer_length, &heading)){
-            att_raw_pointer->yaw = heading * deg2rad; /// Heading w.r.t. true North in rad.
+            //Positive heading on the right, negative on the left
+            if(heading > 180.0 && heading <= 360.0)
+                heading = heading - 360.0;
+            att_raw_pointer->yaw = heading * deg2rad; /// Heading w.r.t. true North in rad, positive on the right.
         }
 
     }
@@ -1386,7 +1389,12 @@ void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing
 
                         //save data in struct
                         wind_sailing_pointer->timestamp = hrt_absolute_time();
-                        wind_sailing_pointer->angle_true = direction * deg2rad;/// True wind direction wrt true North in rad.
+
+                        //Positive direction on the right, negative on the left
+                        if(direction > 180.0 && direction <= 360.0)
+                            direction = direction - 360.0;
+
+                        wind_sailing_pointer->angle_true = direction * deg2rad;/// True wind direction wrt true North in rad, positive on the right.
                         wind_sailing_pointer->speed_true = speed;/// True wind speed wrt true North in m/s
 
                         //cancella
