@@ -1185,8 +1185,13 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                             //save data in struct
                             gps_raw_pointer->timestamp_velocity = hrt_absolute_time();
                             //put speed ground vel in vel_n_mes beacuse vel_m_s is not saved in the SD card by sdlog2
+
+                            //Positive course_over_ground on the right, negative on the left
+                            if(course_over_ground > 180.0 && course_over_ground <= 360.0)
+                                course_over_ground = course_over_ground - 360.0;
+
                             gps_raw_pointer->vel_n_m_s = speed_over_ground * km_h2m_s; /// Speed over ground in m/s.
-                            gps_raw_pointer->cog_rad = course_over_ground * deg2rad; /// Course over ground w.r.t true North, in rad.
+                            gps_raw_pointer->cog_rad = course_over_ground * deg2rad; /// Course over ground w.r.t true North in rad, positive on the right, negative on the left.
 
                             //cancella
                             //warnx("SOG %3.2f \t COG: %3.2f \n", (double)gps_raw_pointer->vel_n_m_s, (double)gps_raw_pointer->cog_rad);
@@ -1281,8 +1286,8 @@ void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_
                 if(f_extract_until_coma(&i, buffer, buffer_length, &temp_speed)){
                     //set value in topic's structure
                     wind_sailing_pointer->timestamp = hrt_absolute_time();
-                    wind_sailing_pointer->angle_apparent = temp_angle * deg2rad; ///Apparent angle in rad.
-                    wind_sailing_pointer->speed_apparent = temp_speed; ///Apparent speed in m/s.
+                    wind_sailing_pointer->angle_apparent = temp_angle * deg2rad; ///Apparent wind angle in rad.
+                    wind_sailing_pointer->speed_apparent = temp_speed; ///Apparent wind speed in m/s.
                 }
 
             }
@@ -1320,9 +1325,11 @@ void hdt_parser(const char *buffer, const int buffer_length, struct vehicle_atti
         i += 6;	// position to byte1
 
         if(f_extract_until_coma(&i, buffer, buffer_length, &heading)){
+
             //Positive heading on the right, negative on the left
             if(heading > 180.0 && heading <= 360.0)
                 heading = heading - 360.0;
+
             att_raw_pointer->yaw = heading * deg2rad; /// Heading w.r.t. true North in rad, positive on the right.
         }
 
