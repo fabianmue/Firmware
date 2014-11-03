@@ -1187,8 +1187,8 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                             //put speed ground vel in vel_n_mes beacuse vel_m_s is not saved in the SD card by sdlog2
 
                             //Positive course_over_ground on the right, negative on the left
-                            if(course_over_ground > 180.0 && course_over_ground <= 360.0)
-                                course_over_ground = course_over_ground - 360.0;
+                            if(course_over_ground > 180.0f && course_over_ground <= 360.0f)
+                                course_over_ground = course_over_ground - 360.0f;
 
                             gps_raw_pointer->vel_n_m_s = speed_over_ground * km_h2m_s; /// Speed over ground in m/s.
                             gps_raw_pointer->cog_rad = course_over_ground * deg2rad; /// Course over ground w.r.t true North in rad, positive on the right, negative on the left.
@@ -1217,7 +1217,7 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
 float nmea_ndeg2degree(float val)
 {
     float deg = ((int)(val / 100));
-    val = deg + (val - deg * 100) / 60;
+    val = deg + (val - deg * 100) / 60.0f;
     return val;
 }
 
@@ -1286,7 +1286,7 @@ void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_
                 if(f_extract_until_coma(&i, buffer, buffer_length, &temp_speed)){
                     //set value in topic's structure
                     wind_sailing_pointer->timestamp = hrt_absolute_time();
-                    wind_sailing_pointer->angle_apparent = temp_angle * deg2rad; ///Apparent wind angle in rad.
+                    wind_sailing_pointer->angle_apparent = temp_angle * deg2rad; ///Apparent wind angle in rad, positive on the right, negative on the left.
                     wind_sailing_pointer->speed_apparent = temp_speed; ///Apparent wind speed in m/s.
                 }
 
@@ -1327,8 +1327,8 @@ void hdt_parser(const char *buffer, const int buffer_length, struct vehicle_atti
         if(f_extract_until_coma(&i, buffer, buffer_length, &heading)){
 
             //Positive heading on the right, negative on the left
-            if(heading > 180.0 && heading <= 360.0)
-                heading = heading - 360.0;
+            if(heading > 180.0f && heading <= 360.0f)
+                heading = heading - 360.0f;
 
             att_raw_pointer->yaw = heading * deg2rad; /// Heading w.r.t. true North in rad, positive on the right.
         }
@@ -1398,8 +1398,8 @@ void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing
                         wind_sailing_pointer->timestamp = hrt_absolute_time();
 
                         //Positive direction on the right, negative on the left
-                        if(direction > 180.0 && direction <= 360.0)
-                            direction = direction - 360.0;
+                        if(direction > 180.0f && direction <= 360.0f)
+                            direction = direction - 360.0f;
 
                         wind_sailing_pointer->angle_true = direction * deg2rad;/// True wind direction wrt true North in rad, positive on the right.
                         wind_sailing_pointer->speed_true = speed;/// True wind speed wrt true North in m/s
