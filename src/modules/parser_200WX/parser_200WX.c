@@ -84,6 +84,8 @@
 
 #define MIN_BYTE_FOR_PARSING_SHORT_MSG 10 ///minimum number of available byte for starting parsing a short message
 
+#define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
+
 //Global buffer for data from 200WX
 char buffer_global[400];
 
@@ -178,7 +180,7 @@ static void usage(const char *reason)
 {
 	if (reason)
 		warnx("%s\n", reason);
-    errx(1, "usage: parser_200WX {start|stop|status} [-p <additional params>]\n\n");
+    errx(1, "usage: parser_200WX {start|stop|status}\n\n");
 }
 
 /**
@@ -206,7 +208,7 @@ int parser_200WX_main(int argc, char *argv[])
 
         daemon_task = task_spawn_cmd("parser_200WX",
                                     SCHED_DEFAULT,
-                                    SCHED_PRIORITY_MAX,
+                                    DAEMON_PRIORITY,
                                     4096,
                                     parser_200WX_daemon_thread_main,
                     (argv) ? (const char **)&argv[2] : (const char **)NULL);
