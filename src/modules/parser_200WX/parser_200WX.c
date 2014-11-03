@@ -86,6 +86,10 @@
 
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
 
+#define deg2rad 0.017453292519f // pi / 180
+
+#define km_h2m_s 0.277777777777778f // 1000 / 3600
+
 //Global buffer for data from 200WX
 char buffer_global[400];
 
@@ -801,9 +805,8 @@ bool retrieve_data(int *wx_port_pointer,
         // see if buffer there is one (or more) HCHDT message(s)
         hdt_parser(buffer_global, buffer_length, att_raw_pointer);
 
-        //TODO: FIX THIS PROBLEM
         // see if buffer there is one (or more) WIMWD message(s)
-        //mwd_parser(buffer_global, buffer_length, wind_sailing_pointer);
+        mwd_parser(buffer_global, buffer_length, wind_sailing_pointer);
     }
 
     //debug
@@ -879,8 +882,8 @@ void xdr_parser(const char *buffer, const int buffer_length,
                     if(f_extract_until_coma(&i, buffer, buffer_length, &temp_val)){
                         //second value extracted, set value in topic's structure
                         att_raw_pointer->timestamp = hrt_absolute_time();
-                        att_raw_pointer->roll = temp_val; ///< Roll in degree
-                        att_raw_pointer->pitch = pitch;   ///< Pitch in degree
+                        att_raw_pointer->roll = temp_val * deg2rad; /// Roll in rad
+                        att_raw_pointer->pitch = pitch * deg2rad;   /// Pitch in rad
 
                         //cancella
                         //warnx("Roll %2.3f \t Pitch %2.3f \n", (double)temp_val, (double)pitch);
@@ -919,9 +922,9 @@ void xdr_parser(const char *buffer, const int buffer_length,
                         if(f_extract_until_coma(&i, buffer, buffer_length, &temp_val)){
                             //set value in topic's structure
                             att_raw_pointer->timestamp = hrt_absolute_time();
-                            att_raw_pointer->rollspeed = rollspeed;     ///< Roll speed in degree/s
-                            att_raw_pointer->pitchspeed = pitchspeed;   ///< Pitch speed in degree/s
-                            att_raw_pointer->yawspeed = temp_val;       ///< Yaw speed in degree/s
+                            att_raw_pointer->rollspeed = rollspeed * deg2rad;     ///< Roll speed in rad/s
+                            att_raw_pointer->pitchspeed = pitchspeed * deg2rad;   ///< Pitch speed in rad/s
+                            att_raw_pointer->yawspeed = temp_val * deg2rad;       ///< Yaw speed in rad/s
 
                             //cancella
                             //warnx("RR %2.3f \t PR %2.3f \t YR %2.3f \n", (double)rollspeed, (double)pitchspeed, (double)temp_val);
@@ -1107,13 +1110,12 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                                     gps_raw_pointer->timestamp_position = hrt_absolute_time();
 
                                     //convert lat and long in degrees and multiple for 1E7 as required in vehicle_gps_position topic
-                                    gps_raw_pointer->lat = nmea_ndeg2degree(latitude) * 1e7f; ///< Valid only for North latitude (for now)
-                                    gps_raw_pointer->lon = nmea_ndeg2degree(longitude) * 1e7f;///< Valid only for East longitude (for now)
+                                    gps_raw_pointer->lat = nmea_ndeg2degree(latitude) * 1e7f; /// Valid only for North latitude (for now)
+                                    gps_raw_pointer->lon = nmea_ndeg2degree(longitude) * 1e7f;/// Valid only for East longitude (for now)
                                     gps_raw_pointer->satellites_used = satellites_used;
-                                    //gps_raw_pointer->fix_type = gps_quality;///< 0 = fix not available, 1 = fix valid, 2 = DGPS
                                     gps_raw_pointer->eph = eph;
                                     //set altitude from meters in millimeter as requested in vehicle_gps_position topic
-                                    gps_raw_pointer->alt = alt * 1000;
+                                    gps_raw_pointer->alt = alt * 1000; ///altitude in millimeters
 
 
                                 }
@@ -1169,12 +1171,22 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                 i += 3;
                 //do not extract course over ground w.r.t. to magnetic north
                 app_i = jump_to_next_coma(i, buffer, buffer_length);
+                /*
+                 * |,|M|,|byte1 of speed over ground in knots|
+                 *  ^
+                 *  |
+                 *  i
+                */
+                app_i += 3;
+                //do not extract speed over ground in knots
+                app_i = jump_to_next_coma(app_i, buffer, buffer_length);
 
                 if(app_i != -1){
                     //update i
                     i = app_i;
+
                     /*
-                     * |,|M|,|byte1 of speed over ground|
+                     * |,|K|,|byte1 of speed over ground in m/s|
                      *  ^
                      *  |
                      *  i
@@ -1187,8 +1199,8 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                         //save data in struct
                         gps_raw_pointer->timestamp_velocity = hrt_absolute_time();
                         //put speed ground vel in vel_n_mes beacuse vel_m_s is not saved in the SD card by sdlog2
-                        gps_raw_pointer->vel_n_m_s = speed_over_ground; ///< Speed over ground in Knots
-                        gps_raw_pointer->cog_rad = course_over_ground; ///< Course over ground w.r.t True North, in Degree
+                        gps_raw_pointer->vel_n_m_s = speed_over_ground * km_h2m_s; /// Speed over ground in m/s
+                        gps_raw_pointer->cog_rad = course_over_ground * deg2rad; /// Course over ground w.r.t True North, in rad
 
                         //TODO vedere se usare campo 8 per validazione dei dati
                     }
@@ -1224,6 +1236,7 @@ float nmea_ndeg2degree(float val)
 void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer){
 
     int i = 0;
+    int app_i;
     float temp_angle;
     float temp_speed;
 
@@ -1257,13 +1270,31 @@ void vr_parser(const char *buffer, const int buffer_length, struct wind_sailing_
             //i+1 is ','
             //i+2 is the first byte of wind speed (in knot)
             i += 2;
-            //extract second value
-            if(f_extract_until_coma(&i, buffer, buffer_length, &temp_speed)){
-                //set value in topic's structure
-                wind_sailing_pointer->timestamp = hrt_absolute_time();
-                wind_sailing_pointer->angle_apparent = temp_angle;
-                wind_sailing_pointer->speed_apparent = temp_speed;
+
+            //do not extract wind speed in knots
+            app_i = jump_to_next_coma(i, buffer, buffer_length);
+
+            if(app_i != -1){
+
+                //update i
+                i = app_i;
+                /*
+                 * |,|N|,|byte1 of wind speed in m/s|
+                 *  ^
+                 *  |
+                 *  i   */
+                i += 3;
+
+                //extract second value
+                if(f_extract_until_coma(&i, buffer, buffer_length, &temp_speed)){
+                    //set value in topic's structure
+                    wind_sailing_pointer->timestamp = hrt_absolute_time();
+                    wind_sailing_pointer->angle_apparent = temp_angle * deg2rad; ///Apparent angle in rad.
+                    wind_sailing_pointer->speed_apparent = temp_speed; ///Apparent speed in m/s.
+                }
+
             }
+
         }
 
     }
@@ -1297,7 +1328,7 @@ void hdt_parser(const char *buffer, const int buffer_length, struct vehicle_atti
         i += 6;	// position to byte1
 
         if(f_extract_until_coma(&i, buffer, buffer_length, &heading)){
-            att_raw_pointer->yaw = heading;
+            att_raw_pointer->yaw = heading * deg2rad; /// Heading w.r.t. true North in rad.
         }
 
     }
@@ -1338,12 +1369,20 @@ void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing
             i += 3;
             //do not extract direction w.r.t. to magnetic north
             app_i = jump_to_next_coma(i, buffer, buffer_length);
+            /*
+             * |,|M|,|byte1 of wind speed in knots|
+             *  ^
+             *  |
+             *  i   */
+            i += 3;
+            //do not extract wind speed in knots
+            app_i = jump_to_next_coma(i, buffer, buffer_length);
 
             if(app_i != -1){
                 //update i
                 i = app_i;
                 /*
-                 * |,|M|,|byte1 of wind speed in knots|
+                 * |,|K|,|byte1 of wind speed in m/s|
                  *  ^
                  *  |
                  *  i   */
@@ -1352,8 +1391,8 @@ void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing
 
                     //save data in struct
                     wind_sailing_pointer->timestamp = hrt_absolute_time();
-                    wind_sailing_pointer->angle_true = direction;
-                    wind_sailing_pointer->speed_true = speed;
+                    wind_sailing_pointer->angle_true = direction * deg2rad;/// True wind direction wrt true North in rad.
+                    wind_sailing_pointer->speed_true = speed;/// True wind speed wrt true North in m/s
 
                     //cancella
                     //warnx("true speed: %3.3f", (double) speed);
