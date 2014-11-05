@@ -796,6 +796,9 @@ bool retrieve_data(int *wx_port_pointer,
     //debug
     //att_raw_pointer->yaw = buffer_length; //cancella
 
+    //debug
+    //att_raw_pointer->yaw = wind_sailing_pointer->angle_apparent; //cancella
+
     return true;
 }
 
