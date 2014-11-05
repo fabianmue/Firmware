@@ -131,12 +131,51 @@ PARAM_DEFINE_FLOAT(ASAIL_RUDDER, 30.0f);
  */
 PARAM_DEFINE_FLOAT(ASAIL_PGAIN, 0.03f);
 
+/**
+ * Integral gain.
+ *
+ *
+ * @min 0
+ * @max ?
+ */
+PARAM_DEFINE_FLOAT(ASAIL_IGAIN, 0.0f);
 
+/**
+ * Latitude of origin of NED system.
+ *
+ *
+ * @min -90
+ * @max 90
+ */
+PARAM_DEFINE_FLOAT(ASAIL_LAT0, 8.560512f);
+
+/**
+ * Longitude of origin of NED system.
+ *
+ *
+ * @min -180
+ * @max 180
+ */
+PARAM_DEFINE_FLOAT(ASAIL_LON0, 47.349482f);
+
+/**
+ * Altitude of origin of NED system.
+ *
+ *
+ * @min 0
+ * @max ?
+ */
+PARAM_DEFINE_FLOAT(ASAIL_ALT0, 0.0f);
 
 param_t servo_sail_pointer;		/**< pointer to param ASAIL_SAIL*/
 param_t servo_rudder_pointer;   /**< pointer to param ASAIL_RUDDER*/
-param_t pgain_pointer;          /**< pointer to param ASAIL_PGAIN*/
 
+param_t pgain_pointer;          /**< pointer to param ASAIL_PGAIN*/
+param_t igain_pointer;          /**< pointer to param ASAIL_IGAIN*/
+
+param_t lat0_pointer;          /**< pointer to param ASAIL_LAT0*/
+param_t lon0_pointer;          /**< pointer to param ASAIL_LON0*/
+param_t alt0_pointer;          /**< pointer to param ASAIL_ALT0*/
 
 
 
@@ -247,14 +286,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
             { .fd = bfme_pub_fd,   .events = POLLIN }
     };
 
-    //prova
-    //att_pub_fd = orb_subscribe(ORB_ID(vehicle_attitude));
-
-    //prova
-//    struct pollfd fds[] = {
-//            { .fd = wsai_pub_fd,   .events = POLLIN }
-//    };
-
     thread_running = true;
 
     while(!thread_should_exit){
@@ -307,7 +338,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
         }
 
         // Send out commands:
-        //ripristina
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
         // actuators.control[0] -> output channel 1
         // actuators.control[2] -> output channel 3
