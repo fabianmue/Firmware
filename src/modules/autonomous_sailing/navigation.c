@@ -42,31 +42,12 @@
 #include "navigation.h"
 
 //WGS84 data
-//static const float flatness = 0.0033528107f;
-
-//static const float one_minus_flatness = 0.9966471893f;
 
 static const double squared_one_minus_flatness_m = 0.99330561993959; ///(1-flatness)^2 in meters
 
-//static const float squared_one_minus_flatness_mm = 993.30561993959f;
-
-//static const float earth_radius = 6378137.0f;
-
 static const double  squared_earth_radius_m = 40680631590769; ///(arth_radius)^2 in meters
 
-//static const double pi = 3.141592653589793;
-
 static const float deg2rad = 0.017453292f; // pi / 180
-
-//static const double degE7_to_rad = 3.141592653589793 / 180 / 10000000;
-
-//Reference variables
-
-//static int lat0_d_e7 = 0; ///Latitude of origin of NED system, in degress * E7.
-
-//static int lon0_d_e7 = 0; ///Longitude of origin of NED system, in degress * E7.
-
-//static int alt0_mm = 0; ///Altitude of origin of NED system, in millimeters.
 
 static float cosPhi = 0.0f;    ///cos(lat0)
 

@@ -47,7 +47,8 @@
 #include <poll.h>
 
 
- #include "as_settings.h"
+#include "as_settings.h"
+#include "navigation.h"
 
 
 //Include topics necessary
@@ -95,6 +96,14 @@ bool as_subscriber(int *att_fd_pointer, int *gps_fd_pointer,
 /** @brief Autonomous sailing controller for the rudder. */
 float as_rudder_controller(const struct wind_sailing_s  *wsai_raw_pointer,
                            struct actuator_controls_s *act_pointer);
+
+/** @brief Convert GPS data in position in Race frame coordinate*/
+void navigation_module(const struct vehicle_gps_position_s *gps_p,
+                       int32_t *x_cm_race_p, int32_t *y_cm_race_p,
+                       int32_t *target_x_cm_race_p, int32_t *target_y_cm_race_p);
+
+/** @brief Decide the next control action to be implemented*/
+void guidance_module();
 
 /*
  * Define the QGroundControl parameters here:
@@ -267,6 +276,14 @@ int as_daemon_thread_main(int argc, char *argv[]){
     int bfme_pub_fd;
     struct vehicle_bodyframe_meas_s bfme_raw;
 
+    // boat's coordinates in Race frame
+    int32_t x_cm_race = 0; ///x position of the boat in Race frame, in centimeters.
+    int32_t y_cm_race = 0; ///y position of the boat in Race frame, in centimeters.
+
+    // next target's coordinates in Race frame, for now set them far away from 0
+    int32_t target_x_cm_race = 100000; ///x position of next target in Race frame, in centimeters.
+    int32_t target_y_cm_race = 100000; ///y position of next target in Race frame, in centimeters.
+
     warnx(" starting\n");
 
     as_subscriber(&att_pub_fd, &gps_pub_fd, &bfme_pub_fd, &wsai_pub_fd);
@@ -314,8 +331,13 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 if(fds[1].revents & POLLIN){
                     // new GPS values
 
-                    //prova
+                    //copy GPS data
                     orb_copy(ORB_ID(vehicle_gps_position), gps_pub_fd, &gps_raw);
+
+                    //do navigation module
+                    navigation_module(&gps_raw,
+                                      &x_cm_race, &y_cm_race,
+                                      &target_x_cm_race, &target_y_cm_race);
 
                 }
                 if(fds[2].revents & POLLIN){//ripristina 2 e NON 0
@@ -442,4 +464,27 @@ float as_rudder_controller(const struct wind_sailing_s  *wsai_raw_pointer,
                            struct actuator_controls_s *act_pointer){
 
 
+}
+
+/**
+ * Compute from GPS position the boat's position in Race frame. Set up the next target position.
+ *
+ * @param gps_p                 pointer to gps struct.
+ * @param x_cm_race_p           pointer to the value to be set with boat x coordinate in Race frame.
+ * @param y_cm_race_p           pointer to the value to be set with boat y coordinate in Race frame.
+ * @param target_x_cm_race_p    pointer to the value to be set with target x coordinate in Race frame.
+ * @param target_y_cm_race_p    pointer to the value to be set with target y coordinate in Race frame.
+*/
+void navigation_module(const vehicle_gps_position_s *gps_p,
+                       int32_t *x_cm_race_p, int32_t *y_cm_race_p,
+                       int32_t *target_x_cm_race_p, int32_t *target_y_cm_race_p){
+
+    int32_t north_cm;
+    int32_t east_cm;
+    int32_t down_cm;
+
+    //TODO Kalman filter to better estimate GPS position
+
+    //compute boat position in NED frame
+    geo_to_ned(gps_p, &north_cm, &east_cm, &down_cm);
 }
