@@ -58,7 +58,7 @@
 #include <uORB/topics/actuator_armed.h>
 
 #include <uORB/topics/wind_sailing.h>
-#include <uORB/topics/vehicle_gps_position.h>
+#include <uORB/topics/vehicle_global_position.h>
 #include <uORB/topics/vehicle_bodyframe_meas.h>
 #include <uORB/topics/vehicle_attitude.h>
 
@@ -99,7 +99,7 @@ float as_rudder_controller(const struct wind_sailing_s  *wsai_raw_pointer,
                            struct actuator_controls_s *act_pointer);
 
 /** @brief Convert GPS data in position in Race frame coordinate*/
-void navigation_module(const struct vehicle_gps_position_s *gps_p,
+void navigation_module(const struct vehicle_global_position_s *gps_p,
                        int32_t *x_cm_race_p, int32_t *y_cm_race_p,
                        int32_t *target_x_cm_race_p, int32_t *target_y_cm_race_p);
 
@@ -194,9 +194,9 @@ int as_daemon_thread_main(int argc, char *argv[]){
     int att_pub_fd;
     struct vehicle_attitude_s att_raw;
 
-    // file descriptor and struct for vehicle_gps_position topic
+    // file descriptor and struct for vehicle_global_position topic
     int gps_pub_fd;
-    struct vehicle_gps_position_s gps_raw;
+    struct vehicle_global_position_s gps_raw;
 
     // file descriptor and struct for wind_sailing topic
     int wsai_pub_fd;
@@ -262,7 +262,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // new GPS values
 
                     //copy GPS data
-                    orb_copy(ORB_ID(vehicle_gps_position), gps_pub_fd, &gps_raw);
+                    orb_copy(ORB_ID(vehicle_global_position), gps_pub_fd, &gps_raw);
 
                     //do navigation module
                     navigation_module(&gps_raw,
@@ -323,7 +323,7 @@ bool as_subscriber(int *att_fd_pointer, int *gps_fd_pointer,
                    int *bfme_fd_pointer, int* wsai_fd_pointer){
 
     *att_fd_pointer = orb_subscribe(ORB_ID(vehicle_attitude));
-    *gps_fd_pointer = orb_subscribe(ORB_ID(vehicle_gps_position));
+    *gps_fd_pointer = orb_subscribe(ORB_ID(vehicle_global_position));
     *bfme_fd_pointer = orb_subscribe(ORB_ID(vehicle_bodyframe_meas));
     *wsai_fd_pointer = orb_subscribe(ORB_ID(wind_sailing));
 
@@ -405,7 +405,7 @@ float as_rudder_controller(const struct wind_sailing_s  *wsai_raw_pointer,
  * @param target_x_cm_race_p    pointer to the value to be set with target x coordinate in Race frame.
  * @param target_y_cm_race_p    pointer to the value to be set with target y coordinate in Race frame.
 */
-void navigation_module(const struct vehicle_gps_position_s *gps_p,
+void navigation_module(const vehicle_global_position_s *gps_p,
                        int32_t *x_cm_race_p, int32_t *y_cm_race_p,
                        int32_t *target_x_cm_race_p, int32_t *target_y_cm_race_p){
 

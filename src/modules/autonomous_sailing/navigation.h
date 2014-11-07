@@ -42,12 +42,12 @@
 #ifndef NAVIGATION_H_
 #define NAVIGATION_H_
 
-#include <uORB/topics/vehicle_gps_position.h>
+#include <uORB/topics/vehicle_global_position.h>
 #include <math.h>
 #include <stdint.h>
 
 /** @brief convert geodedical coordinates into NED coordinate.*/
-void geo_to_ned(const struct vehicle_gps_position_s *gps_p,
+void geo_to_ned(const struct vehicle_global_position_s *gps_p,
                 int32_t *north_cm_p, int32_t *east_cm_p, int32_t *down_cm_p);
 
 /** @brief convert geodedical coordinates into ECEF coordinate.*/

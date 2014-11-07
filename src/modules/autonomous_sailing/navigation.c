@@ -109,7 +109,7 @@ void set_ref0(const int32_t *_lat0_d_e7_p, const int32_t *_lon0_d_e7_p, const in
  * @param east_cm_p     pointer to variable which will contain east coordinate, in centimeters.
  * @param down_cm_p     pointer to variable which will contain down coordinate, in centimeters.
 */
-void geo_to_ned(const struct vehicle_gps_position_s *gps_p,
+void geo_to_ned(const vehicle_global_position_s *gps_p,
                 int32_t *north_cm_p, int32_t *east_cm_p, int32_t *down_cm_p){
 
     const int32_t *lat_d_e7_p;
@@ -120,9 +120,9 @@ void geo_to_ned(const struct vehicle_gps_position_s *gps_p,
     int32_t y_cm;
     int32_t z_cm;
 
-    lat_d_e7_p = &(gps_p->lat);
-    lon_d_e7_p = &(gps_p->lon);
-    alt_mm_p = &(gps_p->alt);
+    lat_d_e7_p = &(gps_p->lat) * E7;
+    lon_d_e7_p = &(gps_p->lon) * E7;
+    alt_mm_p = &(gps_p->alt) * E3;
 
     //compute ECEF coordinate of the actual gps position
     geo_to_ecef(lat_d_e7_p, lon_d_e7_p, alt_mm_p, &x_cm, &y_cm, &z_cm);
