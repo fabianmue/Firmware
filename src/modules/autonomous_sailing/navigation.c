@@ -77,7 +77,7 @@ static const float E2 = 100.0f;
  * @param deg_e7_p  pointer to angle expressed in deg * E7.
  * @return          angle in rad.
 */
-inline float degE7_to_rad(const int32_t  *deg_e7_p){
+float degE7_to_rad(const int32_t  *deg_e7_p){
 
     return (((float)*deg_e7_p) / E7) * deg2rad;
 }

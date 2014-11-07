@@ -31,37 +31,85 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
+
 /**
- * @file navigation.h
+ * @file parameters.c
  *
- * Computes NED position from geodedical information.
+ * Parameters from QGroundControl for autonomous sailing application.
  *
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#ifndef NAVIGATION_H_
-#define NAVIGATION_H_
+#include <systemlib/param/param.h>
 
-#include <uORB/topics/vehicle_gps_position.h>
-#include <math.h>
-#include <stdint.h>
+/*
+ * Define the QGroundControl parameters here:
+ * Warning: name can not be too long!!!
+ */
 
-/** @brief convert geodedical coordinates into NED coordinate.*/
-void geo_to_ned(const struct vehicle_gps_position_s *gps_p,
-                int32_t *north_cm_p, int32_t *east_cm_p, int32_t *down_cm_p);
 
-/** @brief convert geodedical coordinates into ECEF coordinate.*/
-void geo_to_ecef(const int32_t  *lat_d_e7_p, const int32_t  *lon_d_e7_p, const int32_t  *alt_mm_p,
-                 int32_t  *x_cm_p, int32_t  *y_cm_p, int32_t  *z_cm_p);
+/**
+ * Sails position
+ *
+ * ?????.
+ * Default value for sails position (must be converted into degrees) 0 = max sheet out, 0.56 = max sheet in.
+ *
+ * @min 0 (max sheet out)
+ * @max 0.56 (max sheet in)
+ */
+PARAM_DEFINE_FLOAT(AS_SAIL, 0.5f);
 
-/** @brief convert ECEF coordinates into NED coordinate.*/
-void ecef_to_ned(const int32_t *x_cm_p, const int32_t *y_cm_p, const int32_t *z_cm_p,
-                 int32_t *north_cm_p, int32_t *east_cm_p, int32_t *down_cm_p);
+/**
+ * Default heading angle w.r.t. relative wind, in degrees.
+ *
+ *
+ * @min -90
+ * @max 90
+ */
+PARAM_DEFINE_FLOAT(AS_RUDDER, 30.0f);
 
-/** @brief set origin of NED frame.*/
-void set_ref0(const int32_t  *_lat0_d_e7_p, const int32_t  *_lon0_d_e7_p, const int32_t  *_alt0_mm_p);
+/**
+ * Proportional gain.
+ *
+ *
+ * @min 0
+ * @max ?
+ */
+PARAM_DEFINE_FLOAT(AS_P_GAIN, 0.03f);
 
-/** @brief convert Deg*E7 in rad */
-float degE7_to_rad(const int32_t  *deg_e7_p);
+/**
+ * Integral gain.
+ *
+ *
+ * @min 0
+ * @max ?
+ */
+PARAM_DEFINE_FLOAT(AS_I_GAIN, 0.0f);
 
-#endif /* NAVIGATION_H_ */
+/**
+ * Latitude of origin of NED system, in degrees * E7.
+ *
+ *
+ * @min -900000000
+ * @max 900000000
+ */
+PARAM_DEFINE_INT32(AS_LAT0, 85605120);
+
+/**
+ * Longitude of origin of NED system, in degrees * E7.
+ *
+ *
+ * @min -180
+ * @max 180
+ */
+PARAM_DEFINE_INT32(AS_LON0, 473494820);
+
+/**
+ * Altitude of origin of NED system.
+ *
+ *
+ * @min 0
+ * @max ?
+ */
+PARAM_DEFINE_INT32(AS_ALT0, 0);
+

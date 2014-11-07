@@ -49,6 +49,7 @@
 
 #include "as_settings.h"
 #include "navigation.h"
+#include "parameters.c"
 
 
 //Include topics necessary
@@ -68,7 +69,7 @@
 
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
 
-#define deg2rad 0.017453292519f // pi / 180
+//#define deg2rad 0.017453292519f // pi / 180
 
 
 //Thread management variables
@@ -105,86 +106,15 @@ void navigation_module(const struct vehicle_gps_position_s *gps_p,
 /** @brief Decide the next control action to be implemented*/
 void guidance_module();
 
-/*
- * Define the QGroundControl parameters here:
- * Warning: name can not be too long!!!
- */
+param_t servo_sail_pointer;		/**< pointer to param AS_SAIL*/
+param_t servo_rudder_pointer;   /**< pointer to param AS_RUDDER*/
 
+param_t p_gain_pointer;          /**< pointer to param AS_P_GAIN*/
+param_t i_gain_pointer;          /**< pointer to param AS_I_GAIN*/
 
-/**
- * Sails position
- *
- * ?????.
- * Default value for sails position (must be converted into degrees) 0 = max sheet out, 0.56 = max sheet in.
- *
- * @min 0 (max sheet out)
- * @max 0.56 (max sheet in)
- */
-PARAM_DEFINE_FLOAT(ASAIL_SAIL, 0.5f);
-
-/**
- * Default heading angle w.r.t. relative wind, in degrees.
- *
- *
- * @min -90
- * @max 90
- */
-PARAM_DEFINE_FLOAT(ASAIL_RUDDER, 30.0f);
-
-/**
- * Proportional gain.
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_FLOAT(ASAIL_PGAIN, 0.03f);
-
-/**
- * Integral gain.
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_FLOAT(ASAIL_IGAIN, 0.0f);
-
-/**
- * Latitude of origin of NED system.
- *
- *
- * @min -90
- * @max 90
- */
-PARAM_DEFINE_FLOAT(ASAIL_LAT0, 8.560512f);
-
-/**
- * Longitude of origin of NED system.
- *
- *
- * @min -180
- * @max 180
- */
-PARAM_DEFINE_FLOAT(ASAIL_LON0, 47.349482f);
-
-/**
- * Altitude of origin of NED system.
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_FLOAT(ASAIL_ALT0, 0.0f);
-
-param_t servo_sail_pointer;		/**< pointer to param ASAIL_SAIL*/
-param_t servo_rudder_pointer;   /**< pointer to param ASAIL_RUDDER*/
-
-param_t pgain_pointer;          /**< pointer to param ASAIL_PGAIN*/
-param_t igain_pointer;          /**< pointer to param ASAIL_IGAIN*/
-
-param_t lat0_pointer;          /**< pointer to param ASAIL_LAT0*/
-param_t lon0_pointer;          /**< pointer to param ASAIL_LON0*/
-param_t alt0_pointer;          /**< pointer to param ASAIL_ALT0*/
+param_t lat0_pointer;          /**< pointer to param AS_LAT0*/
+param_t lon0_pointer;          /**< pointer to param AS_LON0*/
+param_t alt0_pointer;          /**< pointer to param AS_ALT0*/
 
 
 
@@ -475,16 +405,16 @@ float as_rudder_controller(const struct wind_sailing_s  *wsai_raw_pointer,
  * @param target_x_cm_race_p    pointer to the value to be set with target x coordinate in Race frame.
  * @param target_y_cm_race_p    pointer to the value to be set with target y coordinate in Race frame.
 */
-void navigation_module(const vehicle_gps_position_s *gps_p,
+void navigation_module(const struct vehicle_gps_position_s *gps_p,
                        int32_t *x_cm_race_p, int32_t *y_cm_race_p,
                        int32_t *target_x_cm_race_p, int32_t *target_y_cm_race_p){
 
-    int32_t north_cm;
-    int32_t east_cm;
-    int32_t down_cm;
+//    int32_t north_cm;
+//    int32_t east_cm;
+//    int32_t down_cm;
 
     //TODO Kalman filter to better estimate GPS position
 
     //compute boat position in NED frame
-    geo_to_ned(gps_p, &north_cm, &east_cm, &down_cm);
+    //geo_to_ned(gps_p, &north_cm, &east_cm, &down_cm);
 }
