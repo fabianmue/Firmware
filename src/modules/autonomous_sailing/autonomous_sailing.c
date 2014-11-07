@@ -106,15 +106,31 @@ void navigation_module(const struct vehicle_global_position_s *gps_p,
 /** @brief Decide the next control action to be implemented*/
 void guidance_module();
 
-param_t servo_sail_pointer;		/**< pointer to param AS_SAIL*/
-param_t servo_rudder_pointer;   /**< pointer to param AS_RUDDER*/
+/** @brief Initialize parameters*/
+void param_init(float *sail_servo_p, float *rudder_servo_p,
+                float *p_gain_p, float *i_gain_p,
+                int32_t *lat0_p, int32_t *lon0_p, int32_t *alt0_p,
+                float *epsilon_p);
 
-param_t p_gain_pointer;          /**< pointer to param AS_P_GAIN*/
-param_t i_gain_pointer;          /**< pointer to param AS_I_GAIN*/
+/** @brief Check if one or more parameters have been updated and perform appropriate actions*/
+void param_check_update(float *sail_servo_p, float *rudder_servo_p,
+                        float *p_gain_p, float *i_gain_p,
+                        int32_t *lat0_p, int32_t *lon0_p, int32_t *alt0_p,
+                        float *epsilon_p);
 
-param_t lat0_pointer;          /**< pointer to param AS_LAT0*/
-param_t lon0_pointer;          /**< pointer to param AS_LON0*/
-param_t alt0_pointer;          /**< pointer to param AS_ALT0*/
+
+
+param_t sail_pointer;         /**< pointer to param AS_SAIL*/
+param_t rudder_pointer;       /**< pointer to param AS_RUDDER*/
+
+param_t p_gain_pointer;       /**< pointer to param AS_P_GAIN*/
+param_t i_gain_pointer;       /**< pointer to param AS_I_GAIN*/
+
+param_t lat0_pointer;         /**< pointer to param AS_LAT0*/
+param_t lon0_pointer;         /**< pointer to param AS_LON0*/
+param_t alt0_pointer;         /**< pointer to param AS_ALT0*/
+
+param_t epsilon_pointer;      /**< pointer to param AS_EPSI*/
 
 
 
@@ -214,9 +230,29 @@ int as_daemon_thread_main(int argc, char *argv[]){
     int32_t target_x_cm_race = 100000; ///x position of next target in Race frame, in centimeters.
     int32_t target_y_cm_race = 100000; ///y position of next target in Race frame, in centimeters.
 
+    //paramters from QGroundControl
+    float rudder_servo;
+    float sail_servo;
+
+    float p_gain;
+    float i_gain;
+
+    int32_t lat0;
+    int32_t lon0;
+    int32_t alt0;
+
+    float epsilon;
+
     warnx(" starting\n");
 
+    //subscribe to interested topics
     as_subscriber(&att_pub_fd, &gps_pub_fd, &bfme_pub_fd, &wsai_pub_fd);
+
+    //initialize parameters
+    param_init(&rudder_servo, &sail_servo,
+               &p_gain, &i_gain,
+               &lat0, &lon0, &alt0,
+               &epsilon);
 
 	// try to initiliaze actuators
 	if(!actuators_init(&actuators, &actuator_pub)){
@@ -233,11 +269,14 @@ int as_daemon_thread_main(int argc, char *argv[]){
             { .fd = bfme_pub_fd,   .events = POLLIN }
     };
 
+    //set reference of NED frame before starting
+    set_ref0(&lat0, &lon0, &alt0);
+
     thread_running = true;
 
     while(!thread_should_exit){
 
-        poll_ret = poll(fds, 4, 1000);
+        poll_ret = poll(fds, (sizeof(fds) / sizeof(fds[0])), 1000);
 
         // handle the poll result
         if(poll_ret == 0) {
@@ -270,7 +309,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                                       &target_x_cm_race, &target_y_cm_race);
 
                 }
-                if(fds[2].revents & POLLIN){//ripristina 2 e NON 0
+                if(fds[2].revents & POLLIN){
                     // new WSAI values
 
                     // copy new data
@@ -353,6 +392,107 @@ bool as_subscriber(int *att_fd_pointer, int *gps_fd_pointer,
 }
 
 /**
+* Initialize parameters.
+*
+*/
+void param_init(float *sail_servo_p, float *rudder_servo_p,
+                float *p_gain_p, float *i_gain_p,
+                int32_t *lat0_p, int32_t *lon0_p, int32_t *alt0_p,
+                float *epsilon_p){
+
+    //initialize pointer to parameters
+    sail_pointer      = param_find("AS_SAIL");
+    rudder_pointer    = param_find("AS_RUDDER");
+
+    p_gain_pointer    = param_find("AS_P_GAIN");
+    i_gain_pointer    = param_find("AS_I_GAIN");
+
+    lat0_pointer      = param_find("AS_LAT0");
+    lon0_pointer      = param_find("AS_LON0");
+    alt0_pointer      = param_find("AS_ALT0");
+
+    epsilon_pointer   = param_find("AS_EPSI");
+
+    param_get(sail_pointer, sail_servo_p);
+    param_get(rudder_pointer, rudder_servo_p);
+
+    param_get(p_gain_pointer, p_gain_p);
+    param_get(i_gain_pointer, i_gain_p);
+
+    param_get(lat0_pointer, lat0_p);
+    param_get(lon0_pointer, lon0_p);
+    param_get(alt0_pointer, alt0_p);
+
+    param_get(epsilon_pointer, epsilon_p);
+}
+
+/** Check if any paramter has been updated, if so take appropriate actions
+ *
+*/
+void param_check_update(float *sail_servo_p, float *rudder_servo_p,
+                        float *p_gain_p, float *i_gain_p,
+                        int32_t *lat0_p, int32_t *lon0_p, int32_t *alt0_p,
+                        float *epsilon_p){
+
+    float app_f;
+    int32_t app_i;
+
+    //check sail_servo
+    param_get(sail_pointer, &app_f);
+    if(*sail_servo_p != app_f){
+        *sail_servo_p = app_f;
+    }
+
+    //check rudder_servo
+    param_get(rudder_pointer, &app_f);
+    if(*rudder_servo_p != app_f){
+        *rudder_servo_p = app_f;
+    }
+
+    //check p_gain
+    param_get(p_gain_pointer, &app_f);
+    if(*p_gain_p != app_f){
+        *p_gain_p = app_f;
+    }
+
+    //check i_gain
+    param_get(i_gain_pointer, &app_f);
+    if(*i_gain_p != app_f){
+        *i_gain_p = app_f;
+    }
+
+    //check lat0
+    param_get(lat0_pointer, &app_i);
+    if(*lat0_p != app_i){
+        *lat0_p = app_i;
+        //update NED origin
+        set_ref0(lat0_p, lon0_p, alt0_p);
+    }
+
+    //check lon0
+    param_get(lon0_pointer, &app_i);
+    if(*lon0_p != app_i){
+        *lon0_p = app_i;
+        //update NED origin
+        set_ref0(lat0_p, lon0_p, alt0_p);
+    }
+
+    //check alt0
+    param_get(alt0_pointer, &app_i);
+    if(*alt0_p != app_i){
+        *alt0_p = app_i;
+        //update NED origin
+        set_ref0(lat0_p, lon0_p, alt0_p);
+    }
+
+    //check epsilon
+    param_get(epsilon_pointer, &app_f);
+    if(*epsilon_p != app_f){
+        *epsilon_p = app_f;
+    }
+}
+
+/**
 * Initialize actuators.
 *
 * @param act_pointerp				pointer to actuators struct actuator_controls_s
@@ -405,16 +545,15 @@ float as_rudder_controller(const struct wind_sailing_s  *wsai_raw_pointer,
  * @param target_x_cm_race_p    pointer to the value to be set with target x coordinate in Race frame.
  * @param target_y_cm_race_p    pointer to the value to be set with target y coordinate in Race frame.
 */
-void navigation_module(const vehicle_global_position_s *gps_p,
+void navigation_module(const struct vehicle_global_position_s *gps_p,
                        int32_t *x_cm_race_p, int32_t *y_cm_race_p,
                        int32_t *target_x_cm_race_p, int32_t *target_y_cm_race_p){
 
-//    int32_t north_cm;
-//    int32_t east_cm;
-//    int32_t down_cm;
+    int32_t north_cm;
+    int32_t east_cm;
+    int32_t down_cm;
 
-    //TODO Kalman filter to better estimate GPS position
 
     //compute boat position in NED frame
-    //geo_to_ned(gps_p, &north_cm, &east_cm, &down_cm);
+    geo_to_ned(gps_p, &north_cm, &east_cm, &down_cm);
 }

@@ -105,11 +105,20 @@ PARAM_DEFINE_INT32(AS_LAT0, 85605120);
 PARAM_DEFINE_INT32(AS_LON0, 473494820);
 
 /**
- * Altitude of origin of NED system.
+ * Altitude of origin of NED system, in millimeters.
  *
  *
  * @min 0
  * @max ?
  */
 PARAM_DEFINE_INT32(AS_ALT0, 0);
+
+/**
+ * Epsilon, specifies when the next target could be considered reached, in meters.
+ *
+ *
+ * @min 0
+ * @max ?
+ */
+PARAM_DEFINE_FLOAT(AS_EPSI, 5.0f);
 
