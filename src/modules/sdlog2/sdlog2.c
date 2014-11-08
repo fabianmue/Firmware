@@ -95,6 +95,8 @@
 #include <uORB/topics/wind_sailing.h>
 //Added by Marco Tranzatto
 #include <uORB/topics/vehicle_bodyframe_meas.h>
+//Added by Marco Tranzatto
+#include <uORB/topics/debug_values.h>
 
 #include <systemlib/systemlib.h>
 #include <systemlib/param/param.h>
@@ -961,6 +963,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		struct wind_estimate_s wind_estimate;
         struct wind_sailing_s wind_sailing; //Added by Marco Tranzatto
         struct vehicle_bodyframe_meas_s bodyframe_meas; //Added by Marco Tranzatto
+        struct debug_values_s debug_values; //Added by Marco Tranzatto
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1005,6 +1008,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 			struct log_WIND_s log_WIND;
             struct log_WSAI_s log_WIND_SAILING; //Added by Marco Tranzatto
             struct log_BFME_s log_BODYFRAME_MEAS; //Added by Marco Tranzatto
+            struct log_DEVA_s log_DEBUG_VALUES; //Added by Marco Tranzatto
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1044,6 +1048,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		int wind_sub;
         int wind_sailing_sub; //Added by Marco Tranzatto
         int bodyframe_meas_sub; //Added by Marco Tranzatto
+        int debug_values_sub; //Added by Marco Tranzatto
 	} subs;
 
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
@@ -1086,6 +1091,8 @@ int sdlog2_thread_main(int argc, char *argv[])
     subs.wind_sailing_sub = orb_subscribe(ORB_ID(wind_sailing));
 
     subs.bodyframe_meas_sub = orb_subscribe(ORB_ID(vehicle_bodyframe_meas));
+
+    subs.debug_values_sub = orb_subscribe(ORB_ID(debug_values));
 /*
     // we need to rate-limit wind, as we do not need the full update rate
     orb_set_interval(subs.wind_apparent_sub, 90);
@@ -1710,6 +1717,14 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BODYFRAME_MEAS.acc_y = buf.bodyframe_meas.acc_y;
             log_msg.body.log_BODYFRAME_MEAS.acc_z = buf.bodyframe_meas.acc_z;
             LOGBUFFER_WRITE_AND_COUNT(BFME);
+        }
+
+        /* --- DEBUG VALUES  */
+        if (copy_if_updated(ORB_ID(debug_values), subs.debug_values_sub, &buf.debug_values)) {
+            log_msg.msg_type = LOG_DEVA_MSG;
+            log_msg.body.log_DEBUG_VALUES.float1 = buf.debug_values.float1;
+            log_msg.body.log_DEBUG_VALUES.int1 = buf.debug_values.int1;
+            LOGBUFFER_WRITE_AND_COUNT(DEVA);
         }
 
         //********************** End add *******************************

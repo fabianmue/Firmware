@@ -425,6 +425,13 @@ struct log_BFME_s{
     float acc_y;
     float acc_z;
 };
+
+/* --- DEBUG VALUES ------------------------------------------------------ */
+#define LOG_DEVA_MSG 57
+struct log_DEVA_s{
+    float float1;
+    int32_t  int1;
+};
 //********************** End add *******************************
 
 /********** SYSTEM MESSAGES, ID > 0x80 **********/
@@ -493,6 +500,7 @@ static const struct log_format_s log_formats[] = {
 	LOG_FORMAT(WIND, "ffff",	"X,Y,CovX,CovY"),
     LOG_FORMAT(WSAI, "ffff", "AngleApparent,SpeedApparent,AngleTrue,SpeedTrue"), //Added by Marco Tranzatto
     LOG_FORMAT(BFME, "fff", "AccX,AccY,AccZ"), //Added by Marco Tranzatto
+    LOG_FORMAT(DEVA, "fi", "Float1, Int1"), //Added by Marco Tranzatto
 	/* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),
