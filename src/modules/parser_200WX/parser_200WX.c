@@ -58,13 +58,16 @@
 #include <sys/types.h>
 
 // for uORB topics
-#include <uORB/uORB.h>
-#include <uORB/topics/sensor_combined.h>
-#include <uORB/topics/vehicle_attitude.h>
-#include <uORB/topics/airspeed.h>
-#include <uORB/topics/wind_sailing.h>
-#include <uORB/topics/vehicle_gps_position.h>
-#include <uORB/topics/vehicle_bodyframe_meas.h>
+#include "topics_handler.h"
+
+//#include <uORB/uORB.h>
+//#include <uORB/topics/sensor_combined.h>
+//#include <uORB/topics/vehicle_attitude.h>
+//#include <uORB/topics/airspeed.h>
+//#include <uORB/topics/wind_sailing.h>
+//#include <uORB/topics/vehicle_gps_position.h>
+//#include <uORB/topics/vehicle_bodyframe_meas.h>
+//#include <uORB/topics/debug_values.h>
 
 
 // to open a UART port:
@@ -118,21 +121,28 @@ bool pixhawk_baudrate_set(int wx_port, int baudrate);
 
 /** @brief Initialize all variables. */
 bool parser_variables_init(int *wx_port_pointer,
-                           int *sensor_sub_fd_pointer,
-                           int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
-                           int *airs_pub_fd_pointer, struct airspeed_s *air_vel_raw_pointer,
-                           int *gps_pub_fd_pointer, struct vehicle_gps_position_s  *gps_raw_pointer,
-                           int *wind_sailing_fd_pointer, struct wind_sailing_s *wind_sailing_raw_pointer,
-                           int *bodyframe_meas_fd_pointer, struct vehicle_bodyframe_meas_s *bodyframe_meas_raw_pointer);
+                           struct subscribtion_fd_s  *subs_p,
+                           struct published_fd_s     *pubs_p,
+                           struct structs_topics_s   *strs_p);
+//bool parser_variables_init(int *wx_port_pointer,
+//                           int *sensor_sub_fd_pointer,
+//                           int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
+//                           int *airs_pub_fd_pointer, struct airspeed_s *air_vel_raw_pointer,
+//                           int *gps_pub_fd_pointer, struct vehicle_gps_position_s  *gps_raw_pointer,
+//                           int *wind_sailing_fd_pointer, struct wind_sailing_s *wind_sailing_raw_pointer,
+//                           int *bodyframe_meas_fd_pointer, struct vehicle_bodyframe_meas_s *bodyframe_meas_raw_pointer);
 
 /** @brief Extract data from stream with 200WX. */
 bool retrieve_data(int *wx_port_pointer,
-                  int *sensor_sub_fd_pointer,
-                  struct vehicle_attitude_s *att_raw_pointer,
-                  struct airspeed_s *air_vel_raw_pointer,
-                  struct vehicle_gps_position_s *gps_raw_pointer,
-                  struct wind_sailing_s *wind_sailing_pointer,
-                  struct vehicle_bodyframe_meas_s *bodyframe_meas_raw_pointer);
+                   struct subscribtion_fd_s  *subs_p,
+                   struct structs_topics_s   *strs_p);
+//bool retrieve_data(int *wx_port_pointer,
+//                  int *sensor_sub_fd_pointer,
+//                  struct vehicle_attitude_s *att_raw_pointer,
+//                  struct airspeed_s *air_vel_raw_pointer,
+//                  struct vehicle_gps_position_s *gps_raw_pointer,
+//                  struct wind_sailing_s *wind_sailing_pointer,
+//                  struct vehicle_bodyframe_meas_s *bodyframe_meas_raw_pointer);
 
 /** @brief Parser for YXXDR messages. */
 void xdr_parser(const char *buffer, const int buffer_length,
@@ -174,6 +184,11 @@ void debug_print_nchar(const char *buffer, const int length, const int start, co
 
 /** @brief Print buffer on terminal */
 void debug_print_until_char(const char *buffer, const int length, const int start, const char stop_char);
+
+/** @brief Publish new data. */
+void publish_new_data(struct published_fd_s     *pubs_p,
+                      struct structs_topics_s   *strs_p);
+
 
 static void usage(const char *reason);
 
@@ -264,8 +279,13 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 
 	// file descriptor to read and write on com port
 	int wx_port;
+
+    struct subscribtion_fd_s subs;
+    struct published_fd_s pubs;
+    struct structs_topics_s structs_topics;
+
     // file descriptor for sensor_combined topic
-	int sensor_sub_fd;
+    /*int sensor_sub_fd;
     // file descriptor and struct for attitude topic
 	int att_pub_fd;
     struct vehicle_attitude_s att_raw;
@@ -280,21 +300,26 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
     int wind_sailing_fd;
     // file descriptor and struct for vehicle_bodyframe_meas topic topic
     struct vehicle_bodyframe_meas_s bodyframe_meas_raw;
-    int bodyframe_meas_fd;
+    int bodyframe_meas_fd;*/
+
+
+
 	//pool return value
     int poll_ret;
 
 	// initialize all the indoor variables
-    parser_variables_init(&wx_port, 	&sensor_sub_fd,
-                          &att_pub_fd, 	&att_raw,
-                          &airs_pub_fd, &air_vel_raw,
-                          &vehicle_gps_fd, &gps_raw,
-                          &wind_sailing_fd, &wind_sailing_raw,
-                          &bodyframe_meas_fd, &bodyframe_meas_raw);
+    parser_variables_init(&wx_port, &subs,
+                          &pubs, &structs_topics);
+//    parser_variables_init(&wx_port, 	&sensor_sub_fd,
+//                          &att_pub_fd, 	&att_raw,
+//                          &airs_pub_fd, &air_vel_raw,
+//                          &vehicle_gps_fd, &gps_raw,
+//                          &wind_sailing_fd, &wind_sailing_raw,
+//                          &bodyframe_meas_fd, &bodyframe_meas_raw);
 
 	// polling management
 	struct pollfd fds[] = {
-            { .fd = sensor_sub_fd,   .events = POLLIN }
+            { .fd = subs.sensor_sub,   .events = POLLIN }
     };
 
 
@@ -314,27 +339,14 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 			}
 			else{
 				// evrything is ok, at least so far (i.e. pool_ret > 0)
-				if (fds[0].revents & POLLIN) {	
+                if (fds[0].revents & POLLIN){
 
 					// read UART and retrieve indoor data 
-                    retrieve_data(&wx_port, 	&sensor_sub_fd,
-                                 &att_raw, 	&air_vel_raw,
-                                 &gps_raw,  &wind_sailing_raw,
-                                 &bodyframe_meas_raw);
+                    retrieve_data(&wx_port,
+                                  &subs,
+                                  &structs_topics);
 
-                    //publish attituide data
-                    orb_publish(ORB_ID(vehicle_attitude), att_pub_fd, &att_raw);
-
-                    //publish wind_sailing data
-                    orb_publish(ORB_ID(wind_sailing), wind_sailing_fd, &wind_sailing_raw);
-
-                    //publish vehicle_bodyframe_meas data
-                    orb_publish(ORB_ID(vehicle_bodyframe_meas), bodyframe_meas_fd, &bodyframe_meas_raw);
-
-                    if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
-                        //publish gps data
-                        orb_publish(ORB_ID(vehicle_gps_position), vehicle_gps_fd, &gps_raw);
-                    }
+                    publish_new_data(&pubs, &structs_topics);
 
 				}
 			}
@@ -685,49 +697,41 @@ bool pixhawk_baudrate_set(int wx_port, int baudrate){		// Set the baud rate of t
 * @param wx_port_pointer		pointer to COM file descriptor
 * @return 						true is evrything is ok
 */
-bool parser_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
-                           int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
-                           int *airs_pub_fd_pointer, struct airspeed_s *air_vel_raw_pointer,
-                           int *gps_pub_fd_pointer, struct vehicle_gps_position_s  *gps_raw_pointer,
-                           int *wind_sailing_fd_pointer, struct wind_sailing_s  *wind_sailing_raw_pointer,
-                           int *bodyframe_meas_fd_pointer, struct vehicle_bodyframe_meas_s *bodyframe_meas_raw_pointer){
+bool parser_variables_init(int *wx_port_pointer,
+                          struct subscribtion_fd_s  *subs_p,
+                          struct published_fd_s     *pubs_p,
+                          struct structs_topics_s   *strs_p){
 
     // try to open COM port to talk with wather 200WX station
     if(!weather_station_init(wx_port_pointer))
         return false; //failed to open COM port
 
-	// subscribe to sensor_combined topic
-	*sensor_sub_fd_pointer = orb_subscribe(ORB_ID(sensor_combined));
-	//orb_set_interval(*sensor_sub_fd_pointer, 120);	// set px4 sensors update every 0.12 [second] = 8.3 Hz
-	orb_set_interval(*sensor_sub_fd_pointer, 110);	// set px4 sensors update every 0.11 [second] = 9.1 Hz
-	//orb_set_interval(*sensor_sub_fd_pointer, 100);	// set px4 sensors update every 0.10 [second] = 10 Hz
-	//orb_set_interval(*sensor_sub_fd_pointer, 80);	// set px4 sensors update every 0.08 [second] = 12 Hz
+    // subscribe to sensor_combined topic
+    subs_p->sensor_sub = orb_subscribe(ORB_ID(sensor_combined));
+    //orb_set_interval(*sensor_sub_fd_pointer, 120);	// set px4 sensors update every 0.12 [second] = 8.3 Hz
+    orb_set_interval(subs_p->sensor_sub, 110);	// set px4 sensors update every 0.11 [second] = 9.1 Hz
+    //orb_set_interval(*sensor_sub_fd_pointer, 100);	// set px4 sensors update every 0.10 [second] = 10 Hz
+    //orb_set_interval(*sensor_sub_fd_pointer, 80);	// set px4 sensors update every 0.08 [second] = 12 Hz
 
-	// advertise attitude topic (ATT)
-    memset(att_raw_pointer, 0, sizeof(*att_raw_pointer));
-    att_raw_pointer->timestamp = hrt_absolute_time();
-    *att_pub_fd_pointer = orb_advertise(ORB_ID(vehicle_attitude), att_raw_pointer);
-
-
-	// advertise airspeed topic (AIRS) 
-    memset(air_vel_raw_pointer, 0, sizeof(*air_vel_raw_pointer));
-    air_vel_raw_pointer->timestamp = hrt_absolute_time();
-    *airs_pub_fd_pointer = orb_advertise(ORB_ID(airspeed), air_vel_raw_pointer);
+    // advertise attitude topic (ATT)
+    memset(&(strs_p->att_s), 0, sizeof(strs_p->att_s));
+    strs_p->att_s.timestamp = hrt_absolute_time();
+    pubs_p->att_pub = orb_advertise(ORB_ID(vehicle_attitude), &(strs_p->att_s));
 
     // advertise vehicle_gps_position topic
-    memset(gps_raw_pointer, 0, sizeof(*gps_raw_pointer));
-    gps_raw_pointer->timestamp_time = hrt_absolute_time();
-    *gps_pub_fd_pointer = orb_advertise(ORB_ID(vehicle_gps_position), gps_raw_pointer);
+    memset(&(strs_p->gps_s), 0, sizeof(strs_p->gps_s));
+    strs_p->gps_s.timestamp_time  = hrt_absolute_time();
+    pubs_p->gps_pub = orb_advertise(ORB_ID(vehicle_gps_position), &(strs_p->gps_s));
 
     // advertise wind_sailing topic
-    memset(wind_sailing_raw_pointer, 0, sizeof(*wind_sailing_raw_pointer));
-    wind_sailing_raw_pointer->timestamp = hrt_absolute_time();
-    *wind_sailing_fd_pointer = orb_advertise(ORB_ID(wind_sailing), wind_sailing_raw_pointer);
+    memset(&(strs_p->wind_sailing_s), 0, sizeof(strs_p->wind_sailing_s));
+    strs_p->wind_sailing_s.timestamp = hrt_absolute_time();
+    pubs_p->wind_sailing = orb_advertise(ORB_ID(wind_sailing), &(strs_p->wind_sailing_s));
 
     // advertise vehicle_bodyframe_meas topic
-    memset(bodyframe_meas_raw_pointer, 0, sizeof(*bodyframe_meas_raw_pointer));
-    bodyframe_meas_raw_pointer->timestamp = hrt_absolute_time();
-    *bodyframe_meas_fd_pointer = orb_advertise(ORB_ID(vehicle_bodyframe_meas), bodyframe_meas_raw_pointer);
+    memset(&(strs_p->bodyframe_meas_s), 0, sizeof(strs_p->bodyframe_meas_s));
+    strs_p->bodyframe_meas_s.timestamp = hrt_absolute_time();
+    pubs_p->bodyframe_meas = orb_advertise(ORB_ID(vehicle_bodyframe_meas), &(strs_p->bodyframe_meas_s));
 
     return true;
 }
@@ -736,22 +740,17 @@ bool parser_variables_init(int *wx_port_pointer, int *sensor_sub_fd_pointer,
 * Retrieve indoor data(by readings from UART) when pool() returns correctly.
 *
 * @param wx_port_pointer		pointer to COM file descriptor
-* @param sensor_sub_fd_pointer	pointer to sensor combined topic
 * @return 						true is evrything is ok
 */
 bool retrieve_data(int *wx_port_pointer,
-                  int *sensor_sub_fd_pointer,
-                  struct vehicle_attitude_s *att_raw_pointer,
-                  struct airspeed_s *air_vel_raw_pointer,
-                  struct vehicle_gps_position_s  *gps_raw_pointer,
-                  struct wind_sailing_s *wind_sailing_pointer,
-                  struct vehicle_bodyframe_meas_s *bodyframe_meas_raw_pointer){
+                   struct subscribtion_fd_s  *subs_p,
+                   struct structs_topics_s   *strs_p){
 
 	struct sensor_combined_s sensor_combined_raw;
     int buffer_length;
 
 	// copy sensors raw data into local buffer, actually this action is need only to apply downsampling time
-    orb_copy(ORB_ID(sensor_combined), *sensor_sub_fd_pointer, &sensor_combined_raw);
+    orb_copy(ORB_ID(sensor_combined), subs_p->sensor_sub, &sensor_combined_raw);
 
 	// read UART when px4 sensors are updated
     buffer_length = read(*wx_port_pointer, buffer_global, sizeof(buffer_global));
@@ -760,10 +759,10 @@ bool retrieve_data(int *wx_port_pointer,
         return false;
 
     // see if buffer there is one (or more) YXXDR message(s)
-    xdr_parser(buffer_global, buffer_length, att_raw_pointer, bodyframe_meas_raw_pointer);
+    xdr_parser(buffer_global, buffer_length, &(strs_p->att_s), &(strs_p->bodyframe_meas_s));
 
     // see if buffer there is one (or more) WIVW_ message(s)
-    vr_parser(buffer_global, buffer_length, wind_sailing_pointer);
+    vr_parser(buffer_global, buffer_length, &(strs_p->wind_sailing_s));
 
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
 
@@ -784,13 +783,13 @@ bool retrieve_data(int *wx_port_pointer,
 
 
         // see if buffer there is one (or more) GPXXX message(s)
-        gp_parser(buffer_global, buffer_length, gps_raw_pointer);
+        gp_parser(buffer_global, buffer_length, &(strs_p->gps_s));
 
         // see if buffer there is one (or more) HCHDT message(s)
-        hdt_parser(buffer_global, buffer_length, att_raw_pointer);
+        hdt_parser(buffer_global, buffer_length, &(strs_p->att_s));
 
         // see if buffer there is one (or more) WIMWD message(s)
-        mwd_parser(buffer_global, buffer_length, wind_sailing_pointer);
+        mwd_parser(buffer_global, buffer_length, &(strs_p->wind_sailing_s));
     }
 
     //debug
@@ -1451,4 +1450,24 @@ void debug_print_until_char(const char *buffer, const int length, const int star
     str[i] = '\0';
 
     warnx("buf_len %d; start %d  real_end %d \n %s \n", length, start, start + i-1, str);
+}
+
+/**
+ * Publish new data.
+*/
+void publish_new_data(struct published_fd_s *pubs_p, struct structs_topics_s *strs_p){
+
+    //publish attituide data
+    orb_publish(ORB_ID(vehicle_attitude), pubs_p->att_pub, &(strs_p->att_s));
+
+    //publish wind_sailing data
+    orb_publish(ORB_ID(wind_sailing), pubs_p->wind_sailing, &(strs_p->wind_sailing_s));
+
+    //publish vehicle_bodyframe_meas data
+    orb_publish(ORB_ID(vehicle_bodyframe_meas), pubs_p->bodyframe_meas, &(strs_p->bodyframe_meas_s));
+
+    if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
+        //publish gps data
+        orb_publish(ORB_ID(vehicle_gps_position), pubs_p->gps_pub, &(strs_p->gps_s));
+    }
 }
