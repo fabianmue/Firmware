@@ -21,6 +21,7 @@ struct published_fd_s{
     int gps_pub;
     int wind_sailing;
     int bodyframe_meas;
+    int debug_values;
 };
 
 struct structs_topics_s{
@@ -28,6 +29,7 @@ struct structs_topics_s{
     struct vehicle_gps_position_s  gps_s;
     struct wind_sailing_s wind_sailing_s;
     struct vehicle_bodyframe_meas_s bodyframe_meas_s;
+    struct debug_values_s debug_values_s;
 };
 
 #endif // TOPICS_HANDLER_H

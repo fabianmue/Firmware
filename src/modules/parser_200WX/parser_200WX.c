@@ -346,6 +346,7 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
                                   &subs,
                                   &structs_topics);
 
+                    //publish data
                     publish_new_data(&pubs, &structs_topics);
 
 				}
@@ -733,6 +734,11 @@ bool parser_variables_init(int *wx_port_pointer,
     strs_p->bodyframe_meas_s.timestamp = hrt_absolute_time();
     pubs_p->bodyframe_meas = orb_advertise(ORB_ID(vehicle_bodyframe_meas), &(strs_p->bodyframe_meas_s));
 
+    // advertise debug_values topic
+    memset(&(strs_p->debug_values_s), 0, sizeof(strs_p->debug_values_s));
+    strs_p->debug_values_s.timestamp = hrt_absolute_time();
+    pubs_p->debug_values = orb_advertise(ORB_ID(debug_values), &(strs_p->debug_values_s));
+
     return true;
 }
 
@@ -797,6 +803,11 @@ bool retrieve_data(int *wx_port_pointer,
 
     //debug
     //att_raw_pointer->yaw = wind_sailing_pointer->angle_apparent; //cancella
+
+    //debug, save buffer length
+    strs_p->debug_values_s.timestamp = hrt_absolute_time();
+    strs_p->debug_values_s.int1 = buffer_length;
+    //end debug
 
     return true;
 }
@@ -1470,4 +1481,7 @@ void publish_new_data(struct published_fd_s *pubs_p, struct structs_topics_s *st
         //publish gps data
         orb_publish(ORB_ID(vehicle_gps_position), pubs_p->gps_pub, &(strs_p->gps_s));
     }
+
+    //publish debug data
+    orb_publish(ORB_ID(debug_values), pubs_p->debug_values, &(strs_p->debug_values_s));
 }
