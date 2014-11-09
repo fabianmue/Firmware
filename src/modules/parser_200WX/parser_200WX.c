@@ -1057,15 +1057,21 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                 //--- longitude ---
 
                 // i   is the comma ','
-                /// i+1 is 'N' to symbolize the northern hemisphere (ok for Switzerland!!!)
+
+                // i+1 is 'N' or 'S', check if it's necessary to change sign of lat
+                if(buffer[i+1]  == 'S')
+                    latitude = -latitude;
                 // i+2 is the comma ','
+
                 i += 3;	// position to byte1 of longitude
                 if(f_extract_until_coma(&i, buffer, buffer_length, &longitude)){
 
                     //--- gps quality ---
 
                     // i   is the comma ','
-                    /// i+1 is 'E' to symbolize the East longitude (ok for Switzerland!!!)
+                    // i+1 is 'W' or 'E', check if it's necessary to change sign of lon
+                    if(buffer[i+1]  == 'W')
+                        longitude = -longitude;
                     // i+2 is the comma ','
                     i += 3;	// position to byte1 of GPS quality indicator
                     if(f_extract_until_coma(&i, buffer, buffer_length, &gps_quality)){
