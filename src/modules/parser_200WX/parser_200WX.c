@@ -1097,9 +1097,6 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                                     //save data in the struct
                                     gps_raw_pointer->timestamp_time = hrt_absolute_time();
 
-                                    //TODO cosa mettere qui visto che 200WX non ci da tempo totale per sdlo2 ?
-                                    gps_raw_pointer->time_gps_usec = 3000000l;
-
                                     gps_raw_pointer->timestamp_position = hrt_absolute_time();
 
                                     //convert lat and long in degrees and multiple for 1E7 as required in vehicle_gps_position topic
@@ -1212,6 +1209,8 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
 
                             gps_raw_pointer->vel_ned_valid = true;
 
+                            gps_raw_pointer->timestamp_velocity = hrt_absolute_time();
+
                             //TODO mettere epv!!!
 
                             //cancella
@@ -1269,6 +1268,7 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                                     gps_raw_pointer->time_gps_usec = (uint64_t)epoch * 1000000; //TODO: test this
                                     gps_raw_pointer->time_gps_usec += (uint64_t)((ashtech_sec - ((int)ashtech_sec)) * 1e6);
                                     gps_raw_pointer->timestamp_time = hrt_absolute_time();
+
                                 }
 
                             }
