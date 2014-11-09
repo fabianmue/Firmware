@@ -51,6 +51,7 @@
 #include <string.h>
 #include <poll.h>
 #include <errno.h>
+#include <drivers/drv_hrt.h>
 
 //setting for indoor or outdoor
 #include "../autonomous_sailing/as_settings.h"
@@ -183,6 +184,10 @@ bool d_extract_until_coma(int *index_pointer, const char *buffer, const int buff
 /** @brief Extract float from string. */
 bool f_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer);
 
+/** @brief Extract int from string. */
+bool i_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, int *ret_val_pointer);
+
+
 /** @brief Go to buffer until next ','. */
 int jump_to_next_coma(const int start_index, const char *buffer, const int buffer_length);
 
@@ -287,29 +292,12 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 	// file descriptor to read and write on com port
 	int wx_port;
 
+    //file descriptors of subscribed topics
     struct subscribtion_fd_s subs;
+    //file descriptors of published topics
     struct published_fd_s pubs;
+    //structs of interested toics
     struct structs_topics_s structs_topics;
-
-    // file descriptor for sensor_combined topic
-    /*int sensor_sub_fd;
-    // file descriptor and struct for attitude topic
-	int att_pub_fd;
-    struct vehicle_attitude_s att_raw;
-    // file descriptor and struct for airspeed topic
-	int airs_pub_fd;
-    struct airspeed_s air_vel_raw;
-    // file descriptor and struct for vehicle_gps_position topic
-    int vehicle_gps_fd;
-    struct vehicle_gps_position_s  gps_raw;
-    // file descriptor and struct for wind_sailing topic
-    struct wind_sailing_s wind_sailing_raw;
-    int wind_sailing_fd;
-    // file descriptor and struct for vehicle_bodyframe_meas topic topic
-    struct vehicle_bodyframe_meas_s bodyframe_meas_raw;
-    int bodyframe_meas_fd;*/
-
-
 
 	//pool return value
     int poll_ret;
@@ -317,12 +305,6 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 	// initialize all the indoor variables
     parser_variables_init(&wx_port, &subs,
                           &pubs, &structs_topics);
-//    parser_variables_init(&wx_port, 	&sensor_sub_fd,
-//                          &att_pub_fd, 	&att_raw,
-//                          &airs_pub_fd, &air_vel_raw,
-//                          &vehicle_gps_fd, &gps_raw,
-//                          &wind_sailing_fd, &wind_sailing_raw,
-//                          &bodyframe_meas_fd, &bodyframe_meas_raw);
 
 	// polling management
 	struct pollfd fds[] = {
@@ -356,7 +338,6 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 
                     //publish data
                     publish_new_data(&pubs, &structs_topics);
-
 				}
 			}
         }
@@ -518,6 +499,48 @@ bool f_extract_until_coma(int *index_pointer, const char *buffer, const int buff
     return true;
 }
 
+/**
+* Extract data from buffer, starting from index, until a come is found. Update index. Returns a float
+*
+* @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
+* @param buffer             buffer
+* @param buffer_length      length of buffer
+* @param ret_val_pointer    pointer to variable with the final result
+* @return 	true if no error
+*/
+bool i_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, int *ret_val_pointer){
+
+    int counter = 0;
+    char temp_char[SAFETY_COUNTER_EXTRACT];
+    int i = *index_pointer;
+
+    while(i < buffer_length && buffer[i] != ','){
+
+        temp_char[counter] = buffer[i];
+
+        i++;
+        counter++;
+        if(counter >= SAFETY_COUNTER_EXTRACT){
+            *ret_val_pointer = 0;
+            return false;
+        }
+    }
+
+    //check if we exited from while loop because we have a valid data or not
+    if(i == *index_pointer || i >= buffer_length){
+        *ret_val_pointer = 0;
+        return false; //not found valid data
+    }
+
+    //null terminate string
+    temp_char[counter] = '\0';
+
+    //update index
+    *index_pointer = i;
+    *ret_val_pointer = atoi(temp_char);
+
+    return true;
+}
 
 /**
  * Jump to next the ',' in buffer. -1 on error.
@@ -596,6 +619,9 @@ bool weather_station_init(int *wx_port_pointer){
 
         // enable  GPS GPVTG message, set 0.1 sec as amount of time between succesive trasmission
         encode_msg_200WX(wx_port_pointer, "PAMTC,EN,VTG,1,1");
+
+        // enable  GPS GPZDA message, set 0.1 sec as amount of time between succesive trasmission
+        encode_msg_200WX(wx_port_pointer, "PAMTC,EN,ZDA,1,1");
 
         // enable heading w.r.t. True North, message HCHDT, set 0.1 sec as amount of time between succesive trasmission
         encode_msg_200WX(wx_port_pointer, "PAMTC,EN,HDT,1,1");
@@ -996,6 +1022,13 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
     float alt;
     float course_over_ground;
     float speed_over_ground;
+    double ashtech_time = 0.0;
+    int day = 0;
+    int month = 0;
+    int year = 0;
+    int local_time_off_hour __attribute__((unused)) = 0;
+    int local_time_off_min __attribute__((unused)) = 0;
+
 
     // it's worthless to check if there won't be enough data anyway..
     for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_LONG_MSG; i++){
@@ -1185,6 +1218,61 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                 }
 
             }
+        }
+        else if(buffer[i+2] == 'Z' && buffer[i+3] == 'D' && buffer[i+4] == 'A'){
+            /*found GPZDA message in buffer, starting from i
+             * |G|P|Z|D|A|,|byte1 of UTC time|
+             *  ^
+             *  |
+             *  i   */
+
+            i += 6;
+
+            //extract UTC time
+            if(d_extract_until_coma(&i, buffer, buffer_length, &ashtech_time)){
+                //i is ',', i+1 is byte1 of day
+                i ++;
+                if(i_extract_until_coma(&i, buffer, buffer_length, &day)){
+                    //i is ',', i+1 is byte1 of month
+                    i ++;
+                    if(i_extract_until_coma(&i, buffer, buffer_length, &month)){
+                        //i is ',', i+1 is byte1 of year
+                        i ++;
+                        if(i_extract_until_coma(&i, buffer, buffer_length, &year)){
+                            //i is ',', i+1 is byte1 of local_time_off_hour
+                            i ++;
+                            if(i_extract_until_coma(&i, buffer, buffer_length, &local_time_off_hour)){
+                                //i is ',', i+1 is byte1 of local_time_off_min
+                                i ++;
+                                if(i_extract_until_coma(&i, buffer, buffer_length, &local_time_off_min)){
+                                    int ashtech_hour = ashtech_time / 10000;
+                                    int ashtech_minute = (ashtech_time - ashtech_hour * 10000) / 100;
+                                    double ashtech_sec = ashtech_time - ashtech_hour * 10000 - ashtech_minute * 100;
+                                    /*
+                                     * convert to unix timestamp
+                                     */
+                                    struct tm timeinfo;
+                                    timeinfo.tm_year = year - 1900;
+                                    timeinfo.tm_mon = month - 1;
+                                    timeinfo.tm_mday = day;
+                                    timeinfo.tm_hour = ashtech_hour;
+                                    timeinfo.tm_min = ashtech_minute;
+                                    timeinfo.tm_sec = (int)ashtech_sec;
+                                    time_t epoch = mktime(&timeinfo);
+
+                                    gps_raw_pointer->time_gps_usec = (uint64_t)epoch * 1000000; //TODO: test this
+                                    gps_raw_pointer->time_gps_usec += (uint64_t)((ashtech_sec - ((int)ashtech_sec)) * 1e6);
+                                    gps_raw_pointer->timestamp_time = hrt_absolute_time();
+                                }
+
+                            }
+
+                        }
+                    }
+                }
+            }
+
+
         }
 
 
