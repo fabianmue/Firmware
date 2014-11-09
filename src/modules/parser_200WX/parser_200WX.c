@@ -102,6 +102,11 @@ static bool thread_running = false;			/**< daemon status flag */
 static int daemon_task;						/**< Handle of daemon task / thread */
 
 
+/**
+ * parser 200WX weather station app start / stop handling function
+ *
+ * @ingroup apps
+ */
 __EXPORT int parser_200WX_main(int argc, char *argv[]);
 
 /** @brief main loop. */
@@ -333,10 +338,11 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
             warnx(" got no data within a second\n");
 		}
 		else{
-			if (poll_ret < 0) {
-				// this is seriously bad - should be an emergency
-                warnx(" terrible error!\n");
-			}
+            /* this is undesirable but not much we can do - might want to flag unhappy status */
+            if (poll_ret < 0) {
+                warn("POLL ERR %d, %d", poll_ret, errno);
+                continue;
+            }
 			else{
 				// evrything is ok, at least so far (i.e. pool_ret > 0)
                 if (fds[0].revents & POLLIN){
