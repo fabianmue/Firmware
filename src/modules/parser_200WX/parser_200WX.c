@@ -52,6 +52,7 @@
 #include <poll.h>
 #include <errno.h>
 
+//setting for indoor or outdoor
 #include "../autonomous_sailing/as_settings.h"
 
  // for baud rate selection of the UART port:
@@ -1107,10 +1108,6 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                                     //TODO cosa mettere qui visto che 200WX non ci da tempo totale per sdlo2 ?
                                     gps_raw_pointer->time_gps_usec = 3000000l;
 
-                                    // time in microseconds TODO da levare
-                                    gps_raw_pointer->timestamp_position = (hour * 3600 +
-                                                                        min * 60 + sec) * 1000000;
-
                                     gps_raw_pointer->timestamp_position = hrt_absolute_time();
 
                                     //convert lat and long in degrees and multiple for 1E7 as required in vehicle_gps_position topic
@@ -1204,14 +1201,26 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                         if(f_extract_until_coma(&i, buffer, buffer_length, &speed_over_ground)){
                             //save data in struct
                             gps_raw_pointer->timestamp_velocity = hrt_absolute_time();
-                            //put speed ground vel in vel_n_mes beacuse vel_m_s is not saved in the SD card by sdlog2
 
                             //Positive course_over_ground on the right, negative on the left
                             if(course_over_ground > 180.0f && course_over_ground <= 360.0f)
                                 course_over_ground = course_over_ground - 360.0f;
 
-                            gps_raw_pointer->vel_n_m_s = speed_over_ground * km_h2m_s; /// Speed over ground in m/s.
+                            gps_raw_pointer->vel_m_s = speed_over_ground * km_h2m_s; /// Speed over ground in m/s.
                             gps_raw_pointer->cog_rad = course_over_ground * deg2rad; /// Course over ground w.r.t true North in rad, positive on the right, negative on the left.
+
+                            //compute north and east velocity  hypothesizing down velocity = 0
+                            gps_raw_pointer->vel_n_m_s = gps_raw_pointer->vel_m_s *
+                                                        (float)cos(gps_raw_pointer->cog_rad);
+
+                            gps_raw_pointer->vel_e_m_s = gps_raw_pointer->vel_m_s *
+                                                        (float)sin(gps_raw_pointer->cog_rad);
+
+                            gps_raw_pointer->vel_n_d_s = 0.0f;
+
+                            gps_raw_pointer->vel_ned_valid = true;
+
+                            //TODO mettere epv!!!
 
                             //cancella
                             //warnx("SOG %3.2f \t COG: %3.2f \n", (double)gps_raw_pointer->vel_n_m_s, (double)gps_raw_pointer->cog_rad);
