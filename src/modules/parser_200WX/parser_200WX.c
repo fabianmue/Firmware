@@ -988,21 +988,12 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
 
     int i = 0;
     int app_i;
-    int counter = 0;
-    // UTC in form of hhmmss.00 + last slot for '\0' (null that terminates string)
-    char time_char[SAFETY_COUNTER_EXTRACT];
-    char hour_char[3];
-    char minute_char[3];
-    char second_char[6];
     float latitude;
     float longitude;
     float gps_quality;
     float satellites_used;
     float eph;
     float alt;
-    int hour;
-    int min;
-    float sec;
     float course_over_ground;
     float speed_over_ground;
 
@@ -1024,48 +1015,10 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
              *  |
              *  i   */
 
-
-            i += 6;	// position to byte1 of UTC
-
-            //--- handle time ---
-
-            while(buffer[i] != ','){
-                if(counter >= SAFETY_COUNTER_EXTRACT){
-                    return;// safety
-                }
-                time_char[counter] = buffer[i];
-                i++;
-                counter++;
-            }
-
-            if(counter < 8){
-                //failed readind time, use 00:00:00 and try to parse GPS data
-                hour =  min = sec = 0;
-            }
-            else{
-                //convert time from string to numeric values
-                hour_char[0] = time_char[0];
-                hour_char[1] = time_char[1];
-                hour_char[2] = '\0';
-
-                minute_char[0] = time_char[2];
-                minute_char[1] = time_char[3];
-                minute_char[2] = '\0';
-
-                for (int j=0 ; j<5 ; j++){
-                    second_char[j] = time_char[4+j];
-                }
-                second_char[5] = '\0';
-
-                hour = atoi(hour_char) ;
-                min = atoi(minute_char);
-                sec = atof(second_char);
-            }
-
             //--- latitude ---
 
-            // i is the comma ','
-            i++;// position i to byte1 of Latitude
+            i += 16;	// position to byte1 of Latitude
+
             if(f_extract_until_coma(&i, buffer, buffer_length, &latitude)){
 
                 //--- longitude ---
@@ -1216,7 +1169,7 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                             gps_raw_pointer->vel_e_m_s = gps_raw_pointer->vel_m_s *
                                                         (float)sin(gps_raw_pointer->cog_rad);
 
-                            gps_raw_pointer->vel_n_d_s = 0.0f;
+                            gps_raw_pointer->vel_d_m_s = 0.0f;
 
                             gps_raw_pointer->vel_ned_valid = true;
 
