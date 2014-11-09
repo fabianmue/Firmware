@@ -53,14 +53,17 @@
 
 
 //Include topics necessary
-#include <uORB/uORB.h>
-#include <uORB/topics/actuator_controls.h>
-#include <uORB/topics/actuator_armed.h>
+#include "topics_handler.h"
 
-#include <uORB/topics/wind_sailing.h>
-#include <uORB/topics/vehicle_global_position.h>
-#include <uORB/topics/vehicle_bodyframe_meas.h>
-#include <uORB/topics/vehicle_attitude.h>
+
+//#include <uORB/uORB.h>
+//#include <uORB/topics/actuator_controls.h>
+//#include <uORB/topics/actuator_armed.h>
+
+//#include <uORB/topics/wind_sailing.h>
+//#include <uORB/topics/vehicle_global_position.h>
+//#include <uORB/topics/vehicle_bodyframe_meas.h>
+//#include <uORB/topics/vehicle_attitude.h>
 
 
 // To be able to use the "parameter function" from Q ground control:
@@ -68,8 +71,6 @@
 #include <systemlib/systemlib.h>
 
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
-
-//#define deg2rad 0.017453292519f // pi / 180
 
 
 //Thread management variables
@@ -92,50 +93,31 @@ int as_daemon_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
 
 /** @brief Iinitialize actuators. */
-bool actuators_init(struct actuator_controls_s *act_pointer, orb_advert_t *actuator_pub_pointer);
+bool actuators_init(struct published_fd_s *pubs_p,
+                    struct structs_topics_s *strs_p);
 
 /** @brief Subscribe to appropriate topics. */
-bool as_subscriber(int *att_fd_pointer, int *gps_fd_pointer,
-                   int *bfme_fd_pointer, int* wsai_fd_pointer);
+bool as_subscriber(struct subscribtion_fd_s *subs_p);
 
 /** @brief Autonomous sailing controller for the rudder. */
-float as_rudder_controller(const struct wind_sailing_s  *wsai_raw_pointer,
-                           struct actuator_controls_s *act_pointer);
+float as_rudder_controller();
 
 /** @brief Convert GPS data in position in Race frame coordinate*/
-void navigation_module(const struct vehicle_global_position_s *gps_p,
-                       int32_t *x_cm_race_p, int32_t *y_cm_race_p,
-                       int32_t *target_x_cm_race_p, int32_t *target_y_cm_race_p);
+void navigation_module();
 
 /** @brief Decide the next control action to be implemented*/
 void guidance_module();
 
 /** @brief Initialize parameters*/
-void param_init(float *sail_servo_p, float *rudder_servo_p,
-                float *p_gain_p, float *i_gain_p,
-                int32_t *lat0_p, int32_t *lon0_p, int32_t *alt0_p,
-                float *epsilon_p);
+void param_init(struct pointers_param_qgc *pointers_p,
+                struct parameters_qgc *params_p);
 
 /** @brief Check if one or more parameters have been updated and perform appropriate actions*/
-void param_check_update(float *sail_servo_p, float *rudder_servo_p,
-                        float *p_gain_p, float *i_gain_p,
-                        int32_t *lat0_p, int32_t *lon0_p, int32_t *alt0_p,
-                        float *epsilon_p);
+void param_check_update(struct pointers_param_qgc *pointers_p,
+                        struct parameters_qgc *params_p);
 
-
-
-param_t sail_pointer;         /**< pointer to param AS_SAIL*/
-param_t rudder_pointer;       /**< pointer to param AS_RUDDER*/
-
-param_t p_gain_pointer;       /**< pointer to param AS_P_GAIN*/
-param_t i_gain_pointer;       /**< pointer to param AS_I_GAIN*/
-
-param_t lat0_pointer;         /**< pointer to param AS_LAT0*/
-param_t lon0_pointer;         /**< pointer to param AS_LON0*/
-param_t alt0_pointer;         /**< pointer to param AS_ALT0*/
-
-param_t epsilon_pointer;      /**< pointer to param AS_EPSI*/
-
+//pointers to params from QGroundControl
+struct pointers_param_qgc pointers_param;
 
 
 static void usage(const char *reason)
@@ -203,63 +185,50 @@ int autonomous_sailing_main(int argc, char *argv[]){
 */
 int as_daemon_thread_main(int argc, char *argv[]){
 
-    // file descriptor and struct for actuator_controls topic
-	struct actuator_controls_s actuators; 
-	orb_advert_t actuator_pub;
-
     //pool return value
     int poll_ret;
 
-    // file descriptor and struct for attitude topic
-    int att_pub_fd;
-    struct vehicle_attitude_s att_raw;
+    //file descriptors of subscribed topics
+    struct subscribtion_fd_s subs;
+    //file descriptors of published topics
+    struct published_fd_s pubs;
+    //structs of interested toics
+    struct structs_topics_s strs;
+    //parameters from QGroundControl
+    struct parameters_qgc params;
 
-    // file descriptor and struct for vehicle_global_position topic
-    int gps_pub_fd;
-    struct vehicle_global_position_s gps_raw;
 
-    // file descriptor and struct for wind_sailing topic
-    int wsai_pub_fd;
-    struct wind_sailing_s wsai_raw;
+//    // boat's coordinates in Race frame
+//    int32_t x_cm_race = 0; ///x position of the boat in Race frame, in centimeters.
+//    int32_t y_cm_race = 0; ///y position of the boat in Race frame, in centimeters.
 
-    // file descriptor and struct for vehicle_bodyframe_meas topic
-    int bfme_pub_fd;
-    struct vehicle_bodyframe_meas_s bfme_raw;
-
-    // boat's coordinates in Race frame
-    int32_t x_cm_race = 0; ///x position of the boat in Race frame, in centimeters.
-    int32_t y_cm_race = 0; ///y position of the boat in Race frame, in centimeters.
-
-    // next target's coordinates in Race frame, for now set them far away from 0
-    int32_t target_x_cm_race = 100000; ///x position of next target in Race frame, in centimeters.
-    int32_t target_y_cm_race = 100000; ///y position of next target in Race frame, in centimeters.
+//    // next target's coordinates in Race frame, for now set them far away from 0
+//    int32_t target_x_cm_race = 100000; ///x position of next target in Race frame, in centimeters.
+//    int32_t target_y_cm_race = 100000; ///y position of next target in Race frame, in centimeters.
 
     //paramters from QGroundControl
-    float rudder_servo;
-    float sail_servo;
+//    float rudder_servo;
+//    float sail_servo;
 
-    float p_gain;
-    float i_gain;
+//    float p_gain;
+//    float i_gain;
 
-    int32_t lat0;
-    int32_t lon0;
-    int32_t alt0;
+//    int32_t lat0;
+//    int32_t lon0;
+//    int32_t alt0;
 
-    float epsilon;
+//    float epsilon;
 
     warnx(" starting\n");
 
     //subscribe to interested topics
-    as_subscriber(&att_pub_fd, &gps_pub_fd, &bfme_pub_fd, &wsai_pub_fd);
+    as_subscriber(&subs);
 
     //initialize parameters
-    param_init(&rudder_servo, &sail_servo,
-               &p_gain, &i_gain,
-               &lat0, &lon0, &alt0,
-               &epsilon);
+    param_init(&pointers_param, &params);
 
 	// try to initiliaze actuators
-	if(!actuators_init(&actuators, &actuator_pub)){
+    if(!actuators_init(&pubs, &strs)){
 		// something went wrong
 		thread_should_exit = true;
         warnx(" problem in initializing actuators\n");
@@ -267,14 +236,14 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
     // polling management
     struct pollfd fds[] = {
-            { .fd = att_pub_fd ,   .events = POLLIN },
-            { .fd = gps_pub_fd ,   .events = POLLIN },
-            { .fd = wsai_pub_fd,   .events = POLLIN },
-            { .fd = bfme_pub_fd,   .events = POLLIN }
+            { .fd = subs.att_sub ,   .events = POLLIN },
+            { .fd = subs.gps_sub ,   .events = POLLIN },
+            { .fd = subs.wsai_sub,   .events = POLLIN },
+            { .fd = subs.bfme_sub,   .events = POLLIN }
     };
 
     //set reference of NED frame before starting
-    set_ref0(&lat0, &lon0, &alt0);
+    set_ref0(&(params.lat0), &(params.lon0), &(params.alt0));
 
     thread_running = true;
 
@@ -299,42 +268,43 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // new Attitude values
 
                     //prova
-                    orb_copy(ORB_ID(vehicle_attitude), att_pub_fd, &att_raw);
+                    orb_copy(ORB_ID(vehicle_attitude), subs.att_sub, &(strs.att));
 
                 }
                 if(fds[1].revents & POLLIN){
-                    // new GPS values
+                    // new vehicle_global_position value
 
                     //copy GPS data
-                    orb_copy(ORB_ID(vehicle_global_position), gps_pub_fd, &gps_raw);
+                    orb_copy(ORB_ID(vehicle_global_position), subs.gps_sub, &(strs.gps_filtered));
 
                     //do navigation module
-                    navigation_module(&gps_raw,
-                                      &x_cm_race, &y_cm_race,
-                                      &target_x_cm_race, &target_y_cm_race);
+                    navigation_module();
 
                 }
                 if(fds[2].revents & POLLIN){
                     // new WSAI values
 
                     // copy new data
-                    orb_copy(ORB_ID(wind_sailing), wsai_pub_fd, &wsai_raw);
+                    orb_copy(ORB_ID(wind_sailing), subs.wsai_sub, &(strs.wsai));
                     // rudder control
-                    as_rudder_controller(&wsai_raw, &actuators);
+                    as_rudder_controller();
 
                 }
                 if(fds[3].revents & POLLIN){
                     // new BFME values
 
                     // copy new data
-                    orb_copy(ORB_ID(vehicle_bodyframe_meas), bfme_pub_fd, &bfme_raw);
+                    orb_copy(ORB_ID(vehicle_bodyframe_meas), subs.bfme_sub, &(strs.bfme));
 
                 }
+
+                //check if any parameter has been updated
+                param_check_update(&pointers_param, &params);
             }
         }
 
         // Send out commands:
-        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
+        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
         // actuators.control[0] -> output channel 1
         // actuators.control[2] -> output channel 3
         // actuators.control[3] -> output channel 4
@@ -342,8 +312,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
     // kill all outputs
     for (unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++)
-        actuators.control[i] = 0.0f;
-    orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
+        strs.actuators.control[i] = 0.0f;
+    orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
 
     warnx(" exiting.\n");
 
@@ -356,37 +326,31 @@ int as_daemon_thread_main(int argc, char *argv[]){
 /**
  * Subscribe each fd to the correspondent topic.
  *
- * @param att_fd_pointer   Pointer to int that will contain file descriptor for ATT topic.
- * @param gps_fd_pointer   Pointer to int that will contain file descriptor for GPS topic.
- * @param bfme_fd_pointer  Pointer to int that will contain file descriptor for BFME topic.
- * @param wsai_fd_pointer  Pointer to int that will contain file descriptor for WSAI topic.
- *
  * @return                 True on succes.
 */
-bool as_subscriber(int *att_fd_pointer, int *gps_fd_pointer,
-                   int *bfme_fd_pointer, int* wsai_fd_pointer){
+bool as_subscriber(struct subscribtion_fd_s *subs_p){
 
-    *att_fd_pointer = orb_subscribe(ORB_ID(vehicle_attitude));
-    *gps_fd_pointer = orb_subscribe(ORB_ID(vehicle_global_position));
-    *bfme_fd_pointer = orb_subscribe(ORB_ID(vehicle_bodyframe_meas));
-    *wsai_fd_pointer = orb_subscribe(ORB_ID(wind_sailing));
+    subs_p->att_sub = orb_subscribe(ORB_ID(vehicle_attitude));
+    subs_p->gps_sub = orb_subscribe(ORB_ID(vehicle_global_position));
+    subs_p->bfme_sub = orb_subscribe(ORB_ID(vehicle_bodyframe_meas));
+    subs_p->wsai_sub = orb_subscribe(ORB_ID(wind_sailing));
 
-    if(*att_fd_pointer == -1){
+    if(subs_p->att_sub == -1){
         warnx(" error on subscribing on Attitude Topic \n");
         return false;
     }
 
-    if(*gps_fd_pointer == -1){
+    if(subs_p->gps_sub == -1){
         warnx(" error on subscribing on GPS Topic \n");
         return false;
     }
 
-    if(*bfme_fd_pointer == -1){
+    if(subs_p->bfme_sub == -1){
         warnx(" error on subscribing on Body Frame Measurements Topic \n");
         return false;
     }
 
-    if(*wsai_fd_pointer == -1){
+    if(subs_p->wsai_sub == -1){
         warnx(" error on subscribing on Wind Sailing Topic \n");
         return false;
     }
@@ -400,111 +364,107 @@ bool as_subscriber(int *att_fd_pointer, int *gps_fd_pointer,
 * Initialize parameters.
 *
 */
-void param_init(float *sail_servo_p, float *rudder_servo_p,
-                float *p_gain_p, float *i_gain_p,
-                int32_t *lat0_p, int32_t *lon0_p, int32_t *alt0_p,
-                float *epsilon_p){
+void param_init(struct pointers_param_qgc *pointers_p,
+                struct parameters_qgc *params_p){
 
     //initialize pointer to parameters
-    sail_pointer      = param_find("AS_SAIL");
-    rudder_pointer    = param_find("AS_RUDDER");
+    pointers_p->sail_pointer    = param_find("AS_SAIL");
+    pointers_p->rudder_pointer  = param_find("AS_RUDDER");
 
-    p_gain_pointer    = param_find("AS_P_GAIN");
-    i_gain_pointer    = param_find("AS_I_GAIN");
+    pointers_p->p_gain_pointer  = param_find("AS_P_GAIN");
+    pointers_p->i_gain_pointer  = param_find("AS_I_GAIN");
 
-    lat0_pointer      = param_find("AS_LAT0");
-    lon0_pointer      = param_find("AS_LON0");
-    alt0_pointer      = param_find("AS_ALT0");
+    pointers_p->lat0_pointer    = param_find("AS_LAT0");
+    pointers_p->lon0_pointer    = param_find("AS_LON0");
+    pointers_p->alt0_pointer    = param_find("AS_ALT0");
 
-    epsilon_pointer   = param_find("AS_EPSI");
+    pointers_p->epsilon_pointer = param_find("AS_EPSI");
 
-    param_get(sail_pointer, sail_servo_p);
-    param_get(rudder_pointer, rudder_servo_p);
+    //get parameters
+    param_get(pointers_p->sail_pointer, &(params_p->sail_servo));
+    param_get(pointers_p->rudder_pointer, &(params_p->rudder_servo));
 
-    param_get(p_gain_pointer, p_gain_p);
-    param_get(i_gain_pointer, i_gain_p);
+    param_get(pointers_p->p_gain_pointer, &(params_p->p_gain));
+    param_get(pointers_p->i_gain_pointer, &(params_p->i_gain));
 
-    param_get(lat0_pointer, lat0_p);
-    param_get(lon0_pointer, lon0_p);
-    param_get(alt0_pointer, alt0_p);
+    param_get(pointers_p->lat0_pointer, &(params_p->lat0));
+    param_get(pointers_p->lon0_pointer, &(params_p->lon0));
+    param_get(pointers_p->alt0_pointer, &(params_p->alt0));
 
-    param_get(epsilon_pointer, epsilon_p);
+    param_get(pointers_p->epsilon_pointer, &(params_p->epsilon));
 }
 
 /** Check if any paramter has been updated, if so take appropriate actions
  *
 */
-void param_check_update(float *sail_servo_p, float *rudder_servo_p,
-                        float *p_gain_p, float *i_gain_p,
-                        int32_t *lat0_p, int32_t *lon0_p, int32_t *alt0_p,
-                        float *epsilon_p){
+void param_check_update(struct pointers_param_qgc *pointers_p,
+                        struct parameters_qgc *params_p){
 
     float app_f;
     int32_t app_i;
 
     //check sail_servo
-    param_get(sail_pointer, &app_f);
-    if(*sail_servo_p != app_f){
-        *sail_servo_p = app_f;
+    param_get(pointers_p->sail_pointer, &app_f);
+    if(params_p->sail_servo != app_f){
+        params_p->sail_servo = app_f;
     }
 
     //check rudder_servo
-    param_get(rudder_pointer, &app_f);
-    if(*rudder_servo_p != app_f){
-        *rudder_servo_p = app_f;
+    param_get(pointers_p->rudder_pointer, &app_f);
+    if(params_p->rudder_servo != app_f){
+        params_p->rudder_servo = app_f;
     }
 
     //check p_gain
-    param_get(p_gain_pointer, &app_f);
-    if(*p_gain_p != app_f){
-        *p_gain_p = app_f;
+    param_get(pointers_p->p_gain_pointer, &app_f);
+    if(params_p->p_gain != app_f){
+        params_p->p_gain = app_f;
     }
 
     //check i_gain
-    param_get(i_gain_pointer, &app_f);
-    if(*i_gain_p != app_f){
-        *i_gain_p = app_f;
+    param_get(pointers_p->i_gain_pointer, &app_f);
+    if(params_p->i_gain != app_f){
+        params_p->i_gain = app_f;
     }
 
     //check lat0
-    param_get(lat0_pointer, &app_i);
-    if(*lat0_p != app_i){
-        *lat0_p = app_i;
+    param_get(pointers_p->lat0_pointer, &app_i);
+    if(params_p->lat0 != app_i){
+        params_p->lat0 = app_i;
         //update NED origin
-        set_ref0(lat0_p, lon0_p, alt0_p);
+        set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
     }
 
     //check lon0
-    param_get(lon0_pointer, &app_i);
-    if(*lon0_p != app_i){
-        *lon0_p = app_i;
+    param_get(pointers_p->lon0_pointer, &app_i);
+    if(params_p->lon0 != app_i){
+        params_p->lon0 = app_i;
         //update NED origin
-        set_ref0(lat0_p, lon0_p, alt0_p);
+        set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
     }
 
     //check alt0
-    param_get(alt0_pointer, &app_i);
-    if(*alt0_p != app_i){
-        *alt0_p = app_i;
+    param_get(pointers_p->alt0_pointer, &app_i);
+    if(params_p->alt0 != app_i){
+        params_p->alt0 = app_i;
         //update NED origin
-        set_ref0(lat0_p, lon0_p, alt0_p);
+        set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
     }
 
     //check epsilon
-    param_get(epsilon_pointer, &app_f);
-    if(*epsilon_p != app_f){
-        *epsilon_p = app_f;
+    param_get(pointers_p->epsilon_pointer, &app_f);
+    if(params_p->epsilon != app_f){
+        params_p->epsilon = app_f;
     }
 }
 
 /**
 * Initialize actuators.
 *
-* @param act_pointerp				pointer to actuators struct actuator_controls_s
-* @param actuator_pub_pointer a 	pointer to orb_metadata for the actuators topic
 * @return 							true if everything is OK
 */
-bool actuators_init(struct actuator_controls_s *act_pointer, orb_advert_t *actuator_pub_pointer){
+bool actuators_init(struct published_fd_s *pubs_p,
+                    struct structs_topics_s *strs_p){
 
 	bool right_init = true;
 	// initialize actuators arming structure
@@ -518,25 +478,24 @@ bool actuators_init(struct actuator_controls_s *act_pointer, orb_advert_t *actua
 	orb_publish(ORB_ID(actuator_armed), armed_pub, &armed);
 
 	//initialize actuators struct
-	memset(act_pointer, 0, sizeof(*act_pointer));
+    memset(&(strs_p->actuators), 0, sizeof(strs_p->actuators));
 	// set actuator controls values to zero
 	for (unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++) {
-		act_pointer->control[i] = 0.0f;
+        strs_p->actuators.control[i] = 0.0f;
 	}
 
 	// advertise that this controller will publish actuator values
-	*actuator_pub_pointer = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, act_pointer);
+    pubs_p->actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &(strs_p->actuators));
 
 	//check if everything was ok
-	if(armed_pub == ERROR || armed_pub == -1 || *actuator_pub_pointer == ERROR || *actuator_pub_pointer == -1)
+    if(armed_pub == ERROR || armed_pub == -1 || pubs_p->actuator_pub == ERROR || pubs_p->actuator_pub == -1)
 		right_init = false; //something went wrong
 
 
 	return right_init;
 }
 
-float as_rudder_controller(const struct wind_sailing_s  *wsai_raw_pointer,
-                           struct actuator_controls_s *act_pointer){
+float as_rudder_controller(){
 
 
 }
@@ -544,21 +503,14 @@ float as_rudder_controller(const struct wind_sailing_s  *wsai_raw_pointer,
 /**
  * Compute from GPS position the boat's position in Race frame. Set up the next target position.
  *
- * @param gps_p                 pointer to gps struct.
- * @param x_cm_race_p           pointer to the value to be set with boat x coordinate in Race frame.
- * @param y_cm_race_p           pointer to the value to be set with boat y coordinate in Race frame.
- * @param target_x_cm_race_p    pointer to the value to be set with target x coordinate in Race frame.
- * @param target_y_cm_race_p    pointer to the value to be set with target y coordinate in Race frame.
 */
-void navigation_module(const struct vehicle_global_position_s *gps_p,
-                       int32_t *x_cm_race_p, int32_t *y_cm_race_p,
-                       int32_t *target_x_cm_race_p, int32_t *target_y_cm_race_p){
+void navigation_module(){
 
-    int32_t north_cm;
-    int32_t east_cm;
-    int32_t down_cm;
+//    int32_t north_cm;
+//    int32_t east_cm;
+//    int32_t down_cm;
 
 
-    //compute boat position in NED frame
-    geo_to_ned(gps_p, &north_cm, &east_cm, &down_cm);
+//    //compute boat position in NED frame
+//    geo_to_ned(gps_p, &north_cm, &east_cm, &down_cm);
 }

@@ -50,6 +50,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <poll.h>
+#include <errno.h>
 
 #include "../autonomous_sailing/as_settings.h"
 
