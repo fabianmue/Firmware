@@ -551,10 +551,12 @@ bool retrieve_data(int *wx_port_pointer,
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
 
         //Simulazione dati GPS, COMMENTA IN UTILIZZO VERO
-        /*
+
         char gps_fake[500];
         int length_fake;
-        sim_gps(gps_fake, &length_fake);
+        //sim_gps(gps_fake, &length_fake);
+
+        sim_steady_pos(gps_fake, &length_fake);
 
         gp_parser(gps_fake, length_fake, &(strs_p->gps_s));
 
@@ -565,18 +567,18 @@ bool retrieve_data(int *wx_port_pointer,
         //Simulazione true wind
         char buf_mwd[] = {"$WIMWD,134.0,T,132.1,M,5.5,N,2.8,M,*,***********************************************"};
         mwd_parser(buf_mwd, sizeof(buf_mwd), &(strs_p->wind_sailing_s));
-        */
+
         //Fine simalazione
 
 
         // see if buffer there is one (or more) GPXXX message(s)
-        gp_parser(buffer_global, buffer_length, &(strs_p->gps_s));
+        /*gp_parser(buffer_global, buffer_length, &(strs_p->gps_s));
 
         // see if buffer there is one (or more) HCHDT message(s)
         hdt_parser(buffer_global, buffer_length, &(strs_p->att_s));
 
         // see if buffer there is one (or more) WIMWD message(s)
-        mwd_parser(buffer_global, buffer_length, &(strs_p->wind_sailing_s));
+        mwd_parser(buffer_global, buffer_length, &(strs_p->wind_sailing_s));*/
     }
 
     //debug

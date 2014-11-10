@@ -48,4 +48,6 @@
 
 void sim_gps(char* buf, int *lgt);
 
+void sim_steady_pos(char* buf, int *lgt);
+
 #endif /* GPS_SIMULATOR_H_ */

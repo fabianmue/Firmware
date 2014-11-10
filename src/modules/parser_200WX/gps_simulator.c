@@ -64,6 +64,65 @@ double degree2nmea_ndeg(double input)
     return deg * 100.0 + min + secOver60;
 }
 
+void sim_steady_pos(char *buf, int *lgt){
+
+    double geo[3];
+    double lat;
+    double lon;
+    int32_t alt;
+
+    //force time to increase of 5 seconds
+    elap_sec += 5;
+    int32_t hh = elap_sec / 3600;
+    int32_t mm = (elap_sec - hh * 3600) /60;
+    double ss = (elap_sec - hh * 3600 - mm * 60);
+
+    //double time = hh * 1e4 + mm * 1e2 + ss;
+
+    switch(counter){
+        case 0:
+            geo[0] = 8.554268;
+            geo[1] = 47.378619;
+            geo[2] = 593;
+            break;
+
+        case 1:
+            geo[0] = 8.552529;
+            geo[1] = 47.378729;
+            geo[2] = 593;
+            break;
+
+        case 2:
+            geo[0] = 8.552644;
+            geo[1] = 47.378414;
+            geo[2] = 593;
+            break;
+
+        case 3:
+            geo[0] = 8.552391;
+            geo[1] = 47.378563;
+            geo[2] = 593;
+            break;
+
+    }
+
+    lat = degree2nmea_ndeg(geo[1]);
+    lon = degree2nmea_ndeg(geo[0]);
+    alt = (int)geo[2];
+
+    counter++;
+    if(counter >= 3)
+        counter = 0;
+
+    sprintf(buf, "GPGGA,hhmmss.ss,%4.4f,N,%4.4f,E,3,8,9.3,%d,M,********************* \
+            GPVTG,182.9,T,181.0,M,0.0,N,15.9,K,A,*,\
+            $,GPGSA,A,3,11,17,20,4,,,,,,,,,14.0,9.3,10.5,*,55555...\
+            $GPZDA,%02u%02u%06.3f,10,11,2014,00,00*4...5555555555555555555555555555555555\0\0",
+            lat, lon, alt, hh, mm, ss);
+
+    *lgt = strlen(buf);
+}
+
 
 void sim_gps(char *buf, int *lgt){
 
