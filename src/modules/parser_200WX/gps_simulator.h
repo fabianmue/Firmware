@@ -33,7 +33,7 @@
  ****************************************************************************/
 
 /**
- * @file utilities.h
+ * @file gps_simulator.h
  *
  * Interface for common utility functions.
  *
@@ -41,43 +41,11 @@
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#ifndef UTILITIES_H_
-#define UTILITIES_H_
+#ifndef GPS_SIMULATOR_H_
+#define GPS_SIMULATOR_H_
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <drivers/drv_hrt.h>
 
-#define SAFETY_COUNTER_EXTRACT 15 ///if extract_until coma doesn't find a ',' for SAFETY_COUNTER_EXTRACT charachters, exit
+void sim_gps(char* buf, int *lgt);
 
-
-/** @brief Find string everywhere in buffer. */
-int find_string_everywhere(const int start_index, const char *buffer, const int buffer_length, const char *str);
-
-/** @brief Check if the strin is in the buffer starting from an exact position. */
-int find_string_here(const int start_index, const char *buffer, const int buffer_length, const char *str);
-
-/** @brief Extract double from string. */
-bool d_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer);
-
-/** @brief Extract float from string. */
-bool f_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer);
-
-/** @brief Extract int from string. */
-bool i_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, int *ret_val_pointer);
-
-/** @brief Extract int from string. */
-bool i_extract_until_star(int *index_pointer, const char *buffer, const int buffer_length, int *ret_val_pointer);
-
-/** @brief Go to buffer until next ','. */
-int jump_to_next_coma(const int start_index, const char *buffer, const int buffer_length);
-
-/** @brief Jump n comas. */
-int jump_to_next_n_coma(const int start_index, const char *buffer, const int buffer_length, int n);
-
-/** @brief Print buffer on terminal */
-void debug_print_nchar(const char *buffer, const int length, const int start, const int end);
-
-/** @brief Print buffer on terminal */
-void debug_print_until_char(const char *buffer, const int length, const int start, const char stop_char);
-
-#endif /* UTILITIES_H_ */
+#endif /* GPS_SIMULATOR_H_ */

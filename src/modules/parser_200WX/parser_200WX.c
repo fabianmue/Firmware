@@ -74,6 +74,9 @@
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
 
+//gps simulation
+#include "gps_simulator.h"
+
 
 #define MIN_BYTE_FOR_PARSING_LONG_MSG 40 ///minimum number of available byte for starting parsing a long message
 
@@ -548,18 +551,21 @@ bool retrieve_data(int *wx_port_pointer,
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
 
         //Simulazione dati GPS, COMMENTA IN UTILIZZO VERO
-        /*char good_b[] = {"GPGGA,151939.20,4722.9509,N,00833.3726,E,1,4,9.3,0.0,M,49.1,M,,*,$,GPVTG,182.9,T,181.0,M,0.0,N,15.9,K,A,*,$,GPGSA,A,3,11,17,20,4,,,,,,,,,14.0,9.3,10.5,*,55555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555"};
+        /*
+        char gps_fake[500];
+        int length_fake;
+        sim_gps(gps_fake, &length_fake);
 
-        gp_parser(good_b, sizeof(good_b), gps_raw_pointer);
+        gp_parser(gps_fake, length_fake, &(strs_p->gps_s));
 
         //Simulazione dati heading
         char buf_hdt[] = {"HCHDT,025.3,T,*********************************************************"};
-        hdt_parser(buf_hdt, sizeof(buf_hdt), att_raw_pointer);
+        hdt_parser(buf_hdt, sizeof(buf_hdt), &(strs_p->att_s));
 
         //Simulazione true wind
         char buf_mwd[] = {"$WIMWD,134.0,T,132.1,M,5.5,N,2.8,M,*,***********************************************"};
-        mwd_parser(buf_mwd, sizeof(buf_mwd), wind_sailing_pointer);*/
-
+        mwd_parser(buf_mwd, sizeof(buf_mwd), &(strs_p->wind_sailing_s));
+        */
         //Fine simalazione
 
 
@@ -896,6 +902,15 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                 //update i
                 i = app_i;
 
+                /*
+                 * |,|byte1 of VDOP|
+                 *  ^
+                 *  |
+                 *  i
+                */
+
+                i ++;
+
                 //extract VDOP
                 if(f_extract_until_coma(&i, buffer, buffer_length, &vdop)){
                     //save data
@@ -975,11 +990,6 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
 
                             gps_raw_pointer->timestamp_velocity = hrt_absolute_time();
 
-                            //cancella
-                            //warnx("SOG %3.2f \t COG: %3.2f \n", (double)gps_raw_pointer->vel_n_m_s, (double)gps_raw_pointer->cog_rad);
-                            //fine cancella
-
-                            //TODO vedere se usare campo 8 per validazione dei dati
                         }
                     }
                 }
@@ -1011,7 +1021,7 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                             if(i_extract_until_coma(&i, buffer, buffer_length, &local_time_off_hour)){
                                 //i is ',', i+1 is byte1 of local_time_off_min
                                 i ++;
-                                if(i_extract_until_coma(&i, buffer, buffer_length, &local_time_off_min)){
+                                if(i_extract_until_star(&i, buffer, buffer_length, &local_time_off_min)){
                                     int ashtech_hour = ashtech_time / 10000;
                                     int ashtech_minute = (ashtech_time - ashtech_hour * 10000) / 100;
                                     double ashtech_sec = ashtech_time - ashtech_hour * 10000 - ashtech_minute * 100;

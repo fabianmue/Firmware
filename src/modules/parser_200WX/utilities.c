@@ -106,7 +106,7 @@ int find_string_here(const int start_index, const char *buffer, const int buffer
 }
 
 /**
-* Extract data from buffer, starting from index, until a come is found. Update index. Returns a double
+* Extract data from buffer, starting from index, until a coma is found. Update index. Returns a double
 *
 * @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
 * @param buffer             buffer
@@ -149,7 +149,7 @@ bool d_extract_until_coma(int *index_pointer, const char *buffer, const int buff
 }
 
 /**
-* Extract data from buffer, starting from index, until a come is found. Update index. Returns a float
+* Extract data from buffer, starting from index, until a coma is found. Update index. Returns a float
 *
 * @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
 * @param buffer             buffer
@@ -192,7 +192,7 @@ bool f_extract_until_coma(int *index_pointer, const char *buffer, const int buff
 }
 
 /**
-* Extract data from buffer, starting from index, until a come is found. Update index. Returns a float
+* Extract data from buffer, starting from index, until a coma is found. Update index. Returns an int.
 *
 * @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
 * @param buffer             buffer
@@ -207,6 +207,49 @@ bool i_extract_until_coma(int *index_pointer, const char *buffer, const int buff
     int i = *index_pointer;
 
     while(i < buffer_length && buffer[i] != ','){
+
+        temp_char[counter] = buffer[i];
+
+        i++;
+        counter++;
+        if(counter >= SAFETY_COUNTER_EXTRACT){
+            *ret_val_pointer = 0;
+            return false;
+        }
+    }
+
+    //check if we exited from while loop because we have a valid data or not
+    if(i == *index_pointer || i >= buffer_length){
+        *ret_val_pointer = 0;
+        return false; //not found valid data
+    }
+
+    //null terminate string
+    temp_char[counter] = '\0';
+
+    //update index
+    *index_pointer = i;
+    *ret_val_pointer = atoi(temp_char);
+
+    return true;
+}
+
+/**
+* Extract data from buffer, starting from index, until a '*' is found. Update index. Returns an int.
+*
+* @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
+* @param buffer             buffer
+* @param buffer_length      length of buffer
+* @param ret_val_pointer    pointer to variable with the final result
+* @return 	true if no error
+*/
+bool i_extract_until_star(int *index_pointer, const char *buffer, const int buffer_length, int *ret_val_pointer){
+
+    int counter = 0;
+    char temp_char[SAFETY_COUNTER_EXTRACT];
+    int i = *index_pointer;
+
+    while(i < buffer_length && buffer[i] != '*'){
 
         temp_char[counter] = buffer[i];
 
