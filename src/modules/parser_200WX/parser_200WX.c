@@ -63,14 +63,8 @@
 // for uORB topics
 #include "topics_handler.h"
 
-//#include <uORB/uORB.h>
-//#include <uORB/topics/sensor_combined.h>
-//#include <uORB/topics/vehicle_attitude.h>
-//#include <uORB/topics/airspeed.h>
-//#include <uORB/topics/wind_sailing.h>
-//#include <uORB/topics/vehicle_gps_position.h>
-//#include <uORB/topics/vehicle_bodyframe_meas.h>
-//#include <uORB/topics/debug_values.h>
+//utility functions
+#include "utilities.h"
 
 
 // to open a UART port:
@@ -132,25 +126,11 @@ bool parser_variables_init(int *wx_port_pointer,
                            struct subscribtion_fd_s  *subs_p,
                            struct published_fd_s     *pubs_p,
                            struct structs_topics_s   *strs_p);
-//bool parser_variables_init(int *wx_port_pointer,
-//                           int *sensor_sub_fd_pointer,
-//                           int *att_pub_fd_pointer, struct vehicle_attitude_s *att_raw_pointer,
-//                           int *airs_pub_fd_pointer, struct airspeed_s *air_vel_raw_pointer,
-//                           int *gps_pub_fd_pointer, struct vehicle_gps_position_s  *gps_raw_pointer,
-//                           int *wind_sailing_fd_pointer, struct wind_sailing_s *wind_sailing_raw_pointer,
-//                           int *bodyframe_meas_fd_pointer, struct vehicle_bodyframe_meas_s *bodyframe_meas_raw_pointer);
 
 /** @brief Extract data from stream with 200WX. */
 bool retrieve_data(int *wx_port_pointer,
                    struct subscribtion_fd_s  *subs_p,
                    struct structs_topics_s   *strs_p);
-//bool retrieve_data(int *wx_port_pointer,
-//                  int *sensor_sub_fd_pointer,
-//                  struct vehicle_attitude_s *att_raw_pointer,
-//                  struct airspeed_s *air_vel_raw_pointer,
-//                  struct vehicle_gps_position_s *gps_raw_pointer,
-//                  struct wind_sailing_s *wind_sailing_pointer,
-//                  struct vehicle_bodyframe_meas_s *bodyframe_meas_raw_pointer);
 
 /** @brief Parser for YXXDR messages. */
 void xdr_parser(const char *buffer, const int buffer_length,
@@ -171,31 +151,6 @@ void hdt_parser(const char *buffer, const int buffer_length, struct vehicle_atti
 
 /** @brief Parser for WIMWD message. */
 void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing_s *wind_sailing_pointer);
-
-/** @brief Find string everywhere in buffer. */
-int find_string_everywhere(const int start_index, const char *buffer, const int buffer_length, const char *str);
-
-/** @brief Check if the strin is in the buffer starting from an exact position. */
-int find_string_here(const int start_index, const char *buffer, const int buffer_length, const char *str);
-
-/** @brief Extract double from string. */
-bool d_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer);
-
-/** @brief Extract float from string. */
-bool f_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer);
-
-/** @brief Extract int from string. */
-bool i_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, int *ret_val_pointer);
-
-
-/** @brief Go to buffer until next ','. */
-int jump_to_next_coma(const int start_index, const char *buffer, const int buffer_length);
-
-/** @brief Print buffer on terminal */
-void debug_print_nchar(const char *buffer, const int length, const int start, const int end);
-
-/** @brief Print buffer on terminal */
-void debug_print_until_char(const char *buffer, const int length, const int start, const char stop_char);
 
 /** @brief Publish new data. */
 void publish_new_data(struct published_fd_s     *pubs_p,
@@ -351,217 +306,6 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 
 }
 
-/**
-* Find if string is in buffer starting from start_index and going til the end.
-*
-* @param start_index    index where start to find string
-* @param buffer         buffer where search for string
-* @param buffer_length  length of buffer
-* @param str         string to find in buffer
-* @return 	the index in the buffer where 'string' begins in the buffer, -1 if not found
-*/
-int find_string_everywhere(const int start_index, const char *buffer, const int buffer_length, const char *str){
-
-    int i;
-    int str_len = strlen(str);
-    char temp_str[10]; /**< str cannot be greater than 9 charachter! */
-    int stop_index = buffer_length - str_len +1;
-
-    for(i = start_index; i < stop_index; i++){
-
-        strncpy(temp_str, &buffer[i], str_len);
-        //add null-characther at the end
-        temp_str[str_len] = '\0';
-
-        if(!strcmp(temp_str, str)){
-            //found str in buffer, starting from i
-            return i;
-        }
-    }
-
-    //str not found in buffer
-    return -1;
-}
-
-/**
-* Find if string is in buffer starting exatcly from start_index.
-*
-* @param start_index    index where start to find string
-* @param buffer         buffer where search for string
-* @param buffer_length  length of buffer
-* @param str         string to find in buffer
-* @return 	the index in the buffer where 'string' begins in the buffer ret == start_index on succes, -1 if not found
-*/
-int find_string_here(const int start_index, const char *buffer, const int buffer_length, const char *str){
-
-    int str_len = strlen(str);
-    char temp_str[15]; /**< str cannot be greater than 14 charachter! */
-
-    if(start_index + str_len >= buffer_length)
-        return -1; //not enough characters in the buffer
-
-    strncpy(temp_str, &buffer[start_index], str_len);
-    //add null-characther at the end
-    temp_str[str_len] = '\0';
-
-    if(!strcmp(temp_str, str)){
-        //found str in buffer, starting from start_index
-        return start_index;
-    }
-
-    //str not found in buffer
-    return -1;
-}
-
-/**
-* Extract data from buffer, starting from index, until a come is found. Update index. Returns a double
-*
-* @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
-* @param buffer             buffer
-* @param buffer_length      length of buffer
-* @param ret_val_pointer    pointer to variable with the final result
-* @return 	true if no error
-*/
-bool d_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer){
-
-	int counter = 0;
-    char temp_char[SAFETY_COUNTER_EXTRACT];
-    int i = *index_pointer;
-
-    while(i < buffer_length && buffer[i] != ','){
-					
-		temp_char[counter] = buffer[i];
-
-        i++;
-		counter++;
-        if(counter >= SAFETY_COUNTER_EXTRACT){
-            *ret_val_pointer = 0;
-            return false;
-        }
-	}
-
-    //check if we exited from while loop because we have a valid data or not
-    if(i == *index_pointer || i >= buffer_length){
-        *ret_val_pointer = 0;
-        return false; //not found valid data
-    }
-
-    //null terminate string
-    temp_char[counter] = '\0';
-
-    //update index
-    *index_pointer = i;
-    *ret_val_pointer = atof(temp_char);
-
-    return true;
-}
-
-/**
-* Extract data from buffer, starting from index, until a come is found. Update index. Returns a float
-*
-* @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
-* @param buffer             buffer
-* @param buffer_length      length of buffer
-* @param ret_val_pointer    pointer to variable with the final result
-* @return 	true if no error
-*/
-bool f_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer){
-
-    int counter = 0;
-    char temp_char[SAFETY_COUNTER_EXTRACT];
-    int i = *index_pointer;
-
-    while(i < buffer_length && buffer[i] != ','){
-
-        temp_char[counter] = buffer[i];
-
-        i++;
-        counter++;
-        if(counter >= SAFETY_COUNTER_EXTRACT){
-            *ret_val_pointer = 0;
-            return false;
-        }
-    }
-
-    //check if we exited from while loop because we have a valid data or not
-    if(i == *index_pointer || i >= buffer_length){
-        *ret_val_pointer = 0;
-        return false; //not found valid data
-    }
-
-    //null terminate string
-    temp_char[counter] = '\0';
-
-    //update index
-    *index_pointer = i;
-    *ret_val_pointer = (float)atof(temp_char);
-
-    return true;
-}
-
-/**
-* Extract data from buffer, starting from index, until a come is found. Update index. Returns a float
-*
-* @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
-* @param buffer             buffer
-* @param buffer_length      length of buffer
-* @param ret_val_pointer    pointer to variable with the final result
-* @return 	true if no error
-*/
-bool i_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, int *ret_val_pointer){
-
-    int counter = 0;
-    char temp_char[SAFETY_COUNTER_EXTRACT];
-    int i = *index_pointer;
-
-    while(i < buffer_length && buffer[i] != ','){
-
-        temp_char[counter] = buffer[i];
-
-        i++;
-        counter++;
-        if(counter >= SAFETY_COUNTER_EXTRACT){
-            *ret_val_pointer = 0;
-            return false;
-        }
-    }
-
-    //check if we exited from while loop because we have a valid data or not
-    if(i == *index_pointer || i >= buffer_length){
-        *ret_val_pointer = 0;
-        return false; //not found valid data
-    }
-
-    //null terminate string
-    temp_char[counter] = '\0';
-
-    //update index
-    *index_pointer = i;
-    *ret_val_pointer = atoi(temp_char);
-
-    return true;
-}
-
-/**
- * Jump to next the ',' in buffer. -1 on error.
- *
- * If buffer[start_index] is a ',' returns start_index.
- * @return -1 if no ',' found, index of ','in the buffer on succes.
-*/
-int jump_to_next_coma(const int start_index, const char *buffer, const int buffer_length){
-
-    int i = start_index;
-
-    while(i < buffer_length && buffer[i] != ','){
-        i++;
-    }
-
-    //check if we exited from while loop because we have a ',' or because we arraived at the end
-    if(i >= buffer_length)
-        return -1;
-
-    return i;
-}
 
 /**
 * Initialize weather station 200WX.
@@ -1028,6 +772,8 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
     int year = 0;
     int local_time_off_hour __attribute__((unused)) = 0;
     int local_time_off_min __attribute__((unused)) = 0;
+    uint8_t fix_type;
+    float vdop;
 
 
     // it's worthless to check if there won't be enough data anyway..
@@ -1133,17 +879,35 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
 
             switch(buffer[i]){
             case '1':
-                gps_raw_pointer->fix_type = 1;
+                fix_type = 1;
                 break;
             case '2':
-                gps_raw_pointer->fix_type = 2;
+                fix_type = 2;
                 break;
             case '3':
-                gps_raw_pointer->fix_type = 3;
+                fix_type = 3;
                 break;
             default:
-                gps_raw_pointer->fix_type = 1; //Error, no fix valid found in the message
+                fix_type = 1; //Error, no fix valid found in the message
             }
+
+            //i+1 is ',' go ahead and then skip 14 comas starting from i
+            i += 2;
+            app_i = jump_to_next_n_coma(i, buffer, buffer_length, 14);
+
+            if(app_i != -1){
+                //update i
+                i = app_i;
+
+                //extract VDOP
+                if(f_extract_until_coma(&i, buffer, buffer_length, &vdop)){
+                    //save data
+                    gps_raw_pointer->fix_type = fix_type;
+                    gps_raw_pointer->epv = vdop;
+
+                }
+            }
+
 
         }
         else if(buffer[i+2] == 'V' && buffer[i+3] == 'T' && buffer[i+4] == 'G'){
@@ -1159,6 +923,9 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
 
                 //i is ',', i+1 is 'T', i+2 is ',' i+3 is byte of course wrt magnetic north
                 i += 3;
+
+                //TODO usare jump_next_n_coma
+
                 //do not extract course over ground w.r.t. to magnetic north
                 app_i = jump_to_next_coma(i, buffer, buffer_length);
 
@@ -1184,7 +951,6 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                          *  i
                         */
 
-
                         i += 3;
 
                         if(f_extract_until_coma(&i, buffer, buffer_length, &speed_over_ground)){
@@ -1205,13 +971,12 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                             gps_raw_pointer->vel_e_m_s = gps_raw_pointer->vel_m_s *
                                                         (float)sin(gps_raw_pointer->cog_rad);
 
+                            //TODO verificare se puoi mettere un valore vero
                             gps_raw_pointer->vel_d_m_s = 0.0f;
 
                             gps_raw_pointer->vel_ned_valid = true;
 
                             gps_raw_pointer->timestamp_velocity = hrt_absolute_time();
-
-                            //TODO mettere epv!!!
 
                             //cancella
                             //warnx("SOG %3.2f \t COG: %3.2f \n", (double)gps_raw_pointer->vel_n_m_s, (double)gps_raw_pointer->cog_rad);
@@ -1296,7 +1061,6 @@ float nmea_ndeg2degree(float val)
     val = deg + (val - deg * 100) / 60.0f;
     return val;
 }
-
 
 
 /**
@@ -1445,6 +1209,9 @@ void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing
         if(f_extract_until_coma(&i, buffer, buffer_length, &direction)){
             //i is ',' i+1 is 'T' i+2 is ',' i+3 is byte1 of direction wrt magnetic north
             i += 3;
+
+            //TODO usare jump_next_n_coma ...
+
             //do not extract direction w.r.t. to magnetic north
             app_i = jump_to_next_coma(i, buffer, buffer_length);
 
@@ -1490,40 +1257,6 @@ void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing
             }
         }
     }
-}
-
-/**
- * Print data in buffer from start to end (or end of buffer). buffer[end] is not printed.
-*/
-void debug_print_nchar(const char *buffer, const int length, const int start, const int end){
-    char str[301];
-    int i;
-
-    for(i = 0; (i + start) < length && (i + start) <= end && i < 300; i++){
-
-        str[i] = buffer[start+i];
-    }
-
-    str[i] = '\0';
-
-    warnx("buf_len %d; start %d end %d real_end %d \n %s \n", length, start, end, start + i-1, str);
-}
-
-/**
- * Print data in buffer from start untile stop_char is found (or end of buffer). stop_char is not printed
-*/
-void debug_print_until_char(const char *buffer, const int length, const int start, const char stop_char){
-    char str[301];
-    int i;
-
-    for(i = 0; (i + start) < length && buffer[start+i] != stop_char && i < 300; i++){
-
-        str[i] = buffer[start+i];
-    }
-
-    str[i] = '\0';
-
-    warnx("buf_len %d; start %d  real_end %d \n %s \n", length, start, start + i-1, str);
 }
 
 /**
