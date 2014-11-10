@@ -75,9 +75,6 @@
 #include <systemlib/err.h>
 
 
-
-#define SAFETY_COUNTER_EXTRACT 15 ///if extract_until coma doesn't find a ',' for SAFETY_COUNTER_EXTRACT charachters, exit
-
 #define MIN_BYTE_FOR_PARSING_LONG_MSG 40 ///minimum number of available byte for starting parsing a long message
 
 #define MIN_BYTE_FOR_PARSING_MEDIUM_MSG 25 ///minimum number of available byte for starting parsing a medium message

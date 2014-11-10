@@ -44,6 +44,12 @@
 #ifndef UTILITIES_H_
 #define UTILITIES_H_
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#define SAFETY_COUNTER_EXTRACT 15 ///if extract_until coma doesn't find a ',' for SAFETY_COUNTER_EXTRACT charachters, exit
+
+
 /** @brief Find string everywhere in buffer. */
 int find_string_everywhere(const int start_index, const char *buffer, const int buffer_length, const char *str);
 
