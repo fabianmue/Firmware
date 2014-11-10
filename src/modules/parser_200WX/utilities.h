@@ -62,6 +62,9 @@ bool d_extract_until_coma(int *index_pointer, const char *buffer, const int buff
 /** @brief Extract float from string. */
 bool f_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer);
 
+/** @brief Extract float from string. */
+bool f_extract_until_star(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer);
+
 /** @brief Extract int from string. */
 bool i_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, int *ret_val_pointer);
 

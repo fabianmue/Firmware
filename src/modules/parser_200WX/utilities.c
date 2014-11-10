@@ -191,6 +191,42 @@ bool f_extract_until_coma(int *index_pointer, const char *buffer, const int buff
     return true;
 }
 
+
+
+bool f_extract_until_star(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer){
+
+    int counter = 0;
+    char temp_char[SAFETY_COUNTER_EXTRACT];
+    int i = *index_pointer;
+
+    while(i < buffer_length && buffer[i] != '*'){
+
+        temp_char[counter] = buffer[i];
+
+        i++;
+        counter++;
+        if(counter >= SAFETY_COUNTER_EXTRACT){
+            *ret_val_pointer = 0;
+            return false;
+        }
+    }
+
+    //check if we exited from while loop because we have a valid data or not
+    if(i == *index_pointer || i >= buffer_length){
+        *ret_val_pointer = 0;
+        return false; //not found valid data
+    }
+
+    //null terminate string
+    temp_char[counter] = '\0';
+
+    //update index
+    *index_pointer = i;
+    *ret_val_pointer = (float)atof(temp_char);
+
+    return true;
+}
+
 /**
 * Extract data from buffer, starting from index, until a coma is found. Update index. Returns an int.
 *

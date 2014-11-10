@@ -495,7 +495,7 @@ bool parser_variables_init(int *wx_port_pointer,
     // advertise attitude topic (ATT)
     memset(&(strs_p->att_s), 0, sizeof(strs_p->att_s));
     strs_p->att_s.timestamp = hrt_absolute_time();
-    pubs_p->att_pub = orb_advertise(ORB_ID(vehicle_attitude), &(strs_p->att_s));
+    //pubs_p->att_pub = orb_advertise(ORB_ID(vehicle_attitude), &(strs_p->att_s));//ripristinare
 
     // advertise vehicle_gps_position topic
     memset(&(strs_p->gps_s), 0, sizeof(strs_p->gps_s));
@@ -914,7 +914,7 @@ void gp_parser(const char *buffer, const int buffer_length, struct vehicle_gps_p
                 i ++;
 
                 //extract VDOP
-                if(f_extract_until_coma(&i, buffer, buffer_length, &vdop)){
+                if(f_extract_until_star(&i, buffer, buffer_length, &vdop)){
                     //save data
                     gps_raw_pointer->fix_type = fix_type;
                     gps_raw_pointer->epv = vdop;
@@ -1274,7 +1274,7 @@ void mwd_parser(const char *buffer, const int buffer_length, struct wind_sailing
 void publish_new_data(struct published_fd_s *pubs_p, struct structs_topics_s *strs_p){
 
     //publish attituide data
-    orb_publish(ORB_ID(vehicle_attitude), pubs_p->att_pub, &(strs_p->att_s));
+    //orb_publish(ORB_ID(vehicle_attitude), pubs_p->att_pub, &(strs_p->att_s));//ripristina
 
     //publish wind_sailing data
     orb_publish(ORB_ID(wind_sailing), pubs_p->wind_sailing, &(strs_p->wind_sailing_s));
