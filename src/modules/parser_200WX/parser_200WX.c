@@ -393,6 +393,8 @@ bool weather_station_init(int *wx_port_pointer){
 	// wait for 2 seconds for stability
 	sleep(2); 
 
+    warnx(" switch pixhawk baudrate to 38400.\n");
+
 	// switch the pixhawk baudrate to 38400
 	pixhawk_baudrate_set(*wx_port_pointer, 38400); 
 

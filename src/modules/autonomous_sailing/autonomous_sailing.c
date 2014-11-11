@@ -50,20 +50,12 @@
 #include "as_settings.h"
 #include "navigation.h"
 #include "parameters.c"
+#include "path_planning_data.h"
 
 
 //Include topics necessary
 #include "topics_handler.h"
 
-
-//#include <uORB/uORB.h>
-//#include <uORB/topics/actuator_controls.h>
-//#include <uORB/topics/actuator_armed.h>
-
-//#include <uORB/topics/wind_sailing.h>
-//#include <uORB/topics/vehicle_global_position.h>
-//#include <uORB/topics/vehicle_bodyframe_meas.h>
-//#include <uORB/topics/vehicle_attitude.h>
 
 
 // To be able to use the "parameter function" from Q ground control:
@@ -99,22 +91,26 @@ bool actuators_init(struct published_fd_s *pubs_p,
 /** @brief Subscribe to appropriate topics. */
 bool as_subscriber(struct subscribtion_fd_s *subs_p);
 
-/** @brief Autonomous sailing controller for the rudder. */
-float as_rudder_controller();
-
 /** @brief Convert GPS data in position in Race frame coordinate*/
-void navigation_module();
+void navigation_module(const struct structs_topics_s *strs_p,
+                       struct local_position_race_s *lp_p);
 
-/** @brief Decide the next control action to be implemented*/
-void guidance_module();
+/** @brief Give next optimal action to be implemented*/
+void path_planning();
+
+/** @brief Implement next control action*/
+void guidance_module(struct reference_actions_s *ref_act_p,
+                     const struct apparent_angle_s *apparent_angle_p);
 
 /** @brief Initialize parameters*/
 void param_init(struct pointers_param_qgc *pointers_p,
-                struct parameters_qgc *params_p);
+                struct parameters_qgc *params_p,
+                struct apparent_angle_s *apparent_angle_p);
 
 /** @brief Check if one or more parameters have been updated and perform appropriate actions*/
 void param_check_update(struct pointers_param_qgc *pointers_p,
-                        struct parameters_qgc *params_p);
+                        struct parameters_qgc *params_p,
+                        struct apparent_angle_s *apparent_angle_p);
 
 //pointers to params from QGroundControl
 struct pointers_param_qgc pointers_param;
@@ -197,27 +193,14 @@ int as_daemon_thread_main(int argc, char *argv[]){
     //parameters from QGroundControl
     struct parameters_qgc params;
 
+    //local position in the Race frame
+    struct local_position_race_s local_pos_r = {.x_race_cm = 0, .y_race_cm = 0};
 
-//    // boat's coordinates in Race frame
-//    int32_t x_cm_race = 0; ///x position of the boat in Race frame, in centimeters.
-//    int32_t y_cm_race = 0; ///y position of the boat in Race frame, in centimeters.
+    //optimal path parameters
+    struct reference_actions_s ref_act = {.alpha_star = 30.0, .should_tack = false};
 
-//    // next target's coordinates in Race frame, for now set them far away from 0
-//    int32_t target_x_cm_race = 100000; ///x position of next target in Race frame, in centimeters.
-//    int32_t target_y_cm_race = 100000; ///y position of next target in Race frame, in centimeters.
-
-    //paramters from QGroundControl
-//    float rudder_servo;
-//    float sail_servo;
-
-//    float p_gain;
-//    float i_gain;
-
-//    int32_t lat0;
-//    int32_t lon0;
-//    int32_t alt0;
-
-//    float epsilon;
+    //apparent wind angle history
+    struct apparent_angle_s apparent_angle;
 
     warnx(" starting\n");
 
@@ -225,7 +208,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
     as_subscriber(&subs);
 
     //initialize parameters
-    param_init(&pointers_param, &params);
+    param_init(&pointers_param, &params, &apparent_angle);
 
 	// try to initiliaze actuators
     if(!actuators_init(&pubs, &strs)){
@@ -278,16 +261,27 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     orb_copy(ORB_ID(vehicle_global_position), subs.gps_sub, &(strs.gps_filtered));
 
                     //do navigation module
-                    navigation_module();
+                    navigation_module(&strs, &local_pos_r);
+
+                    //do optimal path planning
+                    path_planning();
 
                 }
                 if(fds[2].revents & POLLIN){
-                    // new WSAI values
-
-                    // copy new data
+                    // new WSAI values, copy new data
                     orb_copy(ORB_ID(wind_sailing), subs.wsai_sub, &(strs.wsai));
-                    // rudder control
-                    as_rudder_controller();
+
+                    //update apparent wind angle history by substituing oldest value
+                    apparent_angle.app_angle_p[apparent_angle.oldest_value] = strs.wsai.angle_apparent;
+                    //update index of oldest value
+                    apparent_angle.oldest_value++;
+                    if(apparent_angle.oldest_value == apparent_angle.window_size)
+                        apparent_angle.oldest_value = 0;
+                    //compute apparent wind angle mean
+                    apparent_angle.app_angle_mean = 0.0f;
+                    for(int i = 0; i < apparent_angle.window_size; i++){
+                        apparent_angle.app_angle_mean += apparent_angle.app_angle_p[i];
+                    }
 
                 }
                 if(fds[3].revents & POLLIN){
@@ -298,10 +292,14 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                 }
 
-                //check if any parameter has been updated
-                param_check_update(&pointers_param, &params);
             }
         }
+
+        //check if any parameter has been updated
+        param_check_update(&pointers_param, &params, &apparent_angle);
+
+        //always perfrom guidance module to control the boat
+        guidance_module(&ref_act, &apparent_angle);
 
         // Send out commands:
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
@@ -365,7 +363,8 @@ bool as_subscriber(struct subscribtion_fd_s *subs_p){
 *
 */
 void param_init(struct pointers_param_qgc *pointers_p,
-                struct parameters_qgc *params_p){
+                struct parameters_qgc *params_p,
+                struct apparent_angle_s *apparent_angle_p){
 
     //initialize pointer to parameters
     pointers_p->sail_pointer    = param_find("AS_SAIL");
@@ -380,6 +379,8 @@ void param_init(struct pointers_param_qgc *pointers_p,
 
     pointers_p->epsilon_pointer = param_find("AS_EPSI");
 
+    pointers_p->moving_window_pointer = param_find("AS_WIN");
+
     //get parameters
     param_get(pointers_p->sail_pointer, &(params_p->sail_servo));
     param_get(pointers_p->rudder_pointer, &(params_p->rudder_servo));
@@ -392,13 +393,24 @@ void param_init(struct pointers_param_qgc *pointers_p,
     param_get(pointers_p->alt0_pointer, &(params_p->alt0));
 
     param_get(pointers_p->epsilon_pointer, &(params_p->epsilon));
+
+    param_get(pointers_p->moving_window_pointer, &(params_p->moving_window));
+
+    //create array for apparent wind angle history
+    apparent_angle_p->window_size = params_p->moving_window;
+    apparent_angle_p->oldest_value = 0;
+    apparent_angle_p->app_angle_p = malloc(sizeof(float) * apparent_angle_p->window_size);
+
+    for(int i = 0; i < apparent_angle_p->window_size; i++)
+        apparent_angle_p->app_angle_p[i] = 0.0f;
 }
 
 /** Check if any paramter has been updated, if so take appropriate actions
  *
 */
 void param_check_update(struct pointers_param_qgc *pointers_p,
-                        struct parameters_qgc *params_p){
+                        struct parameters_qgc *params_p,
+                        struct apparent_angle_s *apparent_angle_p){
 
     float app_f;
     int32_t app_i;
@@ -456,6 +468,23 @@ void param_check_update(struct pointers_param_qgc *pointers_p,
     if(params_p->epsilon != app_f){
         params_p->epsilon = app_f;
     }
+
+    //check moving window
+    param_get(pointers_p->moving_window_pointer, &app_i);
+    if(params_p->moving_window != app_i){
+        params_p->moving_window = app_i;
+
+        //delete old apparent wind angle history
+        free(apparent_angle_p->app_angle_p);
+
+        //create array for apparent wind angle history
+        apparent_angle_p->window_size = params_p->moving_window;
+        apparent_angle_p->oldest_value = 0;
+        apparent_angle_p->app_angle_p = malloc(sizeof(float) * apparent_angle_p->window_size);
+
+        for(int i = 0; i < apparent_angle_p->window_size; i++)
+            apparent_angle_p->app_angle_p[i] = 0.0f;
+    }
 }
 
 /**
@@ -495,22 +524,35 @@ bool actuators_init(struct published_fd_s *pubs_p,
 	return right_init;
 }
 
-float as_rudder_controller(){
+/** Implement refernce actions provided by optimal path planning*/
+void guidance_module(struct reference_actions_s *ref_act_p,
+                     const struct apparent_angle_s *apparent_angle_p){
 
 
 }
 
 /**
- * Compute from GPS position the boat's position in Race frame. Set up the next target position.
+ * Compute from vehicle_global_position topic the boat's position in Race frame. Set up the next target position.
  *
 */
-void navigation_module(){
+void navigation_module(const struct structs_topics_s *strs_p,
+                       struct local_position_race_s *lp_p){
 
-//    int32_t north_cm;
-//    int32_t east_cm;
-//    int32_t down_cm;
+    int32_t north_cm;
+    int32_t east_cm;
+    int32_t down_cm;
 
 
-//    //compute boat position in NED frame
-//    geo_to_ned(gps_p, &north_cm, &east_cm, &down_cm);
+    //compute boat position in NED frame w.r.t. lat0 lon0 alt0 set by set_ref0()
+    geo_to_ned(&(strs_p->gps_filtered), &north_cm, &east_cm, &down_cm);
+
+    //TODO NED to Race frame.
+    lp_p->x_race_cm = east_cm;
+    lp_p->y_race_cm = north_cm;
+
+}
+
+/** Retrieve data from pre-computed path planning and give the next references*/
+void path_planning(){
+
 }

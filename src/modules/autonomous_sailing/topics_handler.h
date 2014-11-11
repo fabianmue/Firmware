@@ -43,6 +43,8 @@ struct parameters_qgc{
     int32_t alt0;
 
     float epsilon;
+
+    int32_t moving_window;
 };
 
 struct pointers_param_qgc{
@@ -57,6 +59,15 @@ struct pointers_param_qgc{
     param_t alt0_pointer;         /**< pointer to param AS_ALT0*/
 
     param_t epsilon_pointer;      /**< pointer to param AS_EPSI*/
+
+    param_t moving_window_pointer;/**< pointer to param AS_WIN*/
+};
+
+struct apparent_angle_s{
+    float *app_angle_p;
+    int32_t window_size;
+    int32_t oldest_value;
+    float app_angle_mean;
 };
 
 

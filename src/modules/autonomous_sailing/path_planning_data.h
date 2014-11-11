@@ -31,103 +31,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
-
 /**
- * @file parameters.c
+ * @file path_planning_data.h
  *
- * Parameters from QGroundControl for autonomous sailing application.
+ * Store all optimal path planning data.
  *
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#include <systemlib/param/param.h>
+#ifndef PATH_PLANNING_DATA_H_
+#define PATH_PLANNING_DATA_H_
 
-/*
- * Define the QGroundControl parameters here:
- * Warning: name can not be too long!!!
- */
+// reference actions for the guidance_module
+struct reference_actions_s{
+    float alpha_star; ///optimal heading angle
+    bool should_tack; ///true if boat should take as soon as possible
+};
 
-
-/**
- * Sails position
- *
- * ?????.
- * Default value for sails position (must be converted into degrees) 0 = max sheet out, 0.56 = max sheet in.
- *
- * @min 0 (max sheet out)
- * @max 0.56 (max sheet in)
- */
-PARAM_DEFINE_FLOAT(AS_SAIL, 0.5f);
-
-/**
- * Default heading angle w.r.t. relative wind, in degrees.
- *
- *
- * @min -90
- * @max 90
- */
-PARAM_DEFINE_FLOAT(AS_RUDDER, 30.0f);
-
-/**
- * Proportional gain.
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_FLOAT(AS_P_GAIN, 0.03f);
-
-/**
- * Integral gain.
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_FLOAT(AS_I_GAIN, 0.0f);
-
-/**
- * Latitude of origin of NED system, in degrees * E7.
- *
- *
- * @min -900000000
- * @max 900000000
- */
-PARAM_DEFINE_INT32(AS_LAT0, 85605120);
-
-/**
- * Longitude of origin of NED system, in degrees * E7.
- *
- *
- * @min -180
- * @max 180
- */
-PARAM_DEFINE_INT32(AS_LON0, 473494820);
-
-/**
- * Altitude of origin of NED system, in millimeters.
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_INT32(AS_ALT0, 0);
-
-/**
- * Epsilon, specifies when the next target could be considered reached, in meters.
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_FLOAT(AS_EPSI, 5.0f);
-
-/**
- * AS_WIN, specifies the number of samples for the moving wind average mean.
- *
- *
- * @min 1
- * @max ?
- */
-PARAM_DEFINE_INT32(AS_WIN, 5);
-
+#endif /* PATH_PLANNING_DATA_H_ */

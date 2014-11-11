@@ -46,6 +46,12 @@
 #include <math.h>
 #include <stdint.h>
 
+//local position of the boat in the Race frame, in centimeters.
+struct local_position_race_s{
+    int32_t x_race_cm;
+    int32_t y_race_cm;
+};
+
 /** @brief convert geodedical coordinates into NED coordinate.*/
 void geo_to_ned(const struct vehicle_global_position_s *gps_p,
                 int32_t *north_cm_p, int32_t *east_cm_p, int32_t *down_cm_p);
