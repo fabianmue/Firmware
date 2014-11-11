@@ -46,7 +46,6 @@
 
 #include <drivers/drv_hrt.h>
 
-void sim_gps(char* buf, int *lgt);
 
 void sim_steady_pos(char* buf, int *lgt);
 
