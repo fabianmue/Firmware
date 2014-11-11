@@ -403,7 +403,7 @@ bool weather_station_init(int *wx_port_pointer){
 
 	// erase received but not read yet data from serial buffer 
 	for (int i=0; i<4; i++)
-		read(*wx_port_pointer, &raw_buffer, sizeof(raw_buffer));
+        read(*wx_port_pointer, raw_buffer, sizeof(raw_buffer));
     sleep(1);		// collect enough data for first parsing
 
     warnx(" ending initialization.\n");
