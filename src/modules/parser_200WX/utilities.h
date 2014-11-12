@@ -47,8 +47,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define SAFETY_COUNTER_EXTRACT 15 ///if extract_until coma doesn't find a ',' for SAFETY_COUNTER_EXTRACT charachters, exit
+#define SAFETY_COUNTER_EXTRACT 15 ///if extract_until_char doesn't find a stop_char for SAFETY_COUNTER_EXTRACT charachters, exit
 
+#define MAX_LENGTH_STRING_FOUND 15///maximum length of string argument in find_string
 
 /** @brief Find string everywhere in buffer. */
 int find_string_everywhere(const int start_index, const char *buffer, const int buffer_length, const char *str);
@@ -56,20 +57,13 @@ int find_string_everywhere(const int start_index, const char *buffer, const int 
 /** @brief Check if the strin is in the buffer starting from an exact position. */
 int find_string_here(const int start_index, const char *buffer, const int buffer_length, const char *str);
 
-/** @brief Extract double from string. */
-bool d_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer);
-
-/** @brief Extract float from string. */
-bool f_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer);
-
-/** @brief Extract float from string. */
-bool f_extract_until_star(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer);
-
-/** @brief Extract int from string. */
-bool i_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, int *ret_val_pointer);
-
-/** @brief Extract int from string. */
-bool i_extract_until_star(int *index_pointer, const char *buffer, const int buffer_length, int *ret_val_pointer);
+/** @brief Extract number from string. */
+bool extract_until_char(const char* type,
+                       int *index_pointer,
+                       const char *buffer,
+                       const int buffer_length,
+                       void *ret_val_pointer,
+                       const char stop_char);
 
 /** @brief Go to buffer until next ','. */
 int jump_to_next_coma(const int start_index, const char *buffer, const int buffer_length);

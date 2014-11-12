@@ -56,7 +56,7 @@ int find_string_everywhere(const int start_index, const char *buffer, const int 
 
     int i;
     int str_len = strlen(str);
-    char temp_str[10]; /**< str cannot be greater than 9 charachter! */
+    char temp_str[MAX_LENGTH_STRING_FOUND]; /**< str cannot be greater than MAX_LENGTH_STRING_FOUND charachter! */
     int stop_index = buffer_length - str_len +1;
 
     for(i = start_index; i < stop_index; i++){
@@ -87,7 +87,7 @@ int find_string_everywhere(const int start_index, const char *buffer, const int 
 int find_string_here(const int start_index, const char *buffer, const int buffer_length, const char *str){
 
     int str_len = strlen(str);
-    char temp_str[15]; /**< str cannot be greater than 14 charachter! */
+    char temp_str[MAX_LENGTH_STRING_FOUND]; /**< str cannot be greater than MAX_LENGTH_STRING_FOUND charachter! */
 
     if(start_index + str_len >= buffer_length)
         return -1; //not enough characters in the buffer
@@ -105,213 +105,90 @@ int find_string_here(const int start_index, const char *buffer, const int buffer
     return -1;
 }
 
-/**
-* Extract data from buffer, starting from index, until a coma is found. Update index. Returns a double
-*
-* @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
-* @param buffer             buffer
-* @param buffer_length      length of buffer
-* @param ret_val_pointer    pointer to variable with the final result
-* @return 	true if no error
-*/
-bool d_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, double *ret_val_pointer){
-
-    int counter = 0;
-    char temp_char[SAFETY_COUNTER_EXTRACT];
-    int i = *index_pointer;
-
-    while(i < buffer_length && buffer[i] != ','){
-
-        temp_char[counter] = buffer[i];
-
-        i++;
-        counter++;
-        if(counter >= SAFETY_COUNTER_EXTRACT){
-            *ret_val_pointer = 0;
-            return false;
-        }
-    }
-
-    //check if we exited from while loop because we have a valid data or not
-    if(i == *index_pointer || i >= buffer_length){
-        *ret_val_pointer = 0;
-        return false; //not found valid data
-    }
-
-    //null terminate string
-    temp_char[counter] = '\0';
-
-    //update index
-    *index_pointer = i;
-    *ret_val_pointer = atof(temp_char);
-
-    return true;
-}
 
 /**
-* Extract data from buffer, starting from index, until a coma is found. Update index. Returns a float
+* Extract data from buffer.
 *
-* @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
-* @param buffer             buffer
-* @param buffer_length      length of buffer
-* @param ret_val_pointer    pointer to variable with the final result
-* @return 	true if no error
-*/
-bool f_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer){
-
-    int counter = 0;
-    char temp_char[SAFETY_COUNTER_EXTRACT];
-    int i = *index_pointer;
-
-    while(i < buffer_length && buffer[i] != ','){
-
-        temp_char[counter] = buffer[i];
-
-        i++;
-        counter++;
-        if(counter >= SAFETY_COUNTER_EXTRACT){
-            *ret_val_pointer = 0;
-            return false;
-        }
-    }
-
-    //check if we exited from while loop because we have a valid data or not
-    if(i == *index_pointer || i >= buffer_length){
-        *ret_val_pointer = 0;
-        return false; //not found valid data
-    }
-
-    //null terminate string
-    temp_char[counter] = '\0';
-
-    //update index
-    *index_pointer = i;
-    *ret_val_pointer = (float)atof(temp_char);
-
-    return true;
-}
-
-
-
-bool f_extract_until_star(int *index_pointer, const char *buffer, const int buffer_length, float *ret_val_pointer){
-
-    int counter = 0;
-    char temp_char[SAFETY_COUNTER_EXTRACT];
-    int i = *index_pointer;
-
-    while(i < buffer_length && buffer[i] != '*'){
-
-        temp_char[counter] = buffer[i];
-
-        i++;
-        counter++;
-        if(counter >= SAFETY_COUNTER_EXTRACT){
-            *ret_val_pointer = 0;
-            return false;
-        }
-    }
-
-    //check if we exited from while loop because we have a valid data or not
-    if(i == *index_pointer || i >= buffer_length){
-        *ret_val_pointer = 0;
-        return false; //not found valid data
-    }
-
-    //null terminate string
-    temp_char[counter] = '\0';
-
-    //update index
-    *index_pointer = i;
-    *ret_val_pointer = (float)atof(temp_char);
-
-    return true;
-}
-
-/**
-* Extract data from buffer, starting from index, until a coma is found. Update index. Returns an int.
+* Starting from index, until stop_char is found, collect chars. Then use aotf or atoi to extract value.
+* Return converted number in the memory pointed by ret_val_pointer, the type is specified by type.
 *
-* @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
-* @param buffer             buffer
-* @param buffer_length      length of buffer
-* @param ret_val_pointer    pointer to variable with the final result
-* @return 	true if no error
-*/
-bool i_extract_until_coma(int *index_pointer, const char *buffer, const int buffer_length, int *ret_val_pointer){
-
-    int counter = 0;
-    char temp_char[SAFETY_COUNTER_EXTRACT];
-    int i = *index_pointer;
-
-    while(i < buffer_length && buffer[i] != ','){
-
-        temp_char[counter] = buffer[i];
-
-        i++;
-        counter++;
-        if(counter >= SAFETY_COUNTER_EXTRACT){
-            *ret_val_pointer = 0;
-            return false;
-        }
-    }
-
-    //check if we exited from while loop because we have a valid data or not
-    if(i == *index_pointer || i >= buffer_length){
-        *ret_val_pointer = 0;
-        return false; //not found valid data
-    }
-
-    //null terminate string
-    temp_char[counter] = '\0';
-
-    //update index
-    *index_pointer = i;
-    *ret_val_pointer = atoi(temp_char);
-
-    return true;
-}
-
-/**
-* Extract data from buffer, starting from index, until a '*' is found. Update index. Returns an int.
+* Update index. Returns type value specif
 *
-* @param index_pointer      pointer to index to be updated at the end of the function, if no error, buffer[i] = ','
+* @param type               can be "double" or "float", or "int".
+* @param index_pointer      pointer to index to be updated at the end of the function.
 * @param buffer             buffer
-* @param buffer_length      length of buffer
-* @param ret_val_pointer    pointer to variable with the final result
-* @return 	true if no error
+* @param buffer_length      length of buffer.
+* @param ret_val_pointer    pointer to variable with the final result.
+* @param stop_char          char to be used as stop signal in parsing the buffer.
+* @return                   true if no error.
 */
-bool i_extract_until_star(int *index_pointer, const char *buffer, const int buffer_length, int *ret_val_pointer){
+bool extract_until_char(const char* type,
+                      int *index_pointer,
+                      const char *buffer,
+                      const int buffer_length,
+                      void *ret_val_pointer,
+                      const char stop_char){
 
     int counter = 0;
     char temp_char[SAFETY_COUNTER_EXTRACT];
     int i = *index_pointer;
+    bool error_extract = false;
 
-    while(i < buffer_length && buffer[i] != '*'){
+    while(i < buffer_length && buffer[i] != stop_char && !error_extract){
 
         temp_char[counter] = buffer[i];
 
         i++;
         counter++;
         if(counter >= SAFETY_COUNTER_EXTRACT){
-            *ret_val_pointer = 0;
-            return false;
+            error_extract = true;
         }
     }
 
     //check if we exited from while loop because we have a valid data or not
     if(i == *index_pointer || i >= buffer_length){
-        *ret_val_pointer = 0;
-        return false; //not found valid data
+        error_extract = true;//not found valid data
     }
 
     //null terminate string
     temp_char[counter] = '\0';
 
-    //update index
-    *index_pointer = i;
-    *ret_val_pointer = atoi(temp_char);
+    //see which type we must use
+    if(!strcmp(type, "int")){
+        if(!error_extract)
+            *((int*)ret_val_pointer) = atoi(temp_char);
+        else
+            *((int*)ret_val_pointer) = 0;
+    }
+    else if(!strcmp(type, "float")){
+        if(!error_extract)
+            *((float*)ret_val_pointer) = (float)atof(temp_char);
+        else
+            *((float*)ret_val_pointer) = 0.0f;
+    }
+    else if(!strcmp(type, "double")){
+        if(!error_extract)
+            *((double*)ret_val_pointer) = atof(temp_char);
+        else
+            *((double*)ret_val_pointer) = 0.0;
+    }
+    else{
+        //type non valid, use float as default
+        if(!error_extract)
+            *((float*)ret_val_pointer) = (float)atof(temp_char);
+        else
+            *((float*)ret_val_pointer) = 0.0f;
+    }
 
-    return true;
+
+    //update index
+    if(!error_extract)
+        *index_pointer = i;
+
+    //return true if everything is ok, false otherwise.
+    return !error_extract;
 }
+
 
 /**
  * Jump to next the ',' in buffer. -1 on error.
