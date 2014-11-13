@@ -78,7 +78,7 @@
 #include "gps_simulator.h"
 
 
-#define MIN_BYTE_FOR_PARSING_LONG_MSG 40 ///minimum number of available byte for starting parsing a long message
+#define MIN_BYTE_FOR_PARSING_LONG_MSG 35 ///minimum number of available byte for starting parsing a long message
 
 #define MIN_BYTE_FOR_PARSING_MEDIUM_MSG 25 ///minimum number of available byte for starting parsing a medium message
 
@@ -619,7 +619,7 @@ void xdr_parser(const char *buffer, const int buffer_length,
     float vert_acc;
 
     // it's worthless to check if there won't be enough data anyway..
-    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_LONG_MSG; i++){
+    for(i = 0; (buffer_length - i) > MIN_BYTE_FOR_PARSING_MEDIUM_MSG; i++){
 
         i = find_string_everywhere(i, buffer, buffer_length, "YXXDR");
 
