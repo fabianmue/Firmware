@@ -484,8 +484,8 @@ bool parser_variables_init(int *wx_port_pointer,
 
     // subscribe to sensor_combined topic
     subs_p->sensor_sub = orb_subscribe(ORB_ID(sensor_combined));
-    //orb_set_interval(*sensor_sub_fd_pointer, 120);	// set px4 sensors update every 0.12 [second] = 8.3 Hz
-    orb_set_interval(subs_p->sensor_sub, 110);	// set px4 sensors update every 0.11 [second] = 9.1 Hz
+    orb_set_interval(subs_p->sensor_sub, 120);	// set px4 sensors update every 0.12 [second] = 8.3 Hz
+    //orb_set_interval(subs_p->sensor_sub, 110);	// set px4 sensors update every 0.11 [second] = 9.1 Hz
     //orb_set_interval(*sensor_sub_fd_pointer, 100);	// set px4 sensors update every 0.10 [second] = 10 Hz
     //orb_set_interval(*sensor_sub_fd_pointer, 80);	// set px4 sensors update every 0.08 [second] = 12 Hz
 
