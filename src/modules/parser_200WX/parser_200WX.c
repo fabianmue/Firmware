@@ -328,32 +328,36 @@ bool weather_station_init(int *wx_port_pointer){
 	    }
 
 
-    warnx(" starting initialization.\n");
+    warnx(" starting weather station initialization.\n");
+
+    // wait 5 seconds for the WX to power up before sending commands (SYS 2999)
+    sleep(5);
 
 	// Set baud rate of wx_port to 4800 baud
     pixhawk_baudrate_set(*wx_port_pointer, 4800);
 
-	// wait 5 [seconds] for the WX to power up before sending commands (SYS 2999)
-	sleep(5); 
+    // wait for 2 seconds for stability
+    sleep(2);
 
-	// start with a new line:
-	uint8_t new_line[] = {'\n'};				
-	write(*wx_port_pointer, new_line, sizeof(new_line));
-    //warnx(" new line.\n");
-
-	// stop transmitting
+    // stop transmitting
     encode_msg_200WX(wx_port_pointer, "PAMTX,0");
-    //warnx(" stop transmitting.\n");
 
-	// wait for 2 seconds for stability
-	sleep(2); 
+    // switch to 38400 baud (the highest possible baud rate):
+    encode_msg_200WX(wx_port_pointer, "PAMTC,BAUD,38400");
+
+    // wait for 2 seconds for stability
+    sleep(2);
+
+    // switch the pixhawk baudrate to 38400
+    pixhawk_baudrate_set(*wx_port_pointer, 38400);
+
+    warnx(" switch pixhawk baudrate to 38400.\n");
+
+    // tell the weather station to start transmitting again (now at 38400 baud):
+    encode_msg_200WX(wx_port_pointer, "PAMTX,1");
 
     // Disable all the transmitted sentences.
-    encode_msg_200WX(wx_port_pointer, "PAMTC,EN,ALL,0,1");
-    //warnx(" PAMTC,EN,ALL,0,1\n");
-
-	// wait for 2 seconds for stability
-	sleep(2); 
+    encode_msg_200WX(wx_port_pointer, "PAMTC,EN,ALL,0");
 
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
         warnx(" enabling outdoor messages.\n");
@@ -389,22 +393,7 @@ bool weather_station_init(int *wx_port_pointer){
     // enable x, y, z accelerometer readings, set 0.1 sec as amount of time between succesive trasmission
     encode_msg_200WX(wx_port_pointer, "PAMTC,EN,XDRC,1,1");
 
-
-	// switch to 38400 baud (the highest possible baud rate):
-    encode_msg_200WX(wx_port_pointer, "PAMTC,BAUD,38400");
-
-
-	// wait for 2 seconds for stability
-	sleep(2); 
-
-    warnx(" switch pixhawk baudrate to 38400.\n");
-
-	// switch the pixhawk baudrate to 38400
-	pixhawk_baudrate_set(*wx_port_pointer, 38400); 
-
-
-	// tell the weather station to start transmitting again (now at 38400 baud):
-    encode_msg_200WX(wx_port_pointer, "PAMTX,1");
+    warnx(" clean UART buffer before start.\n");
 
 	// erase received but not read yet data from serial buffer 
     for (int i=0; i<4; i++){
@@ -547,6 +536,8 @@ bool retrieve_data(int *wx_port_pointer,
 	// read UART when px4 sensors are updated
     buffer_length = read(*wx_port_pointer, buffer_global, sizeof(buffer_global));
 
+    //cancella
+    //warnx("b_lgt %d\n", buffer_length);
 
     if(buffer_length < 1)
         return false;
@@ -597,9 +588,10 @@ bool retrieve_data(int *wx_port_pointer,
     //att_raw_pointer->yaw = wind_sailing_pointer->angle_apparent; //cancella
 
     //debug, save buffer length
+    strs_p->debug_values.float_val_2 = strs_p->debug_values.timestamp / 1e3;
     strs_p->debug_values.timestamp = hrt_absolute_time();
     strs_p->debug_values.float_val_1 = (float)buffer_length;
-    strs_p->debug_values.float_val_2 += 0.01f;
+    strs_p->debug_values.float_val_3 = strs_p->debug_values.timestamp / 1e3;
     //end debug
 
     return true;

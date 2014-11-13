@@ -1724,6 +1724,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.msg_type = LOG_DEVA_MSG;
             log_msg.body.log_DEBUG_VALUES.float_val_1 = buf.debug_values.float_val_1;
             log_msg.body.log_DEBUG_VALUES.float_val_2 = buf.debug_values.float_val_2;
+            log_msg.body.log_DEBUG_VALUES.float_val_3 = buf.debug_values.float_val_3;
             LOGBUFFER_WRITE_AND_COUNT(DEVA);
         }
 
