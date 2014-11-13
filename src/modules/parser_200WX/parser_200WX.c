@@ -93,6 +93,11 @@
 //Global buffer for data from 200WX
 char buffer_global[400];
 
+//debug cancella
+static char buffer_debug[500];
+static int debug_index = 0;
+//end debug cancella
+
 //Thread management variables
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
@@ -484,10 +489,10 @@ bool parser_variables_init(int *wx_port_pointer,
 
     // subscribe to sensor_combined topic
     subs_p->sensor_sub = orb_subscribe(ORB_ID(sensor_combined));
-    orb_set_interval(subs_p->sensor_sub, 120);	// set px4 sensors update every 0.12 [second] = 8.3 Hz
+    //orb_set_interval(subs_p->sensor_sub, 120);	// set px4 sensors update every 0.12 [second] = 8.3 Hz
     //orb_set_interval(subs_p->sensor_sub, 110);	// set px4 sensors update every 0.11 [second] = 9.1 Hz
     //orb_set_interval(*sensor_sub_fd_pointer, 100);	// set px4 sensors update every 0.10 [second] = 10 Hz
-    //orb_set_interval(*sensor_sub_fd_pointer, 80);	// set px4 sensors update every 0.08 [second] = 12 Hz
+    orb_set_interval(subs_p->sensor_sub, 250);//cancella
 
     // advertise attitude topic (ATT)
     memset(&(strs_p->att_s), 0, sizeof(strs_p->att_s));
@@ -535,9 +540,6 @@ bool retrieve_data(int *wx_port_pointer,
 
 	// read UART when px4 sensors are updated
     buffer_length = read(*wx_port_pointer, buffer_global, sizeof(buffer_global));
-
-    //cancella
-    //warnx("b_lgt %d\n", buffer_length);
 
     if(buffer_length < 1)
         return false;
@@ -592,6 +594,30 @@ bool retrieve_data(int *wx_port_pointer,
     strs_p->debug_values.timestamp = hrt_absolute_time();
     strs_p->debug_values.float_val_1 = (float)buffer_length;
     strs_p->debug_values.float_val_3 = strs_p->debug_values.timestamp / 1e3;
+
+    //cancella
+//    warnx("b_lgt %d \t debug_index %d \n", buffer_length, debug_index);
+
+//    if(debug_index < 500){
+//        for(int i = 0; i < buffer_length && debug_index < 500; i++){
+//            buffer_debug[debug_index] = buffer_global[i];
+//            debug_index++;
+//        }
+
+//        if(debug_index < 500){
+//            buffer_debug[debug_index] = '@';
+//            debug_index++;
+//        }
+//        if(debug_index < 500){
+//            buffer_debug[debug_index] = '\n';
+//            debug_index++;
+//        }
+
+//    }
+//    else{
+//        debug_print_nchar(buffer_debug, 500, 0, 499);
+//        debug_index = 0;
+//    }
     //end debug
 
     return true;

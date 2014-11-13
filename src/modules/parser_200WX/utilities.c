@@ -240,10 +240,10 @@ int jump_to_next_n_coma(const int start_index, const char *buffer, const int buf
  * Print data in buffer from start to end (or end of buffer). buffer[end] is not printed.
 */
 void debug_print_nchar(const char *buffer, const int length, const int start, const int end){
-    char str[301];
+    char str[501];
     int i;
 
-    for(i = 0; (i + start) < length && (i + start) <= end && i < 300; i++){
+    for(i = 0; (i + start) < length && (i + start) <= end && i < 500; i++){
 
         str[i] = buffer[start+i];
     }
@@ -257,10 +257,10 @@ void debug_print_nchar(const char *buffer, const int length, const int start, co
  * Print data in buffer from start untile stop_char is found (or end of buffer). stop_char is not printed
 */
 void debug_print_until_char(const char *buffer, const int length, const int start, const char stop_char){
-    char str[301];
+    char str[501];
     int i;
 
-    for(i = 0; (i + start) < length && buffer[start+i] != stop_char && i < 300; i++){
+    for(i = 0; (i + start) < length && buffer[start+i] != stop_char && i < 500; i++){
 
         str[i] = buffer[start+i];
     }
