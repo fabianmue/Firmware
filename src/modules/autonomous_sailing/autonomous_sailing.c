@@ -64,6 +64,8 @@
 
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
 
+#define TIMEOUT_1SEC 1000
+
 
 //Thread management variables
 static bool thread_should_exit = false;		/**< daemon exit flag */
@@ -232,7 +234,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
     while(!thread_should_exit){
 
-        poll_ret = poll(fds, (sizeof(fds) / sizeof(fds[0])), 1000);
+        poll_ret = poll(fds, (sizeof(fds) / sizeof(fds[0])), TIMEOUT_1SEC);
 
         // handle the poll result
         if(poll_ret == 0) {

@@ -56,10 +56,6 @@
 //setting for indoor or outdoor
 #include "../autonomous_sailing/as_settings.h"
 
- // for baud rate selection of the UART port:
-#include <termios.h>
-#include <sys/types.h>
-
 // for uORB topics
 #include "topics_handler.h"
 
@@ -67,15 +63,14 @@
 #include "utilities.h"
 
 
-// to open a UART port:
-#include <sys/stat.h>
-#include <fcntl.h>
-
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
 
 //gps simulation
 #include "gps_simulator.h"
+
+//weather station utility
+#include "weather_station_utility.h"
 
 
 #define MIN_BYTE_FOR_PARSING_LONG_MSG 35 ///minimum number of available byte for starting parsing a long message
@@ -90,12 +85,14 @@
 
 #define km_h2m_s 0.277777777777778f // 1000 / 3600
 
+#define TIMEOUT_1SEC 1000
+
 //Global buffer for data from 200WX
 char buffer_global[400];
 
 //debug cancella
-static char buffer_debug[500];
-static int debug_index = 0;
+//static char buffer_debug[500];
+//static int debug_index = 0;
 //end debug cancella
 
 //Thread management variables
@@ -114,17 +111,6 @@ __EXPORT int parser_200WX_main(int argc, char *argv[]);
 /** @brief main loop. */
 int parser_200WX_daemon_thread_main(int argc, char *argv[]);
 
-/** @brief Initialize weather station. */
-bool weather_station_init(int *wx_port_point);
-
-/** @brief Encode str in a message for 200WX.*/
-void encode_msg_200WX(int *wx_port_point, const char *str);
-
-/** @brief Send msg three times, marine talk. */
-void send_three_times(const int *wx_port_pointer, const uint8_t *msg, const int length);
-
-/** @brief Set baud rate. */
-bool pixhawk_baudrate_set(int wx_port, int baudrate);
 
 /** @brief Initialize all variables. */
 bool parser_variables_init(int *wx_port_pointer,
@@ -274,7 +260,7 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 
 	while (!thread_should_exit) {
         // wait for sensor update of 1 file descriptor up to 1000 ms (1 sec = 1 Hz)
-		poll_ret = poll(fds, 1, 1000);	
+        poll_ret = poll(fds, (sizeof(fds) / sizeof(fds[0])), TIMEOUT_1SEC);
 
 		// handle the poll result 
 		if (poll_ret == 0) {
@@ -311,164 +297,6 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 
 }
 
-
-/**
-* Initialize weather station 200WX.
-*
-* disable all the default messages from the waether station and after that enable only the messages in which
-* we are interested in.
-*
-* @param 				pointer com port file descriptor
-* @return 				true on success
-*/
-bool weather_station_init(int *wx_port_pointer){
-
-    char raw_buffer[300];
-
-	*wx_port_pointer = open("/dev/ttyS5", O_RDWR); // Serial 5, read works, write works
-	// This is serial port 4 according to: pixhawk.org/dev/wiring
-	if (*wx_port_pointer < 0) {
-	        errx(1, "failed to open port: /dev/ttyS5");
-           return false;
-	    }
-
-
-    warnx(" starting weather station initialization.\n");
-
-    // wait 5 seconds for the WX to power up before sending commands (SYS 2999)
-    sleep(5);
-
-	// Set baud rate of wx_port to 4800 baud
-    pixhawk_baudrate_set(*wx_port_pointer, 4800);
-
-    // wait for 2 seconds for stability
-    sleep(2);
-
-    // stop transmitting
-    encode_msg_200WX(wx_port_pointer, "PAMTX,0");
-
-    // switch to 38400 baud (the highest possible baud rate):
-    encode_msg_200WX(wx_port_pointer, "PAMTC,BAUD,38400");
-
-    // wait for 2 seconds for stability
-    sleep(2);
-
-    // switch the pixhawk baudrate to 38400
-    pixhawk_baudrate_set(*wx_port_pointer, 38400);
-
-    warnx(" switch pixhawk baudrate to 38400.\n");
-
-    // tell the weather station to start transmitting again (now at 38400 baud):
-    encode_msg_200WX(wx_port_pointer, "PAMTX,1");
-
-    // Disable all the transmitted sentences.
-    encode_msg_200WX(wx_port_pointer, "PAMTC,EN,ALL,0");
-
-    if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
-        warnx(" enabling outdoor messages.\n");
-
-        // enable  GPS GPGGA message, set 0.1 sec as amount of time between succesive trasmission
-        encode_msg_200WX(wx_port_pointer, "PAMTC,EN,GGA,1,1");
-
-        // enable  GPS GPGSA message, set 0.1 sec as amount of time between succesive trasmission
-        encode_msg_200WX(wx_port_pointer, "PAMTC,EN,GSA,1,1");
-
-        // enable  GPS GPVTG message, set 0.1 sec as amount of time between succesive trasmission
-        encode_msg_200WX(wx_port_pointer, "PAMTC,EN,VTG,1,1");
-
-        // enable  GPS GPZDA message, set 0.1 sec as amount of time between succesive trasmission
-        encode_msg_200WX(wx_port_pointer, "PAMTC,EN,ZDA,1,1");
-
-        // enable heading w.r.t. True North, message HCHDT, set 0.1 sec as amount of time between succesive trasmission
-        encode_msg_200WX(wx_port_pointer, "PAMTC,EN,HDT,1,1");
-
-        // enable wind direction and speed w.r.t. True North, message WIMWD, set 0.1 sec as amount of time between succesive trasmission
-        encode_msg_200WX(wx_port_pointer, "PAMTC,EN,MWD,1,1");
-    }
-
-    // enable relative wind  measurement, set 0.1 sec as amount of time between succesive trasmission
-    encode_msg_200WX(wx_port_pointer, "PAMTC,EN,VWR,1,1");
-
-    // enable vessel attitude (pitch and roll), set 0.1 sec as amount of time between succesive trasmission
-    encode_msg_200WX(wx_port_pointer, "PAMTC,EN,XDRB,1,1");
-
-    // enable Roll, Pitch, Yaw rate relative to the vessel frame, set 0.1 sec as amount of time between succesive trasmission
-    encode_msg_200WX(wx_port_pointer, "PAMTC,EN,XDRE,1,1");
-
-    // enable x, y, z accelerometer readings, set 0.1 sec as amount of time between succesive trasmission
-    encode_msg_200WX(wx_port_pointer, "PAMTC,EN,XDRC,1,1");
-
-    warnx(" clean UART buffer before start.\n");
-
-	// erase received but not read yet data from serial buffer 
-    for (int i=0; i<4; i++){
-        read(*wx_port_pointer, raw_buffer, sizeof(raw_buffer));
-    }
-    sleep(1);		// collect enough data for first parsing
-
-    warnx(" ending initialization.\n");
-
-	return true;
-}
-
-/**
- * Encode str between '$' and '*', add checksum at the end and \r,\n and send it to 200WX.
- *
-*/
-void encode_msg_200WX(int *wx_port_point, const char *str){
-
-    int i;
-    uint8_t checksum;
-    char app_buff[250];
-
-    checksum = str[0];
-
-    for(i = 1; i < strlen(str); i++){
-        checksum = checksum ^ str[i];
-    }
-
-    //encode the message
-    sprintf(app_buff, "$%s*%x\r\n", str, checksum);
-
-    //send message
-    send_three_times(wx_port_point, app_buff, 6 + strlen(str));
-}
-
-/**
- * Send three times (according to marine talk) the same data to 200WX station.
- *
-*/
-void send_three_times(const int *wx_port_pointer, const uint8_t *msg, const int length){
-
-    for(int i = 0; i < 3; i++){
-        write(*wx_port_pointer, msg, length);
-    }
-}
-
-/**
-* Set baud rate between weather station 200WX and pixhawk. (Marine talk, send everything 3 times).
-*
-* @param wx_port	name of the UART port
-* @param baudrate 	baudrate of the communication
-*/
-bool pixhawk_baudrate_set(int wx_port, int baudrate){		// Set the baud rate of the pixhawk to baudrate:
-	struct termios wx_port_config;
-	tcgetattr(wx_port, &wx_port_config);
-	int in_return;
-	int out_return;
-
-	in_return = cfsetispeed(&wx_port_config, baudrate);
-	out_return = cfsetospeed(&wx_port_config, baudrate);
-
-    if(in_return == -1 || out_return == -1){
-        //error
-        errx(1, "failed to set speed of: /dev/ttyS5");
-        return false;
-    }
-	tcsetattr(wx_port, TCSANOW, &wx_port_config); // Set the new configuration
-
-	return true;
-}
 
 /**
 * Initializes all the variables used in the indoor version of the parser.
