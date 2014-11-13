@@ -1722,8 +1722,8 @@ int sdlog2_thread_main(int argc, char *argv[])
         /* --- DEBUG VALUES  */
         if (copy_if_updated(ORB_ID(debug_values), subs.debug_values_sub, &buf.debug_values)) {
             log_msg.msg_type = LOG_DEVA_MSG;
-            log_msg.body.log_DEBUG_VALUES.float1 = buf.debug_values.float1;
-            log_msg.body.log_DEBUG_VALUES.int1 = buf.debug_values.int1;
+            log_msg.body.log_DEBUG_VALUES.float_val_1 = buf.debug_values.float_val_1;
+            log_msg.body.log_DEBUG_VALUES.float_val_2 = buf.debug_values.float_val_2;
             LOGBUFFER_WRITE_AND_COUNT(DEVA);
         }
 

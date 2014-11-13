@@ -521,9 +521,9 @@ bool parser_variables_init(int *wx_port_pointer,
     pubs_p->bodyframe_meas = orb_advertise(ORB_ID(vehicle_bodyframe_meas), &(strs_p->bodyframe_meas_s));
 
     // advertise debug_values topic
-    memset(&(strs_p->debug_values_s), 0, sizeof(strs_p->debug_values_s));
-    strs_p->debug_values_s.timestamp = hrt_absolute_time();
-    pubs_p->debug_values = orb_advertise(ORB_ID(debug_values), &(strs_p->debug_values_s));
+    memset(&(strs_p->debug_values), 0, sizeof(strs_p->debug_values));
+    strs_p->debug_values.timestamp = hrt_absolute_time();
+    pubs_p->debug_values = orb_advertise(ORB_ID(debug_values), &(strs_p->debug_values));
 
     return true;
 }
@@ -547,9 +547,6 @@ bool retrieve_data(int *wx_port_pointer,
 	// read UART when px4 sensors are updated
     buffer_length = read(*wx_port_pointer, buffer_global, sizeof(buffer_global));
 
-    //cancella
-    debug_print_nchar(buffer_global, buffer_length, 0, buffer_length-1);
-    //cancella
 
     if(buffer_length < 1)
         return false;
@@ -583,13 +580,13 @@ bool retrieve_data(int *wx_port_pointer,
         //Fine simalazione
 
 
-        // see if buffer there is one (or more) GPXXX message(s)
+        // see if there is one (or more) GPXXX message(s)
         /*gp_parser(buffer_global, buffer_length, &(strs_p->gps_s));
 
-        // see if buffer there is one (or more) HCHDT message(s)
+        // see if there is one (or more) HCHDT message(s)
         hdt_parser(buffer_global, buffer_length, &(strs_p->att_s));
 
-        // see if buffer there is one (or more) WIMWD message(s)
+        // see if there is one (or more) WIMWD message(s)
         mwd_parser(buffer_global, buffer_length, &(strs_p->wind_sailing_s));*/
     }
 
@@ -600,8 +597,9 @@ bool retrieve_data(int *wx_port_pointer,
     //att_raw_pointer->yaw = wind_sailing_pointer->angle_apparent; //cancella
 
     //debug, save buffer length
-    strs_p->debug_values_s.timestamp = hrt_absolute_time();
-    strs_p->debug_values_s.int1 = buffer_length;
+    strs_p->debug_values.timestamp = hrt_absolute_time();
+    strs_p->debug_values.float_val_1 = (float)buffer_length;
+    strs_p->debug_values.float_val_2 += 0.01f;
     //end debug
 
     return true;
@@ -1304,5 +1302,5 @@ void publish_new_data(struct published_fd_s *pubs_p, struct structs_topics_s *st
     }
 
     //publish debug data
-    orb_publish(ORB_ID(debug_values), pubs_p->debug_values, &(strs_p->debug_values_s));
+    orb_publish(ORB_ID(debug_values), pubs_p->debug_values, &(strs_p->debug_values));
 }

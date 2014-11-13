@@ -72,7 +72,7 @@ struct structs_topics_s{
     struct vehicle_gps_position_s  gps_s;
     struct wind_sailing_s wind_sailing_s;
     struct vehicle_bodyframe_meas_s bodyframe_meas_s;
-    struct debug_values_s debug_values_s;
+    struct debug_values_s debug_values;
 };
 
 #endif // TOPICS_HANDLER_H

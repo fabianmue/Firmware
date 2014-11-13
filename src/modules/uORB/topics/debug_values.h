@@ -49,8 +49,9 @@
 struct debug_values_s {
 
     uint64_t	timestamp;		/**< Microseconds since system boot */
-    float float1;               /**< First float value */
-    uint32_t int1;              /**< First int value */
+    float float_val_1;               /**< First float value */
+    float float_val_2;               /**< Second float value */
+    float float_val_3;               /**< Third float value */
 };
 
 ORB_DECLARE(debug_values);
