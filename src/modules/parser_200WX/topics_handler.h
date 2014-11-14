@@ -54,6 +54,8 @@
 #include <uORB/topics/vehicle_bodyframe_meas.h>
 #include <uORB/topics/debug_values.h>
 
+#include <stdio.h>//bool type
+
 
 struct subscribtion_fd_s{
     int sensor_sub;
@@ -73,6 +75,12 @@ struct structs_topics_s{
     struct wind_sailing_s wind_sailing_s;
     struct vehicle_bodyframe_meas_s bodyframe_meas_s;
     struct debug_values_s debug_values;
+
+    bool att_updated;
+    bool gps_updated;
+    bool wind_updated;
+    bool body_updated;
+    bool debug_updated;
 };
 
 #endif // TOPICS_HANDLER_H

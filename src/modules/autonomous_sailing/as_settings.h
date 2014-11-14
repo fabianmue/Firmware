@@ -40,4 +40,4 @@
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#define AS_TYPE_OF_ENVIRONMENT 0/**< 0 = indoor, 1 = outdoor*/
+#define AS_TYPE_OF_ENVIRONMENT 1/**< 0 = indoor, 1 = outdoor*/
