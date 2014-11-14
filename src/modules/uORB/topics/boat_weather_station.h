@@ -14,7 +14,7 @@ struct boat_weather_station_s {
     float acc_z_g;          ///Vertical acceleration, value reported in g
     float roll_r;           ///Roll in rad
     float pitch_r;          ///Pitch in rad
-    float heading_tn;       ///Heading relative to the true north
+    float heading_tn;       ///Heading relative to the true north, in [-pi, pi], positive on the right
     float roll_rate_r_s;    ///Roll rate in rad/s
     float pitch_rate_r_s;   ///Pitch rate in rad/s
     float yaw_rate_r_s;     ///Yaw rate in rad/s
