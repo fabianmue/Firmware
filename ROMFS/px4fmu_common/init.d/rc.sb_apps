@@ -11,7 +11,7 @@ parser_200WX start
 #
 # start the autonomous_sailing.c script:
 #
-autonomous_sailing start
+#autonomous_sailing start
 
 #
 # start the ekf_att_pos_estimator.cpp script:

@@ -72,6 +72,9 @@
 //weather station utility
 #include "weather_station_utility.h"
 
+#define GPS_SIMULATION 0    //1 to simulate GPS signal
+#define SAVE_DEBUG_VALUES 1 //1 to use debug_values topic for debug purpose
+
 
 #define MIN_BYTE_FOR_PARSING_LONG_MSG 35 ///minimum number of available byte for starting parsing a long message
 
@@ -390,7 +393,10 @@ bool retrieve_data(int *wx_port_pointer,
 
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
 
-        //Simulazione dati GPS, COMMENTA IN UTILIZZO VERO
+
+#if GPS_SIMULATION == 1
+
+        //GPS signal simulation
 
         char gps_fake[500];
         int length_fake;
@@ -408,18 +414,21 @@ bool retrieve_data(int *wx_port_pointer,
         char buf_mwd[] = {"$WIMWD,134.0,T,132.1,M,5.5,N,2.8,M,*,***********************************************"};
         mwd_parser(buf_mwd, sizeof(buf_mwd), strs_p);
 
-        //Fine simalazione
-
+#else
 
         // see if there is one (or more) GPXXX message(s)
-        /*gp_parser(buffer_global, buffer_length, strs_p);
+        gp_parser(buffer_global, buffer_length, strs_p);
 
         // see if there is one (or more) HCHDT message(s)
         hdt_parser(buffer_global, buffer_length, strs_p);
 
         // see if there is one (or more) WIMWD message(s)
-        mwd_parser(buffer_global, buffer_length, strs_p);*/
+        mwd_parser(buffer_global, buffer_length, strs_p);
     }
+
+#endif
+
+#if SAVE_DEBUG_VALUES
 
     //debug
     //att_raw_pointer->yaw = buffer_length; //cancella
@@ -459,6 +468,8 @@ bool retrieve_data(int *wx_port_pointer,
 //        debug_index = 0;
 //    }
     //end debug
+
+#endif
 
     return true;
 }
@@ -1189,9 +1200,13 @@ void publish_new_data(struct published_fd_s *pubs_p, struct structs_topics_s *st
         }
     }
 
+#if SAVE_DEBUG_VALUES == 1
+
     //publish debug data if updated
     if(strs_p->debug_updated){
         orb_publish(ORB_ID(debug_values), pubs_p->debug_values, &(strs_p->debug_values));
         strs_p->debug_updated = false;
     }
+#endif
+
 }
