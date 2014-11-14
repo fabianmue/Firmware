@@ -43,6 +43,9 @@
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
+#define GPS_SIMULATION 1    //1 to simulate GPS signal
+#define SAVE_DEBUG_VALUES 1 //1 to use debug_values topic for debug purpose
+
 #include <nuttx/config.h>
 #include <nuttx/sched.h>
 #include <unistd.h>
@@ -66,15 +69,13 @@
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
 
+#if GPS_SIMULATION == 1
 //gps simulation
 #include "gps_simulator.h"
+#endif
 
 //weather station utility
 #include "weather_station_utility.h"
-
-#define GPS_SIMULATION 0    //1 to simulate GPS signal
-#define SAVE_DEBUG_VALUES 1 //1 to use debug_values topic for debug purpose
-
 
 #define MIN_BYTE_FOR_PARSING_LONG_MSG 35 ///minimum number of available byte for starting parsing a long message
 
@@ -260,7 +261,7 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 
 	// polling management
 	struct pollfd fds[] = {
-            { .fd = subs.sensor_sub,   .events = POLLIN }
+            { .fd = subs.sensor,   .events = POLLIN }
     };
 
 
@@ -322,31 +323,24 @@ bool parser_variables_init(int *wx_port_pointer,
         return false; //failed to open COM port
 
     // subscribe to sensor_combined topic
-    subs_p->sensor_sub = orb_subscribe(ORB_ID(sensor_combined));
-    //orb_set_interval(subs_p->sensor_sub, 120);	// set px4 sensors update every 0.12 [second] = 8.3 Hz
-    orb_set_interval(subs_p->sensor_sub, 110);	// set px4 sensors update every 0.11 [second] = 9.1 Hz
-    //orb_set_interval(*sensor_sub_fd_pointer, 100);	// set px4 sensors update every 0.10 [second] = 10 Hz
-    //orb_set_interval(subs_p->sensor_sub, 250);//cancella
+    subs_p->sensor = orb_subscribe(ORB_ID(sensor_combined));
+    orb_set_interval(subs_p->sensor, 110);	// set px4 sensors update every 0.11 [second] = 9.1 Hz
 
-    // advertise attitude topic (ATT)
-    memset(&(strs_p->att_s), 0, sizeof(strs_p->att_s));
-    strs_p->att_s.timestamp = hrt_absolute_time();
-    //pubs_p->att_pub = orb_advertise(ORB_ID(vehicle_attitude), &(strs_p->att_s));//ripristinare
+
+    // advertise boat_weather_station topic
+    memset(&(strs_p->boat_weather_station), 0, sizeof(strs_p->boat_weather_station));
+    strs_p->boat_weather_station.timestamp = hrt_absolute_time();
+    pubs_p->boat_weather_station = orb_advertise(ORB_ID(boat_weather_station), &(strs_p->boat_weather_station));
 
     // advertise vehicle_gps_position topic
-    memset(&(strs_p->gps_s), 0, sizeof(strs_p->gps_s));
-    strs_p->gps_s.timestamp_time  = hrt_absolute_time();
-    pubs_p->gps_pub = orb_advertise(ORB_ID(vehicle_gps_position), &(strs_p->gps_s));
+    memset(&(strs_p->gps), 0, sizeof(strs_p->gps));
+    strs_p->gps.timestamp_time  = hrt_absolute_time();
+    pubs_p->gps = orb_advertise(ORB_ID(vehicle_gps_position), &(strs_p->gps));
 
     // advertise wind_sailing topic
-    memset(&(strs_p->wind_sailing_s), 0, sizeof(strs_p->wind_sailing_s));
-    strs_p->wind_sailing_s.timestamp = hrt_absolute_time();
-    pubs_p->wind_sailing = orb_advertise(ORB_ID(wind_sailing), &(strs_p->wind_sailing_s));
-
-    // advertise vehicle_bodyframe_meas topic
-    memset(&(strs_p->bodyframe_meas_s), 0, sizeof(strs_p->bodyframe_meas_s));
-    strs_p->bodyframe_meas_s.timestamp = hrt_absolute_time();
-    pubs_p->bodyframe_meas = orb_advertise(ORB_ID(vehicle_bodyframe_meas), &(strs_p->bodyframe_meas_s));
+    memset(&(strs_p->wind_sailing), 0, sizeof(strs_p->wind_sailing));
+    strs_p->wind_sailing.timestamp = hrt_absolute_time();
+    pubs_p->wind_sailing = orb_advertise(ORB_ID(wind_sailing), &(strs_p->wind_sailing));
 
     // advertise debug_values topic
     memset(&(strs_p->debug_values), 0, sizeof(strs_p->debug_values));
@@ -354,10 +348,9 @@ bool parser_variables_init(int *wx_port_pointer,
     pubs_p->debug_values = orb_advertise(ORB_ID(debug_values), &(strs_p->debug_values));
 
     //none topic has been updated yet
-    strs_p->att_updated = false;
     strs_p->gps_updated = false;
     strs_p->wind_updated = false;
-    strs_p->body_updated = false;
+    strs_p->boat_weather_station_updated = false;
     strs_p->debug_updated = false;
 
     return true;
@@ -377,7 +370,7 @@ bool retrieve_data(int *wx_port_pointer,
     int buffer_length;
 
 	// copy sensors raw data into local buffer, actually this action is need only to apply downsampling time
-    orb_copy(ORB_ID(sensor_combined), subs_p->sensor_sub, &sensor_combined_raw);
+    orb_copy(ORB_ID(sensor_combined), subs_p->sensor, &sensor_combined_raw);
 
 	// read UART when px4 sensors are updated
     buffer_length = read(*wx_port_pointer, buffer_global, sizeof(buffer_global));
@@ -424,9 +417,8 @@ bool retrieve_data(int *wx_port_pointer,
 
         // see if there is one (or more) WIMWD message(s)
         mwd_parser(buffer_global, buffer_length, strs_p);
-    }
-
 #endif
+    }
 
 #if SAVE_DEBUG_VALUES
 
@@ -539,10 +531,10 @@ void xdr_parser(const char *buffer, const int buffer_length,
                     //extract second value
                     if(extract_until_char("float", &i, buffer, buffer_length, &temp_val, ',')){
                         //second value extracted, set value in topic's structure
-                        strs_p->att_s.timestamp = hrt_absolute_time();
-                        strs_p->att_s.roll = temp_val * deg2rad; /// Roll in rad.
-                        strs_p->att_s.pitch = pitch * deg2rad;   /// Pitch in rad.
-                        strs_p->att_updated = true;
+                        strs_p->boat_weather_station.timestamp = hrt_absolute_time();
+                        strs_p->boat_weather_station.roll_r = temp_val * deg2rad; /// Roll in rad.
+                        strs_p->boat_weather_station.pitch_r = pitch * deg2rad;   /// Pitch in rad.
+                        strs_p->boat_weather_station_updated = true;
 
                         //cancella
                         //warnx("Roll %2.3f \t Pitch %2.3f \n", (double)temp_val, (double)pitch);
@@ -580,11 +572,11 @@ void xdr_parser(const char *buffer, const int buffer_length,
                         i += 9;	// position to byte1 of third value
                         if(extract_until_char("float", &i, buffer, buffer_length, &temp_val, ',')){
                             //set value in topic's structure
-                            strs_p->att_s.timestamp = hrt_absolute_time();
-                            strs_p->att_s.rollspeed = rollspeed * deg2rad;     ///< Roll speed in rad/s.
-                            strs_p->att_s.pitchspeed = pitchspeed * deg2rad;   ///< Pitch speed in rad/s.
-                            strs_p->att_s.yawspeed = temp_val * deg2rad;       ///< Yaw speed in rad/s.
-                            strs_p->att_updated = true;
+                            strs_p->boat_weather_station.timestamp = hrt_absolute_time();
+                            strs_p->boat_weather_station.roll_rate_r_s = rollspeed * deg2rad;     ///< Roll speed in rad/s.
+                            strs_p->boat_weather_station.pitch_rate_r_s = pitchspeed * deg2rad;   ///< Pitch speed in rad/s.
+                            strs_p->boat_weather_station.yaw_rate_r_s = temp_val * deg2rad;       ///< Yaw speed in rad/s.
+                            strs_p->boat_weather_station_updated = true;
 
                             //cancella
                             //warnx("RR %2.3f \t PR %2.3f \t YR %2.3f \n", (double)rollspeed, (double)pitchspeed, (double)temp_val);
@@ -614,11 +606,11 @@ void xdr_parser(const char *buffer, const int buffer_length,
                     i += 10;
                     if(extract_until_char("float", &i, buffer, buffer_length, &vert_acc, ',')){
                         //set value in topic's structure
-                        strs_p->bodyframe_meas_s.timestamp = hrt_absolute_time();
-                        strs_p->bodyframe_meas_s.acc_x = lon_acc;
-                        strs_p->bodyframe_meas_s.acc_y = lat_acc;
-                        strs_p->bodyframe_meas_s.acc_z = vert_acc;
-                        strs_p->body_updated = true;
+                        strs_p->boat_weather_station.timestamp = hrt_absolute_time();
+                        strs_p->boat_weather_station.acc_x_g = lon_acc;
+                        strs_p->boat_weather_station.acc_y_g = lat_acc;
+                        strs_p->boat_weather_station.acc_z_g = vert_acc;
+                        strs_p->boat_weather_station_updated = true;
                         //cancella
                         //warnx("LatAc %2.3f \t LonAc %2.3f \t AltAc %2.3f \n", (double)lat_acc, (double)lon_acc, (double)vert_acc);
                         //fine cancella
@@ -727,17 +719,17 @@ void gp_parser(const char *buffer, const int buffer_length,
                                 if(extract_until_char("float", &i, buffer, buffer_length, &alt, ',')){
 
                                     //save data in the struct
-                                    strs_p->gps_s.timestamp_time = hrt_absolute_time();
+                                    strs_p->gps.timestamp_time = hrt_absolute_time();
 
-                                    strs_p->gps_s.timestamp_position = hrt_absolute_time();
+                                    strs_p->gps.timestamp_position = hrt_absolute_time();
 
                                     //convert lat and long in degrees and multiple for 1E7 as required in vehicle_gps_position topic
-                                    strs_p->gps_s.lat = nmea_ndeg2degree(latitude) * 1e7f; /// Valid only for North latitude (for now)
-                                    strs_p->gps_s.lon = nmea_ndeg2degree(longitude) * 1e7f;/// Valid only for East longitude (for now)
-                                    strs_p->gps_s.satellites_used = satellites_used;
-                                    strs_p->gps_s.eph = eph;
+                                    strs_p->gps.lat = nmea_ndeg2degree(latitude) * 1e7f; /// Valid only for North latitude (for now)
+                                    strs_p->gps.lon = nmea_ndeg2degree(longitude) * 1e7f;/// Valid only for East longitude (for now)
+                                    strs_p->gps.satellites_used = satellites_used;
+                                    strs_p->gps.eph = eph;
                                     //set altitude from meters in millimeter as requested in vehicle_gps_position topic
-                                    strs_p->gps_s.alt = alt * 1000; ///altitude in millimeters
+                                    strs_p->gps.alt = alt * 1000; ///altitude in millimeters
 
                                     //publish gps position only if there is GGA or VTG message.
                                     strs_p->gps_updated = true;
@@ -799,8 +791,8 @@ void gp_parser(const char *buffer, const int buffer_length,
                 //extract VDOP
                 if(extract_until_char("float", &i, buffer, buffer_length, &vdop, '*')){
                     //save data
-                    strs_p->gps_s.fix_type = fix_type;
-                    strs_p->gps_s.epv = vdop;
+                    strs_p->gps.fix_type = fix_type;
+                    strs_p->gps.epv = vdop;
 
                     //publish gps position only if there is GGA or VTG message.
 
@@ -854,28 +846,28 @@ void gp_parser(const char *buffer, const int buffer_length,
 
                         if(extract_until_char("float", &i, buffer, buffer_length, &speed_over_ground, ',')){
                             //save data in struct
-                            strs_p->gps_s.timestamp_velocity = hrt_absolute_time();
+                            strs_p->gps.timestamp_velocity = hrt_absolute_time();
 
                             //Positive course_over_ground on the right, negative on the left
                             if(course_over_ground > 180.0f && course_over_ground <= 360.0f)
                                 course_over_ground = course_over_ground - 360.0f;
 
-                            strs_p->gps_s.vel_m_s = speed_over_ground * km_h2m_s; /// Speed over ground in m/s.
-                            strs_p->gps_s.cog_rad = course_over_ground * deg2rad; /// Course over ground w.r.t true North in rad, positive on the right, negative on the left.
+                            strs_p->gps.vel_m_s = speed_over_ground * km_h2m_s; /// Speed over ground in m/s.
+                            strs_p->gps.cog_rad = course_over_ground * deg2rad; /// Course over ground w.r.t true North in rad, positive on the right, negative on the left.
 
                             //compute north and east velocity  hypothesizing down velocity = 0
-                           strs_p->gps_s.vel_n_m_s = strs_p->gps_s.vel_m_s *
-                                                        (float)cos(strs_p->gps_s.cog_rad);
+                           strs_p->gps.vel_n_m_s = strs_p->gps.vel_m_s *
+                                                        (float)cos(strs_p->gps.cog_rad);
 
-                            strs_p->gps_s.vel_e_m_s = strs_p->gps_s.vel_m_s *
-                                                        (float)sin(strs_p->gps_s.cog_rad);
+                            strs_p->gps.vel_e_m_s = strs_p->gps.vel_m_s *
+                                                        (float)sin(strs_p->gps.cog_rad);
 
                             //TODO verificare se puoi mettere un valore vero
-                            strs_p->gps_s.vel_d_m_s = 0.0f;
+                            strs_p->gps.vel_d_m_s = 0.0f;
 
-                            strs_p->gps_s.vel_ned_valid = true;
+                            strs_p->gps.vel_ned_valid = true;
 
-                            strs_p->gps_s.timestamp_velocity = hrt_absolute_time();
+                            strs_p->gps.timestamp_velocity = hrt_absolute_time();
 
                             //publish gps position only if there is GGA or VTG message.
                             strs_p->gps_updated = true;
@@ -927,9 +919,9 @@ void gp_parser(const char *buffer, const int buffer_length,
                                     timeinfo.tm_sec = (int)ashtech_sec;
                                     time_t epoch = mktime(&timeinfo);
 
-                                    strs_p->gps_s.time_gps_usec = (uint64_t)epoch * 1000000; //TODO: test this
-                                    strs_p->gps_s.time_gps_usec += (uint64_t)((ashtech_sec - ((int)ashtech_sec)) * 1e6);
-                                    strs_p->gps_s.timestamp_time = hrt_absolute_time();
+                                    strs_p->gps.time_gps_usec = (uint64_t)epoch * 1000000; //TODO: test this
+                                    strs_p->gps.time_gps_usec += (uint64_t)((ashtech_sec - ((int)ashtech_sec)) * 1e6);
+                                    strs_p->gps.timestamp_time = hrt_absolute_time();
 
                                     //publish gps position only if there is GGA or VTG message.
 
@@ -1025,9 +1017,9 @@ void vr_parser(const char *buffer, const int buffer_length,
                 //extract second value
                 if(extract_until_char("float", &i, buffer, buffer_length, &temp_speed, ',')){
                     //set value in topic's structure
-                    strs_p->wind_sailing_s.timestamp = hrt_absolute_time();
-                    strs_p->wind_sailing_s.angle_apparent = temp_angle * deg2rad; ///Apparent wind angle in rad, positive on the right, negative on the left.
-                    strs_p->wind_sailing_s.speed_apparent = temp_speed; ///Apparent wind speed in m/s.
+                    strs_p->wind_sailing.timestamp = hrt_absolute_time();
+                    strs_p->wind_sailing.angle_apparent = temp_angle * deg2rad; ///Apparent wind angle in rad, positive on the right, negative on the left.
+                    strs_p->wind_sailing.speed_apparent = temp_speed; ///Apparent wind speed in m/s.
 
                     strs_p->wind_updated = true;
 
@@ -1077,8 +1069,9 @@ void hdt_parser(const char *buffer, const int buffer_length,
             if(heading > 180.0f && heading <= 360.0f)
                 heading = heading - 360.0f;
 
-            strs_p->att_s.yaw = heading * deg2rad; /// Heading w.r.t. true North in rad, positive on the right.
-            strs_p->att_updated = true;
+            strs_p->boat_weather_station.timestamp = hrt_absolute_time();
+            strs_p->boat_weather_station.heading_tn = heading * deg2rad; /// Heading w.r.t. true North in rad, positive on the right.
+            strs_p->boat_weather_station_updated = true;
         }
 
     }
@@ -1146,15 +1139,16 @@ void mwd_parser(const char *buffer, const int buffer_length,
                     i += 3;
                     if(extract_until_char("float", &i, buffer, buffer_length, &speed, ',')){
 
-                        //save data in struct
-                        strs_p->wind_sailing_s.timestamp = hrt_absolute_time();
 
                         //Positive direction on the right, negative on the left
                         if(direction > 180.0f && direction <= 360.0f)
                             direction = direction - 360.0f;
 
-                        strs_p->wind_sailing_s.angle_true = direction * deg2rad;/// True wind direction wrt true North in rad, positive on the right.
-                        strs_p->wind_sailing_s.speed_true = speed;/// True wind speed wrt true North in m/s
+                        //save data in struct
+                        strs_p->wind_sailing.timestamp = hrt_absolute_time();
+
+                        strs_p->wind_sailing.angle_true = direction * deg2rad;/// True wind direction wrt true North in rad, positive on the right.
+                        strs_p->wind_sailing.speed_true = speed;/// True wind speed wrt true North in m/s
 
                         strs_p->wind_updated = true;
                         //cancella
@@ -1182,20 +1176,20 @@ void publish_new_data(struct published_fd_s *pubs_p, struct structs_topics_s *st
 
     //publish wind_sailing data if updated
     if(strs_p->wind_updated){
-        orb_publish(ORB_ID(wind_sailing), pubs_p->wind_sailing, &(strs_p->wind_sailing_s));
+        orb_publish(ORB_ID(wind_sailing), pubs_p->wind_sailing, &(strs_p->wind_sailing));
         strs_p->wind_updated = false;
     }
 
-    //publish vehicle_bodyframe_meas data if updated
-    if(strs_p->body_updated){
-        orb_publish(ORB_ID(vehicle_bodyframe_meas), pubs_p->bodyframe_meas, &(strs_p->bodyframe_meas_s));
-        strs_p->body_updated = false;
+    //publish boat_weather_station_updated data if updated
+    if(strs_p->boat_weather_station_updated){
+        orb_publish(ORB_ID(boat_weather_station), pubs_p->boat_weather_station, &(strs_p->boat_weather_station));
+        strs_p->boat_weather_station_updated = false;
     }
 
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
         //publish gps data if updated
         if(strs_p->gps_updated){
-            orb_publish(ORB_ID(vehicle_gps_position), pubs_p->gps_pub, &(strs_p->gps_s));
+            orb_publish(ORB_ID(vehicle_gps_position), pubs_p->gps, &(strs_p->gps));
             strs_p->gps_updated = false;
         }
     }

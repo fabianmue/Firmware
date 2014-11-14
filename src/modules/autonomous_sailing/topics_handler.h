@@ -7,15 +7,15 @@
 
 #include <uORB/topics/wind_sailing.h>
 #include <uORB/topics/vehicle_global_position.h>
-#include <uORB/topics/vehicle_bodyframe_meas.h>
+#include <uORB/topics/boat_weather_station.h>
 #include <uORB/topics/vehicle_attitude.h>
 
 
 struct subscribtion_fd_s{
-    int att_sub;
-    int gps_sub;
-    int wsai_sub;
-    int bfme_sub;
+    int att;
+    int gps;
+    int wind_sailing;
+    int boat_weather_station;
 };
 
 struct published_fd_s{
@@ -26,8 +26,8 @@ struct structs_topics_s{
    struct actuator_controls_s actuators;
    struct vehicle_attitude_s att;
    struct vehicle_global_position_s gps_filtered;
-   struct wind_sailing_s wsai;
-   struct vehicle_bodyframe_meas_s bfme;
+   struct wind_sailing_s wind_sailing;
+   struct boat_weather_station_s boat_weather_station;
 
 };
 

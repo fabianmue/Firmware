@@ -221,10 +221,10 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
     // polling management
     struct pollfd fds[] = {
-            { .fd = subs.att_sub ,   .events = POLLIN },
-            { .fd = subs.gps_sub ,   .events = POLLIN },
-            { .fd = subs.wsai_sub,   .events = POLLIN },
-            { .fd = subs.bfme_sub,   .events = POLLIN }
+            { .fd = subs.att ,                  .events = POLLIN },
+            { .fd = subs.gps ,                  .events = POLLIN },
+            { .fd = subs.wind_sailing,          .events = POLLIN },
+            { .fd = subs.boat_weather_station,  .events = POLLIN }
     };
 
     //set reference of NED frame before starting
@@ -253,14 +253,14 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // new Attitude values
 
                     //prova
-                    orb_copy(ORB_ID(vehicle_attitude), subs.att_sub, &(strs.att));
+                    orb_copy(ORB_ID(vehicle_attitude), subs.att, &(strs.att));
 
                 }
                 if(fds[1].revents & POLLIN){
                     // new vehicle_global_position value
 
                     //copy GPS data
-                    orb_copy(ORB_ID(vehicle_global_position), subs.gps_sub, &(strs.gps_filtered));
+                    orb_copy(ORB_ID(vehicle_global_position), subs.gps, &(strs.gps_filtered));
 
                     //do navigation module
                     navigation_module(&strs, &local_pos_r);
@@ -271,26 +271,26 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 }
                 if(fds[2].revents & POLLIN){
                     // new WSAI values, copy new data
-                    orb_copy(ORB_ID(wind_sailing), subs.wsai_sub, &(strs.wsai));
+                    orb_copy(ORB_ID(wind_sailing), subs.wind_sailing, &(strs.wind_sailing));
 
-                    //update apparent wind angle history by substituing oldest value
-                    apparent_angle.app_angle_p[apparent_angle.oldest_value] = strs.wsai.angle_apparent;
-                    //update index of oldest value
-                    apparent_angle.oldest_value++;
-                    if(apparent_angle.oldest_value == apparent_angle.window_size)
-                        apparent_angle.oldest_value = 0;
-                    //compute apparent wind angle mean
-                    apparent_angle.app_angle_mean = 0.0f;
-                    for(int i = 0; i < apparent_angle.window_size; i++){
-                        apparent_angle.app_angle_mean += apparent_angle.app_angle_p[i];
-                    }
+//                    //update apparent wind angle history by substituing oldest value
+//                    apparent_angle.app_angle_p[apparent_angle.oldest_value] = strs.wsai.angle_apparent;
+//                    //update index of oldest value
+//                    apparent_angle.oldest_value++;
+//                    if(apparent_angle.oldest_value == apparent_angle.window_size)
+//                        apparent_angle.oldest_value = 0;
+//                    //compute apparent wind angle mean
+//                    apparent_angle.app_angle_mean = 0.0f;
+//                    for(int i = 0; i < apparent_angle.window_size; i++){
+//                        apparent_angle.app_angle_mean += apparent_angle.app_angle_p[i];
+//                    }
 
                 }
                 if(fds[3].revents & POLLIN){
-                    // new BFME values
+                    // new boat_weather_station values
 
                     // copy new data
-                    orb_copy(ORB_ID(vehicle_bodyframe_meas), subs.bfme_sub, &(strs.bfme));
+                    orb_copy(ORB_ID(boat_weather_station), subs.boat_weather_station, &(strs.boat_weather_station));
 
                 }
 
@@ -330,28 +330,28 @@ int as_daemon_thread_main(int argc, char *argv[]){
 */
 bool as_subscriber(struct subscribtion_fd_s *subs_p){
 
-    subs_p->att_sub = orb_subscribe(ORB_ID(vehicle_attitude));
-    subs_p->gps_sub = orb_subscribe(ORB_ID(vehicle_global_position));
-    subs_p->bfme_sub = orb_subscribe(ORB_ID(vehicle_bodyframe_meas));
-    subs_p->wsai_sub = orb_subscribe(ORB_ID(wind_sailing));
+    subs_p->att = orb_subscribe(ORB_ID(vehicle_attitude));
+    subs_p->gps = orb_subscribe(ORB_ID(vehicle_global_position));
+    subs_p->boat_weather_station = orb_subscribe(ORB_ID(boat_weather_station));
+    subs_p->wind_sailing = orb_subscribe(ORB_ID(wind_sailing));
 
-    if(subs_p->att_sub == -1){
-        warnx(" error on subscribing on Attitude Topic \n");
+    if(subs_p->att == -1){
+        warnx(" error on subscribing on vehicle_attitude Topic \n");
         return false;
     }
 
-    if(subs_p->gps_sub == -1){
-        warnx(" error on subscribing on GPS Topic \n");
+    if(subs_p->gps == -1){
+        warnx(" error on subscribing on vehicle_global_position Topic \n");
         return false;
     }
 
-    if(subs_p->bfme_sub == -1){
-        warnx(" error on subscribing on Body Frame Measurements Topic \n");
+    if(subs_p->boat_weather_station == -1){
+        warnx(" error on subscribing on boat_weather_station Topic \n");
         return false;
     }
 
-    if(subs_p->wsai_sub == -1){
-        warnx(" error on subscribing on Wind Sailing Topic \n");
+    if(subs_p->wind_sailing == -1){
+        warnx(" error on subscribing on wind_sailing Topic \n");
         return false;
     }
 

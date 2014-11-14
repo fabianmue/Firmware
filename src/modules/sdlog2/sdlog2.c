@@ -94,7 +94,7 @@
 //Added by Marco Tranzatto
 #include <uORB/topics/wind_sailing.h>
 //Added by Marco Tranzatto
-#include <uORB/topics/vehicle_bodyframe_meas.h>
+#include <uORB/topics/boat_weather_station.h>
 //Added by Marco Tranzatto
 #include <uORB/topics/debug_values.h>
 
@@ -962,7 +962,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		struct satellite_info_s sat_info;
 		struct wind_estimate_s wind_estimate;
         struct wind_sailing_s wind_sailing; //Added by Marco Tranzatto
-        struct vehicle_bodyframe_meas_s bodyframe_meas; //Added by Marco Tranzatto
+        struct boat_weather_station_s boat_weather_station; //Added by Marco Tranzatto
         struct debug_values_s debug_values; //Added by Marco Tranzatto
 	} buf;
 
@@ -1007,7 +1007,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 			struct log_TECS_s log_TECS;
 			struct log_WIND_s log_WIND;
             struct log_WSAI_s log_WIND_SAILING; //Added by Marco Tranzatto
-            struct log_BFME_s log_BODYFRAME_MEAS; //Added by Marco Tranzatto
+            struct log_BWES_s log_BOAT_WEATHER_STATION; //Added by Marco Tranzatto
             struct log_DEVA_s log_DEBUG_VALUES; //Added by Marco Tranzatto
 		} body;
 	} log_msg = {
@@ -1047,7 +1047,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		int servorail_status_sub;
 		int wind_sub;
         int wind_sailing_sub; //Added by Marco Tranzatto
-        int bodyframe_meas_sub; //Added by Marco Tranzatto
+        int boat_weather_station_sub; //Added by Marco Tranzatto
         int debug_values_sub; //Added by Marco Tranzatto
 	} subs;
 
@@ -1090,7 +1090,7 @@ int sdlog2_thread_main(int argc, char *argv[])
     //****************** Added by Marco Tranzatto **************
     subs.wind_sailing_sub = orb_subscribe(ORB_ID(wind_sailing));
 
-    subs.bodyframe_meas_sub = orb_subscribe(ORB_ID(vehicle_bodyframe_meas));
+    subs.boat_weather_station_sub = orb_subscribe(ORB_ID(boat_weather_station));
 
     subs.debug_values_sub = orb_subscribe(ORB_ID(debug_values));
 /*
@@ -1710,13 +1710,21 @@ int sdlog2_thread_main(int argc, char *argv[])
             LOGBUFFER_WRITE_AND_COUNT(WSAI);
         }
 
-        /* --- BODY FRAME MEAUSERMENT  */
-        if (copy_if_updated(ORB_ID(vehicle_bodyframe_meas), subs.bodyframe_meas_sub, &buf.bodyframe_meas)) {
-            log_msg.msg_type = LOG_BFME_MSG;
-            log_msg.body.log_BODYFRAME_MEAS.acc_x = buf.bodyframe_meas.acc_x;
-            log_msg.body.log_BODYFRAME_MEAS.acc_y = buf.bodyframe_meas.acc_y;
-            log_msg.body.log_BODYFRAME_MEAS.acc_z = buf.bodyframe_meas.acc_z;
-            LOGBUFFER_WRITE_AND_COUNT(BFME);
+        /* --- BOAT WEATHER STATION  */
+        if (copy_if_updated(ORB_ID(boat_weather_station), subs.boat_weather_station_sub, &buf.boat_weather_station)) {
+            log_msg.msg_type = LOG_BWES_MSG;
+            log_msg.body.log_BOAT_WEATHER_STATION.acc_x_g = buf.boat_weather_station.acc_x_g;
+            log_msg.body.log_BOAT_WEATHER_STATION.acc_y_g = buf.boat_weather_station.acc_y_g;
+            log_msg.body.log_BOAT_WEATHER_STATION.acc_z_g = buf.boat_weather_station.acc_z_g;
+
+            log_msg.body.log_BOAT_WEATHER_STATION.roll_r = buf.boat_weather_station.roll_r;
+            log_msg.body.log_BOAT_WEATHER_STATION.pitch_r = buf.boat_weather_station.pitch_r;
+            log_msg.body.log_BOAT_WEATHER_STATION.heading_tn = buf.boat_weather_station.heading_tn;
+
+            log_msg.body.log_BOAT_WEATHER_STATION.roll_rate_r_s = buf.boat_weather_station.roll_rate_r_s;
+            log_msg.body.log_BOAT_WEATHER_STATION.pitch_rate_r_s = buf.boat_weather_station.pitch_rate_r_s;
+            log_msg.body.log_BOAT_WEATHER_STATION.yaw_rate_r_s = buf.boat_weather_station.yaw_rate_r_s;
+            LOGBUFFER_WRITE_AND_COUNT(BWES);
         }
 
         /* --- DEBUG VALUES  */

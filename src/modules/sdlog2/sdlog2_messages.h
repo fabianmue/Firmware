@@ -418,12 +418,18 @@ struct log_WSAI_s{
     float speed_true;
 };
 
-/* --- BODY FRAME MEASUREMENTS ------------------------------------------- */
-#define LOG_BFME_MSG 56
-struct log_BFME_s{
-    float acc_x;
-    float acc_y;
-    float acc_z;
+/* --- BOAT WEATHER STATION MEASUREMNTS ------------------------------------------- */
+#define LOG_BWES_MSG 56
+struct log_BWES_s{
+    float acc_x_g;
+    float acc_y_g;
+    float acc_z_g;
+    float roll_r;
+    float pitch_r;
+    float heading_tn;
+    float roll_rate_r_s;
+    float pitch_rate_r_s;
+    float yaw_rate_r_s;
 };
 
 /* --- DEBUG VALUES ------------------------------------------------------ */
@@ -500,7 +506,7 @@ static const struct log_format_s log_formats[] = {
 	LOG_FORMAT(TECS, "fffffffffffffB",	"ASP,AF,FSP,F,FF,AsSP,AsF,AsDSP,AsD,TERSP,TER,EDRSP,EDR,M"),
 	LOG_FORMAT(WIND, "ffff",	"X,Y,CovX,CovY"),
     LOG_FORMAT(WSAI, "ffff", "AngleApparent,SpeedApparent,AngleTrue,SpeedTrue"), //Added by Marco Tranzatto
-    LOG_FORMAT(BFME, "fff", "AccX,AccY,AccZ"), //Added by Marco Tranzatto
+    LOG_FORMAT(BWES, "fffffffff", "AccX,AccY,AccZ,Roll,Pitch,Heading,RollRate,PitchRate,YawRate"), //Added by Marco Tranzatto
     LOG_FORMAT(DEVA, "fff", "Float1, Float2, Float3"), //Added by Marco Tranzatto
 	/* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
