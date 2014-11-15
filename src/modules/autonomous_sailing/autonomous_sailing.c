@@ -56,7 +56,8 @@
 //Include topics necessary
 #include "topics_handler.h"
 
-
+//controller data functions
+#include "controller_data.h"
 
 // To be able to use the "parameter function" from Q ground control:
 #include <systemlib/param/param.h>
@@ -195,6 +196,9 @@ int as_daemon_thread_main(int argc, char *argv[]){
     //parameters from QGroundControl
     struct parameters_qgc params;
 
+    //initialize controller data structures
+    init_controller_data();
+
     //local position in the Race frame
     struct local_position_race_s local_pos_r = {.x_race_cm = 0, .y_race_cm = 0};
 
@@ -265,7 +269,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     //do navigation module
                     navigation_module(&strs, &local_pos_r);
 
-                    //do optimal path planning
+                    //look into optimal path planning maps
                     path_planning();
 
                 }

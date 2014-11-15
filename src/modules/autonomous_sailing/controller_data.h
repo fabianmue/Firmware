@@ -32,21 +32,25 @@
  *
  ****************************************************************************/
 /**
- * @file path_planning_data.h
+ * @file controller_data.h
  *
- * Store all optimal path planning data.
+ * Store information used by controller.
  *
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#ifndef PATH_PLANNING_DATA_H_
-#define PATH_PLANNING_DATA_H_
+#ifndef CONTROLLER_DATA_H
+#define CONTROLLER_DATA_H
 
-// reference actions for the guidance_module
-struct reference_actions_s{
-    float alpha_star; ///optimal heading angle
-    bool should_tack; ///true if boat should take as soon as possible
-};
+#include <stdint.h>
 
+/** @brief initialize controller data before starting*/
+void init_controller_data();
 
-#endif /* PATH_PLANNING_DATA_H_ */
+/** @brief modify size of the moving window*/
+void update_k(const uint32_t k);
+
+/** @brief update course over ground with a new value*/
+void update_cog(const float cog_r);
+
+#endif // CONTROLLER_DATA_H

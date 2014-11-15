@@ -1,5 +1,6 @@
 MODULE_COMMAND		= autonomous_sailing
 SRCS				= autonomous_sailing.c \
 					navigation.c \
-					parameters.c
+                                        parameters.c \
+                                        controller_data.c
 					
