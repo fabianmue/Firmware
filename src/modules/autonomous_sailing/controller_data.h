@@ -42,15 +42,23 @@
 #ifndef CONTROLLER_DATA_H
 #define CONTROLLER_DATA_H
 
+#define DEFAULT_AVG_WINDOW 10
+
 #include <stdint.h>
 
 /** @brief initialize controller data before starting*/
 void init_controller_data();
 
 /** @brief modify size of the moving window*/
-void update_k(const uint32_t k);
+void update_k(const uint16_t k);
 
 /** @brief update course over ground with a new value*/
 void update_cog(const float cog_r);
+
+/** @brief update true wind (estimated) direction with a new value*/
+void update_twd(const float twd_r);
+
+/** @brief get the average value of alpha*/
+float get_alpha();
 
 #endif // CONTROLLER_DATA_H
