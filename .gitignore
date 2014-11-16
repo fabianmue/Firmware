@@ -48,4 +48,10 @@ firmwareAS.creator
 firmwareAS.creator.user
 firmwareAS.files
 firmwareAS.includes
+Firmware_AS.config
+Firmware_AS.creator
+Firmware_AS.creator.user
+Firmware_AS.files
+Firmware_AS.includes
+
 
