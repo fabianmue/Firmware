@@ -44,7 +44,7 @@
 
 // reference actions for the guidance_module
 struct reference_actions_s{
-    float alpha_star; ///optimal heading angle
+    float alpha_star; ///optimal heading w.r.t. true wind direction
     bool should_tack; ///true if boat should take as soon as possible
 };
 

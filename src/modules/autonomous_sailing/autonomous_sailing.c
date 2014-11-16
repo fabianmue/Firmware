@@ -51,6 +51,7 @@
 #include "navigation.h"
 #include "parameters.c"
 #include "path_planning_data.h"
+#include "guidance_module.h"
 
 
 //Include topics necessary
@@ -101,23 +102,13 @@ void navigation_module(const struct structs_topics_s *strs_p,
 /** @brief Give next optimal action to be implemented*/
 void path_planning();
 
-/** @brief Implement next control action*/
-void guidance_module(struct reference_actions_s *ref_act_p,
-                     const struct apparent_angle_s *apparent_angle_p);
-
 /** @brief Initialize parameters*/
 void param_init(struct pointers_param_qgc *pointers_p,
-                struct parameters_qgc *params_p,
-                struct apparent_angle_s *apparent_angle_p);
+                struct parameters_qgc *params_p);
 
 /** @brief Check if one or more parameters have been updated and perform appropriate actions*/
 void param_check_update(struct pointers_param_qgc *pointers_p,
-                        struct parameters_qgc *params_p,
-                        struct apparent_angle_s *apparent_angle_p);
-
-//pointers to params from QGroundControl
-struct pointers_param_qgc pointers_param;
-
+                        struct parameters_qgc *params_p);
 
 static void usage(const char *reason)
 {
@@ -195,6 +186,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
     struct structs_topics_s strs;
     //parameters from QGroundControl
     struct parameters_qgc params;
+    //pointers to params from QGroundControl
+    struct pointers_param_qgc pointers_param;
 
     //initialize controller data structures
     init_controller_data();
@@ -205,16 +198,13 @@ int as_daemon_thread_main(int argc, char *argv[]){
     //optimal path parameters
     struct reference_actions_s ref_act = {.alpha_star = 30.0, .should_tack = false};
 
-    //apparent wind angle history
-    struct apparent_angle_s apparent_angle;
-
     warnx(" starting\n");
 
     //subscribe to interested topics
     as_subscriber(&subs);
 
-    //initialize parameters
-    param_init(&pointers_param, &params, &apparent_angle);
+    //initialize parameters from QGroundControl
+    param_init(&pointers_param, &params);
 
 	// try to initiliaze actuators
     if(!actuators_init(&pubs, &strs)){
@@ -225,10 +215,9 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
     // polling management
     struct pollfd fds[] = {
-            { .fd = subs.att ,                  .events = POLLIN },
-            { .fd = subs.gps ,                  .events = POLLIN },
-            { .fd = subs.wind_sailing,          .events = POLLIN },
-            { .fd = subs.boat_weather_station,  .events = POLLIN }
+            { .fd = subs.gps_raw,           .events = POLLIN },
+            { .fd = subs.gps_filtered,      .events = POLLIN },
+            { .fd = subs.wind_sailing,      .events = POLLIN }
     };
 
     //set reference of NED frame before starting
@@ -254,17 +243,18 @@ int as_daemon_thread_main(int argc, char *argv[]){
             else{
                 // evrything is ok, at least so far (i.e. pool_ret > 0)
                 if(fds[0].revents & POLLIN){
-                    // new Attitude values
+                    // new vehicle_gps_position data
+                    orb_copy(ORB_ID(vehicle_gps_position), subs.gps_raw, &(strs.gps_raw));
 
-                    //prova
-                    orb_copy(ORB_ID(vehicle_attitude), subs.att, &(strs.att));
+                    //update course over ground in control data
+                    update_cog(strs.gps_raw.cog_rad);
 
                 }
                 if(fds[1].revents & POLLIN){
-                    // new vehicle_global_position value
+                    // new vehicle_global_position data
 
                     //copy GPS data
-                    orb_copy(ORB_ID(vehicle_global_position), subs.gps, &(strs.gps_filtered));
+                    orb_copy(ORB_ID(vehicle_global_position), subs.gps_filtered, &(strs.gps_filtered));
 
                     //do navigation module
                     navigation_module(&strs, &local_pos_r);
@@ -277,37 +267,19 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // new WSAI values, copy new data
                     orb_copy(ORB_ID(wind_sailing), subs.wind_sailing, &(strs.wind_sailing));
 
-//                    //update apparent wind angle history by substituing oldest value
-//                    apparent_angle.app_angle_p[apparent_angle.oldest_value] = strs.wsai.angle_apparent;
-//                    //update index of oldest value
-//                    apparent_angle.oldest_value++;
-//                    if(apparent_angle.oldest_value == apparent_angle.window_size)
-//                        apparent_angle.oldest_value = 0;
-//                    //compute apparent wind angle mean
-//                    apparent_angle.app_angle_mean = 0.0f;
-//                    for(int i = 0; i < apparent_angle.window_size; i++){
-//                        apparent_angle.app_angle_mean += apparent_angle.app_angle_p[i];
-//                    }
-
+                    //update true wind direction in control data
+                    update_cog(strs.wind_sailing.angle_true);
                 }
-                if(fds[3].revents & POLLIN){
-                    // new boat_weather_station values
-
-                    // copy new data
-                    orb_copy(ORB_ID(boat_weather_station), subs.boat_weather_station, &(strs.boat_weather_station));
-
-                }
-
             }
         }
 
         //check if any parameter has been updated
-        param_check_update(&pointers_param, &params, &apparent_angle);
+        param_check_update(&pointers_param, &params);
 
         //always perfrom guidance module to control the boat
-        guidance_module(&ref_act, &apparent_angle);
+        guidance_module(&ref_act, &params, &strs);
 
-        // Send out commands:
+        // Send out commands
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
         // actuators.control[0] -> output channel 1
         // actuators.control[2] -> output channel 3
@@ -315,7 +287,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
 	}
 
     // kill all outputs
-    for (unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++)
+    for(unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++)
         strs.actuators.control[i] = 0.0f;
     orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
 
@@ -334,25 +306,25 @@ int as_daemon_thread_main(int argc, char *argv[]){
 */
 bool as_subscriber(struct subscribtion_fd_s *subs_p){
 
-    subs_p->att = orb_subscribe(ORB_ID(vehicle_attitude));
-    subs_p->gps = orb_subscribe(ORB_ID(vehicle_global_position));
-    subs_p->boat_weather_station = orb_subscribe(ORB_ID(boat_weather_station));
+    subs_p->gps_raw = orb_subscribe(ORB_ID(vehicle_gps_position));
+    subs_p->gps_filtered = orb_subscribe(ORB_ID(vehicle_global_position));
+    //subs_p->boat_weather_station = orb_subscribe(ORB_ID(boat_weather_station));
     subs_p->wind_sailing = orb_subscribe(ORB_ID(wind_sailing));
 
-    if(subs_p->att == -1){
-        warnx(" error on subscribing on vehicle_attitude Topic \n");
+    if(subs_p->gps_raw == -1){
+        warnx(" error on subscribing on vehicle_gps_position Topic \n");
         return false;
     }
 
-    if(subs_p->gps == -1){
+    if(subs_p->gps_filtered == -1){
         warnx(" error on subscribing on vehicle_global_position Topic \n");
         return false;
     }
 
-    if(subs_p->boat_weather_station == -1){
-        warnx(" error on subscribing on boat_weather_station Topic \n");
-        return false;
-    }
+//    if(subs_p->boat_weather_station == -1){
+//        warnx(" error on subscribing on boat_weather_station Topic \n");
+//        return false;
+//    }
 
     if(subs_p->wind_sailing == -1){
         warnx(" error on subscribing on wind_sailing Topic \n");
@@ -369,8 +341,7 @@ bool as_subscriber(struct subscribtion_fd_s *subs_p){
 *
 */
 void param_init(struct pointers_param_qgc *pointers_p,
-                struct parameters_qgc *params_p,
-                struct apparent_angle_s *apparent_angle_p){
+                struct parameters_qgc *params_p){
 
     //initialize pointer to parameters
     pointers_p->sail_pointer    = param_find("AS_SAIL");
@@ -402,21 +373,16 @@ void param_init(struct pointers_param_qgc *pointers_p,
 
     param_get(pointers_p->moving_window_pointer, &(params_p->moving_window));
 
-    //create array for apparent wind angle history
-    apparent_angle_p->window_size = params_p->moving_window;
-    apparent_angle_p->oldest_value = 0;
-    apparent_angle_p->app_angle_p = malloc(sizeof(float) * apparent_angle_p->window_size);
+    //update window size
+    update_k(params_p->moving_window);
 
-    for(int i = 0; i < apparent_angle_p->window_size; i++)
-        apparent_angle_p->app_angle_p[i] = 0.0f;
 }
 
 /** Check if any paramter has been updated, if so take appropriate actions
  *
 */
 void param_check_update(struct pointers_param_qgc *pointers_p,
-                        struct parameters_qgc *params_p,
-                        struct apparent_angle_s *apparent_angle_p){
+                        struct parameters_qgc *params_p){
 
     float app_f;
     int32_t app_i;
@@ -480,23 +446,15 @@ void param_check_update(struct pointers_param_qgc *pointers_p,
     if(params_p->moving_window != app_i){
         params_p->moving_window = app_i;
 
-        //delete old apparent wind angle history
-        free(apparent_angle_p->app_angle_p);
-
-        //create array for apparent wind angle history
-        apparent_angle_p->window_size = params_p->moving_window;
-        apparent_angle_p->oldest_value = 0;
-        apparent_angle_p->app_angle_p = malloc(sizeof(float) * apparent_angle_p->window_size);
-
-        for(int i = 0; i < apparent_angle_p->window_size; i++)
-            apparent_angle_p->app_angle_p[i] = 0.0f;
+        //update window size
+        update_k(params_p->moving_window);
     }
 }
 
 /**
 * Initialize actuators.
 *
-* @return 							true if everything is OK
+* @return   true if everything is OK
 */
 bool actuators_init(struct published_fd_s *pubs_p,
                     struct structs_topics_s *strs_p){
@@ -528,13 +486,6 @@ bool actuators_init(struct published_fd_s *pubs_p,
 
 
 	return right_init;
-}
-
-/** Implement refernce actions provided by optimal path planning*/
-void guidance_module(struct reference_actions_s *ref_act_p,
-                     const struct apparent_angle_s *apparent_angle_p){
-
-
 }
 
 /**

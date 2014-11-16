@@ -47,6 +47,38 @@
  * Warning: name can not be too long!!!
  */
 
+struct parameters_qgc{
+    float rudder_servo;
+    float sail_servo;
+
+    float p_gain;
+    float i_gain;
+
+    int32_t lat0;
+    int32_t lon0;
+    int32_t alt0;
+
+    float epsilon;
+
+    uint16_t moving_window;
+};
+
+struct pointers_param_qgc{
+    param_t sail_pointer;         /**< pointer to param AS_SAIL*/
+    param_t rudder_pointer;       /**< pointer to param AS_RUDDER*/
+
+    param_t p_gain_pointer;       /**< pointer to param AS_P_GAIN*/
+    param_t i_gain_pointer;       /**< pointer to param AS_I_GAIN*/
+
+    param_t lat0_pointer;         /**< pointer to param AS_LAT0*/
+    param_t lon0_pointer;         /**< pointer to param AS_LON0*/
+    param_t alt0_pointer;         /**< pointer to param AS_ALT0*/
+
+    param_t epsilon_pointer;      /**< pointer to param AS_EPSI*/
+
+    param_t moving_window_pointer;/**< pointer to param AS_WIN*/
+};
+
 
 /**
  * Sails position
@@ -129,5 +161,5 @@ PARAM_DEFINE_FLOAT(AS_EPSI, 5.0f);
  * @min 1
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_WIN, 5);
+PARAM_DEFINE_INT32(AS_WIN, 10);
 

@@ -56,6 +56,8 @@ void filter_new_data();
 static struct{
     float cog_r; ///course over ground [rad] (NOT heading), according to Dumas angle definition (Chap 1.3)
     float twd_r; ///true wind estimated direction [rad], according to Dumas angle definition (Chap 1.3)
+    bool cog_updated;///true if cog_r has been updated and the new value has to be used to compute a new instant alpha
+    bool twd_updated;///true if twd_r has been updated and the new value has to be used to compute a new instant alpha
 }measurements_raw;
 
 //filtered measurements
@@ -72,14 +74,16 @@ void init_controller_data(){
 
     measurements_raw.cog_r = 0.0f;
     measurements_raw.twd_r = 0.0f;
+    measurements_raw.cog_updated = false;
+    measurements_raw.twd_updated = false;
 
-    measurements_filtered.alpha = NULL;
+    measurements_filtered.alpha_p = NULL;
     measurements_filtered.k = 0;
     measurements_filtered.oldestValue = -1;
     measurements_filtered.alpha = 0.0f;
 
-    //use default value for k
-    update_k(DEFAULT_AVG_WINDOW);
+    //set k to 1 since a real value is not provided
+    update_k(1);
 }
 
 /** Free memory and allocate new space for new dimension
@@ -117,8 +121,8 @@ void update_cog(const float cog_r){
     //save cog according to Dumas angle definition (Chap 1.3)
     measurements_raw.cog_r = -1 * cog_r;
 
-    //filter new raw data
-    filter_new_data();
+    //set updated flag
+    measurements_raw.cog_updated = true;
 }
 
 /** Update ctrue wind (estimated) direction with a new value supplied by weather station
@@ -130,8 +134,8 @@ void update_twd(const float twd_r){
     //save cog according to Dumas angle definition (Chap 1.3)
     measurements_raw.twd_r = -1 * twd_r;
 
-    //filter new raw data
-    filter_new_data();
+    //set updated flag
+    measurements_raw.twd_updated = true;
 }
 
 /** Compute moving average from values in alpha_p */
@@ -147,12 +151,16 @@ void compute_avg(){
     measurements_filtered.alpha = temp / measurements_filtered.k;
 }
 
-/** Compute instant alpha from a new cog and/or twd value, then update mean value of alpha*/
+/** Compute instant alpha from a new cog and/or twd value.
+ *  Should be called only if either cog_r or twd_r have been updated.
+ *  At the end, set flags of updated to false.
+*/
 void filter_new_data(){
+
     //cog or twd has just been updated, compute new istant alpha according to Dumas
     float instant_alpha = measurements_raw.cog_r - measurements_raw.twd_r;
 
-    //if |instant_alpha|<= pi we're sailing upwind, so everything is ok
+    //if |instant_alpha|<= pi/2 we're sailing upwind, so everything is ok
 
     //save new data by deleting the oldest value
     measurements_filtered.alpha_p[measurements_filtered.oldestValue] = instant_alpha;
@@ -163,13 +171,33 @@ void filter_new_data(){
     else
         measurements_filtered.oldestValue++;
 
-    //compute new mean alpha
-    compute_avg();
+    //set updated flag to false 'cause cog and twd values have been used
+    measurements_raw.cog_updated = false;
+    measurements_raw.twd_updated = false;
 
 }
 
-/** Return the average value of alpha computed from the last k values*/
+/** Return the average value of alpha computed from the last k values
+ *
+ * Before returing avg value, check if either cog_r or twd_r have been updated.
+ * If so, compute a new instant alpha and add it to the vector alpha_p.
+ * Then compute new avg alpha and return it.
+ * If neither cog_r nor twd_r have been updated, return old value of alpha.
+ *
+ * @return moving average value of true wind angle from the last k values of instant alpha.
+*/
 float get_alpha(){
+
+    //check if either cog_r or twd_r have been updated
+    if(measurements_raw.cog_updated || measurements_raw.twd_updated){
+
+        //compute new instant alpha by filtering the new data
+        filter_new_data();
+
+        //compute new mean alpha
+        compute_avg();
+    }
+
     return measurements_filtered.alpha;
 }
 
