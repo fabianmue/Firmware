@@ -54,7 +54,7 @@
 #include <stdio.h>//bool type
 
 //setting for indoor or outdoor
-#include "../autonomous_sailing/as_settings.h"
+#include "settings.h"
 
 /** @brief Initialize weather station. */
 bool weather_station_init(int *wx_port_point);

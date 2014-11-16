@@ -6,7 +6,7 @@
 #include <uORB/topics/actuator_armed.h>
 
 #include <uORB/topics/wind_sailing.h>
-//#include <uORB/topics/vehicle_global_position.h>
+#include <uORB/topics/vehicle_global_position.h>
 #include <uORB/topics/boat_weather_station.h>
 #include <uORB/topics/vehicle_gps_position.h>
 
@@ -28,7 +28,6 @@ struct structs_topics_s{
    struct vehicle_global_position_s gps_filtered;
    struct wind_sailing_s wind_sailing;
    //struct boat_weather_station_s boat_weather_station;
-
 };
 
 

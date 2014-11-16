@@ -46,10 +46,8 @@
 #include <errno.h>
 #include <poll.h>
 
-
-#include "as_settings.h"
 #include "navigation.h"
-#include "parameters.c"
+#include "parameters.h"
 #include "path_planning_data.h"
 #include "guidance_module.h"
 
@@ -101,14 +99,6 @@ void navigation_module(const struct structs_topics_s *strs_p,
 
 /** @brief Give next optimal action to be implemented*/
 void path_planning();
-
-/** @brief Initialize parameters*/
-void param_init(struct pointers_param_qgc *pointers_p,
-                struct parameters_qgc *params_p);
-
-/** @brief Check if one or more parameters have been updated and perform appropriate actions*/
-void param_check_update(struct pointers_param_qgc *pointers_p,
-                        struct parameters_qgc *params_p);
 
 static void usage(const char *reason)
 {
@@ -268,7 +258,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     orb_copy(ORB_ID(wind_sailing), subs.wind_sailing, &(strs.wind_sailing));
 
                     //update true wind direction in control data
-                    update_cog(strs.wind_sailing.angle_true);
+                    update_twd(strs.wind_sailing.angle_true);
                 }
             }
         }
@@ -281,9 +271,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
         // Send out commands
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
-        // actuators.control[0] -> output channel 1
-        // actuators.control[2] -> output channel 3
-        // actuators.control[3] -> output channel 4
 	}
 
     // kill all outputs
@@ -308,7 +295,6 @@ bool as_subscriber(struct subscribtion_fd_s *subs_p){
 
     subs_p->gps_raw = orb_subscribe(ORB_ID(vehicle_gps_position));
     subs_p->gps_filtered = orb_subscribe(ORB_ID(vehicle_global_position));
-    //subs_p->boat_weather_station = orb_subscribe(ORB_ID(boat_weather_station));
     subs_p->wind_sailing = orb_subscribe(ORB_ID(wind_sailing));
 
     if(subs_p->gps_raw == -1){
@@ -321,11 +307,6 @@ bool as_subscriber(struct subscribtion_fd_s *subs_p){
         return false;
     }
 
-//    if(subs_p->boat_weather_station == -1){
-//        warnx(" error on subscribing on boat_weather_station Topic \n");
-//        return false;
-//    }
-
     if(subs_p->wind_sailing == -1){
         warnx(" error on subscribing on wind_sailing Topic \n");
         return false;
@@ -334,121 +315,6 @@ bool as_subscriber(struct subscribtion_fd_s *subs_p){
     warnx(" subscribed to all topics \n");
 
     return true;
-}
-
-/**
-* Initialize parameters.
-*
-*/
-void param_init(struct pointers_param_qgc *pointers_p,
-                struct parameters_qgc *params_p){
-
-    //initialize pointer to parameters
-    pointers_p->sail_pointer    = param_find("AS_SAIL");
-    pointers_p->rudder_pointer  = param_find("AS_RUDDER");
-
-    pointers_p->p_gain_pointer  = param_find("AS_P_GAIN");
-    pointers_p->i_gain_pointer  = param_find("AS_I_GAIN");
-
-    pointers_p->lat0_pointer    = param_find("AS_LAT0");
-    pointers_p->lon0_pointer    = param_find("AS_LON0");
-    pointers_p->alt0_pointer    = param_find("AS_ALT0");
-
-    pointers_p->epsilon_pointer = param_find("AS_EPSI");
-
-    pointers_p->moving_window_pointer = param_find("AS_WIN");
-
-    //get parameters
-    param_get(pointers_p->sail_pointer, &(params_p->sail_servo));
-    param_get(pointers_p->rudder_pointer, &(params_p->rudder_servo));
-
-    param_get(pointers_p->p_gain_pointer, &(params_p->p_gain));
-    param_get(pointers_p->i_gain_pointer, &(params_p->i_gain));
-
-    param_get(pointers_p->lat0_pointer, &(params_p->lat0));
-    param_get(pointers_p->lon0_pointer, &(params_p->lon0));
-    param_get(pointers_p->alt0_pointer, &(params_p->alt0));
-
-    param_get(pointers_p->epsilon_pointer, &(params_p->epsilon));
-
-    param_get(pointers_p->moving_window_pointer, &(params_p->moving_window));
-
-    //update window size
-    update_k(params_p->moving_window);
-
-}
-
-/** Check if any paramter has been updated, if so take appropriate actions
- *
-*/
-void param_check_update(struct pointers_param_qgc *pointers_p,
-                        struct parameters_qgc *params_p){
-
-    float app_f;
-    int32_t app_i;
-
-    //check sail_servo
-    param_get(pointers_p->sail_pointer, &app_f);
-    if(params_p->sail_servo != app_f){
-        params_p->sail_servo = app_f;
-    }
-
-    //check rudder_servo
-    param_get(pointers_p->rudder_pointer, &app_f);
-    if(params_p->rudder_servo != app_f){
-        params_p->rudder_servo = app_f;
-    }
-
-    //check p_gain
-    param_get(pointers_p->p_gain_pointer, &app_f);
-    if(params_p->p_gain != app_f){
-        params_p->p_gain = app_f;
-    }
-
-    //check i_gain
-    param_get(pointers_p->i_gain_pointer, &app_f);
-    if(params_p->i_gain != app_f){
-        params_p->i_gain = app_f;
-    }
-
-    //check lat0
-    param_get(pointers_p->lat0_pointer, &app_i);
-    if(params_p->lat0 != app_i){
-        params_p->lat0 = app_i;
-        //update NED origin
-        set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
-    }
-
-    //check lon0
-    param_get(pointers_p->lon0_pointer, &app_i);
-    if(params_p->lon0 != app_i){
-        params_p->lon0 = app_i;
-        //update NED origin
-        set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
-    }
-
-    //check alt0
-    param_get(pointers_p->alt0_pointer, &app_i);
-    if(params_p->alt0 != app_i){
-        params_p->alt0 = app_i;
-        //update NED origin
-        set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
-    }
-
-    //check epsilon
-    param_get(pointers_p->epsilon_pointer, &app_f);
-    if(params_p->epsilon != app_f){
-        params_p->epsilon = app_f;
-    }
-
-    //check moving window
-    param_get(pointers_p->moving_window_pointer, &app_i);
-    if(params_p->moving_window != app_i){
-        params_p->moving_window = app_i;
-
-        //update window size
-        update_k(params_p->moving_window);
-    }
 }
 
 /**

@@ -40,126 +40,121 @@
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#include <systemlib/param/param.h>
-
-/*
- * Define the QGroundControl parameters here:
- * Warning: name can not be too long!!!
- */
-
-struct parameters_qgc{
-    float rudder_servo;
-    float sail_servo;
-
-    float p_gain;
-    float i_gain;
-
-    int32_t lat0;
-    int32_t lon0;
-    int32_t alt0;
-
-    float epsilon;
-
-    uint16_t moving_window;
-};
-
-struct pointers_param_qgc{
-    param_t sail_pointer;         /**< pointer to param AS_SAIL*/
-    param_t rudder_pointer;       /**< pointer to param AS_RUDDER*/
-
-    param_t p_gain_pointer;       /**< pointer to param AS_P_GAIN*/
-    param_t i_gain_pointer;       /**< pointer to param AS_I_GAIN*/
-
-    param_t lat0_pointer;         /**< pointer to param AS_LAT0*/
-    param_t lon0_pointer;         /**< pointer to param AS_LON0*/
-    param_t alt0_pointer;         /**< pointer to param AS_ALT0*/
-
-    param_t epsilon_pointer;      /**< pointer to param AS_EPSI*/
-
-    param_t moving_window_pointer;/**< pointer to param AS_WIN*/
-};
+#include "parameters.h"
 
 
 /**
- * Sails position
- *
- * ?????.
- * Default value for sails position (must be converted into degrees) 0 = max sheet out, 0.56 = max sheet in.
- *
- * @min 0 (max sheet out)
- * @max 0.56 (max sheet in)
- */
-PARAM_DEFINE_FLOAT(AS_SAIL, 0.5f);
+* Initialize parameters.
+*
+*/
+void param_init(struct pointers_param_qgc *pointers_p,
+                struct parameters_qgc *params_p){
 
-/**
- * Default heading angle w.r.t. relative wind, in degrees.
- *
- *
- * @min -90
- * @max 90
- */
-PARAM_DEFINE_FLOAT(AS_RUDDER, 30.0f);
+    //initialize pointer to parameters
+    pointers_p->sail_pointer    = param_find("AS_SAIL");
+    pointers_p->rudder_pointer  = param_find("AS_RUDDER");
 
-/**
- * Proportional gain.
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_FLOAT(AS_P_GAIN, 0.03f);
+    pointers_p->p_gain_pointer  = param_find("AS_P_GAIN");
+    pointers_p->i_gain_pointer  = param_find("AS_I_GAIN");
 
-/**
- * Integral gain.
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_FLOAT(AS_I_GAIN, 0.0f);
+    pointers_p->lat0_pointer    = param_find("AS_LAT0");
+    pointers_p->lon0_pointer    = param_find("AS_LON0");
+    pointers_p->alt0_pointer    = param_find("AS_ALT0");
 
-/**
- * Latitude of origin of NED system, in degrees * E7.
- *
- *
- * @min -900000000
- * @max 900000000
- */
-PARAM_DEFINE_INT32(AS_LAT0, 85605120);
+    pointers_p->epsilon_pointer = param_find("AS_EPSI");
 
-/**
- * Longitude of origin of NED system, in degrees * E7.
- *
- *
- * @min -180
- * @max 180
- */
-PARAM_DEFINE_INT32(AS_LON0, 473494820);
+    pointers_p->moving_window_pointer = param_find("AS_WIN");
 
-/**
- * Altitude of origin of NED system, in millimeters.
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_INT32(AS_ALT0, 0);
+    //get parameters
+    param_get(pointers_p->sail_pointer, &(params_p->sail_servo));
+    param_get(pointers_p->rudder_pointer, &(params_p->rudder_servo));
 
-/**
- * Epsilon, specifies when the next target could be considered reached, in meters.
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_FLOAT(AS_EPSI, 5.0f);
+    param_get(pointers_p->p_gain_pointer, &(params_p->p_gain));
+    param_get(pointers_p->i_gain_pointer, &(params_p->i_gain));
 
-/**
- * AS_WIN, specifies the number of samples for the moving wind average mean.
+    param_get(pointers_p->lat0_pointer, &(params_p->lat0));
+    param_get(pointers_p->lon0_pointer, &(params_p->lon0));
+    param_get(pointers_p->alt0_pointer, &(params_p->alt0));
+
+    param_get(pointers_p->epsilon_pointer, &(params_p->epsilon));
+
+    param_get(pointers_p->moving_window_pointer, &(params_p->moving_window));
+
+    //update window size
+    update_k(params_p->moving_window);
+
+}
+
+/** Check if any paramter has been updated, if so take appropriate actions
  *
- *
- * @min 1
- * @max ?
- */
-PARAM_DEFINE_INT32(AS_WIN, 10);
+*/
+void param_check_update(struct pointers_param_qgc *pointers_p,
+                        struct parameters_qgc *params_p){
+
+    float app_f;
+    int32_t app_i;
+
+    //check sail_servo
+    param_get(pointers_p->sail_pointer, &app_f);
+    if(params_p->sail_servo != app_f){
+        params_p->sail_servo = app_f;
+    }
+
+    //check rudder_servo
+    param_get(pointers_p->rudder_pointer, &app_f);
+    if(params_p->rudder_servo != app_f){
+        params_p->rudder_servo = app_f;
+    }
+
+    //check p_gain
+    param_get(pointers_p->p_gain_pointer, &app_f);
+    if(params_p->p_gain != app_f){
+        params_p->p_gain = app_f;
+    }
+
+    //check i_gain
+    param_get(pointers_p->i_gain_pointer, &app_f);
+    if(params_p->i_gain != app_f){
+        params_p->i_gain = app_f;
+    }
+
+    //check lat0
+    param_get(pointers_p->lat0_pointer, &app_i);
+    if(params_p->lat0 != app_i){
+        params_p->lat0 = app_i;
+        //update NED origin
+        set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
+    }
+
+    //check lon0
+    param_get(pointers_p->lon0_pointer, &app_i);
+    if(params_p->lon0 != app_i){
+        params_p->lon0 = app_i;
+        //update NED origin
+        set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
+    }
+
+    //check alt0
+    param_get(pointers_p->alt0_pointer, &app_i);
+    if(params_p->alt0 != app_i){
+        params_p->alt0 = app_i;
+        //update NED origin
+        set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
+    }
+
+    //check epsilon
+    param_get(pointers_p->epsilon_pointer, &app_f);
+    if(params_p->epsilon != app_f){
+        params_p->epsilon = app_f;
+    }
+
+    //check moving window
+    param_get(pointers_p->moving_window_pointer, &app_i);
+    if(params_p->moving_window != app_i){
+        params_p->moving_window = app_i;
+
+        //update window size
+        update_k(params_p->moving_window);
+    }
+}
 

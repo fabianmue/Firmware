@@ -57,7 +57,7 @@
 #include <drivers/drv_hrt.h>
 
 //setting for indoor or outdoor
-#include "../autonomous_sailing/as_settings.h"
+#include "settings.h"
 
 // for uORB topics
 #include "topics_handler.h"
@@ -235,7 +235,7 @@ int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
         if(AS_TYPE_OF_ENVIRONMENT == 0)
             warnx(" starting Indoor version\n");
         else{
-            warnx(" ERROR, set 'AS_TYPE_OF_ENVIRONMENT' in autonomous_sailing/as_settings.h\n");
+            warnx(" ERROR, set 'AS_TYPE_OF_ENVIRONMENT' in parser_200WX/settings.h\n");
             thread_should_exit = true;
         }
 

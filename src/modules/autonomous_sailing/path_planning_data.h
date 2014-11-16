@@ -42,6 +42,8 @@
 #ifndef PATH_PLANNING_DATA_H_
 #define PATH_PLANNING_DATA_H_
 
+#include <stdio.h>//bool type
+
 // reference actions for the guidance_module
 struct reference_actions_s{
     float alpha_star; ///optimal heading w.r.t. true wind direction

@@ -33,11 +33,16 @@
  ****************************************************************************/
 
 /**
- * @file as_settings.h
+ * @file settings.h
  *
- * Settings for autonomous_sailing and parser_200WX apps
+ * Settings for parser_200WX apps
  *
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
+#ifndef SETTINGS_H
+#define SETTINGS_H
+
 #define AS_TYPE_OF_ENVIRONMENT 1/**< 0 = indoor, 1 = outdoor*/
+
+#endif // SETTINGS_H

@@ -161,6 +161,7 @@ void filter_new_data(){
     float instant_alpha = measurements_raw.cog_r - measurements_raw.twd_r;
 
     //if |instant_alpha|<= pi/2 we're sailing upwind, so everything is ok
+    //TODO verificare per altri valori di alpha
 
     //save new data by deleting the oldest value
     measurements_filtered.alpha_p[measurements_filtered.oldestValue] = instant_alpha;

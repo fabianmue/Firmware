@@ -66,7 +66,7 @@ float pi_controller(const float *ref_p, const float *meas_p,
     float i_conditioned; //integral condition constant
     float action;
 
-    error = ref_p->alpha_star - * meas_p;
+    error = *ref_p - * meas_p;
 
     //integral constant for conditional integration, this is for anti-wind up!
     i_conditioned = param_qgc_p->i_gain / (1 + error * error);
@@ -90,8 +90,8 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     //get alpha from the moving average value of the last k values of instant alpha
     alpha = get_alpha();
 
-    //PI controller
-    command = pi_controller(ref_act_p, &alpha, param_qgc_p);
+    //PI controller for rudder
+    command = pi_controller(&(ref_act_p->alpha_star), &alpha, param_qgc_p);
 
     //saturation for safety reason
     if(command > RUDDER_SATURATION)
@@ -99,6 +99,13 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     else if(command < -RUDDER_SATURATION)
         command = -RUDDER_SATURATION;
 
+    //TODO tack action
 
+    //update actuator value
+    strs_p->actuators.control[0] = command;
+    // actuators.control[0] -> output channel 1
+    // actuators.control[2] -> output channel 3
+    // actuators.control[3] -> output channel 4
 
+    //TODO sailing control
 }
