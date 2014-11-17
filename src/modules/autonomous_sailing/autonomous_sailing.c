@@ -64,7 +64,11 @@
 
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
 
-#define TIMEOUT_1SEC 1000
+#ifdef SIMULATION_FLAG //defined in parameter.h
+    #define TIMEOUT_POLL 200 //200 ms between every simulation
+#else
+    #define TIMEOUT_POLL 1000 //normal usage set to 1 sec the timeout
+#endif
 
 
 //Thread management variables
@@ -217,12 +221,19 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
     while(!thread_should_exit){
 
-        poll_ret = poll(fds, (sizeof(fds) / sizeof(fds[0])), TIMEOUT_1SEC);
+        poll_ret = poll(fds, (sizeof(fds) / sizeof(fds[0])), TIMEOUT_POLL);
 
         // handle the poll result
         if(poll_ret == 0) {
+            #ifdef SIMULATION_FLAG
+            //we're simulating the gps position, cog and twd with parameters from QGroundControl
+            //take data from param_check_update from last while loop and use them for simulation
+            update_cog(params.cog_sim);
+            update_twd(params.twd_sim);
+            #else
             // this means none of our providers is giving us data
             warnx(" got no data within a second\n");
+            #endif
         }
         else{
             /* this is undesirable but not much we can do - might want to flag unhappy status */
@@ -231,7 +242,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 continue;
             }
             else{
-                // evrything is ok, at least so far (i.e. pool_ret > 0)
+                // everything is ok, at least so far (i.e. pool_ret > 0)
                 if(fds[0].revents & POLLIN){
                     // new vehicle_gps_position data
                     orb_copy(ORB_ID(vehicle_gps_position), subs.gps_raw, &(strs.gps_raw));

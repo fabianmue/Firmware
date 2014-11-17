@@ -178,5 +178,46 @@ void param_check_update(struct pointers_param_qgc *pointers_p,
         //update window size
         update_k(params_p->moving_window);
     }
+
+    #ifdef SIMULATION_FLAG
+
+    //check lat_sim
+    param_get(pointers_p->lat_sim_pointer, &app_i);
+    if(params_p->lat_sim != app_i){
+        params_p->lat_sim = app_i;
+    }
+
+    //check lon_sim
+    param_get(pointers_p->lon_sim_pointer, &app_i);
+    if(params_p->lon_sim != app_i){
+        params_p->lon_sim = app_i;
+    }
+
+    //check alt_sim
+    param_get(pointers_p->alt_sim_pointer, &app_i);
+    if(params_p->alt_sim != app_i){
+        params_p->alt_sim = app_i;
+    }
+
+    //check cog_sim
+    param_get(pointers_p->cog_sim_pointer, &app_f);
+    if(params_p->cog_sim != app_f){
+        params_p->cog_sim = app_f;
+    }
+
+    //check twd_sim
+    param_get(pointers_p->twd_sim_pointer, &app_f);
+    if(params_p->twd_sim != app_f){
+        params_p->twd_sim = app_f;
+    }
+
+    //check tack_sim
+    param_get(pointers_p->tack_sim_pointer, &app_i);
+    if(params_p->tack_sim != app_i){
+        params_p->tack_sim = app_i;
+    }
+
+
+    #endif
 }
 
