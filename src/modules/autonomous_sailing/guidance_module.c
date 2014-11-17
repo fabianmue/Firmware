@@ -114,6 +114,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     // actuators.control[3] -> output channel 4
 
     //publish debug value for post-processing
+    strs_p->boat_guidance_debug.timestamp = hrt_absolute_time();
     strs_p->boat_guidance_debug.alpha_star = ref_act_p->alpha_star;
     strs_p->boat_guidance_debug.alpha = alpha;
     strs_p->boat_guidance_debug.rudder_action = command;
