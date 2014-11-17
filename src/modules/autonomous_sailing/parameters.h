@@ -42,6 +42,8 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
+#define SIMULATION_FLAG 1 //1 if you're testing autonomous sailing app indoor
+
 #include <systemlib/param/param.h>
 #include <stdio.h>//bool type
 
@@ -59,6 +61,19 @@ struct parameters_qgc{
     float epsilon;
 
     uint16_t moving_window;
+
+    #ifdef SIMULATION_FLAG
+
+    int32_t lat_sim;
+    int32_t lon_sim;
+    int32_t alt_sim;
+
+    float cog_sim;
+    float twd_sim;
+
+    uint8_t tack_sim;
+
+    #endif
 };
 
 struct pointers_param_qgc{
@@ -75,6 +90,17 @@ struct pointers_param_qgc{
     param_t epsilon_pointer;      /**< pointer to param AS_EPSI*/
 
     param_t moving_window_pointer;/**< pointer to param AS_WIN*/
+
+    #ifdef SIMULATION_FLAG
+    param_t lat_sim_pointer; /**< pointer to param AS_LATS*/
+    param_t lon_sim_pointer; /**< pointer to param AS_LONS*/
+    param_t alt_sim_pointer; /**< pointer to param AS_ALTS*/
+
+    param_t twd_sim_pointer; /**< pointer to param AS_TWDS*/
+    param_t cog_sim_pointer; /**< pointer to param AS_COGS*/
+
+    param_t tack_sim_pointer;/**< pointer to params AS_TCKS */
+    #endif
 };
 
 /** @brief Initialize parameters*/
@@ -141,8 +167,8 @@ PARAM_DEFINE_INT32(AS_LAT0, 85605120);
  * Longitude of origin of NED system, in degrees * E7.
  *
  *
- * @min -180
- * @max 180
+ * @min -1800000000
+ * @max 1800000000
  */
 PARAM_DEFINE_INT32(AS_LON0, 473494820);
 
@@ -162,7 +188,7 @@ PARAM_DEFINE_INT32(AS_ALT0, 0);
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_FLOAT(AS_EPSI, 5.0f);
+PARAM_DEFINE_FLOAT(AS_EPSI, 2.0f);
 
 /**
  * AS_WIN, specifies the number of samples for the moving wind average mean.
@@ -172,5 +198,63 @@ PARAM_DEFINE_FLOAT(AS_EPSI, 5.0f);
  * @max ?
  */
 PARAM_DEFINE_INT32(AS_WIN, 10);
+
+#ifdef SIMULATION_FLAG
+
+/**
+ * Simulated Latitude, in degrees * E7.
+ *
+ *
+ * @min -900000000
+ * @max 900000000
+ */
+PARAM_DEFINE_INT32(AS_LATS, 85605120);
+
+/**
+ * Simulated Longitude, in degrees * E7.
+ *
+ *
+ * @min -1800000000
+ * @max 1800000000
+ */
+PARAM_DEFINE_INT32(AS_LONS, 473494820);
+
+/**
+ * Simulated Altitude, in millimeters.
+ *
+ *
+ * @min 0
+ * @max ?
+ */
+PARAM_DEFINE_INT32(AS_ALTS, 0);
+
+/**
+ * Simulated Course over ground, in rads, sign opposite to Dumas convention.
+ *
+ *
+ * @min -pi
+ * @max pi
+ */
+PARAM_DEFINE_INT32(AS_COGS, 0);
+
+/**
+ * Simulated true wind direction, in rads, sign opposite to Dumas convention.
+ *
+ *
+ * @min -pi
+ * @max pi
+ */
+PARAM_DEFINE_INT32(AS_TWDS, 0);
+
+/**
+ * 1 = boat should tack as soon as possibile
+ *
+ *
+ * @min 0
+ * @max 1
+ */
+PARAM_DEFINE_INT32(AS_TCKS, 0);
+
+#endif
 
 #endif // PARAMETERS_H

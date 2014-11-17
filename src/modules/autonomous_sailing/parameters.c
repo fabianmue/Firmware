@@ -83,6 +83,28 @@ void param_init(struct pointers_param_qgc *pointers_p,
     //update window size
     update_k(params_p->moving_window);
 
+    #ifdef SIMULATION_FLAG
+
+    pointers_p->lat_sim_pointer = param_find("AS_LATS");
+    param_get(pointers_p->lat_sim_pointer, &(params_p->lat_sim));
+
+    pointers_p->lon_sim_pointer = param_find("AS_LONS");
+    param_get(pointers_p->lon_sim_pointer, &(params_p->lon_sim));
+
+    pointers_p->alt_sim_pointer = param_find("AS_ALTS");
+    param_get(pointers_p->alt_sim_pointer, &(params_p->alt_sim));
+
+    pointers_p->twd_sim_pointer = param_find("AS_TWDS");
+    param_get(pointers_p->twd_sim_pointer, &(params_p->twd_sim));
+
+    pointers_p->cog_sim_pointer = param_find("AS_COGS");
+    param_get(pointers_p->cog_sim_pointer, &(params_p->cog_sim));
+
+    pointers_p->tack_sim_pointer = param_find("AS_TCKS");
+    param_get(pointers_p->tack_sim_pointer, &(params_p->tack_sim));
+
+    #endif
+
 }
 
 /** Check if any paramter has been updated, if so take appropriate actions

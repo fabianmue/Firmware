@@ -74,6 +74,8 @@ float pi_controller(const float *ref_p, const float *meas_p,
     //update sum error
     sum_error_pi += error;
 
+    //TODO check if sum_error_pi has to be set to 0 once in a while
+
     action = param_qgc_p->p_gain * error + i_conditioned * sum_error_pi;
 
     return action;
@@ -87,6 +89,8 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     float alpha;
     float command = 0.0f;
 
+    //TODO check tack action
+
     //get alpha from the moving average value of the last k values of instant alpha
     alpha = get_alpha();
 
@@ -99,7 +103,8 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     else if(command < -RUDDER_SATURATION)
         command = -RUDDER_SATURATION;
 
-    //TODO tack action
+    //TODO sailing control
+
 
     //update actuator value
     strs_p->actuators.control[0] = command;
@@ -107,5 +112,4 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     // actuators.control[2] -> output channel 3
     // actuators.control[3] -> output channel 4
 
-    //TODO sailing control
 }
