@@ -9,6 +9,7 @@
 #include <uORB/topics/vehicle_global_position.h>
 #include <uORB/topics/boat_weather_station.h>
 #include <uORB/topics/vehicle_gps_position.h>
+#include <uORB/topics/boat_guidance_debug.h>
 
 
 struct subscribtion_fd_s{
@@ -19,7 +20,8 @@ struct subscribtion_fd_s{
 };
 
 struct published_fd_s{
-        orb_advert_t actuator_pub;
+    orb_advert_t actuator_pub;
+    int boat_guidance_debug_pub;
 };
 
 struct structs_topics_s{
@@ -27,7 +29,7 @@ struct structs_topics_s{
    struct vehicle_gps_position_s gps_raw;
    struct vehicle_global_position_s gps_filtered;
    struct wind_sailing_s wind_sailing;
-   //struct boat_weather_station_s boat_weather_station;
+   struct boat_guidance_debug_s boat_guidance_debug;
 };
 
 

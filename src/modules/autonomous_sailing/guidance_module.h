@@ -52,6 +52,7 @@
 /** @brief Implement next control action*/
 void guidance_module(struct reference_actions_s *ref_act_p,
                      struct parameters_qgc *param_qgc_p,
-                     struct structs_topics_s *strs_p);
+                     struct structs_topics_s *strs_p,
+                     struct published_fd_s *pubs_p);
 
 #endif //GUIDANCE_MODULE_H

@@ -94,8 +94,10 @@ static void usage(const char *reason);
 bool actuators_init(struct published_fd_s *pubs_p,
                     struct structs_topics_s *strs_p);
 
-/** @brief Subscribe to appropriate topics. */
-bool as_subscriber(struct subscribtion_fd_s *subs_p);
+/** @brief Subscribe/Advertise appropriate topics. */
+bool as_topics(struct subscribtion_fd_s *subs_p,
+               struct published_fd_s *pubs_p,
+               struct structs_topics_s *strs_p);
 
 /** @brief Convert GPS data in position in Race frame coordinate*/
 void navigation_module(const struct structs_topics_s *strs_p,
@@ -194,8 +196,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
     warnx(" starting\n");
 
-    //subscribe to interested topics
-    as_subscriber(&subs);
+    //subscribe/advertise interested topics
+    as_topics(&subs, &pubs, &strs);
 
     //initialize parameters from QGroundControl
     param_init(&pointers_param, &params);
@@ -278,7 +280,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
         param_check_update(&pointers_param, &params);
 
         //always perfrom guidance module to control the boat
-        guidance_module(&ref_act, &params, &strs);
+        guidance_module(&ref_act, &params, &strs, &pubs);
 
         // Send out commands
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
@@ -298,11 +300,13 @@ int as_daemon_thread_main(int argc, char *argv[]){
 }
 
 /**
- * Subscribe each fd to the correspondent topic.
+ * Subscribe/Advertise each fd to the correspondent topic.
  *
  * @return                 True on succes.
 */
-bool as_subscriber(struct subscribtion_fd_s *subs_p){
+bool as_topics(struct subscribtion_fd_s *subs_p,
+               struct published_fd_s *pubs_p,
+               struct structs_topics_s *strs_p){
 
     subs_p->gps_raw = orb_subscribe(ORB_ID(vehicle_gps_position));
     subs_p->gps_filtered = orb_subscribe(ORB_ID(vehicle_global_position));
@@ -324,6 +328,10 @@ bool as_subscriber(struct subscribtion_fd_s *subs_p){
     }
 
     warnx(" subscribed to all topics \n");
+
+    //advertise topics
+    memset(&(strs_p->boat_guidance_debug), 0, sizeof(strs_p->boat_guidance_debug));
+    pubs_p->boat_guidance_debug_pub = orb_advertise(ORB_ID(boat_guidance_debug), &(strs_p->boat_guidance_debug));
 
     return true;
 }
