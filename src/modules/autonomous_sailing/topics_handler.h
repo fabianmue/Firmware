@@ -10,18 +10,25 @@
 #include <uORB/topics/boat_weather_station.h>
 #include <uORB/topics/vehicle_gps_position.h>
 #include <uORB/topics/boat_guidance_debug.h>
+#include <uORB/topics/parameter_update.h>
 
+
+//only for debug on qcg
+#include <uORB/topics/vehicle_attitude.h>
 
 struct subscribtion_fd_s{
     int gps_raw;
     int gps_filtered;
     int wind_sailing;
-    //int boat_weather_station;
+    int parameter_update;
 };
 
 struct published_fd_s{
     orb_advert_t actuator_pub;
-    int boat_guidance_debug_pub;
+    orb_advert_t boat_guidance_debug_pub;
+
+    //only for debug on qGC
+    orb_advert_t debug_att;
 };
 
 struct structs_topics_s{
@@ -30,6 +37,10 @@ struct structs_topics_s{
    struct vehicle_global_position_s gps_filtered;
    struct wind_sailing_s wind_sailing;
    struct boat_guidance_debug_s boat_guidance_debug;
+   struct parameter_update_s update;
+
+   //only for debug on qGC
+   struct vehicle_attitude_s debug_att;
 };
 
 

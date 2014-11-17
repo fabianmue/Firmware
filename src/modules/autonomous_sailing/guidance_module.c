@@ -107,6 +107,19 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     //TODO sailing control
 
 
+    //cancella
+
+    //cancella
+    strs_p->debug_att.timestamp = hrt_absolute_time();
+    strs_p->debug_att.roll = ref_act_p->alpha_star;
+    strs_p->debug_att.pitch = alpha;
+    strs_p->debug_att.yaw = command;
+
+    orb_publish(ORB_ID(vehicle_attitude), pubs_p->debug_att, &(strs_p->debug_att));
+
+    //fine cancella
+
+
     //update actuator value
     strs_p->actuators.control[0] = command;
     // actuators.control[0] -> output channel 1

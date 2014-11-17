@@ -65,11 +65,10 @@
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
 
 #ifdef SIMULATION_FLAG //defined in parameter.h
-    #define TIMEOUT_POLL 200 //200 ms between every simulation
+    #define TIMEOUT_POLL 1000 //ms between every simulation
 #else
     #define TIMEOUT_POLL 1000 //normal usage set to 1 sec the timeout
 #endif
-
 
 //Thread management variables
 static bool thread_should_exit = false;		/**< daemon exit flag */
@@ -112,7 +111,6 @@ static void usage(const char *reason)
 		warnx("%s\n", reason);
     errx(1, "usage: autonomous_sailing {start|stop|status} [-p <additional params>]\n\n");
 }
-
 
 
 /**
@@ -180,13 +178,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
     struct published_fd_s pubs;
     //structs of interested toics
     struct structs_topics_s strs;
-    //parameters from QGroundControl
+    //local copy of parameters from QGroundControl
     struct parameters_qgc params;
-    //pointers to params from QGroundControl
-    struct pointers_param_qgc pointers_param;
-
-    //initialize controller data structures
-    init_controller_data();
 
     //local position in the Race frame
     struct local_position_race_s local_pos_r = {.x_race_cm = 0, .y_race_cm = 0};
@@ -196,11 +189,14 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
     warnx(" starting\n");
 
+    //initialize controller data structures
+    init_controller_data();
+
     //subscribe/advertise interested topics
     as_topics(&subs, &pubs, &strs);
 
-    //initialize parameters from QGroundControl
-    param_init(&pointers_param, &params);
+    //initialize local copy of parameters from QGroundControl
+    param_init(&params);
 
 	// try to initiliaze actuators
     if(!actuators_init(&pubs, &strs)){
@@ -213,13 +209,16 @@ int as_daemon_thread_main(int argc, char *argv[]){
     struct pollfd fds[] = {
             { .fd = subs.gps_raw,           .events = POLLIN },
             { .fd = subs.gps_filtered,      .events = POLLIN },
-            { .fd = subs.wind_sailing,      .events = POLLIN }
+            { .fd = subs.wind_sailing,      .events = POLLIN },
+            { .fd = subs.parameter_update,  .events = POLLIN }
     };
 
     //set reference of NED frame before starting
     set_ref0(&(params.lat0), &(params.lon0), &(params.alt0));
 
     thread_running = true;
+
+
 
     while(!thread_should_exit){
 
@@ -232,6 +231,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
             //take data from param_check_update from last while loop and use them for simulation
             update_cog(params.cog_sim);
             update_twd(params.twd_sim);
+
             #else
             // this means none of our providers is giving us data
             warnx(" got no data within a second\n");
@@ -240,7 +240,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
         else{
             /* this is undesirable but not much we can do - might want to flag unhappy status */
             if (poll_ret < 0) {
-                warn("POLL ERR %d, %d", poll_ret, errno);
+                warnx("POLL ERR %d, %d", poll_ret, errno);
                 continue;
             }
             else{
@@ -273,11 +273,16 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     //update true wind direction in control data
                     update_twd(strs.wind_sailing.angle_true);
                 }
+                if(fds[3].revents & POLLIN){
+                    // parameters updated
+                    // read from param to clear updated flag
+                    orb_copy(ORB_ID(parameter_update), subs.parameter_update, &(strs.update));
+
+                    //update param
+                    param_update(&params);
+                }
             }
         }
-
-        //check if any parameter has been updated
-        param_check_update(&pointers_param, &params);
 
         //always perfrom guidance module to control the boat
         guidance_module(&ref_act, &params, &strs, &pubs);
@@ -311,6 +316,7 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     subs_p->gps_raw = orb_subscribe(ORB_ID(vehicle_gps_position));
     subs_p->gps_filtered = orb_subscribe(ORB_ID(vehicle_global_position));
     subs_p->wind_sailing = orb_subscribe(ORB_ID(wind_sailing));
+    subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
 
     if(subs_p->gps_raw == -1){
         warnx(" error on subscribing on vehicle_gps_position Topic \n");
@@ -333,6 +339,11 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     memset(&(strs_p->boat_guidance_debug), 0, sizeof(strs_p->boat_guidance_debug));
     pubs_p->boat_guidance_debug_pub = orb_advertise(ORB_ID(boat_guidance_debug), &(strs_p->boat_guidance_debug));
 
+    #ifdef SIMULATION_FLAG
+    memset(&(strs_p->debug_att), 0, sizeof(strs_p->debug_att));
+    pubs_p->debug_att = orb_advertise(ORB_ID(vehicle_attitude), &(strs_p->debug_att));
+
+    #endif
     return true;
 }
 
