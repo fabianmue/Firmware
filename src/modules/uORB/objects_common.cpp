@@ -239,3 +239,7 @@ ORB_DEFINE(boat_weather_station, struct boat_weather_station_s);
 //Added by Marco Tranzatto
 #include "topics/debug_values.h"
 ORB_DEFINE(debug_values, struct debug_values_s);
+
+//Added by Marco Tranzatto
+#include "topics/boat_guidance_debug.h"
+ORB_DEFINE(boat_guidance_debug, struct boat_guidance_debug_s);

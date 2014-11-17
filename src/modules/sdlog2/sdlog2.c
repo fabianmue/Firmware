@@ -97,6 +97,8 @@
 #include <uORB/topics/boat_weather_station.h>
 //Added by Marco Tranzatto
 #include <uORB/topics/debug_values.h>
+//Added by Marco Tranzatto
+#include <uORB/topics/boat_guidance_debug.h>
 
 #include <systemlib/systemlib.h>
 #include <systemlib/param/param.h>
@@ -964,6 +966,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         struct wind_sailing_s wind_sailing; //Added by Marco Tranzatto
         struct boat_weather_station_s boat_weather_station; //Added by Marco Tranzatto
         struct debug_values_s debug_values; //Added by Marco Tranzatto
+        struct boat_guidance_debug_s boat_guidance_debug; //Added by Marco Tranzatto
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1009,6 +1012,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             struct log_WSAI_s log_WIND_SAILING; //Added by Marco Tranzatto
             struct log_BWES_s log_BOAT_WEATHER_STATION; //Added by Marco Tranzatto
             struct log_DEVA_s log_DEBUG_VALUES; //Added by Marco Tranzatto
+            struct log_BGUD_s log_BOAT_GUIDANCE; //Added by Marco Tranzatto
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1049,6 +1053,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         int wind_sailing_sub; //Added by Marco Tranzatto
         int boat_weather_station_sub; //Added by Marco Tranzatto
         int debug_values_sub; //Added by Marco Tranzatto
+        int boat_guidance_sub; //Added by Marco Tranzatto
 	} subs;
 
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
@@ -1093,6 +1098,8 @@ int sdlog2_thread_main(int argc, char *argv[])
     subs.boat_weather_station_sub = orb_subscribe(ORB_ID(boat_weather_station));
 
     subs.debug_values_sub = orb_subscribe(ORB_ID(debug_values));
+
+    subs.boat_guidance_sub = orb_subscribe(ORB_ID(boat_guidance_debug));
 /*
     // we need to rate-limit wind, as we do not need the full update rate
     orb_set_interval(subs.wind_apparent_sub, 90);
@@ -1734,6 +1741,17 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_DEBUG_VALUES.float_val_2 = buf.debug_values.float_val_2;
             log_msg.body.log_DEBUG_VALUES.float_val_3 = buf.debug_values.float_val_3;
             LOGBUFFER_WRITE_AND_COUNT(DEVA);
+        }
+
+        /* --- BOAT GUIDANCE MODULE DEBUG  */
+        if (copy_if_updated(ORB_ID(boat_guidance_debug), subs.boat_guidance_sub, &buf.boat_guidance_debug)) {
+            log_msg.msg_type = LOG_BGUD_MSG;
+            log_msg.body.log_BOAT_GUIDANCE.alpha_star = buf.boat_guidance_debug.alpha_star;
+            log_msg.body.log_BOAT_GUIDANCE.alpha = buf.boat_guidance_debug.alpha;
+            log_msg.body.log_BOAT_GUIDANCE.rudder_action = buf.boat_guidance_debug.rudder_action;
+            log_msg.body.log_BOAT_GUIDANCE.sail_action = buf.boat_guidance_debug.sail_action;
+            log_msg.body.log_BOAT_GUIDANCE.debug_val1 = buf.boat_guidance_debug.debug_val1;
+            LOGBUFFER_WRITE_AND_COUNT(BGUD);
         }
 
         //********************** End add *******************************

@@ -439,6 +439,17 @@ struct log_DEVA_s{
     float float_val_2;
     float float_val_3;
 };
+
+/* --- BOAT GUIDANCE MODULE DEBUG -------------------------------------------------*/
+#define LOG_BGUD_MSG 58
+struct log_BGUD_s{
+    float alpha_star;
+    float alpha;
+    float rudder_action;
+    float sail_action;
+    float debug_val1;
+};
+
 //********************** End add *******************************
 
 /********** SYSTEM MESSAGES, ID > 0x80 **********/
@@ -508,6 +519,7 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(WSAI, "ffff", "AngleApparent,SpeedApparent,AngleTrue,SpeedTrue"), //Added by Marco Tranzatto
     LOG_FORMAT(BWES, "fffffffff", "AccX,AccY,AccZ,Roll,Pitch,Heading,RollRate,PitchRate,YawRate"), //Added by Marco Tranzatto
     LOG_FORMAT(DEVA, "fff", "Float1, Float2, Float3"), //Added by Marco Tranzatto
+    LOG_FORMAT(BGUD, "fffff", "AlphaStar, Alpha, Rudder, Sail, Float1"), //Added by Marco Tranzatto
 	/* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),
