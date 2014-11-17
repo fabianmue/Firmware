@@ -87,7 +87,7 @@ PARAM_DEFINE_FLOAT(AS_I_GAIN, 0.0f);
  * @min -900000000
  * @max 900000000
  */
-PARAM_DEFINE_INT32(AS_LAT0, 85605120);
+PARAM_DEFINE_INT32(AS_LAT0, 473494820);
 
 /**
  * Longitude of origin of NED system, in degrees * E7.
@@ -96,7 +96,7 @@ PARAM_DEFINE_INT32(AS_LAT0, 85605120);
  * @min -1800000000
  * @max 1800000000
  */
-PARAM_DEFINE_INT32(AS_LON0, 473494820);
+PARAM_DEFINE_INT32(AS_LON0, 85605120);
 
 /**
  * Altitude of origin of NED system, in millimeters.
@@ -105,7 +105,7 @@ PARAM_DEFINE_INT32(AS_LON0, 473494820);
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_ALT0, 0);
+PARAM_DEFINE_INT32(AS_ALT0, 406);
 
 /**
  * Epsilon, specifies when the next target could be considered reached, in meters.
@@ -138,7 +138,7 @@ PARAM_DEFINE_INT32(AS_WIN, 10);
  * @min -900000000
  * @max 900000000
  */
-PARAM_DEFINE_INT32(AS_LAT_SIM, 85605120);
+PARAM_DEFINE_INT32(AS_LAT_SIM, 473494820);
 
 /**
  * Simulated Longitude, in degrees * E7.
@@ -147,7 +147,7 @@ PARAM_DEFINE_INT32(AS_LAT_SIM, 85605120);
  * @min -1800000000
  * @max 1800000000
  */
-PARAM_DEFINE_INT32(AS_LON_SIM, 473494820);
+PARAM_DEFINE_INT32(AS_LON_SIM, 85605120);
 
 /**
  * Simulated Altitude, in millimeters.
@@ -156,7 +156,7 @@ PARAM_DEFINE_INT32(AS_LON_SIM, 473494820);
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_ALT_SIM, 0);
+PARAM_DEFINE_INT32(AS_ALT_SIM, 406);
 
 /**
  * Simulated Course over ground, in rads, sign opposite to Dumas convention.

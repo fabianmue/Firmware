@@ -185,7 +185,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
     struct local_position_race_s local_pos_r = {.x_race_cm = 0, .y_race_cm = 0};
 
     //optimal path parameters
-    struct reference_actions_s ref_act = {.alpha_star = 8.5, .should_tack = false};
+    struct reference_actions_s ref_act = {.alpha_star = 0.5, .should_tack = false};
 
     warnx(" starting\n");
 
@@ -229,13 +229,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
             #ifdef SIMULATION_FLAG
             //we're simulating the gps position, cog and twd with parameters from QGroundControl
             //take data from param_check_update from last while loop and use them for simulation
-            //update_cog(params.cog_sim);
-            //update_twd(params.twd_sim);
-
-            //cancella
-            update_cog(0.5f);
-            update_twd(0.3f);
-
+            update_cog(params.cog_sim);
+            update_twd(params.twd_sim);
             #else
             // this means none of our providers is giving us data
             warnx(" got no data within a second\n");

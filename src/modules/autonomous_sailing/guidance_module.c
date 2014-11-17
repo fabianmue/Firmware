@@ -106,10 +106,11 @@ void guidance_module(const struct reference_actions_s *ref_act_p,
 
     //TODO sailing control
 
-    //cancella
+    //debug
 //    printf("alpha_star %2.3f \t alpha %2.3f \t command %2.3f \n",
 //          (double)(ref_act_p->alpha_star), (double)alpha, (double)command);
 
+    //cancella
     strs_p->debug_att.timestamp = hrt_absolute_time();
     strs_p->debug_att.roll = ref_act_p->alpha_star;
     strs_p->debug_att.pitch = alpha;
