@@ -41,6 +41,8 @@
 
 #include "controller_data.h"
 
+#define PRINT_DEBUG 0
+
 #ifndef NULL
     #define NULL 0
 #endif
@@ -84,6 +86,10 @@ void init_controller_data(){
 
     //set k to 1 since a real value is not provided
     update_k(1);
+
+    #if PRINT_DEBUG == 1
+    //printf("init_controller_data \n");
+    #endif
 }
 
 /** Free memory and allocate new space for new dimension
@@ -93,7 +99,7 @@ void init_controller_data(){
 void update_k(const uint16_t k){
 
     //some controls before freeing memory
-    if(k == measurements_filtered.k)
+    if(k == measurements_filtered.k || k == 0)
         return; //nothing to do
 
     if(measurements_filtered.alpha_p != NULL)
@@ -104,11 +110,16 @@ void update_k(const uint16_t k){
     measurements_filtered.k = k;
 
     //initialize all the elements of alpha_p to 0
-    for(int i = 0; i < measurements_filtered.k; i++){
+    for(uint16_t i = 0; i < measurements_filtered.k; i++){
         measurements_filtered.alpha_p[i] = 0.0f;
     }
 
     measurements_filtered.oldestValue = 0;
+
+
+    #if PRINT_DEBUG == 1
+    //printf("update_k k: %d \n", measurements_filtered.k);
+    #endif
 
 }
 
@@ -123,6 +134,10 @@ void update_cog(const float cog_r){
 
     //set updated flag
     measurements_raw.cog_updated = true;
+
+    #if PRINT_DEBUG == 1
+    //printf("saved cog %2.3f \n", (double)measurements_raw.cog_r);
+    #endif
 }
 
 /** Update ctrue wind (estimated) direction with a new value supplied by weather station
@@ -136,6 +151,10 @@ void update_twd(const float twd_r){
 
     //set updated flag
     measurements_raw.twd_updated = true;
+
+    #if PRINT_DEBUG == 1
+    //printf("saved twd %2.3f \n", (double)measurements_raw.twd_r);
+    #endif
 }
 
 /** Compute moving average from values in alpha_p */
@@ -145,10 +164,20 @@ void compute_avg(){
 
     for(uint16_t i = 0; i < measurements_filtered.k; i++){
         temp += measurements_filtered.alpha_p[i];
+
+        #if PRINT_DEBUG == 1
+        //printf(" measurements_filtered.alpha_p[%d] %2.3f \n", i, (double) measurements_filtered.alpha_p[i]);
+        #endif
     }
 
     //compute average value of alpha
     measurements_filtered.alpha = temp / measurements_filtered.k;
+
+    #if PRINT_DEBUG == 1
+    //printf("temp %2.3f \n", (double)temp);
+    //printf("measurements_filtered.k %2.3f \n", (double)measurements_filtered.k);
+    //printf("measurements_filtered.alpha %2.3f \n", (double)measurements_filtered.alpha);
+    #endif
 }
 
 /** Compute instant alpha from a new cog and/or twd value.
@@ -176,6 +205,11 @@ void filter_new_data(){
     measurements_raw.cog_updated = false;
     measurements_raw.twd_updated = false;
 
+    #if PRINT_DEBUG == 1
+    //printf("instant_alpha %2.3f \n", (double)instant_alpha);
+    //printf("oldestValue %d \n", measurements_filtered.oldestValue);
+    #endif
+
 }
 
 /** Return the average value of alpha computed from the last k values
@@ -198,6 +232,10 @@ float get_alpha(){
         //compute new mean alpha
         compute_avg();
     }
+
+    #if PRINT_DEBUG == 1
+    printf(" *** get_alpha.alpha %2.3f *** \n", (double)measurements_filtered.alpha);
+    #endif
 
     return measurements_filtered.alpha;
 }

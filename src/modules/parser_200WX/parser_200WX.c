@@ -43,9 +43,6 @@
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#define GPS_SIMULATION 0    //1 to simulate GPS signal
-#define SAVE_DEBUG_VALUES 1 //1 to use debug_values topic for debug purpose
-
 #include <nuttx/config.h>
 #include <nuttx/sched.h>
 #include <unistd.h>

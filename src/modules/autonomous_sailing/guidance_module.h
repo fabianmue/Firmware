@@ -46,13 +46,14 @@
 #include "path_planning_data.h"
 #include "parameters.h"
 #include "topics_handler.h"
+#include "controller_data.h"
 
 #define RUDDER_SATURATION 0.9f
 
 /** @brief Implement next control action*/
-void guidance_module(struct reference_actions_s *ref_act_p,
-                     struct parameters_qgc *param_qgc_p,
+void guidance_module(const struct reference_actions_s *ref_act_p,
+                     const struct parameters_qgc *param_qgc_p,
                      struct structs_topics_s *strs_p,
-                     struct published_fd_s *pubs_p);
+                     const struct published_fd_s *pubs_p);
 
 #endif //GUIDANCE_MODULE_H

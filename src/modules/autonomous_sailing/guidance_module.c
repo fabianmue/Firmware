@@ -46,7 +46,7 @@ static float sum_error_pi = 0.0f; ///error sum from iterations of guidance_modul
 
 /** @brief PI controller with conditional integration*/
 float pi_controller(const float *ref_p, const float *meas_p,
-                    struct parameters_qgc *param_qgc_p);
+                    const struct parameters_qgc *param_qgc_p);
 
 /** PI controller to compute the input for the rudder servo motor.
  *
@@ -60,13 +60,13 @@ float pi_controller(const float *ref_p, const float *meas_p,
  * @return input value for actuator of rudder
 */
 float pi_controller(const float *ref_p, const float *meas_p,
-                    struct parameters_qgc *param_qgc_p){
+                    const struct parameters_qgc *param_qgc_p){
 
     float error;
     float i_conditioned; //integral condition constant
     float action;
 
-    error = *ref_p - * meas_p;
+    error = *ref_p - *meas_p;
 
     //integral constant for conditional integration, this is for anti-wind up!
     i_conditioned = param_qgc_p->i_gain / (1 + error * error);
@@ -82,10 +82,10 @@ float pi_controller(const float *ref_p, const float *meas_p,
 }
 
 /** Implement reference actions provided by optimal path planning*/
-void guidance_module(struct reference_actions_s *ref_act_p,
-                     struct parameters_qgc *param_qgc_p,
+void guidance_module(const struct reference_actions_s *ref_act_p,
+                     const struct parameters_qgc *param_qgc_p,
                      struct structs_topics_s *strs_p,
-                     struct published_fd_s *pubs_p){
+                     const struct published_fd_s *pubs_p){
 
     float alpha;
     float command = 0.0f;
@@ -106,10 +106,10 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 
     //TODO sailing control
 
-
     //cancella
+//    printf("alpha_star %2.3f \t alpha %2.3f \t command %2.3f \n",
+//          (double)(ref_act_p->alpha_star), (double)alpha, (double)command);
 
-    //cancella
     strs_p->debug_att.timestamp = hrt_absolute_time();
     strs_p->debug_att.roll = ref_act_p->alpha_star;
     strs_p->debug_att.pitch = alpha;
