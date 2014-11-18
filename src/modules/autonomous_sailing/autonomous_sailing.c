@@ -396,7 +396,6 @@ void navigation_module(const struct structs_topics_s *strs_p,
     //convert gps filtered position in race frame coordinates
     geo_to_race(&(strs_p->gps_filtered), &x_cm, &y_cm);
 
-    //TODO NED to Race frame.
     lp_p->x_race_cm = x_cm;
     lp_p->y_race_cm = y_cm;
 
