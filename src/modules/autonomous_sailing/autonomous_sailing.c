@@ -65,7 +65,7 @@
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
 
 #ifdef SIMULATION_FLAG //defined in parameter.h
-    #define TIMEOUT_POLL 1000 //ms between every simulation
+    #define TIMEOUT_POLL 200 //ms between every simulation
 #else
     #define TIMEOUT_POLL 1000 //normal usage set to 1 sec the timeout
 #endif
@@ -285,6 +285,14 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
         //always perfrom guidance module to control the boat
         guidance_module(&ref_act, &params, &strs, &pubs);
+
+        //cancella
+        strs.debug_att.timestamp = hrt_absolute_time();
+        strs.debug_att.yaw = strs.actuators.control[0];
+
+        orb_publish(ORB_ID(vehicle_attitude), pubs.debug_att, &(strs.debug_att));
+
+        //fine cancella
 
         // Send out commands
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
