@@ -190,8 +190,8 @@ PARAM_DEFINE_FLOAT(AS_TWD_SIM, 0.0f);
  * 1 = boat should tack as soon as possibile
  *
  *
- * @min -pi
- * @max pi
+ * @min 0
+ * @max 1
  */
 PARAM_DEFINE_INT32(AS_TCK_SIM, 0);
 

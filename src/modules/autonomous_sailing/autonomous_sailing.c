@@ -208,10 +208,12 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
     // polling management
     struct pollfd fds[] = {
-            { .fd = subs.gps_raw,           .events = POLLIN },
-            { .fd = subs.gps_filtered,      .events = POLLIN },
-            { .fd = subs.wind_sailing,      .events = POLLIN },
-            { .fd = subs.parameter_update,  .events = POLLIN }
+            { .fd = subs.gps_raw,               .events = POLLIN },
+            { .fd = subs.gps_filtered,          .events = POLLIN },
+            { .fd = subs.wind_sailing,          .events = POLLIN },
+            { .fd = subs.parameter_update,      .events = POLLIN },
+            { .fd = subs.att,                   .events = POLLIN },
+            { .fd = subs.boat_weather_station,  .events = POLLIN }
     };
 
     //set reference of NED frame before starting
@@ -284,6 +286,18 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                     //update param
                     param_update(&params);
+
+                    #if SIMULATION_FLAG == 1
+                    ref_act.should_tack = params.tack_sim;
+                    #endif
+                }
+                if(fds[4].revents & POLLIN){
+                    // attitude updated
+                    orb_copy(ORB_ID(vehicle_attitude), subs.att, &(strs.att));
+                }
+                if(fds[5].revents & POLLIN){
+                    // boat_weather_station updated
+                    orb_copy(ORB_ID(boat_weather_station), subs.boat_weather_station, &(strs.boat_weather_station));
                 }
             }
         }
@@ -329,6 +343,8 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     subs_p->gps_filtered = orb_subscribe(ORB_ID(vehicle_global_position));
     subs_p->wind_sailing = orb_subscribe(ORB_ID(wind_sailing));
     subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
+    subs_p->att = orb_subscribe(ORB_ID(vehicle_attitude));
+    subs_p->boat_weather_station = orb_subscribe(ORB_ID(boat_weather_station));
 
     if(subs_p->gps_raw == -1){
         warnx(" error on subscribing on vehicle_gps_position Topic \n");
@@ -342,6 +358,21 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
 
     if(subs_p->wind_sailing == -1){
         warnx(" error on subscribing on wind_sailing Topic \n");
+        return false;
+    }
+
+    if(subs_p->parameter_update == -1){
+        warnx(" error on subscribing on parameter_update Topic \n");
+        return false;
+    }
+
+    if(subs_p->att == -1){
+        warnx(" error on subscribing on vehicle_attitude Topic \n");
+        return false;
+    }
+
+    if(subs_p->boat_weather_station == -1){
+        warnx(" error on subscribing on boat_weather_station Topic \n");
         return false;
     }
 
