@@ -46,6 +46,8 @@
 
 #include <systemlib/param/param.h>
 #include <stdio.h>//bool type
+#include "controller_data.h"
+#include "navigation.h"
 
 //struct for local copy of parameter from QGroundControl
 struct parameters_qgc{

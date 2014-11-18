@@ -126,7 +126,8 @@ PARAM_DEFINE_FLOAT(AS_EPSI, 2.0f);
 PARAM_DEFINE_INT32(AS_WINDOW, 10);
 
 /**
- * AS_MEAN_WIND, specifies the mean wind direction [rad]. in [-pi, pi] positive on the right, negative on the left
+ * AS_MEAN_WIND, specifies the mean wind direction [rad], in [-pi, pi].
+ * Positive on the right (going from North to East), negative on the left (going from North to West).
  *
  *
  * @min -pi
@@ -297,7 +298,7 @@ void param_update(struct parameters_qgc *params_p){
     //alt0
     param_get(pointers_param_qgc.alt0_pointer, &(params_p->alt0));
 
-    //update NED origin
+    //update NED origin using API in navigation.h
     set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
 
     //epsilon
@@ -306,7 +307,7 @@ void param_update(struct parameters_qgc *params_p){
     //moving window
     param_get(pointers_param_qgc.moving_window_pointer, &(params_p->moving_window));
 
-    //update window size
+    //update window size using API in controller_data.h
     update_k(params_p->moving_window);
 
     //mean wind
