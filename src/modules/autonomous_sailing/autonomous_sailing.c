@@ -390,17 +390,15 @@ bool actuators_init(struct published_fd_s *pubs_p,
 void navigation_module(const struct structs_topics_s *strs_p,
                        struct local_position_race_s *lp_p){
 
-    int32_t north_cm;
-    int32_t east_cm;
-    int32_t down_cm;
+    int32_t x_cm;
+    int32_t y_cm;
 
-
-    //compute boat position in NED frame w.r.t. lat0 lon0 alt0 set by set_ref0()
-    geo_to_ned(&(strs_p->gps_filtered), &north_cm, &east_cm, &down_cm);
+    //convert gps filtered position in race frame coordinates
+    geo_to_race(&(strs_p->gps_filtered), &x_cm, &y_cm);
 
     //TODO NED to Race frame.
-    lp_p->x_race_cm = east_cm;
-    lp_p->y_race_cm = north_cm;
+    lp_p->x_race_cm = x_cm;
+    lp_p->y_race_cm = y_cm;
 
 }
 

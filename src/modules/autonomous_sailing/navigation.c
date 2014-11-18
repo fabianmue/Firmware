@@ -72,7 +72,50 @@ static const float E2 = 100.0f;
 static float R_r_ned[2][2] = {{0.0f, 0.0f},///Rotation matrix about Down axes, trasform coordinates from NED to Race frame
                              {0.0f, 0.0f}};
 
-//static const double E3 = 100.0; ///10^3.
+
+/** @brief convert geodedical coordinates into NED coordinate.*/
+void geo_to_ned(const struct vehicle_global_position_s *gps_p,
+                int32_t *north_cm_p, int32_t *east_cm_p, int32_t *down_cm_p);
+
+/** @brief convert geodedical coordinates into ECEF coordinate.*/
+void geo_to_ecef(const int32_t  *lat_d_e7_p, const int32_t  *lon_d_e7_p, const int32_t  *alt_mm_p,
+                 int32_t  *x_cm_p, int32_t  *y_cm_p, int32_t  *z_cm_p);
+
+/** @brief convert ECEF coordinates into NED coordinate.*/
+void ecef_to_ned(const int32_t *x_cm_p, const int32_t *y_cm_p, const int32_t *z_cm_p,
+                 int32_t *north_cm_p, int32_t *east_cm_p, int32_t *down_cm_p);
+
+/** @brief convert Deg*E7 in rad */
+float degE7_to_rad(const int32_t  *deg_e7_p);
+
+
+/**
+ * Convert geodedical coordinate in race frame coordinate.
+ *
+ * First step: convert geodedical coordinates in NED coordinates using lat0, lon0 and alt0 set by set_ref0().
+ * Second step: use the mean wind angle set by set_mean_wind_angle()
+ * for the rotation matrix from NED to Race frame.
+ *
+ * @param vehicle_global_position_s pointer to struct with gps filtered data.
+ * @param x_cm_p                    pointer to returned value with x coordinate in race frame
+ * @param x_cm_p                    pointer to returned value with x coordinate in race frame
+ */
+void geo_to_race(const vehicle_global_position_s *gps_p,
+                 int32_t *x_cm_p, int32_t *y_cm_p){
+
+    int32_t north_cm;
+    int32_t east_cm;
+    int32_t down_cm;
+
+
+    //compute boat position in NED frame w.r.t. lat0 lon0 alt0 set by set_ref0()
+    geo_to_ned(gps_p, &north_cm, &east_cm, &down_cm);
+
+    //transform [north, east] coordinate in NED fram in [x, y] coordinate in race frame
+    *x_cm_p = R_r_ned[0][0] * north_cm + R_r_ned[0][1] * east_cm;
+    *y_cm_p = R_r_ned[1][0] * north_cm + R_r_ned[1][1] * east_cm;
+
+}
 
 /**
  * Convert Deg*E7 in rad.
@@ -226,6 +269,8 @@ void set_mean_wind_angle(float mean_wind){
      * The Y-axis is defined so that the system is positively oriented.
     */
 
+    //TODO: add traslation terms to move origin of race frame from NED origin to top mark!!!
+
     //first row, transform NED coordinates in x coordinate
     R_r_ned[0][0] = (float)(-cos(mean_wind));
     R_r_ned[0][1] = (float)sin(mean_wind);
@@ -233,8 +278,6 @@ void set_mean_wind_angle(float mean_wind){
     //second row, transform NED coordinates in y coordinate
     R_r_ned[1][0] = (float)sin(mean_wind);
     R_r_ned[1][1] = (float)cos(mean_wind);
-
-
 
 }
 

@@ -52,23 +52,12 @@ struct local_position_race_s{
     int32_t y_race_cm;
 };
 
-/** @brief convert geodedical coordinates into NED coordinate.*/
-void geo_to_ned(const struct vehicle_global_position_s *gps_p,
-                int32_t *north_cm_p, int32_t *east_cm_p, int32_t *down_cm_p);
-
-/** @brief convert geodedical coordinates into ECEF coordinate.*/
-void geo_to_ecef(const int32_t  *lat_d_e7_p, const int32_t  *lon_d_e7_p, const int32_t  *alt_mm_p,
-                 int32_t  *x_cm_p, int32_t  *y_cm_p, int32_t  *z_cm_p);
-
-/** @brief convert ECEF coordinates into NED coordinate.*/
-void ecef_to_ned(const int32_t *x_cm_p, const int32_t *y_cm_p, const int32_t *z_cm_p,
-                 int32_t *north_cm_p, int32_t *east_cm_p, int32_t *down_cm_p);
+/** @brief transform geodedical coordinate in race frame coordinate*/
+void geo_to_race(const struct vehicle_global_position_s *gps_p,
+                 int32_t *x_cm_p, int32_t *y_cm_p);
 
 /** @brief set origin of NED frame.*/
 void set_ref0(const int32_t  *_lat0_d_e7_p, const int32_t  *_lon0_d_e7_p, const int32_t  *_alt0_mm_p);
-
-/** @brief convert Deg*E7 in rad */
-float degE7_to_rad(const int32_t  *deg_e7_p);
 
 /** @brief set the angle of the mean wind w.r.t. true North*/
 void set_mean_wind_angle(float mean_wind);
