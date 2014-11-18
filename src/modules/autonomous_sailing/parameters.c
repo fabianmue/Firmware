@@ -313,6 +313,9 @@ void param_update(struct parameters_qgc *params_p){
     //mean wind
     param_get(pointers_param_qgc.mean_wind_pointer, &(params_p->mean_wind));
 
+    //set mean wind angle in navigation.h
+    set_mean_wind_angle(params_p->mean_wind);
+
     #ifdef SIMULATION_FLAG
 
     //lat_sim

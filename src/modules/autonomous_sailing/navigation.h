@@ -70,4 +70,7 @@ void set_ref0(const int32_t  *_lat0_d_e7_p, const int32_t  *_lon0_d_e7_p, const 
 /** @brief convert Deg*E7 in rad */
 float degE7_to_rad(const int32_t  *deg_e7_p);
 
+/** @brief set the angle of the mean wind w.r.t. true North*/
+void set_mean_wind_angle(float mean_wind);
+
 #endif /* NAVIGATION_H_ */

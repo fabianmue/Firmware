@@ -69,6 +69,9 @@ static const float E3 = 1000.0f;
 
 static const float E2 = 100.0f;
 
+static float R_r_ned[2][2] = {{0.0f, 0.0f},///Rotation matrix about Down axes, trasform coordinates from NED to Race frame
+                             {0.0f, 0.0f}};
+
 //static const double E3 = 100.0; ///10^3.
 
 /**
@@ -202,5 +205,36 @@ void ecef_to_ned(const int32_t *x_cm_p, const int32_t *y_cm_p, const int32_t *z_
     *east_cm_p     = -sinLambda * u_cm + cosLambda * v_cm;
 
     *down_cm_p     = -cosPhi * t_cm - sinPhi * w_cm;
+}
+
+/** Set the mean wind angle with respect to true North.
+ *
+ * Compute the new rotation matrix that transforms NED coordinate in Race coordinate.
+ *
+ * @param mean_wind mean wind direction w.r.t. true North [rad], positive N. to E., negative N. to W.
+*/
+void set_mean_wind_angle(float mean_wind){
+
+    /*
+     * Compute the new R_r_ned matrix, it's a rotation matrix.
+     * Pay attention: mean_wind is the angle between mean wind direction(wrt true North) and north axis.
+     * The matrix rotation is not the "standard" form of rotation matrix about Z axis.
+     * We're interested in only the transformation of north and east coordinates.
+     *
+     * The top mark represents the origin of the system reference frame trough which
+     * two orthogonal axes pass; the X-axis is set in the average wind direction.
+     * The Y-axis is defined so that the system is positively oriented.
+    */
+
+    //first row, transform NED coordinates in x coordinate
+    R_r_ned[0][0] = (float)(-cos(mean_wind));
+    R_r_ned[0][1] = (float)sin(mean_wind);
+
+    //second row, transform NED coordinates in y coordinate
+    R_r_ned[1][0] = (float)sin(mean_wind);
+    R_r_ned[1][1] = (float)cos(mean_wind);
+
+
+
 }
 
