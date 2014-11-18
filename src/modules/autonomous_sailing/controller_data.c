@@ -196,10 +196,10 @@ void filter_new_data(){
     measurements_filtered.alpha_p[measurements_filtered.oldestValue] = instant_alpha;
 
     //update oldest value index
+    measurements_filtered.oldestValue++;
+
     if(measurements_filtered.oldestValue >= measurements_filtered.k)
         measurements_filtered.oldestValue = 0;
-    else
-        measurements_filtered.oldestValue++;
 
     //set updated flag to false 'cause cog and twd values have been used
     measurements_raw.cog_updated = false;
