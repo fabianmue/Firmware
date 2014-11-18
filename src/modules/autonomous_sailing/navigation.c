@@ -100,7 +100,7 @@ float degE7_to_rad(const int32_t  *deg_e7_p);
  * @param x_cm_p                    pointer to returned value with x coordinate in race frame
  * @param x_cm_p                    pointer to returned value with x coordinate in race frame
  */
-void geo_to_race(const vehicle_global_position_s *gps_p,
+void geo_to_race(const struct vehicle_global_position_s *gps_p,
                  int32_t *x_cm_p, int32_t *y_cm_p){
 
     int32_t north_cm;
