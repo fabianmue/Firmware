@@ -49,10 +49,10 @@
 
 //private functions
 /** @brief compute moving average to calculate true wind angle (alpha)*/
-void compute_avg();
+void compute_avg(void);
 
 /** @brief filter new data computing alpha and a new avg value*/
-void filter_new_data();
+void filter_new_data(void);
 
 //actual raw measurements from parser_200WX
 static struct{
@@ -72,7 +72,7 @@ static struct{
 
 
 /** Initialize all the structures necessary to compute moving average window of true wind angle (alpha)*/
-void init_controller_data(){
+void init_controller_data(void){
 
     measurements_raw.cog_r = 0.0f;
     measurements_raw.twd_r = 0.0f;
@@ -136,7 +136,7 @@ void update_cog(const float cog_r){
     measurements_raw.cog_updated = true;
 
     #if PRINT_DEBUG == 1
-    //printf("saved cog %2.3f \n", (double)measurements_raw.cog_r);
+    printf("saved cog %2.3f \n", (double)measurements_raw.cog_r);
     #endif
 }
 
@@ -153,12 +153,12 @@ void update_twd(const float twd_r){
     measurements_raw.twd_updated = true;
 
     #if PRINT_DEBUG == 1
-    //printf("saved twd %2.3f \n", (double)measurements_raw.twd_r);
+    printf("saved twd %2.3f \n", (double)measurements_raw.twd_r);
     #endif
 }
 
 /** Compute moving average from values in alpha_p */
-void compute_avg(){
+void compute_avg(void){
 
     float temp = 0.0f;
 
@@ -166,7 +166,7 @@ void compute_avg(){
         temp += measurements_filtered.alpha_p[i];
 
         #if PRINT_DEBUG == 1
-        //printf(" measurements_filtered.alpha_p[%d] %2.3f \n", i, (double) measurements_filtered.alpha_p[i]);
+        printf(" measurements_filtered.alpha_p[%d] %2.3f \n", i, (double) measurements_filtered.alpha_p[i]);
         #endif
     }
 
@@ -174,7 +174,7 @@ void compute_avg(){
     measurements_filtered.alpha = temp / measurements_filtered.k;
 
     #if PRINT_DEBUG == 1
-    //printf("temp %2.3f \n", (double)temp);
+    printf("temp %2.3f \n", (double)temp);
     //printf("measurements_filtered.k %2.3f \n", (double)measurements_filtered.k);
     //printf("measurements_filtered.alpha %2.3f \n", (double)measurements_filtered.alpha);
     #endif
@@ -184,7 +184,7 @@ void compute_avg(){
  *  Should be called only if either cog_r or twd_r have been updated.
  *  At the end, set flags of updated to false.
 */
-void filter_new_data(){
+void filter_new_data(void){
 
     //cog or twd has just been updated, compute new istant alpha according to Dumas
     float instant_alpha = measurements_raw.cog_r - measurements_raw.twd_r;
@@ -207,7 +207,7 @@ void filter_new_data(){
 
     #if PRINT_DEBUG == 1
     //printf("instant_alpha %2.3f \n", (double)instant_alpha);
-    //printf("oldestValue %d \n", measurements_filtered.oldestValue);
+    //printf("New oldestValue %d \n", measurements_filtered.oldestValue);
     #endif
 
 }
@@ -221,7 +221,7 @@ void filter_new_data(){
  *
  * @return moving average value of true wind angle from the last k values of instant alpha.
 */
-float get_alpha(){
+float get_alpha(void){
 
     //check if either cog_r or twd_r have been updated
     if(measurements_raw.cog_updated || measurements_raw.twd_updated){
@@ -234,7 +234,7 @@ float get_alpha(){
     }
 
     #if PRINT_DEBUG == 1
-    printf(" *** get_alpha.alpha %2.3f *** \n", (double)measurements_filtered.alpha);
+    //printf(" *** get_alpha.alpha %2.3f *** \n", (double)measurements_filtered.alpha);
     #endif
 
     return measurements_filtered.alpha;

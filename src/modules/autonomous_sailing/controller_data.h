@@ -44,9 +44,10 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /** @brief initialize controller data before starting*/
-void init_controller_data();
+void init_controller_data(void);
 
 /** @brief modify size of the moving window*/
 void update_k(const uint16_t k);
@@ -58,6 +59,6 @@ void update_cog(const float cog_r);
 void update_twd(const float twd_r);
 
 /** @brief get the average value of alpha*/
-float get_alpha();
+float get_alpha(void);
 
 #endif // CONTROLLER_DATA_H

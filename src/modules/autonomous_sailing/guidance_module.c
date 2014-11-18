@@ -68,11 +68,6 @@ float pi_controller(const float *ref_p, const float *meas_p,
 
     error = *ref_p - *meas_p;
 
-    //cancella
-//    printf("*ref_p %2.3f \t *meas_p %2.3f \t error %2.3f \n",
-//           (double)*ref_p, (double) *meas_p, (double)error);
-    //fine cancella
-
     //integral constant for conditional integration, this is for anti-wind up!
     i_conditioned = param_qgc_p->i_gain / (1 + error * error);
 
@@ -100,11 +95,6 @@ void guidance_module(const struct reference_actions_s *ref_act_p,
 
     //get alpha from the moving average value of the last k values of instant alpha
     alpha = get_alpha();
-
-    //cancella
-//    printf("************* alpha %2.3f *****\n  ",
-//           (double)alpha);
-    //fine cancella
 
     //PI controller for rudder
     command = pi_controller(&(ref_act_p->alpha_star), &alpha, param_qgc_p);

@@ -137,7 +137,7 @@ PARAM_DEFINE_FLOAT(AS_MEAN_WIND, 0.0f);
 
 
 
-#ifdef SIMULATION_FLAG
+#if SIMULATION_FLAG == 1
 
 //---------------------------------------- Simulation variables --------------------
 
@@ -216,7 +216,7 @@ static struct pointers_param_qgc_s{
 
     param_t mean_wind_pointer;/**< pointer to param AS_MEAN_WIND*/
 
-    #ifdef SIMULATION_FLAG
+    #if SIMULATION_FLAG == 1
     param_t lat_sim_pointer; /**< pointer to param AS_LATS*/
     param_t lon_sim_pointer; /**< pointer to param AS_LONS*/
     param_t alt_sim_pointer; /**< pointer to param AS_ALTS*/
@@ -252,7 +252,7 @@ void param_init(struct parameters_qgc *params_p){
 
     pointers_param_qgc.mean_wind_pointer = param_find("AS_MEAN_WIND");
 
-    #ifdef SIMULATION_FLAG
+    #if SIMULATION_FLAG == 1
 
     pointers_param_qgc.lat_sim_pointer = param_find("AS_LAT_SIM");
     pointers_param_qgc.lon_sim_pointer = param_find("AS_LON_SIM");
@@ -316,7 +316,7 @@ void param_update(struct parameters_qgc *params_p){
     //set mean wind angle in navigation.h
     set_mean_wind_angle(params_p->mean_wind);
 
-    #ifdef SIMULATION_FLAG
+    #if SIMULATION_FLAG == 1
 
     //lat_sim
     param_get(pointers_param_qgc.lat_sim_pointer, &(params_p->lat_sim));

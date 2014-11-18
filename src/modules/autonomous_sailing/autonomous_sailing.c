@@ -46,15 +46,16 @@
 #include <errno.h>
 #include <poll.h>
 
+//navigation module
 #include "navigation.h"
+//parameters from QGroundControl
 #include "parameters.h"
+//path planning data computed offline
 #include "path_planning_data.h"
+//guidance module
 #include "guidance_module.h"
-
-
 //Include topics necessary
 #include "topics_handler.h"
-
 //controller data functions
 #include "controller_data.h"
 
@@ -64,8 +65,8 @@
 
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
 
-#ifdef SIMULATION_FLAG //defined in parameter.h
-    #define TIMEOUT_POLL 200 //ms between every simulation
+#if SIMULATION_FLAG == 1 //defined in parameter.h
+    #define TIMEOUT_POLL 400 //ms between every simulation
 #else
     #define TIMEOUT_POLL 1000 //normal usage set to 1 sec the timeout
 #endif
@@ -103,7 +104,7 @@ void navigation_module(const struct structs_topics_s *strs_p,
                        struct local_position_race_s *lp_p);
 
 /** @brief Give next optimal action to be implemented*/
-void path_planning();
+void path_planning(void);
 
 static void usage(const char *reason)
 {
@@ -225,14 +226,12 @@ int as_daemon_thread_main(int argc, char *argv[]){
         poll_ret = poll(fds, (sizeof(fds) / sizeof(fds[0])), TIMEOUT_POLL);
 
         // handle the poll result
-        if(poll_ret == 0) {
-            #ifdef SIMULATION_FLAG
+        if(poll_ret == 0){
+            #if SIMULATION_FLAG == 1
             //we're simulating the gps position, cog and twd with parameters from QGroundControl
             //take data from param_check_update from last while loop and use them for simulation
-//            update_cog(params.cog_sim);
-//            update_twd(params.twd_sim);
-            update_cog(0.3f);
-            update_twd(0.1f);
+            update_cog(params.cog_sim);
+            update_twd(params.twd_sim);
             #else
             // this means none of our providers is giving us data
             warnx(" got no data within a second\n");
@@ -250,8 +249,10 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // new vehicle_gps_position data
                     orb_copy(ORB_ID(vehicle_gps_position), subs.gps_raw, &(strs.gps_raw));
 
+                    #if SIMULATION_FLAG == 0
                     //update course over ground in control data
                     update_cog(strs.gps_raw.cog_rad);
+                    #endif
 
                 }
                 if(fds[1].revents & POLLIN){
@@ -271,8 +272,10 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // new WSAI values, copy new data
                     orb_copy(ORB_ID(wind_sailing), subs.wind_sailing, &(strs.wind_sailing));
 
+                    #if SIMULATION_FLAG == 0
                     //update true wind direction in control data
                     update_twd(strs.wind_sailing.angle_true);
+                    #endif
                 }
                 if(fds[3].revents & POLLIN){
                     // parameters updated
@@ -348,7 +351,7 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     memset(&(strs_p->boat_guidance_debug), 0, sizeof(strs_p->boat_guidance_debug));
     pubs_p->boat_guidance_debug_pub = orb_advertise(ORB_ID(boat_guidance_debug), &(strs_p->boat_guidance_debug));
 
-    #ifdef SIMULATION_FLAG
+    #if SIMULATION_FLAG == 1
     memset(&(strs_p->debug_att), 0, sizeof(strs_p->debug_att));
     pubs_p->debug_att = orb_advertise(ORB_ID(vehicle_attitude), &(strs_p->debug_att));
 
@@ -412,6 +415,6 @@ void navigation_module(const struct structs_topics_s *strs_p,
 }
 
 /** Retrieve data from pre-computed path planning and give the next references*/
-void path_planning(){
+void path_planning(void){
 
 }
