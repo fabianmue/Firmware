@@ -117,13 +117,22 @@ PARAM_DEFINE_INT32(AS_ALT0, 406);
 PARAM_DEFINE_FLOAT(AS_EPSI, 2.0f);
 
 /**
- * AS_WIN, specifies the number of samples for the moving wind average mean.
+ * AS_WINDOW, specifies the number of samples for the moving wind average mean.
  *
  *
  * @min 1
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_WIN, 10);
+PARAM_DEFINE_INT32(AS_WINDOW, 10);
+
+/**
+ * AS_MEAN_WIND, specifies the mean wind direction [rad]. in [-pi, pi] positive on the right, negative on the left
+ *
+ *
+ * @min -pi
+ * @max pi
+ */
+PARAM_DEFINE_FLOAT(AS_MEAN_WIND, 0.0f);
 
 
 
@@ -202,7 +211,9 @@ static struct pointers_param_qgc_s{
 
     param_t epsilon_pointer;      /**< pointer to param AS_EPSI*/
 
-    param_t moving_window_pointer;/**< pointer to param AS_WIN*/
+    param_t moving_window_pointer;/**< pointer to param AS_WINDOW*/
+
+    param_t mean_wind_pointer;/**< pointer to param AS_MEAN_WIND*/
 
     #ifdef SIMULATION_FLAG
     param_t lat_sim_pointer; /**< pointer to param AS_LATS*/
@@ -236,7 +247,9 @@ void param_init(struct parameters_qgc *params_p){
 
     pointers_param_qgc.epsilon_pointer = param_find("AS_EPSI");
 
-    pointers_param_qgc.moving_window_pointer = param_find("AS_WIN");
+    pointers_param_qgc.moving_window_pointer = param_find("AS_WINDOW");
+
+    pointers_param_qgc.mean_wind_pointer = param_find("AS_MEAN_WIND");
 
     #ifdef SIMULATION_FLAG
 
@@ -295,6 +308,9 @@ void param_update(struct parameters_qgc *params_p){
 
     //update window size
     update_k(params_p->moving_window);
+
+    //mean wind
+    param_get(pointers_param_qgc.mean_wind_pointer, &(params_p->mean_wind));
 
     #ifdef SIMULATION_FLAG
 

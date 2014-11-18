@@ -63,6 +63,8 @@ struct parameters_qgc{
 
     uint16_t moving_window;
 
+    float mean_wind;
+
     #ifdef SIMULATION_FLAG
 
     int32_t lat_sim;
