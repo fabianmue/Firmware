@@ -42,7 +42,7 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
-#define SIMULATION_FLAG 1 ///1 if you're testing autonomous sailing app indoor, PLEASE STOP PARSER_200WX RUNNING
+#define SIMULATION_FLAG 1 ///1 if you're testing autonomous sailing app indoor, PLEASE SET INDOOR PARSER_200WX
 
 #include <systemlib/param/param.h>
 #include <stdio.h>//bool type

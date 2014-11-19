@@ -45,8 +45,8 @@ struct structs_topics_s{
    struct vehicle_attitude_s att;
    struct boat_weather_station_s boat_weather_station;
 
-   //only for debug on qGC
-   struct vehicle_attitude_s debug_att;
+//   //only for debug on qGC
+//   struct vehicle_attitude_s debug_att;
 };
 
 

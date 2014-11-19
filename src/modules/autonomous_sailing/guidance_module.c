@@ -198,8 +198,8 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     //TODO sailing control
 
     //cancella
-    strs_p->debug_att.roll = ref_act_p->alpha_star;
-    strs_p->debug_att.pitch = alpha;
+//    strs_p->debug_att.roll = ref_act_p->alpha_star;
+//    strs_p->debug_att.pitch = alpha;
     //fine cancella
 
 

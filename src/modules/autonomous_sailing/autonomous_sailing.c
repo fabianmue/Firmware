@@ -306,10 +306,10 @@ int as_daemon_thread_main(int argc, char *argv[]){
         guidance_module(&ref_act, &params, &strs, &pubs);
 
         //cancella
-        strs.debug_att.timestamp = hrt_absolute_time();
-        strs.debug_att.yaw = strs.actuators.control[0];
+//        strs.debug_att.timestamp = hrt_absolute_time();
+//        strs.debug_att.yaw = strs.actuators.control[0];
 
-        orb_publish(ORB_ID(vehicle_attitude), pubs.debug_att, &(strs.debug_att));
+//        orb_publish(ORB_ID(vehicle_attitude), pubs.debug_att, &(strs.debug_att));
 
         //fine cancella
 
@@ -383,8 +383,8 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     pubs_p->boat_guidance_debug_pub = orb_advertise(ORB_ID(boat_guidance_debug), &(strs_p->boat_guidance_debug));
 
     #if SIMULATION_FLAG == 1
-    memset(&(strs_p->debug_att), 0, sizeof(strs_p->debug_att));
-    pubs_p->debug_att = orb_advertise(ORB_ID(vehicle_attitude), &(strs_p->debug_att));
+//    memset(&(strs_p->debug_att), 0, sizeof(strs_p->debug_att));
+//    pubs_p->debug_att = orb_advertise(ORB_ID(vehicle_attitude), &(strs_p->debug_att));
 
     #endif
     return true;
