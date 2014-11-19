@@ -16,7 +16,7 @@
 
 
 //only for debug on qcg
-#include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/airspeed.h>
 
 struct subscribtion_fd_s{
     int gps_raw;
@@ -32,7 +32,7 @@ struct published_fd_s{
     orb_advert_t boat_guidance_debug_pub;
 
     //only for debug on qGC
-    orb_advert_t debug_att;
+    orb_advert_t airspeed;
 };
 
 struct structs_topics_s{
@@ -46,7 +46,7 @@ struct structs_topics_s{
    struct boat_weather_station_s boat_weather_station;
 
 //   //only for debug on qGC
-//   struct vehicle_attitude_s debug_att;
+   struct airspeed_s airspeed;
 };
 
 
