@@ -175,14 +175,15 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     float alpha;
     float command = 0.0f;
 
+    //get alpha from the moving average value of the last k values of instant alpha
+    alpha = get_alpha();
+
     if(ref_act_p->should_tack){
 
         command = tack_action(ref_act_p, strs_p);
     }
     if(!(ref_act_p->should_tack)){
         //if the boat should not tack, compute rudder action to follow reference alpha
-        //get alpha from the moving average value of the last k values of instant alpha
-        alpha = get_alpha();
 
         //PI controller for rudder
         command = pi_controller(&(ref_act_p->alpha_star), &alpha, param_qgc_p);
