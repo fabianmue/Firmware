@@ -69,8 +69,12 @@ static const float E3 = 1000.0f;
 
 static const float E2 = 100.0f;
 
-static float R_r_ned[2][2] = {{0.0f, 0.0f},///Rotation matrix about Down axes, trasform coordinates from NED to Race frame
-                             {0.0f, 0.0f}};
+static struct{
+    float sin_mwd;  ///sin(mean wind direction)
+    float cos_mwd;  ///cos(mean wind direction)
+    int32_t n0_cm;  ///north distance of origin of race frame from NED origin [cm]
+    int32_t e0_cm;  ///east distance of origin of race frame from NED origin [cm]
+}ned_to_race_s;
 
 
 /** @brief convert geodedical coordinates into NED coordinate.*/
@@ -111,9 +115,26 @@ void geo_to_race(const struct vehicle_global_position_s *gps_p,
     //compute boat position in NED frame w.r.t. lat0 lon0 alt0 set by set_ref0()
     geo_to_ned(gps_p, &north_cm, &east_cm, &down_cm);
 
-    //transform [north, east] coordinate in NED fram in [x, y] coordinate in race frame
-    *x_cm_p = R_r_ned[0][0] * north_cm + R_r_ned[0][1] * east_cm;
-    *y_cm_p = R_r_ned[1][0] * north_cm + R_r_ned[1][1] * east_cm;
+    /** Race frame has X-axis oriented as the wind direction,
+     * Y-axis is defined so that the system is positively oriented.
+     *
+     * To transform NED coordinate in Race frame coordinate we need a rotation, a translation and
+     * a "reflection".
+     *
+     * Here we compute the final boat coordinate in Race frame by performing:
+     * rotation from NED frame in Race' frame (defined in set_mean_wind_angle),
+     * then we translate the origin of Race' from the origin of NED frame to the top mark,
+     * then we change the direction of Race' x-axis in order to have the new x-axis
+     * oriented as the wind direction. At this poin we have the Race frane.
+    */
+
+    //transform [north, east] coordinate from NED frame in [x, y] coordinate in Race frame
+    *x_cm_p = -ned_to_race_s.cos_mwd * north_cm + ned_to_race_s.sin_mwd * east_cm +
+            ned_to_race_s.cos_mwd * ned_to_race_s.n0_cm - ned_to_race_s.sin_mwd * ned_to_race_s.e0_cm;
+
+    *y_cm_p = ned_to_race_s.sin_mwd * north_cm + ned_to_race_s.cos_mwd * east_cm -
+            ned_to_race_s.sin_mwd * ned_to_race_s.n0_cm - ned_to_race_s.cos_mwd * ned_to_race_s.e0_cm;
+
 
 }
 
@@ -252,32 +273,65 @@ void ecef_to_ned(const int32_t *x_cm_p, const int32_t *y_cm_p, const int32_t *z_
 
 /** Set the mean wind angle with respect to true North.
  *
- * Compute the new rotation matrix that transforms NED coordinate in Race coordinate.
+ * Compute the new values to transform NED coordinate in Race coordinate.
  *
  * @param mean_wind mean wind direction w.r.t. true North [rad], positive N. to E., negative N. to W.
 */
 void set_mean_wind_angle(float mean_wind){
 
-    /*
-     * Compute the new R_r_ned matrix, it's a rotation matrix.
-     * Pay attention: mean_wind is the angle between mean wind direction(wrt true North) and north axis.
-     * The matrix rotation is not the "standard" form of rotation matrix about Z axis.
-     * We're interested in only the transformation of north and east coordinates.
+    /** Race frame has X-axis oriented as the wind direction,
+     * Y-axis is defined so that the system is positively oriented.
      *
-     * The top mark represents the origin of the system reference frame trough which
-     * two orthogonal axes pass; the X-axis is set in the average wind direction.
-     * The Y-axis is defined so that the system is positively oriented.
+     * To transform NED coordinate in Race frame coordinate we need a rotation, a translation and
+     * a "reflection".
+     *
+     * Here we compute values needed to perform a rotation that transform coordinate to the
+     * NED frame into an middle frame Race'. This frame is rotated wrt NED frame by
+     * the angle mean_wind about the down axis of the NED frame.
     */
 
-    //TODO: add traslation terms to move origin of race frame from NED origin to top mark!!!
-
-    //first row, transform NED coordinates in x coordinate
-    R_r_ned[0][0] = (float)(-cos(mean_wind));
-    R_r_ned[0][1] = (float)sin(mean_wind);
-
-    //second row, transform NED coordinates in y coordinate
-    R_r_ned[1][0] = (float)sin(mean_wind);
-    R_r_ned[1][1] = (float)cos(mean_wind);
+    ned_to_race_s.cos_mwd = (float)cos(mean_wind);
+    ned_to_race_s.sin_mwd = (float)sin(mean_wind);
 
 }
 
+/** Set the position of the top mark.
+ *
+ * Compute the new values to transform NED coordinate in Race coordinate.
+ *
+ * @param lat_d_e7_p    pointer to latitude value, in degress * E7.
+ * @param lon_d_e7_p    pointer to longitude value, in degress * E7.
+ * @param alt_mm_p      pointer to altitude value, in millimeters.
+*/
+void set_pos_top_mark(const int32_t *lat_d_e7_p, const int32_t *lon_d_e7_p, const int32_t *alt_mm_p){
+
+    int32_t north_cm;
+    int32_t east_cm;
+    int32_t down_cm;
+
+    //use a global position struct to call geo_to_ned function
+    struct vehicle_global_position_s temp_pos;
+
+    /*set lat, lon and alt in temp_pos,
+     * remember to save lon and lat in degrees! (not degrees * E7).
+     * Save alt in meters.
+    */
+    temp_pos.lat = ((double) *lat_d_e7_p) / (double)E7;
+    temp_pos.lon = ((double) *lon_d_e7_p) / (double)E7;
+    temp_pos.alt =  (*alt_mm_p) / E3;
+
+    geo_to_ned(&temp_pos, &north_cm, &east_cm, &down_cm);
+
+    /** Race frame has X-axis oriented as the wind direction,
+     * Y-axis is defined so that the system is positively oriented.
+     *
+     * To transform NED coordinate in Race frame coordinate we need a rotation, a translation and
+     * a "reflection".
+     *
+     * Here we compute values needed to perform a translation that moves the origin of frame Race'
+     * (defined in set_mean_wind_angle()) from the origin of NED frame to the top mark.
+    */
+
+    ned_to_race_s.n0_cm = north_cm;
+    ned_to_race_s.e0_cm = east_cm;
+}

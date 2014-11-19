@@ -62,4 +62,7 @@ void set_ref0(const int32_t  *_lat0_d_e7_p, const int32_t  *_lon0_d_e7_p, const 
 /** @brief set the angle of the mean wind w.r.t. true North*/
 void set_mean_wind_angle(float mean_wind);
 
+/** @brief set the origin of the top mark buoy*/
+void set_pos_top_mark(const int32_t  *lat_d_e7_p, const int32_t  *lon_d_e7_p, const int32_t  *alt_mm_p);
+
 #endif /* NAVIGATION_H_ */
