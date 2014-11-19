@@ -128,7 +128,7 @@ float tack_action(struct reference_actions_s *ref_act_p, struct structs_topics_s
         //we must start tack maneuver
         boat_is_tacking = true;
         //invert rudder command and set it to the maximum value
-        tack_rudder_command = (strs_p->actuators.control[0] > 0)? -RUDDER_SATURATION:
+        tack_rudder_command = (strs_p->actuators.control[0] > 0)? (-RUDDER_SATURATION):
                                                                   RUDDER_SATURATION;
         //save actual roll angles
         roll_before_tack[0] = strs_p->att.roll;
