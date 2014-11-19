@@ -67,6 +67,10 @@ struct parameters_qgc{
 
     float mean_wind;
 
+    int32_t lat_tmark;
+    int32_t lon_tmark;
+    int32_t alt_tmark;
+
     #ifdef SIMULATION_FLAG
 
     int32_t lat_sim;

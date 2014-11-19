@@ -217,7 +217,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
     };
 
     //set reference of NED frame before starting
-    set_ref0(&(params.lat0), &(params.lon0), &(params.alt0));
+    //set_ref0(&(params.lat0), &(params.lon0), &(params.alt0));
 
     thread_running = true;
 

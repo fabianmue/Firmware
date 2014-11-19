@@ -105,7 +105,7 @@ PARAM_DEFINE_INT32(AS_LON0, 85605120);
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_ALT0, 406);
+PARAM_DEFINE_INT32(AS_ALT0, 406000);
 
 /**
  * Epsilon, specifies when the next target could be considered reached, in meters.
@@ -135,7 +135,32 @@ PARAM_DEFINE_INT32(AS_WINDOW, 10);
  */
 PARAM_DEFINE_FLOAT(AS_MEAN_WIND, 0.0f);
 
+/**
+ * Latitude of top mark, in degrees * E7.
+ *
+ *
+ * @min -900000000
+ * @max 900000000
+ */
+PARAM_DEFINE_INT32(AS_TMARK_LAT, 473459370);
 
+/**
+ * Longitude of top mark, in degrees * E7.
+ *
+ *
+ * @min -1800000000
+ * @max 1800000000
+ */
+PARAM_DEFINE_INT32(AS_TMARK_LON, 85547940);
+
+/**
+ * Altitude of top mark, in millimeters.
+ *
+ *
+ * @min 0
+ * @max ?
+ */
+PARAM_DEFINE_INT32(AS_TMARK_ALT, 406000);
 
 #if SIMULATION_FLAG == 1
 
@@ -166,7 +191,7 @@ PARAM_DEFINE_INT32(AS_SIM_LON, 85605120);
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_SIM_ALT, 406);
+PARAM_DEFINE_INT32(AS_SIM_ALT, 406000);
 
 /**
  * Simulated Course over ground, in rads, sign opposite to Dumas convention.
@@ -216,6 +241,10 @@ static struct pointers_param_qgc_s{
 
     param_t mean_wind_pointer;/**< pointer to param AS_MEAN_WIND*/
 
+    param_t lat_tmark_pointer;         /**< pointer to param AS_TMARK_LAT*/
+    param_t lon_tmark_pointer;         /**< pointer to param AS_TMARK_LON*/
+    param_t alt_tmark_pointer;         /**< pointer to param AS_TMARK_ALT*/
+
     #if SIMULATION_FLAG == 1
     param_t lat_sim_pointer; /**< pointer to param AS_LATS*/
     param_t lon_sim_pointer; /**< pointer to param AS_LONS*/
@@ -251,6 +280,10 @@ void param_init(struct parameters_qgc *params_p){
     pointers_param_qgc.moving_window_pointer = param_find("AS_WINDOW");
 
     pointers_param_qgc.mean_wind_pointer = param_find("AS_MEAN_WIND");
+
+    pointers_param_qgc.lat_tmark_pointer    = param_find("AS_TMARK_LAT");
+    pointers_param_qgc.lon_tmark_pointer    = param_find("AS_TMARK_LON");
+    pointers_param_qgc.alt_tmark_pointer    = param_find("AS_TMARK_ALT");
 
     #if SIMULATION_FLAG == 1
 
@@ -315,6 +348,18 @@ void param_update(struct parameters_qgc *params_p){
 
     //set mean wind angle in navigation.h
     set_mean_wind_angle(params_p->mean_wind);
+
+    //lat_tmark
+    param_get(pointers_param_qgc.lat_tmark_pointer, &(params_p->lat_tmark));
+
+    //lon_tmark
+    param_get(pointers_param_qgc.lon_tmark_pointer, &(params_p->lon_tmark));
+
+    //alt_tmark
+    param_get(pointers_param_qgc.alt_tmark_pointer, &(params_p->alt_tmark));
+
+    //set top mark position
+    set_pos_top_mark(&(params_p->lat_tmark), &(params_p->lon_tmark), &(params_p->alt_tmark));
 
     #if SIMULATION_FLAG == 1
 
