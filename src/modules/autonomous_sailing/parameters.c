@@ -262,7 +262,8 @@ static struct pointers_param_qgc_s{
 * Initialize parameters.
 *
 */
-void param_init(struct parameters_qgc *params_p){
+void param_init(struct parameters_qgc *params_p,
+                struct structs_topics_s *strs_p){
 
     //initialize pointer to parameters
     pointers_param_qgc.sail_pointer    = param_find("AS_SAIL");
@@ -299,14 +300,15 @@ void param_init(struct parameters_qgc *params_p){
     #endif
 
     //get parameters
-    param_update(params_p);
+    param_update(params_p, strs_p);
 
 }
 
 /** Update local copy of parameters.
  *
 */
-void param_update(struct parameters_qgc *params_p){
+void param_update(struct parameters_qgc *params_p,
+                  struct structs_topics_s *strs_p){
 
 
     //sail_servo
@@ -371,6 +373,11 @@ void param_update(struct parameters_qgc *params_p){
 
     //alt_sim
     param_get(pointers_param_qgc.alt_sim_pointer, &(params_p->alt_sim));
+
+    //set lat, lon and alt to gps_filtered struct to simulate
+    strs_p->gps_filtered.lat = ((double)params_p->lat_sim) / 1e7;
+    strs_p->gps_filtered.lon = ((double)params_p->lon_sim) / 1e7;
+    strs_p->gps_filtered.alt = params_p->alt_sim / 1e3;
 
     //cog_sim
     param_get(pointers_param_qgc.cog_sim_pointer, &(params_p->cog_sim));

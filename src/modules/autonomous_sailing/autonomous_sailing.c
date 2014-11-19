@@ -197,7 +197,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
     as_topics(&subs, &pubs, &strs);
 
     //initialize local copy of parameters from QGroundControl
-    param_init(&params);
+    param_init(&params, &strs);
 
 	// try to initiliaze actuators
     if(!actuators_init(&pubs, &strs)){
@@ -285,7 +285,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     orb_copy(ORB_ID(parameter_update), subs.parameter_update, &(strs.update));
 
                     //update param
-                    param_update(&params);
+                    param_update(&params, &strs);
 
                     #if SIMULATION_FLAG == 1
                     ref_act.should_tack = params.tack_sim;
@@ -305,13 +305,19 @@ int as_daemon_thread_main(int argc, char *argv[]){
         //always perfrom guidance module to control the boat
         guidance_module(&ref_act, &params, &strs, &pubs);
 
+        #if SIMULATION_FLAG == 1
+        //do navigation module. During simulation gps_filtered is set by param_update()
+        navigation_module(&strs, &local_pos_r);
+
         //cancella
         strs.airspeed.timestamp = hrt_absolute_time();
-        strs.airspeed.true_airspeed_m_s = strs.actuators.control[0];
+        //strs.airspeed.true_airspeed_m_s = strs.actuators.control[0];
+        strs.airspeed.true_airspeed_m_s = local_pos_r.y_race_cm;
 
         orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
 
         //fine cancella
+        #endif
 
         // Send out commands
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
