@@ -44,11 +44,15 @@
 #include "gps_simulator.h"
 
 
+
+static int32_t elap_sec = 0;//start from midnight
+
+#if GPS_SIMULATION == 1 //save memory, define geo_steady_state only in simulation mode
+
+
 #define NUM_GEO_STEADY_STATE 250
 
 static int32_t counter_steady_state = 0;
-
-static int32_t elap_sec = 0;//start from midnight
 
 static double geo_steady_state[NUM_GEO_STEADY_STATE][3] = {{8.5526656,47.3785248,498.6000366},
                                                            {8.5527016,47.3785312,497.9000244},
@@ -301,6 +305,9 @@ static double geo_steady_state[NUM_GEO_STEADY_STATE][3] = {{8.5526656,47.3785248
                                                            {8.5526992,47.3784992,498.4000244},
                                                            {8.5526896,47.3785248,499.3000183}};
 
+#endif
+
+
 double degree2nmea_ndeg(double input)
 {
     double deg;
@@ -320,9 +327,9 @@ double degree2nmea_ndeg(double input)
 
 void sim_steady_pos(char *buf, int *lgt){
 
-    double lat;
-    double lon;
-    int32_t alt;
+    double lat = 0.0;
+    double lon = 0.0;
+    int32_t alt = 0;
 
     //force time to increase of 5 seconds
     elap_sec += 5;
@@ -331,7 +338,7 @@ void sim_steady_pos(char *buf, int *lgt){
     double ss = (elap_sec - hh * 3600 - mm * 60);
 
 
-
+    #if GPS_SIMULATION == 1
 
     lat = degree2nmea_ndeg(geo_steady_state[counter_steady_state][1]);
     lon = degree2nmea_ndeg(geo_steady_state[counter_steady_state][0]);
@@ -340,6 +347,8 @@ void sim_steady_pos(char *buf, int *lgt){
     counter_steady_state++;
     if(counter_steady_state >= NUM_GEO_STEADY_STATE)
         counter_steady_state = 0;
+
+    #endif
 
     sprintf(buf, "GPGGA,hhmmss.ss,%4.4f,N,%4.4f,E,3,8,2,%d,M,********************* \
             GPVTG,182.9,T,181.0,M,0.0,N,0.0,K,A,*,\

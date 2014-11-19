@@ -45,7 +45,7 @@
 #define GPS_SIMULATOR_H_
 
 #include <drivers/drv_hrt.h>
-
+#include "settings.h"
 
 void sim_steady_pos(char* buf, int *lgt);
 
