@@ -89,8 +89,8 @@ float pi_controller(const float *ref_p, const float *meas_p,
 
     //TODO check if sum_error_pi has to be set to 0 once in a while
 
-    //with Dumas angle convention, we have to make a negative feedback law control
-    action = -(param_qgc_p->p_gain * error + i_conditioned * sum_error_pi);
+    //command = P * error + I * sum{error}
+    action = param_qgc_p->p_gain * error + i_conditioned * sum_error_pi;
 
     return action;
 }
