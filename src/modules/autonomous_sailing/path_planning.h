@@ -66,7 +66,7 @@ void init_grids(void);
 void set_grids_number(int16_t size);
 
 /** @brief set the x coordinate of a grid line*/
-void set_grid(int16_t index, float x_m);
+void set_grid(float x_m);
 
 /** @brief based on gps position decide reference actions*/
 void path_planning(struct reference_actions_s *ref_act_p,

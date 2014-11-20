@@ -51,12 +51,13 @@ static int32_t temp_cont = 0;
 
 //grid lines data
 static struct{
-    float *x_m_p;       ///array of x coordinates [m] of grid lines, in Race frame
-    int16_t size;       ///size of array x_m_p
-    int16_t next_goal;  ///index of next grid line to reach
+    float *x_m_p;           ///array of x coordinates [m] of grid lines, in Race frame
+    int16_t size;           ///size of array x_m_p
+    int16_t current_goal;   ///index of current grid line to reach
+    int16_t last_goal;      ///index of the last grid line to reach
 }grid_lines;
 
-static float current_grid_goal_x_m = 0;//current x coordinate of grid line to reach [m]
+static float current_grid_goal_x_m = 0.0f;//current x coordinate of grid line to reach [m]
 static bool current_grid_valid = false;
 
 /** @brief distance function from an x-coordinate and a grid line x-coordinate*/
@@ -83,6 +84,9 @@ void init_grids(void){
 
     grid_lines.x_m_p = NULL;
     grid_lines.size = 0;
+
+    grid_lines.current_goal = -1;
+    grid_lines.last_goal = -1;
 
     //set to 1 the number of grid lines before a real number is used
     set_grids_number(1);
@@ -112,7 +116,6 @@ void set_grids_number(int16_t size){
         grid_lines.x_m_p[i] = 0.0f;
 
     //we still do not have a valid next grid line to reach
-    grid_lines.next_goal = -1;
     current_grid_goal_x_m = 0;
     current_grid_valid = false;
 
@@ -120,22 +123,22 @@ void set_grids_number(int16_t size){
 
 /**
  * Set the x coordinate in Race frame of a grid line.
- * If you are setting the grid line after a new number of grid lines has been set,
- * please set the grid line of index 0 first.
+ * Grid lines are inserted with a FIFO policy.
  *
- * @param index     index of the grid line to be set
  * @param x_m       x coordinate [m] in Race frame of the new grid line
 */
-void set_grid(int16_t index, float x_m){
+void set_grid(float x_m){
 
-    if(index >= grid_lines.size || index < 0)
-        return; //wrong index
+    if(grid_lines.last_goal >= grid_lines.size)
+        return; //not enough space to add a new grid line
 
-    grid_lines.x_m_p[index] = x_m;
+    //enough space, add the new grid line
+    grid_lines.last_goal++;
+    grid_lines.x_m_p[grid_lines.last_goal] = x_m;
 
-    //if this is the first grid line inserted, it's the next goal
-    if(grid_lines.next_goal == -1 && index == 0){
-        grid_lines.next_goal = index;
+    //if this is the first grid line inserted, it's the current goal grid line
+    if(grid_lines.last_goal == 0){
+        grid_lines.current_goal = grid_lines.last_goal;
         current_grid_goal_x_m = x_m;
         current_grid_valid = true;
     }
@@ -151,8 +154,8 @@ void set_grid(int16_t index, float x_m){
 bool read_nex_grid(float *next_grid_p){
 
     //if there are others grid lines to reach, return the first one of them
-    if(grid_lines.next_goal < grid_lines.size){
-        *next_grid_p = grid_lines.x_m_p[grid_lines.next_goal];
+    if(grid_lines.current_goal != -1){
+        *next_grid_p = grid_lines.x_m_p[grid_lines.current_goal];
         return true;
     }
 
@@ -162,17 +165,51 @@ bool read_nex_grid(float *next_grid_p){
 }
 
 void reached_current_grid(void){
-    //update next_goal
-    if(grid_lines.next_goal < grid_lines.size)
-        grid_lines.next_goal++;
+    //update current_goal index if there is at least one new grid line to reach
+    if(grid_lines.current_goal < grid_lines.last_goal){
+        //we have other grid lines to reach
+        grid_lines.current_goal++;
+    }
+    else{
+        //we have reached the last grid line, empty the buffer
+        grid_lines.current_goal = -1;
+        grid_lines.last_goal = -1;
+    }
 }
+
+#if SIMULATION_FLAG == 1
+void print_debug_mode(float *pos_p, float *val_p, int numb, struct structs_topics_s *strs_p){
+
+    static int index = 0;
+
+    strs_p->airspeed.timestamp = hrt_absolute_time();
+
+    if(temp_cont < index * 40 + 10){
+       strs_p->airspeed.true_airspeed_m_s = pos_p[index];
+    }
+    else if(temp_cont < index * 40 + 30){
+        strs_p->airspeed.true_airspeed_m_s = val_p[index];
+    }
+    else{
+        index++;
+        if(index >= numb){
+            index = 0;
+            temp_cont = -1;
+        }
+    }
+
+
+    temp_cont++;
+}
+
+#endif
 
 void path_planning(struct reference_actions_s *ref_act_p,
                    struct structs_topics_s *strs_p,
                    const struct parameters_qgc *params_p){
 
     struct local_position_race_s local_pos;
-    int32_t tmp;
+    float tmp;
 
     //convert geodedical coordinate into Race frame coordinate
     navigation_module(strs_p, &local_pos);
@@ -185,6 +222,7 @@ void path_planning(struct reference_actions_s *ref_act_p,
             reached_current_grid();
             //tacke the new grid line, if any
             if(read_nex_grid(&tmp)){
+                //there is at least another grid line to reach
                 current_grid_goal_x_m = tmp;
                 current_grid_valid = true;
             }
@@ -198,21 +236,16 @@ void path_planning(struct reference_actions_s *ref_act_p,
     }
 
     #if SIMULATION_FLAG == 1
-    //cancella
-    strs_p->airspeed.timestamp = hrt_absolute_time();
-    //strs.airspeed.true_airspeed_m_s = strs.actuators.control[0];
-    //strs_p->airspeed.true_airspeed_m_s = distance(local_pos.x_race_m, current_grid_goal_x_m);
 
-    if(temp_cont < 10){
-       strs_p->airspeed.true_airspeed_m_s = local_pos.x_race_m;
-    }
-    else if(temp_cont < 20){
-        strs_p->airspeed.true_airspeed_m_s = local_pos.y_race_m;
-    }
-    else
-        temp_cont = -1;
+    float pos_p[] = {0.1f,0.2f,
+                     0.3f,0.4f,
+                     0.5f};
 
-    temp_cont++;
-    //fine cancella
+    float val_p[] = {grid_lines.current_goal, grid_lines.last_goal,
+                     current_grid_goal_x_m, (float)current_grid_valid,
+                    (float)ref_act_p->should_tack};
+
+    print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
+
     #endif
 }
