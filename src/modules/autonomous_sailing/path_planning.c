@@ -65,8 +65,11 @@ bool read_nex_grid(int32_t *next_grid_p);
 void reached_current_grid(void);
 
 float distance(int32_t x1, int32_t x2){
-    //euclidean distance
-    return (float)(sqrt((float) (x1 - x2) * (x1 - x2)));
+    float diff;
+
+    diff = x1 - x2;
+
+    return (diff > 0) ? diff : -diff;
 }
 
 /**
@@ -195,7 +198,7 @@ void path_planning(struct reference_actions_s *ref_act_p,
     //cancella
     strs_p->airspeed.timestamp = hrt_absolute_time();
     //strs.airspeed.true_airspeed_m_s = strs.actuators.control[0];
-    strs_p->airspeed.true_airspeed_m_s = distance(x_cm, current_grid_goal_x) - params_p->epsilon_cm;
+    strs_p->airspeed.true_airspeed_m_s = distance(x_cm, current_grid_goal_x);
     //fine cancella
     #endif
 }
