@@ -300,11 +300,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
         //look into optimal path planning maps for reference actions
         path_planning(&ref_act, &strs, &params);
 
-        //cancella
-//        strs.airspeed.timestamp = hrt_absolute_time();
-//        //strs.airspeed.true_airspeed_m_s = strs.actuators.control[0];
-//        strs.airspeed.true_airspeed_m_s = (float)ref_act.should_tack;
-
         orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
 
         //fine cancella

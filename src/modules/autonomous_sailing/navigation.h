@@ -49,15 +49,12 @@
 //Include topics necessary
 #include "topics_handler.h"
 
-//local position of the boat in the Race frame, in centimeters.
+//local position of the boat in the Race frame, in meters.
 struct local_position_race_s{
-    int32_t x_race_cm;
-    int32_t y_race_cm;
+    float x_race_m;
+    float y_race_m;
 };
 
-/** @brief transform geodedical coordinate in race frame coordinate*/
-void geo_to_race(const struct vehicle_global_position_s *gps_p,
-                 int32_t *x_cm_p, int32_t *y_cm_p);
 
 /** @brief set origin of NED frame.*/
 void set_ref0(const int32_t  *_lat0_d_e7_p, const int32_t  *_lon0_d_e7_p, const int32_t  *_alt0_mm_p);

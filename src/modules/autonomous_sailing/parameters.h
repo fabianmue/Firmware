@@ -67,7 +67,7 @@ struct parameters_qgc{
     int32_t lon0;
     int32_t alt0;
 
-    float epsilon_cm;
+    float epsilon_m;
 
     uint16_t moving_window;
 
@@ -79,7 +79,7 @@ struct parameters_qgc{
 
     int32_t grids_number;
     int32_t grids_index;
-    int32_t grids_x_cm;
+    float grids_x_m;
 
     #ifdef SIMULATION_FLAG
 

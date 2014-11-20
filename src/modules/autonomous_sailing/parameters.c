@@ -181,13 +181,13 @@ PARAM_DEFINE_INT32(AS_P_TOT_G, 1);
 PARAM_DEFINE_INT32(AS_P_INDEX, 0);
 
 /**
- * X coordinate in Race frame of grid line of index AS_P_INDEX, [cm]
+ * X coordinate in Race frame of grid line of index AS_P_INDEX, [m]
  *
  *
- * @min -2^31
- * @max 2^31
+ * @min ?
+ * @max ?
  */
-PARAM_DEFINE_INT32(AS_P_X_CM, 1000);
+PARAM_DEFINE_FLOAT(AS_P_X_M, 0);
 
 #if SIMULATION_FLAG == 1
 
@@ -274,7 +274,7 @@ static struct pointers_param_qgc_s{
 
     param_t grids_number_pointer;         /**< pointer to param AS_P_TOT_G*/
     param_t grid_index_pointer;         /**< pointer to param AS_P_INDEX*/
-    param_t grid_x_pointer;         /**< pointer to param AS_P_X_CM*/
+    param_t grid_x_pointer;         /**< pointer to param AS_P_X_M*/
 
     #if SIMULATION_FLAG == 1
     param_t lat_sim_pointer; /**< pointer to param AS_S_LAT_E7*/
@@ -319,7 +319,7 @@ void param_init(struct parameters_qgc *params_p,
 
     pointers_param_qgc.grids_number_pointer    = param_find("AS_P_TOT_G");
     pointers_param_qgc.grid_index_pointer    = param_find("AS_P_INDEX");
-    pointers_param_qgc.grid_x_pointer    = param_find("AS_P_X_CM");
+    pointers_param_qgc.grid_x_pointer    = param_find("AS_P_X_M");
 
     #if SIMULATION_FLAG == 1
 
@@ -372,10 +372,7 @@ void param_update(struct parameters_qgc *params_p,
     set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
 
     //epsilon
-    float eps_m;
-    param_get(pointers_param_qgc.epsilon_pointer, &eps_m);
-    //from m to cm
-    params_p->epsilon_cm = eps_m * (float)1e2;
+    param_get(pointers_param_qgc.epsilon_pointer, &(params_p->epsilon_m));
 
     //moving window
     param_get(pointers_param_qgc.moving_window_pointer, &(params_p->moving_window));
@@ -408,13 +405,13 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.grid_index_pointer, &(params_p->grids_index));
 
     //x coordinate of current grid line
-    param_get(pointers_param_qgc.grid_x_pointer, &(params_p->grids_x_cm));
+    param_get(pointers_param_qgc.grid_x_pointer, &(params_p->grids_x_m));
 
     //set the new number of grid lines
     set_grids_number(params_p->grids_number);
 
     //set the x coordinate of a new grid line
-    set_grid(params_p->grids_index, params_p->grids_x_cm);
+    set_grid(params_p->grids_index, params_p->grids_x_m);
 
     #if SIMULATION_FLAG == 1
 

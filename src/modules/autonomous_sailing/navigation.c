@@ -57,40 +57,46 @@ static float cosLambda = 0.0f; ///cos(lon0)
 
 static float sinLambda = 0.0f; ///sin(lon0)
 
-static int32_t x0_cm = 0; ///x coordinate in ECEF of origin of NED system, in centimeters
+static int32_t x0_dm = 0; ///x coordinate in ECEF of origin of NED system, in decimeters
 
-static int32_t y0_cm = 0; ///y coordinate in ECEF of origin of NED system, in centimeters
+static int32_t y0_dm = 0; ///y coordinate in ECEF of origin of NED system, in decimeters
 
-static int32_t z0_cm = 0; ///z coordinate in ECEF of origin of NED system, in centimeters
+static int32_t z0_dm = 0; ///z coordinate in ECEF of origin of NED system, in decimeters
 
 static const float E7 = 10000000.0f;
 
 static const float E3 = 1000.0f;
 
-static const float E2 = 100.0f;
+//static const float E2 = 100.0f;
+
+static const float E1 = 10.0f;
 
 static struct{
     float sin_mwd;  ///sin(mean wind direction)
     float cos_mwd;  ///cos(mean wind direction)
-    int32_t n0_cm;  ///north distance of origin of race frame from NED origin [cm]
-    int32_t e0_cm;  ///east distance of origin of race frame from NED origin [cm]
+    int32_t n0_dm;  ///north distance of origin of race frame from NED origin [dm]
+    int32_t e0_dm;  ///east distance of origin of race frame from NED origin [dm]
 }ned_to_race_s;
 
 
 /** @brief convert geodedical coordinates into NED coordinate.*/
 void geo_to_ned(const struct vehicle_global_position_s *gps_p,
-                int32_t *north_cm_p, int32_t *east_cm_p, int32_t *down_cm_p);
+                int32_t *north_dm_p, int32_t *east_dm_p, int32_t *down_dm_p);
 
 /** @brief convert geodedical coordinates into ECEF coordinate.*/
 void geo_to_ecef(const int32_t  *lat_d_e7_p, const int32_t  *lon_d_e7_p, const int32_t  *alt_mm_p,
-                 int32_t  *x_cm_p, int32_t  *y_cm_p, int32_t  *z_cm_p);
+                 int32_t  *x_dm_p, int32_t  *y_dm_p, int32_t  *z_dm_p);
 
 /** @brief convert ECEF coordinates into NED coordinate.*/
-void ecef_to_ned(const int32_t *x_cm_p, const int32_t *y_cm_p, const int32_t *z_cm_p,
-                 int32_t *north_cm_p, int32_t *east_cm_p, int32_t *down_cm_p);
+void ecef_to_ned(const int32_t *x_dm_p, const int32_t *y_dm_p, const int32_t *z_dm_p,
+                 int32_t *north_dm_p, int32_t *east_dm_p, int32_t *down_dm_p);
 
 /** @brief convert Deg*E7 in rad */
 float degE7_to_rad(const int32_t  *deg_e7_p);
+
+/** @brief transform geodedical coordinate in race frame coordinate*/
+void geo_to_race(const struct vehicle_global_position_s *gps_p,
+                 int32_t *x_dm_p, int32_t *y_dm_p);
 
 
 /**
@@ -101,19 +107,19 @@ float degE7_to_rad(const int32_t  *deg_e7_p);
  * for the rotation matrix from NED to Race frame.
  *
  * @param vehicle_global_position_s pointer to struct with gps filtered data.
- * @param x_cm_p                    pointer to returned value with x coordinate in race frame
- * @param x_cm_p                    pointer to returned value with x coordinate in race frame
+ * @param x_dm_p                    pointer to returned value with x coordinate in race frame, decimeters
+ * @param x_dm_p                    pointer to returned value with x coordinate in race frame, decimeters
  */
 void geo_to_race(const struct vehicle_global_position_s *gps_p,
-                 int32_t *x_cm_p, int32_t *y_cm_p){
+                 int32_t *x_dm_p, int32_t *y_dm_p){
 
-    int32_t north_cm;
-    int32_t east_cm;
-    int32_t down_cm;
+    int32_t north_dm;
+    int32_t east_dm;
+    int32_t down_dm;
 
 
     //compute boat position in NED frame w.r.t. lat0 lon0 alt0 set by set_ref0()
-    geo_to_ned(gps_p, &north_cm, &east_cm, &down_cm);
+    geo_to_ned(gps_p, &north_dm, &east_dm, &down_dm);
 
     /** Race frame has X-axis oriented as the wind direction,
      * Y-axis is defined so that the system is positively oriented.
@@ -129,11 +135,11 @@ void geo_to_race(const struct vehicle_global_position_s *gps_p,
     */
 
     //transform [north, east] coordinate from NED frame in [x, y] coordinate in Race frame
-    *x_cm_p = -ned_to_race_s.cos_mwd * north_cm + ned_to_race_s.sin_mwd * east_cm +
-            ned_to_race_s.cos_mwd * ned_to_race_s.n0_cm - ned_to_race_s.sin_mwd * ned_to_race_s.e0_cm;
+    *x_dm_p = -ned_to_race_s.cos_mwd * north_dm + ned_to_race_s.sin_mwd * east_dm +
+            ned_to_race_s.cos_mwd * ned_to_race_s.n0_dm - ned_to_race_s.sin_mwd * ned_to_race_s.e0_dm;
 
-    *y_cm_p = ned_to_race_s.sin_mwd * north_cm + ned_to_race_s.cos_mwd * east_cm -
-            ned_to_race_s.sin_mwd * ned_to_race_s.n0_cm - ned_to_race_s.cos_mwd * ned_to_race_s.e0_cm;
+    *y_dm_p = ned_to_race_s.sin_mwd * north_dm + ned_to_race_s.cos_mwd * east_dm -
+            ned_to_race_s.sin_mwd * ned_to_race_s.n0_dm - ned_to_race_s.cos_mwd * ned_to_race_s.e0_dm;
 
 
 }
@@ -165,37 +171,37 @@ void set_ref0(const int32_t *_lat0_d_e7_p, const int32_t *_lon0_d_e7_p, const in
     sinLambda = (float)sin(degE7_to_rad(_lon0_d_e7_p));
 
     //set ecef reference of NED origin
-    geo_to_ecef(_lat0_d_e7_p, _lon0_d_e7_p, _alt0_mm_p, &x0_cm, &y0_cm, &z0_cm);
+    geo_to_ecef(_lat0_d_e7_p, _lon0_d_e7_p, _alt0_mm_p, &x0_dm, &y0_dm, &z0_dm);
 }
 
 /**
  * Convert geodedical coordinate in NED coordinate
  *
  * @param gps_p         pointer to vehicle_gps_position struct.
- * @param north_cm_p    pointer to variable which will contain north coordinate, in centimeters.
- * @param east_cm_p     pointer to variable which will contain east coordinate, in centimeters.
- * @param down_cm_p     pointer to variable which will contain down coordinate, in centimeters.
+ * @param north_dm_p    pointer to variable which will contain north coordinate, in decimeters.
+ * @param east_dm_p     pointer to variable which will contain east coordinate, in decimeters.
+ * @param down_dm_p     pointer to variable which will contain down coordinate, in decimeters.
 */
 void geo_to_ned(const struct vehicle_global_position_s *gps_p,
-                int32_t *north_cm_p, int32_t *east_cm_p, int32_t *down_cm_p){
+                int32_t *north_dm_p, int32_t *east_dm_p, int32_t *down_dm_p){
 
     int32_t lat_d_e7;
     int32_t lon_d_e7;
     int32_t alt_mm;
 
-    int32_t x_cm;
-    int32_t y_cm;
-    int32_t z_cm;
+    int32_t x_dm;
+    int32_t y_dm;
+    int32_t z_dm;
 
     lat_d_e7 = (int32_t)((gps_p->lat) * (double)E7);
     lon_d_e7 = (int32_t)((gps_p->lon) * (double)E7);
     alt_mm = (int32_t)((gps_p->alt) * E3);
 
     //compute ECEF coordinate of the actual gps position
-    geo_to_ecef(&lat_d_e7, &lon_d_e7, &alt_mm, &x_cm, &y_cm, &z_cm);
+    geo_to_ecef(&lat_d_e7, &lon_d_e7, &alt_mm, &x_dm, &y_dm, &z_dm);
 
     //compute NED position from ECEF coordinate
-    ecef_to_ned(&x_cm, &y_cm, &z_cm, north_cm_p, east_cm_p, down_cm_p);
+    ecef_to_ned(&x_dm, &y_dm, &z_dm, north_dm_p, east_dm_p, down_dm_p);
 }
 
 /**
@@ -204,12 +210,12 @@ void geo_to_ned(const struct vehicle_global_position_s *gps_p,
  * @param lat_d_e7_p    pointer to latitude value, in degress * E7.
  * @param lon_d_e7_p    pointer to longitude value, in degress * E7.
  * @param alt_mm_p      pointer to altitude value, in millimeters.
- * @param x_cm_p        pointer to variable which will contain X coordinate in ECEF, in centimeters.
- * @param y_cm_p        pointer to variable which will contain Y coordinate in ECEF, in centimeters.
- * @param z_cm_p        pointer to variable which will contain Z coordinate in ECEF, in centimeters.
+ * @param x_dm_p        pointer to variable which will contain X coordinate in ECEF, in decimeters.
+ * @param y_dm_p        pointer to variable which will contain Y coordinate in ECEF, in decimeters.
+ * @param z_dm_p        pointer to variable which will contain Z coordinate in ECEF, in decimeters.
 */
 void geo_to_ecef(const int32_t  *lat_d_e7_p, const int32_t  *lon_d_e7_p, const int32_t  *alt_mm_p,
-                 int32_t  *x_cm_p, int32_t  *y_cm_p, int32_t  *z_cm_p){
+                 int32_t  *x_dm_p, int32_t  *y_dm_p, int32_t  *z_dm_p){
 
     float mu_r;
     float l_r;
@@ -229,46 +235,46 @@ void geo_to_ecef(const int32_t  *lat_d_e7_p, const int32_t  *lon_d_e7_p, const i
     r_s_m = sqrt((squared_earth_radius_m) /
                (1 + ((1 / squared_one_minus_flatness_m) - 1) * (pow(sin(lab_s_r), 2))));
 
-    //compute x, y and z and convert from meters in millimeters
-    *x_cm_p = (int32_t) ((r_s_m * (float)cos(lab_s_r) * (float)cos(l_r) +
-                          h_m * (float)cos(mu_r) * (float)cos(l_r)) * E2);
+    //compute x, y and z and convert them from meters to decimeters
+    *x_dm_p = (int32_t) ((r_s_m * (float)cos(lab_s_r) * (float)cos(l_r) +
+                          h_m * (float)cos(mu_r) * (float)cos(l_r)) * E1);
 
-    *y_cm_p = (int32_t) ((r_s_m * (float)cos(lab_s_r) * (float)sin(l_r) +
-                          h_m * (float)cos(mu_r) * (float)sin(l_r)) * E2);
+    *y_dm_p = (int32_t) ((r_s_m * (float)cos(lab_s_r) * (float)sin(l_r) +
+                          h_m * (float)cos(mu_r) * (float)sin(l_r)) * E1);
 
-    *z_cm_p = (int32_t) ((r_s_m * (float)sin(lab_s_r) +
-                          h_m * (float)sin(mu_r)) * E2);
+    *z_dm_p = (int32_t) ((r_s_m * (float)sin(lab_s_r) +
+                          h_m * (float)sin(mu_r)) * E1);
 }
 
 /**
  * Convert ECEF coordinate in NED coordinate
  *
- * @param x_cm_p           pointer to x coordinate in ECEF, in centimeters.
- * @param y_cm_p           pointer to y coordinate in ECEF, in centimeters.
- * @param z_cm_p           pointer to z coordinate in ECEF, in centimeters.
- * @param north_cm_p       pointer to variable which will contain north coordinate in NED, in centimeters.
- * @param east_cm_p        pointer to variable which will contain east coordinate in NED, in centimeters.
- * @param down_cm_p        pointer to variable which will contain down coordinate in NED, in centimeters.
+ * @param x_dm_p           pointer to x coordinate in ECEF, in decimeters.
+ * @param y_dm_p           pointer to y coordinate in ECEF, in decimeters.
+ * @param z_dm_p           pointer to z coordinate in ECEF, in decimeters.
+ * @param north_dm_p       pointer to variable which will contain north coordinate in NED, in decimeters.
+ * @param east_dm_p        pointer to variable which will contain east coordinate in NED, in decimeters.
+ * @param down_dm_p        pointer to variable which will contain down coordinate in NED, in decimeters.
 */
-void ecef_to_ned(const int32_t *x_cm_p, const int32_t *y_cm_p, const int32_t *z_cm_p,
-                 int32_t *north_cm_p, int32_t *east_cm_p, int32_t *down_cm_p){
-    int32_t u_cm;
-    int32_t v_cm;
-    int32_t w_cm;
-    float t_cm;
+void ecef_to_ned(const int32_t *x_dm_p, const int32_t *y_dm_p, const int32_t *z_dm_p,
+                 int32_t *north_dm_p, int32_t *east_dm_p, int32_t *down_dm_p){
+    int32_t u_dm;
+    int32_t v_dm;
+    int32_t w_dm;
+    float t_dm;
 
-    u_cm = *x_cm_p - x0_cm;
-    v_cm = *y_cm_p - y0_cm;
-    w_cm = *z_cm_p - z0_cm;
+    u_dm = *x_dm_p - x0_dm;
+    v_dm = *y_dm_p - y0_dm;
+    w_dm = *z_dm_p - z0_dm;
 
-    t_cm     =  cosLambda * u_cm + sinLambda * v_cm;
+    t_dm     =  cosLambda * u_dm + sinLambda * v_dm;
 
     //convert from ecef to ned
-    *north_cm_p    = -sinPhi * t_cm + cosPhi * w_cm;
+    *north_dm_p    = -sinPhi * t_dm + cosPhi * w_dm;
 
-    *east_cm_p     = -sinLambda * u_cm + cosLambda * v_cm;
+    *east_dm_p     = -sinLambda * u_dm + cosLambda * v_dm;
 
-    *down_cm_p     = -cosPhi * t_cm - sinPhi * w_cm;
+    *down_dm_p     = -cosPhi * t_dm - sinPhi * w_dm;
 }
 
 /** Set the mean wind angle with respect to true North.
@@ -305,9 +311,9 @@ void set_mean_wind_angle(float mean_wind){
 */
 void set_pos_top_mark(const int32_t *lat_d_e7_p, const int32_t *lon_d_e7_p, const int32_t *alt_mm_p){
 
-    int32_t north_cm;
-    int32_t east_cm;
-    int32_t down_cm;
+    int32_t north_dm;
+    int32_t east_dm;
+    int32_t down_dm;
 
     //use a global position struct to call geo_to_ned function
     struct vehicle_global_position_s temp_pos;
@@ -320,7 +326,7 @@ void set_pos_top_mark(const int32_t *lat_d_e7_p, const int32_t *lon_d_e7_p, cons
     temp_pos.lon = ((double) *lon_d_e7_p) / (double)E7;
     temp_pos.alt =  (*alt_mm_p) / E3;
 
-    geo_to_ned(&temp_pos, &north_cm, &east_cm, &down_cm);
+    geo_to_ned(&temp_pos, &north_dm, &east_dm, &down_dm);
 
     /** Race frame has X-axis oriented as the wind direction,
      * Y-axis is defined so that the system is positively oriented.
@@ -332,8 +338,8 @@ void set_pos_top_mark(const int32_t *lat_d_e7_p, const int32_t *lon_d_e7_p, cons
      * (defined in set_mean_wind_angle()) from the origin of NED frame to the top mark.
     */
 
-    ned_to_race_s.n0_cm = north_cm;
-    ned_to_race_s.e0_cm = east_cm;
+    ned_to_race_s.n0_dm = north_dm;
+    ned_to_race_s.e0_dm = east_dm;
 }
 
 /**
@@ -343,13 +349,14 @@ void set_pos_top_mark(const int32_t *lat_d_e7_p, const int32_t *lon_d_e7_p, cons
 void navigation_module(const struct structs_topics_s *strs_p,
                        struct local_position_race_s *lp_p){
 
-    int32_t x_cm;
-    int32_t y_cm;
+    int32_t x_dm;
+    int32_t y_dm;
 
     //convert gps filtered position in race frame coordinates
-    geo_to_race(&(strs_p->gps_filtered), &x_cm, &y_cm);
+    geo_to_race(&(strs_p->gps_filtered), &x_dm, &y_dm);
 
-    lp_p->x_race_cm = x_cm;
-    lp_p->y_race_cm = y_cm;
+    //convert local position from decimeters to meters
+    lp_p->x_race_m = (float)x_dm / E1;
+    lp_p->y_race_m = (float)y_dm / E1;
 
 }
