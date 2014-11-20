@@ -47,8 +47,22 @@
 // reference actions for the guidance_module
 struct reference_actions_s{
     float alpha_star; ///optimal heading w.r.t. true wind direction
-    bool should_tack; ///true if boat should take as soon as possible
+    bool should_tack; ///true if boat should tack as soon as possible
 };
 
+/** @brief Initialize the grid lines struct.*/
+void init_grids(void);
+
+/** @brief set number of grid lines*/
+void set_grids_number(int16_t size);
+
+/** @brief set the x coordinate of a grid line*/
+void set_grid(int16_t index, int32_t x_cm);
+
+/** @brief read next grid line to reach*/
+bool read_nex_grid(int32_t *next_grid_p);
+
+/** @brief advise that current goal grid line has been reached*/
+void reached_current_grid(void);
 
 #endif /* PATH_PLANNING_DATA_H_ */

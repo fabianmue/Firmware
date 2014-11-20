@@ -123,7 +123,7 @@ PARAM_DEFINE_FLOAT(AS_EPSI_M, 2.0f);
  * @min 1
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_WINDOW, 10);
+PARAM_DEFINE_INT32(AS_WINDOW, 30);
 
 /**
  * AS_MEAN_WIND, specifies the mean wind direction [rad], in [-pi, pi].
@@ -161,6 +161,33 @@ PARAM_DEFINE_INT32(AS_T_LON_E7, 85547940);
  * @max ?
  */
 PARAM_DEFINE_INT32(AS_T_ALT_E3, 406000);
+
+/**
+ * Total numbers of grid lines
+ *
+ *
+ * @min 1
+ * @max ?
+ */
+PARAM_DEFINE_INT32(AS_P_TOT_G, 1);
+
+/**
+ * Index of grid line to be set
+ *
+ *
+ * @min 1
+ * @max AS_P_TOT_G
+ */
+PARAM_DEFINE_INT32(AS_P_INDEX, 1);
+
+/**
+ * X coordinate in Race frame of grid line of index AS_P_INDEX, [cm]
+ *
+ *
+ * @min -2^31
+ * @max 2^31
+ */
+PARAM_DEFINE_INT32(AS_P_X_CM, 1000);
 
 #if SIMULATION_FLAG == 1
 
@@ -245,6 +272,10 @@ static struct pointers_param_qgc_s{
     param_t lon_tmark_pointer;         /**< pointer to param AS_T_LON_E7*/
     param_t alt_tmark_pointer;         /**< pointer to param AS_T_ALT_E3*/
 
+    param_t grids_number_pointer;         /**< pointer to param AS_P_TOT_G*/
+    param_t grid_index_pointer;         /**< pointer to param AS_P_INDEX*/
+    param_t grid_x_pointer;         /**< pointer to param AS_P_X_CM*/
+
     #if SIMULATION_FLAG == 1
     param_t lat_sim_pointer; /**< pointer to param AS_S_LAT_E7*/
     param_t lon_sim_pointer; /**< pointer to param AS_S_LON_E7*/
@@ -285,6 +316,10 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.lat_tmark_pointer    = param_find("AS_T_LAT_E7");
     pointers_param_qgc.lon_tmark_pointer    = param_find("AS_T_LON_E7");
     pointers_param_qgc.alt_tmark_pointer    = param_find("AS_T_ALT_E3");
+
+    pointers_param_qgc.grids_number_pointer    = param_find("AS_P_TOT_G");
+    pointers_param_qgc.grid_index_pointer    = param_find("AS_P_INDEX");
+    pointers_param_qgc.grid_x_pointer    = param_find("AS_P_X_CM");
 
     #if SIMULATION_FLAG == 1
 
@@ -362,6 +397,15 @@ void param_update(struct parameters_qgc *params_p,
 
     //set top mark position
     set_pos_top_mark(&(params_p->lat_tmark), &(params_p->lon_tmark), &(params_p->alt_tmark));
+
+    //number of grids
+    param_get(pointers_param_qgc.grids_number_pointer, &(params_p->grids_number));
+
+    //index of grid to be change
+    param_get(pointers_param_qgc.grid_index_pointer, &(params_p->grids_index));
+
+    //x coordinate of current grid line
+    param_get(pointers_param_qgc.grid_x_pointer, &(params_p->grids_x_cm));
 
     #if SIMULATION_FLAG == 1
 

@@ -49,6 +49,7 @@
 #include "controller_data.h"
 #include "navigation.h"
 #include "topics_handler.h"
+#include "path_planning_data.h"
 
 //struct for local copy of parameter from QGroundControl
 struct parameters_qgc{
@@ -71,6 +72,10 @@ struct parameters_qgc{
     int32_t lat_tmark;
     int32_t lon_tmark;
     int32_t alt_tmark;
+
+    int32_t grids_number;
+    int32_t grids_index;
+    int32_t grids_x_cm;
 
     #ifdef SIMULATION_FLAG
 
