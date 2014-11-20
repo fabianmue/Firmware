@@ -335,3 +335,21 @@ void set_pos_top_mark(const int32_t *lat_d_e7_p, const int32_t *lon_d_e7_p, cons
     ned_to_race_s.n0_cm = north_cm;
     ned_to_race_s.e0_cm = east_cm;
 }
+
+/**
+ * Compute from vehicle_global_position topic the boat's position in Race frame. Set up the next target position.
+ *
+*/
+void navigation_module(const struct structs_topics_s *strs_p,
+                       struct local_position_race_s *lp_p){
+
+    int32_t x_cm;
+    int32_t y_cm;
+
+    //convert gps filtered position in race frame coordinates
+    geo_to_race(&(strs_p->gps_filtered), &x_cm, &y_cm);
+
+    lp_p->x_race_cm = x_cm;
+    lp_p->y_race_cm = y_cm;
+
+}

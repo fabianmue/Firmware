@@ -43,6 +43,15 @@
 #define PATH_PLANNING_DATA_H_
 
 #include <stdio.h>//bool type
+//navigation module
+
+#include "navigation.h"
+
+#include "topics_handler.h"
+
+#include "parameters.h"
+
+#include <math.h>
 
 // reference actions for the guidance_module
 struct reference_actions_s{
@@ -59,10 +68,9 @@ void set_grids_number(int16_t size);
 /** @brief set the x coordinate of a grid line*/
 void set_grid(int16_t index, int32_t x_cm);
 
-/** @brief read next grid line to reach*/
-bool read_nex_grid(int32_t *next_grid_p);
-
-/** @brief advise that current goal grid line has been reached*/
-void reached_current_grid(void);
+/** @brief based on gps position decide reference actions*/
+void path_planning(struct reference_actions_s *ref_act_p,
+                   struct structs_topics_s *strs_p,
+                   const struct parameters_qgc *params_p);
 
 #endif /* PATH_PLANNING_DATA_H_ */

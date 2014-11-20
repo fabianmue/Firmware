@@ -4,5 +4,5 @@ SRCS				= autonomous_sailing.c \
                                         parameters.c \
                                         controller_data.c \
                                         guidance_module.c \
-                                        path_planning_data.c
+                                        path_planning.c
 					

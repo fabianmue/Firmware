@@ -42,9 +42,12 @@
 #ifndef NAVIGATION_H_
 #define NAVIGATION_H_
 
-#include <uORB/topics/vehicle_global_position.h>
+
 #include <math.h>
 #include <stdint.h>
+
+//Include topics necessary
+#include "topics_handler.h"
 
 //local position of the boat in the Race frame, in centimeters.
 struct local_position_race_s{
@@ -64,5 +67,9 @@ void set_mean_wind_angle(float mean_wind);
 
 /** @brief set the origin of the top mark buoy*/
 void set_pos_top_mark(const int32_t  *lat_d_e7_p, const int32_t  *lon_d_e7_p, const int32_t  *alt_mm_p);
+
+/** @brief Convert GPS data in position in Race frame coordinate*/
+void navigation_module(const struct structs_topics_s *strs_p,
+                       struct local_position_race_s *lp_p);
 
 #endif /* NAVIGATION_H_ */

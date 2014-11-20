@@ -46,10 +46,14 @@
 
 #include <systemlib/param/param.h>
 #include <stdio.h>//bool type
+
 #include "controller_data.h"
+
 #include "navigation.h"
+
 #include "topics_handler.h"
-#include "path_planning_data.h"
+
+#include "path_planning.h"
 
 //struct for local copy of parameter from QGroundControl
 struct parameters_qgc{
@@ -63,7 +67,7 @@ struct parameters_qgc{
     int32_t lon0;
     int32_t alt0;
 
-    float epsilon;
+    float epsilon_cm;
 
     uint16_t moving_window;
 

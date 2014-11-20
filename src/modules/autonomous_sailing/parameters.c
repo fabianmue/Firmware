@@ -175,10 +175,10 @@ PARAM_DEFINE_INT32(AS_P_TOT_G, 1);
  * Index of grid line to be set
  *
  *
- * @min 1
- * @max AS_P_TOT_G
+ * @min 0
+ * @max AS_P_TOT_G - 1
  */
-PARAM_DEFINE_INT32(AS_P_INDEX, 1);
+PARAM_DEFINE_INT32(AS_P_INDEX, 0);
 
 /**
  * X coordinate in Race frame of grid line of index AS_P_INDEX, [cm]
@@ -200,7 +200,7 @@ PARAM_DEFINE_INT32(AS_P_X_CM, 1000);
  * @min -900000000
  * @max 900000000
  */
-PARAM_DEFINE_INT32(AS_S_LAT_E7, 473494820);
+PARAM_DEFINE_INT32(AS_S_LAT_E7, 473457910);
 
 /**
  * Simulated Longitude, in degrees * E7.
@@ -209,7 +209,7 @@ PARAM_DEFINE_INT32(AS_S_LAT_E7, 473494820);
  * @min -1800000000
  * @max 1800000000
  */
-PARAM_DEFINE_INT32(AS_S_LON_E7, 85605120);
+PARAM_DEFINE_INT32(AS_S_LON_E7, 85547880);
 
 /**
  * Simulated Altitude, in millimeters.
@@ -372,7 +372,10 @@ void param_update(struct parameters_qgc *params_p,
     set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
 
     //epsilon
-    param_get(pointers_param_qgc.epsilon_pointer, &(params_p->epsilon));
+    float eps_m;
+    param_get(pointers_param_qgc.epsilon_pointer, &eps_m);
+    //from m to cm
+    params_p->epsilon_cm = eps_m * (float)1e2;
 
     //moving window
     param_get(pointers_param_qgc.moving_window_pointer, &(params_p->moving_window));

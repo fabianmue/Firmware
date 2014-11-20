@@ -43,7 +43,7 @@
 #ifndef GUIDANCE_MODULE_H
 #define GUIDANCE_MODULE_H
 
-#include "path_planning_data.h"
+#include "path_planning.h"
 #include "parameters.h"
 #include "topics_handler.h"
 #include "controller_data.h"

@@ -39,7 +39,7 @@
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#include "path_planning_data.h"
+#include "path_planning.h"
 
 #ifndef NULL
     #define NULL 0
@@ -52,8 +52,25 @@ static struct{
     int16_t next_goal;  ///index of next grid line to reach
 }grid_lines;
 
+static int32_t current_grid_goal_x = 0;//current grid line to reach
+static bool current_grid_valid = false;
+
+/** @brief distance function from an x-coordinate and a grid line x-coordinate*/
+float distance(int32_t x1, int32_t x2);
+
+/** @brief read next grid line to reach*/
+bool read_nex_grid(int32_t *next_grid_p);
+
+/** @brief advise that current goal grid line has been reached*/
+void reached_current_grid(void);
+
+float distance(int32_t x1, int32_t x2){
+    //euclidean distance
+    return (float)(sqrt((float) (x1 - x2) * (x1 - x2)));
+}
+
 /**
- * Initialize the grid lines struct. Delete all the old grid lines (if exsist).
+ * Initialize the grid lines struct. Delete all the old grid lines (if any).
 */
 void init_grids(void){
 
@@ -77,20 +94,27 @@ void set_grids_number(int16_t size){
         return; //nothing to do
 
     if(grid_lines.x_cm_p != NULL)
-        free(grid_lines.x_cm_p);
+        free(grid_lines.x_cm_p);//delete old data
 
+    //update grid_lines
     grid_lines.x_cm_p = malloc(sizeof(int32_t) * size);
     grid_lines.size = size;
 
+    //set to 0, default
     for(int16_t i = 0; i < size; i++)
         grid_lines.x_cm_p[i] = 0;
 
-    grid_lines.next_goal = 0;
+    //we still do not have a valid next grid line to reach
+    grid_lines.next_goal = -1;
+    current_grid_goal_x = 0;
+    current_grid_valid = false;
 
 }
 
 /**
  * Set the x coordinate in Race frame of a grid line.
+ * If you are setting the grid line after a new number of grid lines has been set,
+ * please set the grid line of index 0 first.
  *
  * @param index     index of the grid line to be set
  * @param x_cm      x coordinate in Race frame of the new grid line
@@ -101,6 +125,14 @@ void set_grid(int16_t index, int32_t x_cm){
         return; //wrong index
 
     grid_lines.x_cm_p[index] = x_cm;
+
+    //if this is the first grid line inserted, it's the next goal
+    if(grid_lines.next_goal == -1 && index == 0){
+        grid_lines.next_goal = index;
+        current_grid_goal_x = x_cm;
+        current_grid_valid = true;
+    }
+
 }
 
 /**
@@ -126,4 +158,44 @@ void reached_current_grid(void){
     //update next_goal
     if(grid_lines.next_goal < grid_lines.size)
         grid_lines.next_goal++;
+}
+
+void path_planning(struct reference_actions_s *ref_act_p,
+                   struct structs_topics_s *strs_p,
+                   const struct parameters_qgc *params_p){
+
+    int32_t x_cm;
+    int32_t y_cm;
+    int32_t tmp;
+
+    //convert geodedical coordinate into Race frame coordinate
+    geo_to_race(&(strs_p->gps_filtered), &x_cm, &y_cm);
+
+    //if the next grid line to reach is valid
+    if(current_grid_valid){
+        //see if we have just reached our goal
+        if(distance(x_cm, current_grid_goal_x) <= params_p->epsilon_cm){
+            //Advise we have reached it
+            reached_current_grid();
+            //tacke the new grid line, if any
+            if(read_nex_grid(&tmp)){
+                current_grid_goal_x = tmp;
+                current_grid_valid = true;
+            }
+            else //no new grid line to reach
+                current_grid_valid = false;
+
+            //TODO see appropriate action
+            //for now just tack
+            ref_act_p->should_tack = true;
+        }
+    }
+
+    #if SIMULATION_FLAG == 1
+    //cancella
+    strs_p->airspeed.timestamp = hrt_absolute_time();
+    //strs.airspeed.true_airspeed_m_s = strs.actuators.control[0];
+    strs_p->airspeed.true_airspeed_m_s = distance(x_cm, current_grid_goal_x) - params_p->epsilon_cm;
+    //fine cancella
+    #endif
 }

@@ -46,16 +46,19 @@
 #include <errno.h>
 #include <poll.h>
 
-//navigation module
-#include "navigation.h"
+
 //parameters from QGroundControl
 #include "parameters.h"
+
 //path planning data computed offline
-#include "path_planning_data.h"
+#include "path_planning.h"
+
 //guidance module
 #include "guidance_module.h"
+
 //Include topics necessary
 #include "topics_handler.h"
+
 //controller data functions
 #include "controller_data.h"
 
@@ -98,13 +101,6 @@ bool actuators_init(struct published_fd_s *pubs_p,
 bool as_topics(struct subscribtion_fd_s *subs_p,
                struct published_fd_s *pubs_p,
                struct structs_topics_s *strs_p);
-
-/** @brief Convert GPS data in position in Race frame coordinate*/
-void navigation_module(const struct structs_topics_s *strs_p,
-                       struct local_position_race_s *lp_p);
-
-/** @brief Give next optimal action to be implemented*/
-void path_planning(void);
 
 static void usage(const char *reason)
 {
@@ -181,9 +177,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
     struct structs_topics_s strs;
     //local copy of parameters from QGroundControl
     struct parameters_qgc params;
-
-    //local position in the Race frame
-    struct local_position_race_s local_pos_r = {.x_race_cm = 0, .y_race_cm = 0};
 
     //optimal path parameters
     struct reference_actions_s ref_act = {.alpha_star = 0.5f, .should_tack = false};
@@ -266,11 +259,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     //copy GPS data
                     orb_copy(ORB_ID(vehicle_global_position), subs.gps_filtered, &(strs.gps_filtered));
 
-                    //do navigation module
-                    navigation_module(&strs, &local_pos_r);
-
-                    //look into optimal path planning maps
-                    path_planning();
+                    //look into optimal path planning maps for reference actions
+                    path_planning(&ref_act, &strs, &params);
 
                 }
                 if(fds[2].revents & POLLIN){
@@ -291,7 +281,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     param_update(&params, &strs);
 
                     #if SIMULATION_FLAG == 1
-                    ref_act.should_tack = params.tack_sim;
+                    //ref_act.should_tack = params.tack_sim;
                     #endif
                 }
                 if(fds[4].revents & POLLIN){
@@ -305,22 +295,23 @@ int as_daemon_thread_main(int argc, char *argv[]){
             }
         }
 
-        //always perfrom guidance module to control the boat
-        guidance_module(&ref_act, &params, &strs, &pubs);
-
         #if SIMULATION_FLAG == 1
-        //do navigation module. During simulation gps_filtered is set by param_update()
-        navigation_module(&strs, &local_pos_r);
+
+        //look into optimal path planning maps for reference actions
+        path_planning(&ref_act, &strs, &params);
 
         //cancella
-        strs.airspeed.timestamp = hrt_absolute_time();
-        //strs.airspeed.true_airspeed_m_s = strs.actuators.control[0];
-        strs.airspeed.true_airspeed_m_s = local_pos_r.y_race_cm;
+//        strs.airspeed.timestamp = hrt_absolute_time();
+//        //strs.airspeed.true_airspeed_m_s = strs.actuators.control[0];
+//        strs.airspeed.true_airspeed_m_s = (float)ref_act.should_tack;
 
         orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
 
         //fine cancella
         #endif
+
+        //always perfrom guidance module to control the boat
+        guidance_module(&ref_act, &params, &strs, &pubs);
 
         // Send out commands
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
@@ -436,25 +427,5 @@ bool actuators_init(struct published_fd_s *pubs_p,
 	return right_init;
 }
 
-/**
- * Compute from vehicle_global_position topic the boat's position in Race frame. Set up the next target position.
- *
-*/
-void navigation_module(const struct structs_topics_s *strs_p,
-                       struct local_position_race_s *lp_p){
 
-    int32_t x_cm;
-    int32_t y_cm;
 
-    //convert gps filtered position in race frame coordinates
-    geo_to_race(&(strs_p->gps_filtered), &x_cm, &y_cm);
-
-    lp_p->x_race_cm = x_cm;
-    lp_p->y_race_cm = y_cm;
-
-}
-
-/** Retrieve data from pre-computed path planning and give the next references*/
-void path_planning(void){
-
-}
