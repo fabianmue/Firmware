@@ -407,6 +407,12 @@ void param_update(struct parameters_qgc *params_p,
     //x coordinate of current grid line
     param_get(pointers_param_qgc.grid_x_pointer, &(params_p->grids_x_cm));
 
+    //set the new number of grid lines
+    set_grids_number(params_p->grids_number);
+
+    //set the x coordinate of a new grid line
+    set_grid(params_p->grids_index, params_p->grids_x_cm);
+
     #if SIMULATION_FLAG == 1
 
     //lat_sim

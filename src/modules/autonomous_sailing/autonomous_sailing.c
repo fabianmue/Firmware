@@ -193,6 +193,9 @@ int as_daemon_thread_main(int argc, char *argv[]){
     //initialize controller data structures
     init_controller_data();
 
+    //initialize grid lines in Race frame
+    init_grids();
+
     //subscribe/advertise interested topics
     as_topics(&subs, &pubs, &strs);
 
