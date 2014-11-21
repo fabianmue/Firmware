@@ -278,7 +278,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     orb_copy(ORB_ID(parameter_update), subs.parameter_update, &(strs.update));
 
                     //update param
-                    param_update(&params, &strs);
+                    param_update(&params, &strs, true);
 
                     #if SIMULATION_FLAG == 1
                     //ref_act.should_tack = params.tack_sim;
@@ -308,7 +308,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
 
         #if SIMULATION_FLAG == 1
-        strs.airspeed.true_airspeed_m_s = strs.actuators.control[0];
+        //strs.airspeed.true_airspeed_m_s = strs.actuators.control[0];
         orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
         //fine cancella
         #endif

@@ -102,7 +102,8 @@ void param_init(struct parameters_qgc *params_p,
 
 /** @brief Check if one or more parameters have been updated and perform appropriate actions*/
 void param_update(struct parameters_qgc *params_p,
-                  struct structs_topics_s *strs_p);
+                  struct structs_topics_s *strs_p,
+                  bool update_path_param);
 
 
 #endif // PARAMETERS_H

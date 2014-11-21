@@ -345,8 +345,8 @@ void param_init(struct parameters_qgc *params_p,
 
     #endif
 
-    //get parameters
-    param_update(params_p, strs_p);
+    //get parameters but do not add any grid lines at start up
+    param_update(params_p, strs_p, false);
 
 }
 
@@ -354,7 +354,7 @@ void param_init(struct parameters_qgc *params_p,
  *
 */
 void param_update(struct parameters_qgc *params_p,
-                  struct structs_topics_s *strs_p){
+                  struct structs_topics_s *strs_p, bool update_path_param){
 
 
     //sail_servo
@@ -421,7 +421,7 @@ void param_update(struct parameters_qgc *params_p,
     //check if we have to add a new grid line
     int32_t temp;
     param_get(pointers_param_qgc.grid_add_pointer, &temp);
-    if(temp > 0){
+    if(temp > 0 && update_path_param){
         //set x coordinate of a new grid line
         set_grid(params_p->grids_x_m);
     }
