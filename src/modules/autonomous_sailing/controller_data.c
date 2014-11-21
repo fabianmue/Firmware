@@ -43,6 +43,9 @@
 
 #define PRINT_DEBUG 0
 
+#define M_PI_F 3.14159265358979323846f
+#define TWO_PI_F 2 * M_PI_F
+
 #ifndef NULL
     #define NULL 0
 #endif
@@ -190,7 +193,8 @@ void filter_new_data(void){
     float instant_alpha = measurements_raw.cog_r - measurements_raw.twd_r;
 
     //if |instant_alpha|<= pi/2 we're sailing upwind, so everything is ok
-    //TODO verificare per altri valori di alpha
+    if(instant_alpha > M_PI_F) instant_alpha = instant_alpha - TWO_PI_F;
+    else if(instant_alpha < -M_PI_F) instant_alpha = instant_alpha + TWO_PI_F;
 
     //save new data by deleting the oldest value
     measurements_filtered.alpha_p[measurements_filtered.oldestValue] = instant_alpha;

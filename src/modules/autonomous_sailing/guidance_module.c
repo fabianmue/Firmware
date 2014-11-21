@@ -82,7 +82,7 @@ float pi_controller(const float *ref_p, const float *meas_p,
     error = *ref_p - *meas_p;
 
     //integral constant for conditional integration, this is for anti-wind up!
-    i_conditioned = param_qgc_p->i_gain / (1 + error * error);
+    i_conditioned = param_qgc_p->i_gain / (1.0f + error * error);
 
     //update sum error
     sum_error_pi += error;
@@ -197,6 +197,9 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 
     //TODO sailing control
 
+    //cancella
+    strs_p->airspeed.true_airspeed_m_s = alpha;
+    //fine cancella
 
 
     //update actuator value

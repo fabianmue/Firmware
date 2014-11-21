@@ -296,12 +296,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
         }
 
         #if SIMULATION_FLAG == 1
-
         //look into optimal path planning maps for reference actions
         path_planning(&ref_act, &strs, &params);
-
-        orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
-
         //fine cancella
         #endif
 
@@ -310,6 +306,11 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
         // Send out commands
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
+
+        #if SIMULATION_FLAG == 1
+        orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
+        //fine cancella
+        #endif
 	}
 
     // kill all outputs
