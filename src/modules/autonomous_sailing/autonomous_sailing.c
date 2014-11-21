@@ -308,6 +308,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
 
         #if SIMULATION_FLAG == 1
+        strs.airspeed.true_airspeed_m_s = strs.actuators.control[0];
         orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
         //fine cancella
         #endif

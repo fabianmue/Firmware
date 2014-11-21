@@ -208,7 +208,7 @@ PARAM_DEFINE_INT32(AS_P_ADD, 0);
  * @min -900000000
  * @max 900000000
  */
-PARAM_DEFINE_INT32(AS_S_LAT_E7, 473494820);
+PARAM_DEFINE_INT32(ASIM_LAT_E7, 473494820);
 
 /**
  * Simulated Longitude, in degrees * E7.
@@ -217,7 +217,7 @@ PARAM_DEFINE_INT32(AS_S_LAT_E7, 473494820);
  * @min -1800000000
  * @max 1800000000
  */
-PARAM_DEFINE_INT32(AS_S_LON_E7, 85605120);
+PARAM_DEFINE_INT32(ASIM_LON_E7, 85605120);
 
 /**
  * Simulated Altitude, in millimeters.
@@ -226,7 +226,7 @@ PARAM_DEFINE_INT32(AS_S_LON_E7, 85605120);
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_S_ALT_E3, 406000);
+PARAM_DEFINE_INT32(ASIM_ALT_E3, 406000);
 
 /**
  * Simulated Course over ground, in rads, sign opposite to Dumas convention.
@@ -235,7 +235,7 @@ PARAM_DEFINE_INT32(AS_S_ALT_E3, 406000);
  * @min -pi
  * @max pi
  */
-PARAM_DEFINE_FLOAT(AS_S_COG_R, 0.0f);
+PARAM_DEFINE_FLOAT(ASIM_COG_R, 0.0f);
 
 /**
  * Simulated true wind direction, in rads, sign opposite to Dumas convention.
@@ -244,7 +244,7 @@ PARAM_DEFINE_FLOAT(AS_S_COG_R, 0.0f);
  * @min -pi
  * @max pi
  */
-PARAM_DEFINE_FLOAT(AS_S_TWD_R, 0.0f);
+PARAM_DEFINE_FLOAT(ASIM_TWD_R, 0.0f);
 
 /**
  * 1 = boat should tack as soon as possibile
@@ -253,7 +253,7 @@ PARAM_DEFINE_FLOAT(AS_S_TWD_R, 0.0f);
  * @min 0
  * @max 1
  */
-PARAM_DEFINE_INT32(AS_S_TACK, 0);
+PARAM_DEFINE_INT32(ASIM_TACK, 0);
 
 #endif
 
@@ -286,14 +286,14 @@ static struct pointers_param_qgc_s{
     param_t grid_add_pointer;         /**< pointer to param AS_P_ADD*/
 
     #if SIMULATION_FLAG == 1
-    param_t lat_sim_pointer; /**< pointer to param AS_S_LAT_E7*/
-    param_t lon_sim_pointer; /**< pointer to param AS_S_LON_E7*/
-    param_t alt_sim_pointer; /**< pointer to param AS_S_ALt_E3*/
+    param_t lat_sim_pointer; /**< pointer to param ASIM_LAT_E7*/
+    param_t lon_sim_pointer; /**< pointer to param ASIM_LON_E7*/
+    param_t alt_sim_pointer; /**< pointer to param ASIM_ALt_E3*/
 
-    param_t twd_sim_pointer; /**< pointer to param AS_S_TWD_R*/
-    param_t cog_sim_pointer; /**< pointer to param AS_S_COG_R*/
+    param_t twd_sim_pointer; /**< pointer to param ASIM_TWD_R*/
+    param_t cog_sim_pointer; /**< pointer to param ASIM_COG_R*/
 
-    param_t tack_sim_pointer;/**< pointer to params AS_S_TACK */
+    param_t tack_sim_pointer;/**< pointer to params ASIM_TACK */
     #endif
 }pointers_param_qgc;
 
@@ -334,14 +334,14 @@ void param_init(struct parameters_qgc *params_p,
 
     #if SIMULATION_FLAG == 1
 
-    pointers_param_qgc.lat_sim_pointer = param_find("AS_S_LAT_E7");
-    pointers_param_qgc.lon_sim_pointer = param_find("AS_S_LON_E7");
-    pointers_param_qgc.alt_sim_pointer = param_find("AS_S_ALT_E3");
+    pointers_param_qgc.lat_sim_pointer = param_find("ASIM_LAT_E7");
+    pointers_param_qgc.lon_sim_pointer = param_find("ASIM_LON_E7");
+    pointers_param_qgc.alt_sim_pointer = param_find("ASIM_ALT_E3");
 
-    pointers_param_qgc.cog_sim_pointer = param_find("AS_S_COG_R");
-    pointers_param_qgc.twd_sim_pointer = param_find("AS_S_TWD_R");
+    pointers_param_qgc.cog_sim_pointer = param_find("ASIM_COG_R");
+    pointers_param_qgc.twd_sim_pointer = param_find("ASIM_TWD_R");
 
-    pointers_param_qgc.tack_sim_pointer = param_find("AS_S_TACK");
+    pointers_param_qgc.tack_sim_pointer = param_find("ASIM_TACK");
 
     #endif
 

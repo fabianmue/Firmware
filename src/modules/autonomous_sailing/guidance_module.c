@@ -197,11 +197,6 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 
     //TODO sailing control
 
-    //cancella
-    strs_p->airspeed.true_airspeed_m_s = alpha;
-    //fine cancella
-
-
     //update actuator value
     strs_p->actuators.control[0] = command;
     // actuators.control[0] -> rudder
