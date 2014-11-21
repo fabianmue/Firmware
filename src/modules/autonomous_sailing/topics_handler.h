@@ -12,7 +12,6 @@
 #include <uORB/topics/boat_guidance_debug.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/vehicle_attitude.h>
-#include <uORB/topics/boat_weather_station.h>
 
 
 //only for debug on qcg
