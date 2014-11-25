@@ -52,6 +52,10 @@ static float roll_before_tack[2] = {0.0f, 0.0f}; ///roll angle (from ekf and wea
 
 static float stop_tack = 2.0f; ///used to see if the tack maneuver is completed
 
+static float sail_controller_m = -0.17825353f; /// -0.56 / pi
+
+static float sail_controller_q = 0.56f;
+
 /** @brief PI controller with conditional integration*/
 float pi_controller(const float *ref_p, const float *meas_p,
                     const struct parameters_qgc *param_qgc_p);
@@ -63,10 +67,13 @@ float tack_action(struct reference_actions_s *ref_act_p,
 /** @brief determine if the tack maneuver is finished*/
 bool stop_tack_action(float angle, uint8_t index_roll);
 
-/** Set the stop_tack value used in stop_tack_action()*/
+/** @brief set the stop_tack value used in stop_tack_action()*/
 void set_stop_tack(float stop_val){
     stop_tack = stop_val;
 }
+
+/** @brief simple controller for sails*/
+float sail_controller(const struct structs_topics_s *strs_p);
 
 /** PI controller to compute the input for the rudder servo motor.
  *
@@ -89,7 +96,7 @@ float pi_controller(const float *ref_p, const float *meas_p,
     error = *ref_p - *meas_p;
 
     //integral constant for conditional integration, this is for anti-wind up!
-    i_conditioned = param_qgc_p->i_gain / (1.0f + error * error);
+    i_conditioned = param_qgc_p->rudder_i_gain / (1.0f + error * error);
 
     //update sum error
     sum_error_pi += error;
@@ -97,7 +104,7 @@ float pi_controller(const float *ref_p, const float *meas_p,
     //TODO check if sum_error_pi has to be set to 0 once in a while
 
     //command = P * error + I * sum{error}
-    action = param_qgc_p->p_gain * error + i_conditioned * sum_error_pi;
+    action = param_qgc_p->rudder_p_gain * error + i_conditioned * sum_error_pi;
 
     return action;
 }
@@ -175,6 +182,19 @@ bool stop_tack_action(float angle, uint8_t index_roll){
     return stop;
 }
 
+/**
+ * Simple controller for sails.
+*/
+float sail_controller(const struct structs_topics_s *strs_p){
+
+    float abs_angle = (strs_p->wind_sailing.angle_apparent > 0) ? strs_p->wind_sailing.angle_apparent :
+                                                                  -(strs_p->wind_sailing.angle_apparent);
+
+    float command = sail_controller_m * abs_angle + sail_controller_q;
+
+    return command;
+}
+
 /** Implement reference actions provided by optimal path planning*/
 void guidance_module(struct reference_actions_s *ref_act_p,
                      const struct parameters_qgc *param_qgc_p,
@@ -182,32 +202,45 @@ void guidance_module(struct reference_actions_s *ref_act_p,
                      const struct published_fd_s *pubs_p){
 
     float alpha;
-    float command = 0.0f;
+    float rudder_command = 0.0f;
+    float sail_command = 0.0f;
+
+    //rudder control
 
     //get alpha from the moving average value of the last k values of instant alpha
     alpha = get_alpha();
 
     if(ref_act_p->should_tack){
 
-        command = tack_action(ref_act_p, strs_p);
+        rudder_command = tack_action(ref_act_p, strs_p);
     }
     if(!(ref_act_p->should_tack)){
         //if the boat should not tack, compute rudder action to follow reference alpha
 
         //PI controller for rudder
-        command = pi_controller(&(ref_act_p->alpha_star), &alpha, param_qgc_p);
+        rudder_command = pi_controller(&(ref_act_p->alpha_star), &alpha, param_qgc_p);
     }
 
-    //saturation for safety reason
-    if(command > RUDDER_SATURATION)
-        command = RUDDER_SATURATION;
-    else if(command < -RUDDER_SATURATION)
-        command = -RUDDER_SATURATION;
+    //sails control only if AS_SAIL param from QGC is negative
+    if(param_qgc_p->sail_servo < 0.0f)
+        sail_command = sail_controller(strs_p);
+    else
+        sail_command = param_qgc_p->sail_servo;
 
-    //TODO sailing control
+    //saturation for safety reason
+    if(rudder_command > RUDDER_SATURATION)
+        rudder_command = RUDDER_SATURATION;
+    else if(rudder_command < -RUDDER_SATURATION)
+        rudder_command = -RUDDER_SATURATION;
+
+    if(sail_command < 0.0f)
+        sail_command = 0.0f;
+    else if(sail_command > SAIL_SATURATION)
+        sail_command = SAIL_SATURATION;
 
     //update actuator value
-    strs_p->actuators.control[0] = command;
+    strs_p->actuators.control[0] = rudder_command;
+    strs_p->actuators.control[3] = sail_command;
     // actuators.control[0] -> rudder
     // actuators.control[3] -> sail
 
@@ -215,7 +248,8 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     strs_p->boat_guidance_debug.timestamp = hrt_absolute_time();
     strs_p->boat_guidance_debug.alpha_star = ref_act_p->alpha_star;
     strs_p->boat_guidance_debug.alpha = alpha;
-    strs_p->boat_guidance_debug.rudder_action = command;
+    strs_p->boat_guidance_debug.rudder_action = rudder_command;
+    strs_p->boat_guidance_debug.sail_action = sail_command;
 
     orb_publish(ORB_ID(boat_guidance_debug), pubs_p->boat_guidance_debug_pub, &(strs_p->boat_guidance_debug));
 

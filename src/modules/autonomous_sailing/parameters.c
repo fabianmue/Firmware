@@ -45,32 +45,42 @@
 /**
  * Sails position
  *
- * ?????.
- * Default value for sails position (must be converted into degrees) 0 = max sheet out, 0.56 = max sheet in.
+ * Default value for sails position. 0 = max sheet out, 0.56 = max sheet in.
+ * If a negative value is set, then the sail control is in charge to control sails.
  *
  * @min 0 (max sheet out)
  * @max 0.56 (max sheet in)
  */
-PARAM_DEFINE_FLOAT(AS_SAIL, 0.5f);
+PARAM_DEFINE_FLOAT(AS_SAIL, -1.0f);
 
 
 /**
- * Proportional gain.
+ * Proportional gain for rudder PI.
  *
  *
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_FLOAT(AS_GAIN_P, 0.03f);
+PARAM_DEFINE_FLOAT(AS_RUD_P, 0.03f);
 
 /**
- * Integral gain.
+ * Integral gain for rudder PI.
  *
  *
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_FLOAT(AS_GAIN_I, 0.0f);
+PARAM_DEFINE_FLOAT(AS_RUD_I, 0.0f);
+
+/**
+ * Proportional gain for sail PI.
+ *
+ *
+ * @min 0
+ * @max ?
+ */
+//PARAM_DEFINE_FLOAT(AS_SAI_P, 0.03f);
+
 
 /**
  * Latitude of origin of NED system, in degrees * E7.
@@ -255,8 +265,9 @@ static struct pointers_param_qgc_s{
     param_t sail_pointer;         /**< pointer to param AS_SAIL*/
     //param_t rudder_pointer;       /**< pointer to param AS_RUDDER*/
 
-    param_t p_gain_pointer;       /**< pointer to param AS_P_GAIN*/
-    param_t i_gain_pointer;       /**< pointer to param AS_I_GAIN*/
+    param_t rud_p_gain_pointer;       /**< pointer to param AS_RUD_P*/
+    param_t rud_i_gain_pointer;       /**< pointer to param AS_RUD_I*/
+   // param_t sai_p_gain_pointer;       /**< pointer to param AS_SAI_P*/
 
     param_t lat0_pointer;         /**< pointer to param AS_R_LAT0_E7*/
     param_t lon0_pointer;         /**< pointer to param AS_R_LON0_E7*/
@@ -301,8 +312,9 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.sail_pointer    = param_find("AS_SAIL");
     //pointers_param_qgc.rudder_pointer  = param_find("AS_RUDDER");
 
-    pointers_param_qgc.p_gain_pointer  = param_find("AS_GAIN_P");
-    pointers_param_qgc.i_gain_pointer  = param_find("AS_GAIN_I");
+    pointers_param_qgc.rud_p_gain_pointer  = param_find("AS_RUD_P");
+    pointers_param_qgc.rud_i_gain_pointer  = param_find("AS_RUD_I");
+    //pointers_param_qgc.sai_p_gain_pointer  = param_find("AS_SAI_P");
 
     pointers_param_qgc.lat0_pointer    = param_find("AS_R_LAT0_E7");
     pointers_param_qgc.lon0_pointer    = param_find("AS_R_LON0_E7");
@@ -355,12 +367,14 @@ void param_update(struct parameters_qgc *params_p,
     //rudder_servo
     //param_get(pointers_param_qgc.rudder_pointer, &(params_p->rudder_servo));
 
-    //p_gain
-    param_get(pointers_param_qgc.p_gain_pointer, &(params_p->p_gain));
+    //p_gain for rudder PI
+    param_get(pointers_param_qgc.rud_p_gain_pointer, &(params_p->rudder_p_gain));
 
+    //i_gain for rudder PI
+    param_get(pointers_param_qgc.rud_i_gain_pointer, &(params_p->rudder_i_gain));
 
-    //i_gain
-    param_get(pointers_param_qgc.i_gain_pointer, &(params_p->i_gain));
+    //p_gain for sail P
+    //param_get(pointers_param_qgc.sai_p_gain_pointer, &(params_p->sail_p_gain));
 
     //lat0
     param_get(pointers_param_qgc.lat0_pointer, &(params_p->lat0));

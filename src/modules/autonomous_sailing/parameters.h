@@ -62,8 +62,9 @@ struct parameters_qgc{
     //float rudder_servo;
     float sail_servo;
 
-    float p_gain;
-    float i_gain;
+    float rudder_p_gain;
+    float rudder_i_gain;
+    //float sail_p_gain;
 
     int32_t lat0;
     int32_t lon0;

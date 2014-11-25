@@ -49,6 +49,7 @@
 #include "controller_data.h"
 
 #define RUDDER_SATURATION 0.9f
+#define SAIL_SATURATION 0.56f
 
 /** @brief Implement next control action*/
 void guidance_module(struct reference_actions_s *ref_act_p,

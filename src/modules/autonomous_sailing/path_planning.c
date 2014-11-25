@@ -237,16 +237,15 @@ void path_planning(struct reference_actions_s *ref_act_p,
 
     #if SIMULATION_FLAG == 1
 
-    float pos_p[] = {0.1f,0.2f,
-                     0.3f, 0.4f,
-                    0.5f};
+//    float pos_p[] = {0.1f,0.2f,
+//                     0.3f, 0.4f,
+//                    0.5f};
 
-    float val_p[] = {current_grid_goal_x_m, (float)current_grid_valid,
-                    grid_lines.current_goal, grid_lines.last_goal,
-                    ref_act_p->should_tack};
+//    float val_p[] = {current_grid_goal_x_m, (float)current_grid_valid,
+//                    grid_lines.current_goal, grid_lines.last_goal,
+//                    ref_act_p->should_tack};
 
-    print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
-    //strs_p->airspeed.true_airspeed_m_s = current_grid_goal_x_m;
+//    print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
 
     #endif
 }
