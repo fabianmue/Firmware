@@ -1,0 +1,11 @@
+#!nsh
+#
+# Radio MAVLink start
+#
+
+mavlink start -r 20000 -d /dev/ttyS1 -x
+mavlink stream -d /dev/ttyS1 -s WIND_SAILING_MSG -r 10
+usleep 100000
+
+# Exit shell to make it available to MAVLink
+exit
