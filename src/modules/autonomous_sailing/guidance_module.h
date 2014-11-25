@@ -43,10 +43,13 @@
 #ifndef GUIDANCE_MODULE_H
 #define GUIDANCE_MODULE_H
 
+#include <math.h>
+
 #include "path_planning.h"
 #include "parameters.h"
 #include "topics_handler.h"
 #include "controller_data.h"
+#include "simulation_utility.h"
 
 #define RUDDER_SATURATION 0.9f
 #define SAIL_SATURATION 0.56f
@@ -59,5 +62,8 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 
 /** @brief Set the stop value to see if the tack maneuver is completed*/
 void set_stop_tack(float stop_val);
+
+/** @brief Set the number of positions the sail can be at*/
+void set_sail_positions(int32_t num);
 
 #endif //GUIDANCE_MODULE_H

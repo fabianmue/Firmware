@@ -45,9 +45,6 @@
     #define NULL 0
 #endif
 
-#if SIMULATION_FLAG == 1
-static int32_t temp_cont = 0;
-#endif
 
 //grid lines data
 static struct{
@@ -69,13 +66,6 @@ bool read_nex_grid(float *next_grid_p);
 /** @brief advise that current goal grid line has been reached*/
 void reached_current_grid(void);
 
-/*float distance(float x1, float x2){
-    float diff;
-
-    diff = x1 - x2;
-
-    return (diff > 0) ? diff : -diff;
-}*/
 
 /**
  * Initialize the grid lines struct. Delete all the old grid lines (if any).
@@ -175,35 +165,6 @@ void reached_current_grid(void){
     }
 }
 
-#if SIMULATION_FLAG == 1
-void print_debug_mode(float *pos_p, float *val_p, int numb, struct structs_topics_s *strs_p){
-
-    static int index = 0;
-    int tot_time = 20;
-    int pos_time = 7;
-
-    strs_p->airspeed.timestamp = hrt_absolute_time();
-
-    if(temp_cont < index * tot_time + pos_time){
-       strs_p->airspeed.true_airspeed_m_s = pos_p[index];
-    }
-    else if(temp_cont < index * tot_time + tot_time){
-        strs_p->airspeed.true_airspeed_m_s = val_p[index];
-    }
-    else{
-        index++;
-        if(index >= numb){
-            index = 0;
-            temp_cont = -1;
-        }
-    }
-
-
-    temp_cont++;
-}
-
-#endif
-
 void path_planning(struct reference_actions_s *ref_act_p,
                    struct structs_topics_s *strs_p,
                    const struct parameters_qgc *params_p){
@@ -234,18 +195,4 @@ void path_planning(struct reference_actions_s *ref_act_p,
             ref_act_p->should_tack = true;
         }
     }
-
-    #if SIMULATION_FLAG == 1
-
-//    float pos_p[] = {0.1f,0.2f,
-//                     0.3f, 0.4f,
-//                    0.5f};
-
-//    float val_p[] = {current_grid_goal_x_m, (float)current_grid_valid,
-//                    grid_lines.current_goal, grid_lines.last_goal,
-//                    ref_act_p->should_tack};
-
-//    print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
-
-    #endif
 }

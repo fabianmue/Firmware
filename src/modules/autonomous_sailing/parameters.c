@@ -53,6 +53,14 @@
  */
 PARAM_DEFINE_FLOAT(AS_SAIL, -1.0f);
 
+/**
+ * Number of possibile sail positions.
+ * Used in guidance_module to set sail position.
+ *
+ * @min 1 (max sheet out)
+ * @max ? (max sheet in)
+ */
+PARAM_DEFINE_INT32(AS_N_SPOS, 4);
 
 /**
  * Proportional gain for rudder PI.
@@ -263,7 +271,8 @@ PARAM_DEFINE_INT32(ASIM_TACK, 0);
 
 static struct pointers_param_qgc_s{
     param_t sail_pointer;         /**< pointer to param AS_SAIL*/
-    //param_t rudder_pointer;       /**< pointer to param AS_RUDDER*/
+
+    param_t sail_positions_pointer;       /**< pointer to param AS_N_SPOS*/
 
     param_t rud_p_gain_pointer;       /**< pointer to param AS_RUD_P*/
     param_t rud_i_gain_pointer;       /**< pointer to param AS_RUD_I*/
@@ -310,7 +319,8 @@ void param_init(struct parameters_qgc *params_p,
 
     //initialize pointer to parameters
     pointers_param_qgc.sail_pointer    = param_find("AS_SAIL");
-    //pointers_param_qgc.rudder_pointer  = param_find("AS_RUDDER");
+
+    pointers_param_qgc.sail_positions_pointer  = param_find("AS_N_SPOS");
 
     pointers_param_qgc.rud_p_gain_pointer  = param_find("AS_RUD_P");
     pointers_param_qgc.rud_i_gain_pointer  = param_find("AS_RUD_I");
@@ -364,8 +374,10 @@ void param_update(struct parameters_qgc *params_p,
     //sail_servo
     param_get(pointers_param_qgc.sail_pointer, &(params_p->sail_servo));
 
-    //rudder_servo
-    //param_get(pointers_param_qgc.rudder_pointer, &(params_p->rudder_servo));
+    //number of possibile sail positions
+    int32_t positions_temp;
+    param_get(pointers_param_qgc.sail_positions_pointer, &positions_temp);
+    set_sail_positions(positions_temp);
 
     //p_gain for rudder PI
     param_get(pointers_param_qgc.rud_p_gain_pointer, &(params_p->rudder_p_gain));

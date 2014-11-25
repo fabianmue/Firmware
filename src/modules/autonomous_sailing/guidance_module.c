@@ -42,19 +42,41 @@
 
 #include "guidance_module.h"
 
+#define M_PI_F 3.14159265358979323846f
+
 static float sum_error_pi = 0.0f; ///error sum from iterations of guidance_module, used in PI
 
-static bool boat_is_tacking = false;///true if boat is performing a tack maneuver
+//static data for tack action
+static struct{
+    bool boat_is_tacking;
+    float tack_rudder_command;
+    float roll_before_tack[2];
+    float stop_tack;
+}tack_data =    {
+                    .boat_is_tacking = false,///true if boat is performing a tack maneuver
+                    .tack_rudder_command = 0.0f,
+                    .roll_before_tack[0] = 0.0f,
+                    .roll_before_tack[1] = 0.0f,
+                    .stop_tack = 2.0f
+                };
 
-static float tack_rudder_command = 0.0f;
+//static bool boat_is_tacking = false;///true if boat is performing a tack maneuver
 
-static float roll_before_tack[2] = {0.0f, 0.0f}; ///roll angle (from ekf and weather station) before starting tack maneuver
+//static float tack_rudder_command = 0.0f;
 
-static float stop_tack = 2.0f; ///used to see if the tack maneuver is completed
+//static float roll_before_tack[2] = {0.0f, 0.0f}; ///roll angle (from ekf and weather station) before starting tack maneuver
 
-static float sail_controller_m = -0.17825353f; /// -0.56 / pi
+//static float stop_tack = 2.0f; ///used to see if the tack maneuver is completed
 
-static float sail_controller_q = 0.56f;
+//static data for sails controller
+static struct{
+    float position_quantum;
+    float command_quantum;
+}sail_controller_data = {
+                            .position_quantum = M_PI_F/4.0f, //initial guess: 4 available positions
+                            .command_quantum = SAIL_SATURATION/4.0f //initial guess: 4 available positions
+                        };
+
 
 /** @brief PI controller with conditional integration*/
 float pi_controller(const float *ref_p, const float *meas_p,
@@ -69,7 +91,7 @@ bool stop_tack_action(float angle, uint8_t index_roll);
 
 /** @brief set the stop_tack value used in stop_tack_action()*/
 void set_stop_tack(float stop_val){
-    stop_tack = stop_val;
+    tack_data.stop_tack = stop_val;
 }
 
 /** @brief simple controller for sails*/
@@ -125,33 +147,33 @@ float tack_action(struct reference_actions_s *ref_act_p,
     float command = 0.0f;
 
     //we are here beacuse ref_act_p->should_tack is true, so boat should tack
-    if(boat_is_tacking){
+    if(tack_data.boat_is_tacking){
         //we have started the tack maneuver, check if stop it or keep it on
         if(stop_tack_action(strs_p->att.roll, 0) ||
            stop_tack_action(strs_p->boat_weather_station.roll_r, 1)){
 
             //we have just completed the tack maneuver
             ref_act_p->should_tack = false;//so PI controller can compute new rudder commnad
-            boat_is_tacking = false;
+            tack_data.boat_is_tacking = false;
 
         }
         else{
             //keep on tack maneuver
-            command = tack_rudder_command;
+            command = tack_data.tack_rudder_command;
         }
     }
     else{
         //we must start tack maneuver
-        boat_is_tacking = true;
+        tack_data.boat_is_tacking = true;
         //invert rudder command and set it to the maximum value
-        tack_rudder_command = (strs_p->actuators.control[0] > 0)? (-RUDDER_SATURATION):
-                                                                  RUDDER_SATURATION;
+        tack_data.tack_rudder_command = (strs_p->actuators.control[0] > 0)? (-RUDDER_SATURATION):
+                                                                            RUDDER_SATURATION;
         //save actual roll angles
-        roll_before_tack[0] = strs_p->att.roll;
-        roll_before_tack[1] = strs_p->boat_weather_station.roll_r;
+        tack_data.roll_before_tack[0] = strs_p->att.roll;
+        tack_data.roll_before_tack[1] = strs_p->boat_weather_station.roll_r;
 
         //set command for rudder
-        command = tack_rudder_command;
+        command = tack_data.tack_rudder_command;
     }
 
     return command;
@@ -170,12 +192,12 @@ float tack_action(struct reference_actions_s *ref_act_p,
 bool stop_tack_action(float angle, uint8_t index_roll){
     bool stop = false;
 
-    if(roll_before_tack[index_roll] > 0){
-        if(angle <= (-roll_before_tack[index_roll] / stop_tack))
+    if(tack_data.roll_before_tack[index_roll] > 0){
+        if(angle <= (-tack_data.roll_before_tack[index_roll] / tack_data.stop_tack))
             stop = true;
     }
-    else if(roll_before_tack[index_roll] < 0){
-        if(angle >= (-roll_before_tack[index_roll] / stop_tack))
+    else if(tack_data.roll_before_tack[index_roll] < 0){
+        if(angle >= (-tack_data.roll_before_tack[index_roll] / tack_data.stop_tack))
             stop = true;
     }
 
@@ -187,12 +209,42 @@ bool stop_tack_action(float angle, uint8_t index_roll){
 */
 float sail_controller(const struct structs_topics_s *strs_p){
 
-    float abs_angle = (strs_p->wind_sailing.angle_apparent > 0) ? strs_p->wind_sailing.angle_apparent :
-                                                                  -(strs_p->wind_sailing.angle_apparent);
+    float abs_angle;
+    float command;
+    int32_t sector;
 
-    float command = sail_controller_m * abs_angle + sail_controller_q;
+    abs_angle = (strs_p->wind_sailing.angle_apparent > 0) ? strs_p->wind_sailing.angle_apparent :
+                                                            -(strs_p->wind_sailing.angle_apparent);
+
+    /*
+     * See in which sector (from 0 to num set by set_sail_positions()) the absolute value of
+     * apparent wind direction is.
+    */
+    sector = (int32_t)(abs_angle / sail_controller_data.position_quantum);
+
+    /*
+     * If it is in sector 0, then tighten the sail (giving SAIL_SATURATION as command).
+     * If it is in the last sector, ease off the sail (giving 0 as command).
+     * Use a linear value in a middle sector.
+    */
+    command = SAIL_SATURATION - (sector * sail_controller_data.command_quantum);
 
     return command;
+}
+
+/**
+ * Set a new value for the numbers of positions at which the sail can be at.
+ * There are "num" positions available for the sails.
+*/
+void set_sail_positions(int32_t num){
+
+    /*There are "num" available positions for the sail. Each of the
+     * is large pi / num. In this way the absolute value of apparent wind is in a sector
+     * numbered from 0 to num-1.
+    */
+
+    sail_controller_data.position_quantum = M_PI_F / (float)num;
+    sail_controller_data.command_quantum = SAIL_SATURATION / (float)num;
 }
 
 /** Implement reference actions provided by optimal path planning*/
@@ -243,6 +295,18 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     strs_p->actuators.control[3] = sail_command;
     // actuators.control[0] -> rudder
     // actuators.control[3] -> sail
+
+    #if SIMULATION_FLAG == 1
+
+        float pos_p[] = {0.1f,0.2f,0.3f};
+
+        float val_p[] = {strs_p->wind_sailing.angle_apparent,
+                         alpha,
+                        param_qgc_p->rudder_p_gain};
+
+        print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
+
+    #endif
 
     //publish debug value for post-processing
     strs_p->boat_guidance_debug.timestamp = hrt_absolute_time();

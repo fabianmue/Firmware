@@ -71,7 +71,7 @@
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
 
 #if SIMULATION_FLAG == 1 //defined in parameter.h
-    #define TIMEOUT_POLL 200 //ms between every simulation
+    #define TIMEOUT_POLL 400 //ms between every simulation
 #else
     #define TIMEOUT_POLL 1000 //normal usage set to 1 sec the timeout
 #endif
@@ -317,7 +317,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
 
         #if SIMULATION_FLAG == 1
-        strs.airspeed.true_airspeed_m_s = strs.actuators.control[3];
         orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
         //fine cancella
         #endif
