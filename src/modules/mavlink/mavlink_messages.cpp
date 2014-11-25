@@ -1947,7 +1947,7 @@ public:
         return 0;
     }
 
-    static MavlinkStreamWindSailing *new_instance(Mavlink *mavlink)
+    static MavlinkStream *new_instance(Mavlink *mavlink)
     {
         return new MavlinkStreamWindSailing(mavlink);
     }
@@ -1981,13 +1981,13 @@ protected:
 
             msg.time_boot_ms = wind_sail.timestamp / 1000;
 
-            snprintf(msg.name, sizeof(msg.name), "true wind ang");
-            msg.value = 55.0f;
+            snprintf(msg.name, sizeof(msg.name), "wnd angle");
+            msg.value = wind_sail.angle_apparent;
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "true wind s");
-            msg.value = 25.0f;
+            snprintf(msg.name, sizeof(msg.name), "wnd speed");
+            msg.value = wind_sail.speed_apparent;
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
@@ -2231,5 +2231,6 @@ StreamListItem *streams_list[] = {
 	new StreamListItem(&MavlinkStreamNamedValueFloat::new_instance, &MavlinkStreamNamedValueFloat::get_name_static),
 	new StreamListItem(&MavlinkStreamCameraCapture::new_instance, &MavlinkStreamCameraCapture::get_name_static),
 	new StreamListItem(&MavlinkStreamDistanceSensor::new_instance, &MavlinkStreamDistanceSensor::get_name_static),
+    new StreamListItem(&MavlinkStreamWindSailing::new_instance, &MavlinkStreamWindSailing::get_name_static),
 	nullptr
 };
