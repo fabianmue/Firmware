@@ -53,14 +53,6 @@
  */
 PARAM_DEFINE_FLOAT(AS_SAIL, 0.5f);
 
-/**
- * Default heading angle w.r.t. relative wind, in degrees.
- *
- *
- * @min -90
- * @max 90
- */
-PARAM_DEFINE_FLOAT(AS_RUDDER, 30.0f);
 
 /**
  * Proportional gain.
@@ -114,7 +106,7 @@ PARAM_DEFINE_INT32(AS_R_ALT0_E3, 406000);
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_FLOAT(AS_EPSI_M, 2.0f);
+//PARAM_DEFINE_FLOAT(AS_EPSI_M, 2.0f);
 
 /**
  * AS_WINDOW, specifies the number of samples for the moving wind average mean.
@@ -261,7 +253,7 @@ PARAM_DEFINE_INT32(ASIM_TACK, 0);
 
 static struct pointers_param_qgc_s{
     param_t sail_pointer;         /**< pointer to param AS_SAIL*/
-    param_t rudder_pointer;       /**< pointer to param AS_RUDDER*/
+    //param_t rudder_pointer;       /**< pointer to param AS_RUDDER*/
 
     param_t p_gain_pointer;       /**< pointer to param AS_P_GAIN*/
     param_t i_gain_pointer;       /**< pointer to param AS_I_GAIN*/
@@ -270,7 +262,7 @@ static struct pointers_param_qgc_s{
     param_t lon0_pointer;         /**< pointer to param AS_R_LON0_E7*/
     param_t alt0_pointer;         /**< pointer to param AS_R_ALT0_E3*/
 
-    param_t epsilon_pointer;      /**< pointer to param AS_EPSI_M*/
+    //param_t epsilon_pointer;      /**< pointer to param AS_EPSI_M*/
 
     param_t moving_window_pointer;/**< pointer to param AS_WINDOW*/
 
@@ -307,7 +299,7 @@ void param_init(struct parameters_qgc *params_p,
 
     //initialize pointer to parameters
     pointers_param_qgc.sail_pointer    = param_find("AS_SAIL");
-    pointers_param_qgc.rudder_pointer  = param_find("AS_RUDDER");
+    //pointers_param_qgc.rudder_pointer  = param_find("AS_RUDDER");
 
     pointers_param_qgc.p_gain_pointer  = param_find("AS_GAIN_P");
     pointers_param_qgc.i_gain_pointer  = param_find("AS_GAIN_I");
@@ -316,7 +308,7 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.lon0_pointer    = param_find("AS_R_LON0_E7");
     pointers_param_qgc.alt0_pointer    = param_find("AS_R_ALT0_E3");
 
-    pointers_param_qgc.epsilon_pointer = param_find("AS_EPSI_M");
+    //pointers_param_qgc.epsilon_pointer = param_find("AS_EPSI_M");
 
     pointers_param_qgc.moving_window_pointer = param_find("AS_WINDOW");
 
@@ -361,7 +353,7 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.sail_pointer, &(params_p->sail_servo));
 
     //rudder_servo
-    param_get(pointers_param_qgc.rudder_pointer, &(params_p->rudder_servo));
+    //param_get(pointers_param_qgc.rudder_pointer, &(params_p->rudder_servo));
 
     //p_gain
     param_get(pointers_param_qgc.p_gain_pointer, &(params_p->p_gain));
@@ -383,7 +375,7 @@ void param_update(struct parameters_qgc *params_p,
     set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
 
     //epsilon
-    param_get(pointers_param_qgc.epsilon_pointer, &(params_p->epsilon_m));
+    //param_get(pointers_param_qgc.epsilon_pointer, &(params_p->epsilon_m));
 
     //moving window
     param_get(pointers_param_qgc.moving_window_pointer, &(params_p->moving_window));

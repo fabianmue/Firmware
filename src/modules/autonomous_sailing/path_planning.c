@@ -60,8 +60,8 @@ static struct{
 static float current_grid_goal_x_m = 0.0f;//current x coordinate of grid line to reach [m]
 static bool current_grid_valid = false;
 
-/** @brief distance function from an x-coordinate and a grid line x-coordinate*/
-float distance(float x1, float x2);
+// /** @brief distance function from an x-coordinate and a grid line x-coordinate*/
+//float distance(float x1, float x2);
 
 /** @brief read next grid line to reach*/
 bool read_nex_grid(float *next_grid_p);
@@ -69,13 +69,13 @@ bool read_nex_grid(float *next_grid_p);
 /** @brief advise that current goal grid line has been reached*/
 void reached_current_grid(void);
 
-float distance(float x1, float x2){
+/*float distance(float x1, float x2){
     float diff;
 
     diff = x1 - x2;
 
     return (diff > 0) ? diff : -diff;
-}
+}*/
 
 /**
  * Initialize the grid lines struct. Delete all the old grid lines (if any).
@@ -216,9 +216,9 @@ void path_planning(struct reference_actions_s *ref_act_p,
 
     //if the next grid line to reach is valid
     if(current_grid_valid){
-        //see if we have just reached our goal
-        if(distance(local_pos.x_race_m, current_grid_goal_x_m) <= params_p->epsilon_m){
-            //Advise we have reached it
+        //see if we have reached or exceeded our goal
+        if(local_pos.x_race_m <= current_grid_goal_x_m){
+            //Advise we have reached the current target grid line
             reached_current_grid();
             //tacke the new grid line, if any
             if(read_nex_grid(&tmp)){
