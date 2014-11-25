@@ -100,13 +100,13 @@ PARAM_DEFINE_INT32(AS_R_LON0_E7, 85605120);
 PARAM_DEFINE_INT32(AS_R_ALT0_E3, 406000);
 
 /**
- * Epsilon, specifies when the next target could be considered reached, in meters.
+ * Stop tack, used in guidance_module to decide whetever the tack maneuver is finisched
  *
  *
  * @min 0
  * @max ?
  */
-//PARAM_DEFINE_FLOAT(AS_EPSI_M, 2.0f);
+PARAM_DEFINE_FLOAT(AS_STP_TCK, 2.0f);
 
 /**
  * AS_WINDOW, specifies the number of samples for the moving wind average mean.
@@ -262,7 +262,7 @@ static struct pointers_param_qgc_s{
     param_t lon0_pointer;         /**< pointer to param AS_R_LON0_E7*/
     param_t alt0_pointer;         /**< pointer to param AS_R_ALT0_E3*/
 
-    //param_t epsilon_pointer;      /**< pointer to param AS_EPSI_M*/
+    param_t stop_tack_pointer;      /**< pointer to param AS_STP_TCK*/
 
     param_t moving_window_pointer;/**< pointer to param AS_WINDOW*/
 
@@ -308,7 +308,7 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.lon0_pointer    = param_find("AS_R_LON0_E7");
     pointers_param_qgc.alt0_pointer    = param_find("AS_R_ALT0_E3");
 
-    //pointers_param_qgc.epsilon_pointer = param_find("AS_EPSI_M");
+    pointers_param_qgc.stop_tack_pointer = param_find("AS_STP_TCK");
 
     pointers_param_qgc.moving_window_pointer = param_find("AS_WINDOW");
 
@@ -374,8 +374,11 @@ void param_update(struct parameters_qgc *params_p,
     //update NED origin using API in navigation.h
     set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
 
-    //epsilon
-    //param_get(pointers_param_qgc.epsilon_pointer, &(params_p->epsilon_m));
+    //stop tack value
+    float tmpF = 1.0f;
+    param_get(pointers_param_qgc.stop_tack_pointer, &tmpF);
+    //set it in the guidance_module
+    set_stop_tack(tmpF);
 
     //moving window
     param_get(pointers_param_qgc.moving_window_pointer, &(params_p->moving_window));
@@ -403,9 +406,6 @@ void param_update(struct parameters_qgc *params_p,
 
     //number of grids
     param_get(pointers_param_qgc.grids_number_pointer, &(params_p->grids_number));
-
-    //index of grid to be change
-    //param_get(pointers_param_qgc.grid_index_pointer, &(params_p->grids_index));
 
     //x coordinate of current grid line
     param_get(pointers_param_qgc.grid_x_pointer, &(params_p->grids_x_m));

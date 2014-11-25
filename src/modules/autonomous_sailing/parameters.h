@@ -55,6 +55,8 @@
 
 #include "path_planning.h"
 
+#include "guidance_module.h"
+
 //struct for local copy of parameter from QGroundControl
 struct parameters_qgc{
     //float rudder_servo;
@@ -66,8 +68,6 @@ struct parameters_qgc{
     int32_t lat0;
     int32_t lon0;
     int32_t alt0;
-
-    //float epsilon_m;
 
     uint16_t moving_window;
 

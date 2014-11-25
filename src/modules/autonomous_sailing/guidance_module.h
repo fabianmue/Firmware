@@ -56,4 +56,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
                      struct structs_topics_s *strs_p,
                      const struct published_fd_s *pubs_p);
 
+/** @brief Set the stop value to see if the tack maneuver is completed*/
+void set_stop_tack(float stop_val);
+
 #endif //GUIDANCE_MODULE_H

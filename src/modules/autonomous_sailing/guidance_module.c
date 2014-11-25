@@ -50,6 +50,8 @@ static float tack_rudder_command = 0.0f;
 
 static float roll_before_tack[2] = {0.0f, 0.0f}; ///roll angle (from ekf and weather station) before starting tack maneuver
 
+static float stop_tack = 2.0f; ///used to see if the tack maneuver is completed
+
 /** @brief PI controller with conditional integration*/
 float pi_controller(const float *ref_p, const float *meas_p,
                     const struct parameters_qgc *param_qgc_p);
@@ -60,6 +62,11 @@ float tack_action(struct reference_actions_s *ref_act_p,
 
 /** @brief determine if the tack maneuver is finished*/
 bool stop_tack_action(float angle, uint8_t index_roll);
+
+/** Set the stop_tack value used in stop_tack_action()*/
+void set_stop_tack(float stop_val){
+    stop_tack = stop_val;
+}
 
 /** PI controller to compute the input for the rudder servo motor.
  *
@@ -101,18 +108,20 @@ float pi_controller(const float *ref_p, const float *meas_p,
  * Keep on this rudder command until stop_tack_action() is false.
  * When the tack maneuver is completed, updated reference param by setting should_tack to false.
  *
- * @param ref_act_p pointer to reference action
- * @param strs_p    pointer to topics data
- * @return          rudder command
+ * @param ref_act_p     pointer to reference action
+ * @param strs_p        pointer to topics data
+ * @return              rudder command
 */
-float tack_action(struct reference_actions_s *ref_act_p, struct structs_topics_s *strs_p){
+float tack_action(struct reference_actions_s *ref_act_p,
+                  struct structs_topics_s *strs_p){
 
     float command = 0.0f;
 
     //we are here beacuse ref_act_p->should_tack is true, so boat should tack
     if(boat_is_tacking){
         //we have started the tack maneuver, check if stop it or keep it on
-        if(stop_tack_action(strs_p->att.roll, 0) || stop_tack_action(strs_p->boat_weather_station.roll_r, 1)){
+        if(stop_tack_action(strs_p->att.roll, 0) ||
+           stop_tack_action(strs_p->boat_weather_station.roll_r, 1)){
 
             //we have just completed the tack maneuver
             ref_act_p->should_tack = false;//so PI controller can compute new rudder commnad
@@ -155,11 +164,11 @@ bool stop_tack_action(float angle, uint8_t index_roll){
     bool stop = false;
 
     if(roll_before_tack[index_roll] > 0){
-        if(angle <= (-roll_before_tack[index_roll] / 2.0f))
+        if(angle <= (-roll_before_tack[index_roll] / stop_tack))
             stop = true;
     }
     else if(roll_before_tack[index_roll] < 0){
-        if(angle >= (-roll_before_tack[index_roll] / 2.0f))
+        if(angle >= (-roll_before_tack[index_roll] / stop_tack))
             stop = true;
     }
 
