@@ -1927,7 +1927,7 @@ protected:
 	}
 };
 
-//--------------------------------- Trial wind msg ------------------
+//--------------------------------- ADD WIND MSG ------------------
 
 class MavlinkStreamWindSailing : public MavlinkStream
 {
@@ -1954,7 +1954,7 @@ public:
 
     unsigned get_size()
     {
-        return 2 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 4 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
     }
 
 private:
@@ -1981,13 +1981,23 @@ protected:
 
             msg.time_boot_ms = wind_sail.timestamp / 1000;
 
-            snprintf(msg.name, sizeof(msg.name), "wnd angle");
+            snprintf(msg.name, sizeof(msg.name), "app angle");
             msg.value = wind_sail.angle_apparent;
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "wnd speed");
+            snprintf(msg.name, sizeof(msg.name), "app speed");
             msg.value = wind_sail.speed_apparent;
+
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "true angle");
+            msg.value = wind_sail.angle_true;
+
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "true speed");
+            msg.value = wind_sail.speed_true;
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
