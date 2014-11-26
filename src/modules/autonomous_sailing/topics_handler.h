@@ -12,7 +12,7 @@
 #include <uORB/topics/boat_guidance_debug.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/vehicle_attitude.h>
-//#include <uORB/topics/offboard_control_setpoint.h>//prova
+#include <uORB/topics/mission.h>//prova
 
 
 //only for debug on qcg
@@ -25,7 +25,7 @@ struct subscribtion_fd_s{
     int parameter_update;
     int att;
     int boat_weather_station;
-    //int offboard_control_setpoint;//prova
+    int mission;//prova
 };
 
 struct published_fd_s{
@@ -45,7 +45,8 @@ struct structs_topics_s{
    struct parameter_update_s update;
    struct vehicle_attitude_s att;
    struct boat_weather_station_s boat_weather_station;
-   //struct offboard_control_setpoint_s offboard_control_setpoint;//prova
+   struct mission_s mission;//prova
+   int current_offboard;//prova
 
 //   //only for debug on qGC
    struct airspeed_s airspeed;

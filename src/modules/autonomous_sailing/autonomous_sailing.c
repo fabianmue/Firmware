@@ -65,6 +65,9 @@
 //hardware in the loop simulation
 #include "hil_simulation.h"
 
+//prova
+#include <dataman/dataman.h>
+
 // To be able to use the "parameter function" from Q ground control:
 #include <systemlib/param/param.h>
 #include <systemlib/systemlib.h>
@@ -104,6 +107,10 @@ bool actuators_init(struct published_fd_s *pubs_p,
 bool as_topics(struct subscribtion_fd_s *subs_p,
                struct published_fd_s *pubs_p,
                struct structs_topics_s *strs_p);
+
+
+//cancella
+void prova_waypoints(struct structs_topics_s *strs_p);
 
 static void usage(const char *reason)
 {
@@ -212,8 +219,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
             { .fd = subs.wind_sailing,              .events = POLLIN },
             { .fd = subs.parameter_update,          .events = POLLIN },
             { .fd = subs.att,                       .events = POLLIN },
-            { .fd = subs.boat_weather_station,      .events = POLLIN }//,
-            //{ .fd = subs.offboard_control_setpoint, .events = POLLIN }//prova
+            { .fd = subs.boat_weather_station,      .events = POLLIN },
+            { .fd = subs.mission, .events = POLLIN }//prova
     };
 
     thread_running = true;
@@ -280,14 +287,14 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // boat_weather_station updated
                     orb_copy(ORB_ID(boat_weather_station), subs.boat_weather_station, &(strs.boat_weather_station));
                 }
-//                if(fds[6].revents & POLLIN){//prova
-//                    // boat_weather_station updated
-//                    orb_copy(ORB_ID(offboard_control_setpoint),
-//                             subs.offboard_control_setpoint,
-//                             &(strs.offboard_control_setpoint));
+                if(fds[6].revents & POLLIN){//prova
+                    // mission updated
+                    orb_copy(ORB_ID(offboard_mission),
+                             subs.mission,
+                             &(strs.mission));
 
-//                    strs.airspeed.true_airspeed_m_s = (float)strs.offboard_control_setpoint.position[0]; //prova
-//                }
+                    prova_waypoints(&strs);
+                }
             }
         }
 
@@ -347,7 +354,8 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
     subs_p->att = orb_subscribe(ORB_ID(vehicle_attitude));
     subs_p->boat_weather_station = orb_subscribe(ORB_ID(boat_weather_station));
-    //subs_p->offboard_control_setpoint = oeb_subscribe(ORB_ID(offboard_control_setpoint));//prova
+    subs_p->mission = orb_subscribe(ORB_ID(offboard_mission));//prova
+    strs_p->current_offboard = -1;//prova
 
     if(subs_p->gps_raw == -1){
         warnx(" error on subscribing on vehicle_gps_position Topic \n");
@@ -379,10 +387,10 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
         return false;
     }
 
-//    if(subs_p->offboard_control_setpoint == -1){//prova
-//        warnx(" error on subscribing on offboard_control_setpoint Topic \n");
-//        return false;
-//    }
+    if(subs_p->mission == -1){//prova
+        warnx(" error on subscribing on mission Topic \n");
+        return false;
+    }
 
     warnx(" subscribed to all topics \n");
 
@@ -436,4 +444,69 @@ bool actuators_init(struct published_fd_s *pubs_p,
 }
 
 
+void prova_waypoints(struct structs_topics_s *strs_p){
 
+    /* determine current index */
+    if (strs_p->mission.current_seq >= 0 && strs_p->mission.current_seq < (int)strs_p->mission.count) {
+        strs_p->current_offboard = strs_p->mission.current_seq;
+    } else {
+        /* if less items available, reset to first item */
+        if (strs_p->current_offboard >= (int)strs_p->mission.count) {
+            strs_p->current_offboard = 0;
+
+        /* if not initialized, set it to 0 */
+        } else if (strs_p->current_offboard < 0) {
+            strs_p->current_offboard = 0;
+        }
+        /* otherwise, just leave it */
+    }
+
+    /* Check mission feasibility, for now do not handle the return value,
+     * however warnings are issued to the gcs via mavlink from inside the MissionFeasiblityChecker */
+    //dm_item_t dm_current = DM_KEY_WAYPOINTS_OFFBOARD(strs_p->mission.dataman_id);
+
+//    _missionFeasiblityChecker.checkMissionFeasible(_navigator->get_vstatus()->is_rotary_wing,
+//            dm_current, (size_t) strs_p->mission.count, _navigator->get_geofence(),
+//            _navigator->get_home_position()->alt);
+
+    struct mission_s mission_state;
+
+    /* lock MISSION_STATE item */
+    dm_lock(DM_KEY_MISSION_STATE);
+
+    /* read current state */
+    int read_res = dm_read(DM_KEY_MISSION_STATE, 0, &mission_state, sizeof(mission_state));
+
+    //strs_p->airspeed.true_airspeed_m_s = (float)read_res;//cancella
+
+    if (read_res == sizeof(mission_state)) {
+        /* data read successfully, check dataman ID and items count */
+
+        if (mission_state.dataman_id == strs_p->mission.dataman_id && mission_state.count == strs_p->mission.count) {
+            /* navigator may modify only sequence, write modified state only if it changed */
+            if (mission_state.current_seq != strs_p->current_offboard) {
+                if (dm_write(DM_KEY_MISSION_STATE, 0, DM_PERSIST_POWER_ON_RESET, &mission_state, sizeof(mission_state)) != sizeof(mission_state)) {
+                    //warnx("ERROR: can't save mission state");
+                    //mavlink_log_critical(_navigator->get_mavlink_fd(), "ERROR: can't save mission state");
+                }
+            }
+        }
+
+    } else {
+        /* invalid data, this must not happen and indicates error in offboard_mission publisher */
+        mission_state.dataman_id = strs_p->mission.dataman_id;
+        mission_state.count = strs_p->mission.count;
+        mission_state.current_seq = strs_p->current_offboard;
+
+        //warnx("ERROR: invalid mission state");
+        //mavlink_log_critical(_navigator->get_mavlink_fd(), "ERROR: invalid mission state");
+
+        /* write modified state only if changed */
+        if (dm_write(DM_KEY_MISSION_STATE, 0, DM_PERSIST_POWER_ON_RESET, &mission_state, sizeof(mission_state)) != sizeof(mission_state)) {
+            //warnx("ERROR: can't save mission state");
+            //mavlink_log_critical(_navigator->get_mavlink_fd(), "ERROR: can't save mission state");
+        }
+    }
+
+
+}
