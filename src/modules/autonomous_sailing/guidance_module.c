@@ -298,14 +298,14 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 
     #if SIMULATION_FLAG == 1
 
-        float pos_p[] = {0.1f,0.2f,0.3f};
+//        float pos_p[] = {0.1f,0.2f};
 
-        float val_p[] = {strs_p->wind_sailing.angle_apparent,
-                         alpha,
-                        param_qgc_p->rudder_p_gain};
+//        float val_p[] = {alpha,
+//                        param_qgc_p->rudder_p_gain};
 
-        print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
+//        print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
 
+    //strs_p->airspeed.true_airspeed_m_s = alpha;
     #endif
 
     //publish debug value for post-processing

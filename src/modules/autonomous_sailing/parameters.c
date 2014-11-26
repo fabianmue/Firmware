@@ -437,7 +437,7 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.grid_x_pointer, &(params_p->grids_x_m));
 
     //check if we have to add a new grid line
-    int32_t temp;
+    int32_t temp = 0;
     param_get(pointers_param_qgc.grid_add_pointer, &temp);
     if(temp > 0 && update_path_param){
         //set x coordinate of a new grid line

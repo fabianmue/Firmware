@@ -7,8 +7,8 @@ static int32_t temp_cont = 0;
 void print_debug_mode(float *pos_p, float *val_p, int numb, struct structs_topics_s *strs_p){
 
     static int index = 0;
-    int tot_time = 18;
-    int pos_time = 8;
+    int tot_time = 30;
+    int pos_time = 12;
 
     strs_p->airspeed.timestamp = hrt_absolute_time();
 

@@ -62,6 +62,7 @@
 //controller data functions
 #include "controller_data.h"
 
+//hardware in the loop simulation
 #include "hil_simulation.h"
 
 // To be able to use the "parameter function" from Q ground control:
@@ -71,7 +72,7 @@
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
 
 #if SIMULATION_FLAG == 1 //defined in parameter.h
-    #define TIMEOUT_POLL 400 //ms between every simulation
+    #define TIMEOUT_POLL 200 //ms between every simulation
 #else
     #define TIMEOUT_POLL 1000 //normal usage set to 1 sec the timeout
 #endif
@@ -206,20 +207,16 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
     // polling management
     struct pollfd fds[] = {
-            { .fd = subs.gps_raw,               .events = POLLIN },
-            { .fd = subs.gps_filtered,          .events = POLLIN },
-            { .fd = subs.wind_sailing,          .events = POLLIN },
-            { .fd = subs.parameter_update,      .events = POLLIN },
-            { .fd = subs.att,                   .events = POLLIN },
-            { .fd = subs.boat_weather_station,  .events = POLLIN }
+            { .fd = subs.gps_raw,                   .events = POLLIN },
+            { .fd = subs.gps_filtered,              .events = POLLIN },
+            { .fd = subs.wind_sailing,              .events = POLLIN },
+            { .fd = subs.parameter_update,          .events = POLLIN },
+            { .fd = subs.att,                       .events = POLLIN },
+            { .fd = subs.boat_weather_station,      .events = POLLIN }//,
+            //{ .fd = subs.offboard_control_setpoint, .events = POLLIN }//prova
     };
 
-    //set reference of NED frame before starting
-    //set_ref0(&(params.lat0), &(params.lon0), &(params.alt0));
-
     thread_running = true;
-
-
 
     while(!thread_should_exit){
 
@@ -227,22 +224,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
         // handle the poll result
         if(poll_ret == 0){
-            #if SIMULATION_FLAG == 1
-            //we're simulating the gps position, cog and twd with parameters from QGroundControl
-            //take data from param_check_update from last while loop and use them for simulation
-                #if HIL_SIM == 1
-                float cog, twd;
-                get_data_hil(&cog, &twd);
-                update_cog(cog);
-                update_twd(twd);
-                #else
-                update_cog(params.cog_sim);
-                update_twd(params.twd_sim);
-                #endif
-            #else
             // this means none of our providers is giving us data
             warnx(" got no data within a second\n");
-            #endif
         }
         else{
             /* this is undesirable but not much we can do - might want to flag unhappy status */
@@ -288,10 +271,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                     //update param
                     param_update(&params, &strs, true);
-
-                    #if SIMULATION_FLAG == 1
-                    //ref_act.should_tack = params.tack_sim;
-                    #endif
                 }
                 if(fds[4].revents & POLLIN){
                     // attitude updated
@@ -301,13 +280,31 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // boat_weather_station updated
                     orb_copy(ORB_ID(boat_weather_station), subs.boat_weather_station, &(strs.boat_weather_station));
                 }
+//                if(fds[6].revents & POLLIN){//prova
+//                    // boat_weather_station updated
+//                    orb_copy(ORB_ID(offboard_control_setpoint),
+//                             subs.offboard_control_setpoint,
+//                             &(strs.offboard_control_setpoint));
+
+//                    strs.airspeed.true_airspeed_m_s = (float)strs.offboard_control_setpoint.position[0]; //prova
+//                }
             }
         }
 
         #if SIMULATION_FLAG == 1
-        //look into optimal path planning maps for reference actions
-        path_planning(&ref_act, &strs, &params);
-        //fine cancella
+            //we're simulating the gps position, cog and twd with parameters from QGroundControl
+            #if HIL_SIM == 1
+                float cog, twd;
+                get_data_hil(&cog, &twd);
+                update_cog(cog);
+                update_twd(twd);
+            #else
+                update_cog(params.cog_sim);
+                update_twd(params.twd_sim);
+            #endif
+            //look into optimal path planning maps for reference actions
+            path_planning(&ref_act, &strs, &params);
+            //fine cancella
         #endif
 
         //always perfrom guidance module to control the boat
@@ -317,8 +314,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
 
         #if SIMULATION_FLAG == 1
-        orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
-        //fine cancella
+            orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
+            //fine cancella
         #endif
 	}
 
@@ -350,6 +347,7 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
     subs_p->att = orb_subscribe(ORB_ID(vehicle_attitude));
     subs_p->boat_weather_station = orb_subscribe(ORB_ID(boat_weather_station));
+    //subs_p->offboard_control_setpoint = oeb_subscribe(ORB_ID(offboard_control_setpoint));//prova
 
     if(subs_p->gps_raw == -1){
         warnx(" error on subscribing on vehicle_gps_position Topic \n");
@@ -380,6 +378,11 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
         warnx(" error on subscribing on boat_weather_station Topic \n");
         return false;
     }
+
+//    if(subs_p->offboard_control_setpoint == -1){//prova
+//        warnx(" error on subscribing on offboard_control_setpoint Topic \n");
+//        return false;
+//    }
 
     warnx(" subscribed to all topics \n");
 
