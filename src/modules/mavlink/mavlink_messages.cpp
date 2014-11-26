@@ -75,6 +75,8 @@
 #include <systemlib/err.h>
 #include <mavlink/mavlink_log.h>
 
+#include <uORB/topics/wind_sailing.h>
+
 #include "mavlink_messages.h"
 #include "mavlink_main.h"
 
@@ -1925,6 +1927,79 @@ protected:
 	}
 };
 
+//--------------------------------- Trial wind msg ------------------
+
+class MavlinkStreamWindSailing : public MavlinkStream
+{
+public:
+    const char *get_name() const
+    {
+        return MavlinkStreamWindSailing::get_name_static();
+    }
+
+    static const char *get_name_static()
+    {
+        return "WIND_SAILING_MSG";
+    }
+
+    uint8_t get_id()
+    {
+        return 0;
+    }
+
+    static MavlinkStream *new_instance(Mavlink *mavlink)
+    {
+        return new MavlinkStreamWindSailing(mavlink);
+    }
+
+    unsigned get_size()
+    {
+        return 2 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+    }
+
+private:
+    MavlinkOrbSubscription *_wind_sailing_sub;
+    uint64_t _wind_sailing_time;
+
+    /* do not allow top copying this class */
+    MavlinkStreamWindSailing(MavlinkStreamWindSailing &);
+    MavlinkStreamWindSailing& operator = (const MavlinkStreamWindSailing &);
+
+protected:
+    explicit MavlinkStreamWindSailing(Mavlink *mavlink) : MavlinkStream(mavlink),
+        _wind_sailing_sub(_mavlink->add_orb_subscription(ORB_ID(wind_sailing))),
+        _wind_sailing_time(0)
+    {}
+
+    void send(const hrt_abstime t)
+    {
+        struct wind_sailing_s wind_sail;
+
+        if (_wind_sailing_sub->update(&_wind_sailing_time, &wind_sail)) {
+            /* send, add spaces so that string buffer is at least 10 chars long */
+            mavlink_named_value_float_t msg;
+
+            msg.time_boot_ms = wind_sail.timestamp / 1000;
+
+            snprintf(msg.name, sizeof(msg.name), "wnd angle");
+            msg.value = wind_sail.angle_apparent;
+
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "wnd speed");
+            msg.value = wind_sail.speed_apparent;
+
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+        }
+    }
+};
+
+
+
+//--------------------------------- End Add -----------------------------------
+
+
 
 class MavlinkStreamNamedValueFloat : public MavlinkStream
 {
@@ -2156,5 +2231,6 @@ StreamListItem *streams_list[] = {
 	new StreamListItem(&MavlinkStreamNamedValueFloat::new_instance, &MavlinkStreamNamedValueFloat::get_name_static),
 	new StreamListItem(&MavlinkStreamCameraCapture::new_instance, &MavlinkStreamCameraCapture::get_name_static),
 	new StreamListItem(&MavlinkStreamDistanceSensor::new_instance, &MavlinkStreamDistanceSensor::get_name_static),
+    new StreamListItem(&MavlinkStreamWindSailing::new_instance, &MavlinkStreamWindSailing::get_name_static),
 	nullptr
 };
