@@ -396,7 +396,7 @@ void param_init(struct parameters_qgc *params_p,
 void param_update(struct parameters_qgc *params_p,
                   struct structs_topics_s *strs_p, bool update_path_param){
 
-    //alpha star
+    //----- alpha star
     float alpha_tmp;
     int32_t set_alpha;
     param_get(pointers_param_qgc.alpha_star_pointer, &alpha_tmp);
@@ -404,97 +404,111 @@ void param_update(struct parameters_qgc *params_p,
     if(set_alpha)
         set_alpha_star(alpha_tmp);
 
-    //sail_servo
+    //----- sail_servo
     param_get(pointers_param_qgc.sail_pointer, &(params_p->sail_servo));
 
-    //number of possibile sail positions
+    //----- number of possibile sail positions
     int32_t positions_temp;
     param_get(pointers_param_qgc.sail_positions_pointer, &positions_temp);
     set_sail_positions(positions_temp);
 
-    //p_gain for rudder PI
+    //----- p_gain for rudder PI
     param_get(pointers_param_qgc.rud_p_gain_pointer, &(params_p->rudder_p_gain));
 
-    //i_gain for rudder PI
+    //----- i_gain for rudder PI
     param_get(pointers_param_qgc.rud_i_gain_pointer, &(params_p->rudder_i_gain));
 
     //p_gain for sail P
     //param_get(pointers_param_qgc.sai_p_gain_pointer, &(params_p->sail_p_gain));
 
+    //----- reference geo coordinate
+    int32_t lat0;
+    int32_t lon0;
+    int32_t alt0;
     //lat0
-    param_get(pointers_param_qgc.lat0_pointer, &(params_p->lat0));
+    param_get(pointers_param_qgc.lat0_pointer, &lat0);
 
     //lon0
-    param_get(pointers_param_qgc.lon0_pointer, &(params_p->lon0));
+    param_get(pointers_param_qgc.lon0_pointer, &lon0);
 
     //alt0
-    param_get(pointers_param_qgc.alt0_pointer, &(params_p->alt0));
+    param_get(pointers_param_qgc.alt0_pointer, &alt0);
 
     //update NED origin using API in navigation.h
-    set_ref0(&(params_p->lat0), &(params_p->lon0), &(params_p->alt0));
+    set_ref0(&lat0, &lon0, &alt0);
 
-    //stop tack value
+    //----- stop tack value
     float tmpF = 1.0f;
     param_get(pointers_param_qgc.stop_tack_pointer, &tmpF);
     //set it in the guidance_module
     set_stop_tack(tmpF);
 
-    //moving window
-    param_get(pointers_param_qgc.moving_window_pointer, &(params_p->moving_window));
-
+    //----- moving window
+    uint16_t moving_window;
+    param_get(pointers_param_qgc.moving_window_pointer, &moving_window);
     //update window size using API in controller_data.h
-    update_k(params_p->moving_window);
+    update_k(moving_window);
 
-    //mean wind
-    param_get(pointers_param_qgc.mean_wind_pointer, &(params_p->mean_wind));
-
+    //----- mean wind
+    float mean_wind;
+    param_get(pointers_param_qgc.mean_wind_pointer, &mean_wind);
     //set mean wind angle in navigation.h
-    set_mean_wind_angle(params_p->mean_wind);
+    set_mean_wind_angle(mean_wind);
 
+    //----- top mark geo coordinate
+    int32_t lat_tmark;
+    int32_t lon_tmark;
+    int32_t alt_tmark;
     //lat_tmark
-    param_get(pointers_param_qgc.lat_tmark_pointer, &(params_p->lat_tmark));
+    param_get(pointers_param_qgc.lat_tmark_pointer, &lat_tmark);
 
     //lon_tmark
-    param_get(pointers_param_qgc.lon_tmark_pointer, &(params_p->lon_tmark));
+    param_get(pointers_param_qgc.lon_tmark_pointer, &lon_tmark);
 
     //alt_tmark
-    param_get(pointers_param_qgc.alt_tmark_pointer, &(params_p->alt_tmark));
+    param_get(pointers_param_qgc.alt_tmark_pointer, &alt_tmark);
 
     //set top mark position
-    set_pos_top_mark(&(params_p->lat_tmark), &(params_p->lon_tmark), &(params_p->alt_tmark));
+    set_pos_top_mark(&lat_tmark, &lon_tmark, &alt_tmark);
 
-    //number of grids
-    param_get(pointers_param_qgc.grids_number_pointer, &(params_p->grids_number));
+    //----- number of grids
+    int32_t grids_number;
+    float grids_x_m;
+    param_get(pointers_param_qgc.grids_number_pointer, &grids_number);
 
     //x coordinate of current grid line
-    param_get(pointers_param_qgc.grid_x_pointer, &(params_p->grids_x_m));
+    param_get(pointers_param_qgc.grid_x_pointer, &grids_x_m);
 
     //check if we have to add a new grid line
     int32_t temp = 0;
     param_get(pointers_param_qgc.grid_add_pointer, &temp);
     if(temp > 0 && update_path_param){
         //set x coordinate of a new grid line
-        set_grid(params_p->grids_x_m);
+        set_grid(grids_x_m);
     }
 
     //set the new number of grid lines
-    set_grids_number(params_p->grids_number);   
+    set_grids_number(grids_number);
 
     #if SIMULATION_FLAG == 1
 
+    //----- simulation coordinates
+    int32_t lat_sim;
+    int32_t lon_sim;
+    int32_t alt_sim;
     //lat_sim
-    param_get(pointers_param_qgc.lat_sim_pointer, &(params_p->lat_sim));
+    param_get(pointers_param_qgc.lat_sim_pointer, &lat_sim);
 
     //lon_sim
-    param_get(pointers_param_qgc.lon_sim_pointer, &(params_p->lon_sim));
+    param_get(pointers_param_qgc.lon_sim_pointer, &lon_sim);
 
     //alt_sim
-    param_get(pointers_param_qgc.alt_sim_pointer, &(params_p->alt_sim));
+    param_get(pointers_param_qgc.alt_sim_pointer, &alt_sim);
 
     //set lat, lon and alt to gps_filtered struct to simulate
-    strs_p->gps_filtered.lat = ((double)params_p->lat_sim) / 1e7;
-    strs_p->gps_filtered.lon = ((double)params_p->lon_sim) / 1e7;
-    strs_p->gps_filtered.alt = params_p->alt_sim / 1e3;
+    strs_p->gps_filtered.lat = ((double)lat_sim) / 1e7;
+    strs_p->gps_filtered.lon = ((double)lon_sim) / 1e7;
+    strs_p->gps_filtered.alt = alt_sim / 1e3;
 
     //cog_sim
     param_get(pointers_param_qgc.cog_sim_pointer, &(params_p->cog_sim));

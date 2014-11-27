@@ -66,27 +66,27 @@ struct parameters_qgc{
     float rudder_i_gain;
     //float sail_p_gain;
 
-    int32_t lat0;
-    int32_t lon0;
-    int32_t alt0;
+//    int32_t lat0;
+//    int32_t lon0;
+//    int32_t alt0;
 
-    uint16_t moving_window;
+//    uint16_t moving_window;
 
-    float mean_wind;
+//    float mean_wind;
 
-    int32_t lat_tmark;
-    int32_t lon_tmark;
-    int32_t alt_tmark;
+//    int32_t lat_tmark;
+//    int32_t lon_tmark;
+//    int32_t alt_tmark;
 
-    int32_t grids_number;
-    int32_t grids_index;
-    float grids_x_m;
+//    int32_t grids_number;
+//    int32_t grids_index;
+//    float grids_x_m;
 
     #ifdef SIMULATION_FLAG
 
-    int32_t lat_sim;
-    int32_t lon_sim;
-    int32_t alt_sim;
+//    int32_t lat_sim;
+//    int32_t lon_sim;
+//    int32_t alt_sim;
 
     float cog_sim;
     float twd_sim;
