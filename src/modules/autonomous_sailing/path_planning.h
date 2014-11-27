@@ -77,4 +77,7 @@ void path_planning(struct reference_actions_s *ref_act_p,
 /** @brief set a new value for reference alpha star*/
 void set_alpha_star(float val);
 
+/** @brief notify that the tack maneuver is completed*/
+void notify_tack_completed(void);
+
 #endif /* PATH_PLANNING_DATA_H_ */

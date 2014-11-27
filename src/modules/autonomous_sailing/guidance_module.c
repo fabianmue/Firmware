@@ -51,22 +51,19 @@ static struct{
     bool boat_is_tacking;
     float tack_rudder_command;
     float roll_before_tack[2];
-    float stop_tack;
+    float yaw_before_tack[2];
+    float roll_stop_tack;
+    float yaw_stop_tack;
 }tack_data =    {
-                    .boat_is_tacking = false,///true if boat is performing a tack maneuver
+                    .boat_is_tacking = false,//true if boat is performing a tack maneuver
                     .tack_rudder_command = 0.0f,
                     .roll_before_tack[0] = 0.0f,
                     .roll_before_tack[1] = 0.0f,
-                    .stop_tack = 2.0f
+                    .yaw_before_tack[0] = 0.0f,
+                    .yaw_before_tack[1] = 0.0f,
+                    .roll_stop_tack = 2.0f,
+                    .yaw_stop_tack = 1.04f //more or less 60 degress
                 };
-
-//static bool boat_is_tacking = false;///true if boat is performing a tack maneuver
-
-//static float tack_rudder_command = 0.0f;
-
-//static float roll_before_tack[2] = {0.0f, 0.0f}; ///roll angle (from ekf and weather station) before starting tack maneuver
-
-//static float stop_tack = 2.0f; ///used to see if the tack maneuver is completed
 
 //static data for sails controller
 static struct{
@@ -87,15 +84,28 @@ float tack_action(struct reference_actions_s *ref_act_p,
                   struct structs_topics_s *strs_p);
 
 /** @brief determine if the tack maneuver is finished*/
-bool stop_tack_action(float angle, uint8_t index_roll);
+bool is_tack_completed(const struct structs_topics_s *strs_p);
+
+/** Check first condition for stopping tack, @see is_tack_completed*/
+bool roll_stop_tack(float angle, uint8_t index_roll);
+
+/** Check second condition for stopping tack, @see is_tack_completed*/
+bool yaw_stop_tack(float angle, uint8_t index_yaw);
 
 /** @brief set the stop_tack value used in stop_tack_action()*/
-void set_stop_tack(float stop_val){
-    tack_data.stop_tack = stop_val;
-}
+void set_stop_tack(float roll_stop, float yaw_stop);
 
 /** @brief simple controller for sails*/
 float sail_controller(const struct structs_topics_s *strs_p);
+
+/**
+ * set the stop_tack value used in stop_tack_action()
+*/
+void set_stop_tack(float roll_stop, float yaw_stop){
+    tack_data.roll_stop_tack = roll_stop;
+    //convert value from deg to rad
+    tack_data.yaw_stop_tack = yaw_stop * M_PI_F / 180.0f;
+}
 
 /** PI controller to compute the input for the rudder servo motor.
  *
@@ -149,12 +159,13 @@ float tack_action(struct reference_actions_s *ref_act_p,
     //we are here beacuse ref_act_p->should_tack is true, so boat should tack
     if(tack_data.boat_is_tacking){
         //we have started the tack maneuver, check if stop it or keep it on
-        if(stop_tack_action(strs_p->att.roll, 0) ||
-           stop_tack_action(strs_p->boat_weather_station.roll_r, 1)){
-
+        if(is_tack_completed(strs_p)){
             //we have just completed the tack maneuver
             ref_act_p->should_tack = false;//so PI controller can compute new rudder commnad
             tack_data.boat_is_tacking = false;
+
+            //notify to path_planning that we've completed the tack action
+            notify_tack_completed();
 
         }
         else{
@@ -166,11 +177,13 @@ float tack_action(struct reference_actions_s *ref_act_p,
         //we must start tack maneuver
         tack_data.boat_is_tacking = true;
         //invert rudder command and set it to the maximum value
-        tack_data.tack_rudder_command = (strs_p->actuators.control[0] > 0)? (-RUDDER_SATURATION):
-                                                                            RUDDER_SATURATION;
-        //save actual roll angles
+        tack_data.tack_rudder_command = (strs_p->actuators.control[0] > 0) ? (-RUDDER_SATURATION):
+                                                                              RUDDER_SATURATION;
+        //save actual roll and yaw angles
         tack_data.roll_before_tack[0] = strs_p->att.roll;
         tack_data.roll_before_tack[1] = strs_p->boat_weather_station.roll_r;
+        tack_data.yaw_before_tack[0] = strs_p->att.yaw;
+        tack_data.yaw_before_tack[1] = strs_p->boat_weather_station.heading_tn;
 
         //set command for rudder
         command = tack_data.tack_rudder_command;
@@ -181,25 +194,166 @@ float tack_action(struct reference_actions_s *ref_act_p,
 
 /** Determine when a tack maneuver is completed
  *
- * If roll angle has changed in sign from the roll angle before tack, and if
- * this roll angle is greater/less than half of previous roll angle changed in sign,
- * then tack action is completed
+ * Tack is completed if two conditions are both true.
+ * 1)If roll (either from Kalman filter or weather station) angle has changed in sign
+ * from the roll angle before tack, and if
+ * this roll angle is greater/less than previous roll angle / roll_stop_tack, changed in sign,
+ * then first condition is met. Roll_stop_tack value is set by set_stop_tack function.
+ * 2)If yaw (either from Kalman filter or weather station) angle has decreased/increased by
+ * of yaw_stop_tack rads, then second condition is met.
+ * Yaw_stop_tack value is set by set_stop_tack function.
  *
- * @param angle         actual roll angle(from ekf or weather station)
- * @param index_roll    0 if roll angle from ekf, 1 if roll angle from weather station
+ * @param strs_p        pointer to topics values
  * @return              true if the tack action is completed
  */
-bool stop_tack_action(float angle, uint8_t index_roll){
+bool is_tack_completed(const struct structs_topics_s *strs_p){
+
+    bool first_cond = false;
+    bool second_cond = false;
+
+    //check first condition on roll angles (by Kalman filter app and Weather station)
+    first_cond = roll_stop_tack(strs_p->att.roll, 0) ||
+                     roll_stop_tack(strs_p->boat_weather_station.roll_r, 1);
+
+    //check second condition on yaw angles (by Kalman filter app and Weather station)
+    second_cond = yaw_stop_tack(strs_p->att.yaw, 0) ||
+                     yaw_stop_tack(strs_p->boat_weather_station.heading_tn, 1);
+
+    #if SIMULATION_FLAG == 1
+
+    float pos_p[] = {0.1f,
+                     0.2f,
+                     0.3f,
+                     0.4f};
+
+    float val_p[] = {roll_stop_tack(strs_p->boat_weather_station.roll_r, 1),
+                    (float)yaw_stop_tack(strs_p->att.yaw, 0),
+                     strs_p->att.yaw,
+                    tack_data.yaw_before_tack[0]};
+
+    print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
+    #endif
+
+    //return logic "and" between these two conditions
+    return (first_cond && second_cond);
+}
+
+/**
+ * Check first condition for stopping tack, @see is_tack_completed.
+ *
+ * @param angle         actual roll angle to check
+ * @param index_roll    index to access to tack_data.roll_before_tack vector
+ * @return              true if second condition on this angle is met
+*/
+bool roll_stop_tack(float angle, uint8_t index_roll){
     bool stop = false;
 
     if(tack_data.roll_before_tack[index_roll] > 0){
-        if(angle <= (-tack_data.roll_before_tack[index_roll] / tack_data.stop_tack))
+        if(angle <= (-tack_data.roll_before_tack[index_roll] / tack_data.roll_stop_tack))
             stop = true;
     }
     else if(tack_data.roll_before_tack[index_roll] < 0){
-        if(angle >= (-tack_data.roll_before_tack[index_roll] / tack_data.stop_tack))
+        if(angle >= (-tack_data.roll_before_tack[index_roll] / tack_data.roll_stop_tack))
             stop = true;
     }
+
+    return stop;
+}
+
+/**
+ * Check second condition for stopping tack, @see is_tack_completed.
+ *
+ * @param angle         actual yaw angle to check, positive from North to South passing through East
+ * @param index_yaw     index to access to tack_data.yaw_before_tack vector
+ * @return              true if second condition on this angle is met
+ *
+*/
+bool yaw_stop_tack(float angle, uint8_t index_yaw){
+    bool stop = false;
+    float thrsh;
+
+    //TODO add robust check if some yaw angles are missing!
+
+    if(tack_data.tack_rudder_command > 0){
+        //we're steering on the left
+        if(tack_data.yaw_before_tack[index_yaw] > 0){
+            /* the boat before tacking had a "positive" heading,
+             * that is, its yaw angle was between North and South, East side.
+             * So we have to check if the difference between final and initial
+             * yaw angle is at least tack_data.yaw_before_tack[index_yaw].
+             * Remeber, tack_data.yaw_stop_tack is a positive value!
+            */
+            stop = ((angle - tack_data.yaw_before_tack[index_yaw]) <= -tack_data.yaw_stop_tack);
+        }
+        else{
+            /* the boat before tacking had a "negative" heading,
+             * that is, its yaw angle was between North and South, West side.
+             * So we have to check if the difference between final and initial
+             * yaw angle (either from Kalman filter or Weather station) is at least equal to
+             * tack_data.yaw_stop_tack.
+             * BE CAREFUL IF WE'RE PASSING THROUGH -PI PI (PASSING THROUGH SOUTH GOING FROM WEST TO EAST)
+            */
+            if(tack_data.yaw_before_tack[index_yaw] - tack_data.yaw_stop_tack >= -M_PI_F){
+                //stern during tack maneuver will not pass through south!
+                stop = ((angle - tack_data.yaw_before_tack[index_yaw]) <= -tack_data.yaw_stop_tack);
+            }
+            else{
+                /* PAY ATTENTION, tack maneuver will bring stern passing through south!
+                 * Compute a new value for the threshold.
+                 * See how many rads there are left "after" pi,
+                 * remeber: tack_data.yaw_stop_tack is a negative value!
+                */
+                thrsh = tack_data.yaw_stop_tack - (M_PI_F + tack_data.yaw_before_tack[index_yaw]);
+                /* pay attention, thrsh is a positive value, stop tack only if
+                 * angle is positive and the total difference between final and initial
+                 * yaw angle is at least tack_data.yaw_before_tack[index_yaw]
+                */
+                if(angle >= 0 && (angle - M_PI_F <= -thrsh))
+                    stop = true;
+            }
+        }
+    }
+    else{
+        //we're steering on the right
+        if(tack_data.yaw_before_tack[index_yaw] < 0){
+            /* the boat before tacking had a "negative" heading,
+             * that is, its yaw angle was between North and South, West side.
+             * So we have to check if the difference between final and initial
+             * yaw angle is at least tack_data.yaw_before_tack[index_yaw].
+             * Remeber, tack_data.yaw_stop_tack is a positive value!
+            */
+            stop = ((angle - tack_data.yaw_before_tack[index_yaw]) >= tack_data.yaw_stop_tack);
+        }
+        else{
+            /* the boat before tacking had a "positive" heading,
+             * that is, its yaw angle was between North and South, East side.
+             * So we have to check if the difference between final and initial
+             * yaw angle (either from Kalman filter or Weather station) is at least equal to
+             * tack_data.yaw_stop_tack.
+             * BE CAREFUL IF WE'RE PASSING THROUGH PI PI (PASSING THROUGH SOUTH GOING FROM EAST TO WEST)
+            */
+            if(tack_data.yaw_before_tack[index_yaw] + tack_data.yaw_stop_tack <= M_PI_F){
+                //stern during tack maneuver will not pass through south!
+                stop = ((angle - tack_data.yaw_before_tack[index_yaw]) >= tack_data.yaw_stop_tack);
+            }
+            else{
+                /* PAY ATTENTION, tack maneuver will bring stern passing through south!
+                 * Compute a new value for the threshold.
+                 * See how many rads there are left "after" pi,
+                 * remeber: tack_data.yaw_stop_tack is a positive value!
+                */
+                thrsh = tack_data.yaw_stop_tack - (M_PI_F - tack_data.yaw_before_tack[index_yaw]);
+                /* pay attention, thrsh is a positive value, stop tack only if
+                 * angle is negative and the total difference between final and initial
+                 * yaw angle is at least tack_data.yaw_before_tack[index_yaw]
+                */
+                if(angle <= 0 && (angle - (-M_PI_F) >= thrsh))
+                    stop = true;
+            }
+        }
+
+    }
+
 
     return stop;
 }
@@ -250,8 +404,7 @@ void set_sail_positions(int32_t num){
 /** Implement reference actions provided by optimal path planning*/
 void guidance_module(struct reference_actions_s *ref_act_p,
                      const struct parameters_qgc *param_qgc_p,
-                     struct structs_topics_s *strs_p,
-                     const struct published_fd_s *pubs_p){
+                     struct structs_topics_s *strs_p){
 
     float alpha;
     float rudder_command = 0.0f;
@@ -293,27 +446,12 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     //update actuator value
     strs_p->actuators.control[0] = rudder_command;
     strs_p->actuators.control[3] = sail_command;
-    // actuators.control[0] -> rudder
-    // actuators.control[3] -> sail
 
-    #if SIMULATION_FLAG == 1
 
-//        float pos_p[] = {0.1f,0.2f};
-
-//        float val_p[] = {alpha,
-//                        param_qgc_p->rudder_p_gain};
-
-//        print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
-
-    //strs_p->airspeed.true_airspeed_m_s = alpha;
-    #endif
 
     //save first debug values for post-processing, other values set in path_planning()
     strs_p->boat_guidance_debug.timestamp = hrt_absolute_time();
     strs_p->boat_guidance_debug.alpha = alpha;
     strs_p->boat_guidance_debug.rudder_action = rudder_command;
     strs_p->boat_guidance_debug.sail_action = sail_command;
-
-
-
 }

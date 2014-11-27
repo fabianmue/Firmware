@@ -57,11 +57,10 @@
 /** @brief Implement next control action*/
 void guidance_module(struct reference_actions_s *ref_act_p,
                      const struct parameters_qgc *param_qgc_p,
-                     struct structs_topics_s *strs_p,
-                     const struct published_fd_s *pubs_p);
+                     struct structs_topics_s *strs_p);
 
 /** @brief Set the stop value to see if the tack maneuver is completed*/
-void set_stop_tack(float stop_val);
+void set_stop_tack(float roll_stop, float yaw_stop);
 
 /** @brief Set the number of positions the sail can be at*/
 void set_sail_positions(int32_t num);

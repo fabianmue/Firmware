@@ -270,6 +270,10 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                     //update param
                     param_update(&params, &strs, true);
+
+                    #if SIMULATION_FLAG == 1
+                    //ref_act.should_tack = params.tack_sim;//cancella
+                    #endif
                 }
                 if(fds[4].revents & POLLIN){
                     // attitude updated
@@ -294,12 +298,12 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 update_twd(params.twd_sim);
             #endif
             //look into optimal path planning maps for reference actions
-            path_planning(&ref_act, &strs);
+            path_planning(&ref_act, &strs);//ripristina
             //fine cancella
         #endif
 
         //always perfrom guidance module to control the boat
-        guidance_module(&ref_act, &params, &strs, &pubs);
+        guidance_module(&ref_act, &params, &strs);
 
         //publish out commands
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));

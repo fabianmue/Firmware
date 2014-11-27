@@ -175,6 +175,14 @@ void set_alpha_star(float val){
     ref_act.alpha_star = val;
 }
 
+/**
+ * Notify the end of the tack maneuver.
+ * Only guidance_module should use this function when a tack action has been completed.
+*/
+void notify_tack_completed(void){
+    ref_act.should_tack = false;
+}
+
 void path_planning(struct reference_actions_s *ref_act_p,
                    struct structs_topics_s *strs_p){
 
@@ -215,16 +223,4 @@ void path_planning(struct reference_actions_s *ref_act_p,
     strs_p->boat_guidance_debug.alpha_star = ref_act_p->alpha_star;
     strs_p->boat_guidance_debug.should_tack = (ref_act_p->should_tack == true) ? 1 : 0;
 
-    #if SIMULATION_FLAG == 1
-
-//            float pos_p[] = {0.1f,
-//                             0.2f,
-//                             0.3f};
-
-//            float val_p[] = {current_grid_goal_x_m,
-//                            current_grid_valid,
-//                            local_pos.x_race_m};
-
-//            print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
-    #endif
 }

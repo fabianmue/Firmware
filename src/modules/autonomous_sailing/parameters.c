@@ -43,6 +43,25 @@
 #include "parameters.h"
 
 /**
+ * Stop tack, used in guidance_module to decide whetever the tack maneuver is finished using yaw.
+ * Offset in degrees.
+ *
+ *
+ * @min -180
+ * @max 180
+ */
+PARAM_DEFINE_FLOAT(AS_SPTC_Y_D, 60.0f);
+
+/**
+ * Stop tack, used in guidance_module to decide whetever the tack maneuver is finished using roll angle
+ *
+ *
+ * @min 0
+ * @max ?
+ */
+PARAM_DEFINE_FLOAT(AS_SPTC_R, 2.0f);
+
+/**
  * Reference angle with respect true wind [rad]
  *
  * Use Dumas'convention.
@@ -283,6 +302,15 @@ PARAM_DEFINE_FLOAT(ASIM_TWD_R, 0.0f);
  */
 PARAM_DEFINE_INT32(ASIM_TACK, 0);
 
+/**
+ * Simulated yaw, in rads, sign opposite to Dumas convention.
+ *
+ *
+ * @min -pi
+ * @max pi
+ */
+PARAM_DEFINE_FLOAT(ASIM_YAW_R, 0.0f);
+
 #endif
 
 
@@ -305,7 +333,8 @@ static struct pointers_param_qgc_s{
     param_t lon0_pointer;         /**< pointer to param AS_R_LON0_E7*/
     param_t alt0_pointer;         /**< pointer to param AS_R_ALT0_E3*/
 
-    param_t stop_tack_pointer;      /**< pointer to param AS_STP_TCK*/
+    param_t stop_tack_roll_pointer;      /**< pointer to param AS_SPTC_R*/
+    param_t stop_tack_yaw_pointer;      /**< pointer to param AS_SPTC_Y_D */
 
     param_t moving_window_pointer;/**< pointer to param AS_WINDOW*/
 
@@ -329,6 +358,8 @@ static struct pointers_param_qgc_s{
     param_t cog_sim_pointer; /**< pointer to param ASIM_COG_R*/
 
     param_t tack_sim_pointer;/**< pointer to params ASIM_TACK */
+
+    param_t yaw_sim_pointer; /**< pointer to param ASIM_YAW_R*/
     #endif
 }pointers_param_qgc;
 
@@ -356,7 +387,8 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.lon0_pointer    = param_find("AS_R_LON0_E7");
     pointers_param_qgc.alt0_pointer    = param_find("AS_R_ALT0_E3");
 
-    pointers_param_qgc.stop_tack_pointer = param_find("AS_STP_TCK");
+    pointers_param_qgc.stop_tack_roll_pointer = param_find("AS_SPTC_R");
+    pointers_param_qgc.stop_tack_yaw_pointer = param_find("AS_SPTC_Y_D");
 
     pointers_param_qgc.moving_window_pointer = param_find("AS_WINDOW");
 
@@ -382,6 +414,8 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.twd_sim_pointer = param_find("ASIM_TWD_R");
 
     pointers_param_qgc.tack_sim_pointer = param_find("ASIM_TACK");
+
+    pointers_param_qgc.yaw_sim_pointer = param_find("ASIM_YAW_R");
 
     #endif
 
@@ -437,11 +471,13 @@ void param_update(struct parameters_qgc *params_p,
     //update NED origin using API in navigation.h
     set_ref0(&lat0, &lon0, &alt0);
 
-    //----- stop tack value
-    float tmpF = 1.0f;
-    param_get(pointers_param_qgc.stop_tack_pointer, &tmpF);
+    //----- stop tack values
+    float roll_stop;
+    float yaw_stop;
+    param_get(pointers_param_qgc.stop_tack_roll_pointer, &roll_stop);
+    param_get(pointers_param_qgc.stop_tack_yaw_pointer, &yaw_stop);
     //set it in the guidance_module
-    set_stop_tack(tmpF);
+    set_stop_tack(roll_stop, yaw_stop);
 
     //----- moving window
     uint16_t moving_window;
@@ -518,6 +554,12 @@ void param_update(struct parameters_qgc *params_p,
 
     //tack_sim
     param_get(pointers_param_qgc.tack_sim_pointer, &(params_p->tack_sim));
+
+    //yaw_sim
+    param_get(pointers_param_qgc.yaw_sim_pointer, &(params_p->yaw_sim));
+
+    //set them in the appropriate struct to simulate heading changing
+    strs_p->att.yaw = params_p->yaw_sim;
 
     #endif
 }
