@@ -76,6 +76,7 @@
 #include <mavlink/mavlink_log.h>
 
 #include <uORB/topics/wind_sailing.h>//Added by Marco Tranzatto
+#include <uORB/topics/boat_guidance_debug.h>//Added by Marco Tranzatto
 
 #include "mavlink_messages.h"
 #include "mavlink_main.h"
@@ -2009,6 +2010,89 @@ protected:
 
 //--------------------------------- End Add -----------------------------------
 
+//--------------------------------- ADD GUIDANCE DEBUG MSG ------------------
+
+class MavlinkStreamGuidanceDebug : public MavlinkStream
+{
+public:
+    const char *get_name() const
+    {
+        return MavlinkStreamGuidanceDebug::get_name_static();
+    }
+
+    static const char *get_name_static()
+    {
+        return "GUID_DEBUG_MSG";
+    }
+
+    uint8_t get_id()
+    {
+        return 0;
+    }
+
+    static MavlinkStream *new_instance(Mavlink *mavlink)
+    {
+        return new MavlinkStreamGuidanceDebug(mavlink);
+    }
+
+    unsigned get_size()
+    {
+        return 4 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+    }
+
+private:
+    MavlinkOrbSubscription *_guidance_debug_sub;
+    uint64_t _guidance_debug_time;
+
+    /* do not allow top copying this class */
+    MavlinkStreamGuidanceDebug(MavlinkStreamGuidanceDebug &);
+    MavlinkStreamGuidanceDebug& operator = (const MavlinkStreamGuidanceDebug &);
+
+protected:
+    explicit MavlinkStreamGuidanceDebug(Mavlink *mavlink) : MavlinkStream(mavlink),
+        _guidance_debug_sub(_mavlink->add_orb_subscription(ORB_ID(boat_guidance_debug))),
+        _guidance_debug_time(0)
+    {}
+
+    void send(const hrt_abstime t)
+    {
+        struct boat_guidance_debug_s boat_guidance_debug;
+
+        if (_guidance_debug_sub->update(&_guidance_debug_time, &boat_guidance_debug)) {
+            /* send, add spaces so that string buffer is at least 10 chars long */
+            mavlink_named_value_float_t msg;
+
+            msg.time_boot_ms = boat_guidance_debug.timestamp / 1000;
+
+            snprintf(msg.name, sizeof(msg.name), "alpha angl");
+            msg.value = boat_guidance_debug.alpha;
+
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "x race coo");
+            msg.value = boat_guidance_debug.x_race;
+
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "y race coo");
+            msg.value = boat_guidance_debug.y_race;
+
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "next grid");
+            msg.value = boat_guidance_debug.next_grid_line;
+
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+
+        }
+    }
+};
+
+
+
+//--------------------------------- End Add -----------------------------------
+
 
 
 class MavlinkStreamNamedValueFloat : public MavlinkStream
@@ -2241,6 +2325,7 @@ StreamListItem *streams_list[] = {
 	new StreamListItem(&MavlinkStreamNamedValueFloat::new_instance, &MavlinkStreamNamedValueFloat::get_name_static),
 	new StreamListItem(&MavlinkStreamCameraCapture::new_instance, &MavlinkStreamCameraCapture::get_name_static),
 	new StreamListItem(&MavlinkStreamDistanceSensor::new_instance, &MavlinkStreamDistanceSensor::get_name_static),
-    new StreamListItem(&MavlinkStreamWindSailing::new_instance, &MavlinkStreamWindSailing::get_name_static),
+    new StreamListItem(&MavlinkStreamWindSailing::new_instance, &MavlinkStreamWindSailing::get_name_static),//Added by Marco Tranzatto
+    new StreamListItem(&MavlinkStreamGuidanceDebug::new_instance, &MavlinkStreamGuidanceDebug::get_name_static),//Added by Marco Tranzatto
 	nullptr
 };
