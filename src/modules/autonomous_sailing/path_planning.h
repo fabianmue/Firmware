@@ -53,6 +53,8 @@
 
 #include <math.h>
 
+#include <string.h>
+
 // reference actions for the guidance_module
 struct reference_actions_s{
     float alpha_star; ///optimal heading w.r.t. true wind direction
@@ -70,7 +72,9 @@ void set_grid(float x_m);
 
 /** @brief based on gps position decide reference actions*/
 void path_planning(struct reference_actions_s *ref_act_p,
-                   struct structs_topics_s *strs_p,
-                   const struct parameters_qgc *params_p);
+                   struct structs_topics_s *strs_p);
+
+/** @brief set a new value for reference alpha star*/
+void set_alpha_star(float val);
 
 #endif /* PATH_PLANNING_DATA_H_ */

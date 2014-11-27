@@ -54,6 +54,8 @@ static struct{
     int16_t last_goal;      ///index of the last grid line to reach
 }grid_lines;
 
+static struct reference_actions_s ref_act = {.alpha_star = 0.5f, .should_tack = false};
+
 static float current_grid_goal_x_m = 0.0f;//current x coordinate of grid line to reach [m]
 static bool current_grid_valid = false;
 
@@ -165,9 +167,16 @@ void reached_current_grid(void){
     }
 }
 
+/**
+ * Set new value for reference alpha
+*/
+void set_alpha_star(float val){
+
+    ref_act.alpha_star = val;
+}
+
 void path_planning(struct reference_actions_s *ref_act_p,
-                   struct structs_topics_s *strs_p,
-                   const struct parameters_qgc *params_p){
+                   struct structs_topics_s *strs_p){
 
     struct local_position_race_s local_pos;
     float tmp;
@@ -192,9 +201,12 @@ void path_planning(struct reference_actions_s *ref_act_p,
 
             //TODO see appropriate action
             //for now just tack
-            ref_act_p->should_tack = true;
+            ref_act.should_tack = true;
         }
     }
+
+    //copy local reference action to the output struct
+    memcpy(ref_act_p, &ref_act, sizeof(ref_act));
 
     //save second debug values for post-processing, other values set in guidance_module()
     strs_p->boat_guidance_debug.next_grid_line = current_grid_goal_x_m;
@@ -205,14 +217,14 @@ void path_planning(struct reference_actions_s *ref_act_p,
 
     #if SIMULATION_FLAG == 1
 
-            float pos_p[] = {0.1f,
-                             0.2f,
-                             0.3f};
+//            float pos_p[] = {0.1f,
+//                             0.2f,
+//                             0.3f};
 
-            float val_p[] = {current_grid_goal_x_m,
-                            current_grid_valid,
-                            local_pos.x_race_m};
+//            float val_p[] = {current_grid_goal_x_m,
+//                            current_grid_valid,
+//                            local_pos.x_race_m};
 
-            print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
+//            print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
     #endif
 }

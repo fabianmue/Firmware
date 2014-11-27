@@ -43,6 +43,24 @@
 #include "parameters.h"
 
 /**
+ * Reference angle with respect true wind [rad]
+ *
+ * Use Dumas'convention.
+ *
+ * @min -pi
+ * @max pi
+ */
+PARAM_DEFINE_FLOAT(AS_ALST_ANG, 0.5f);
+
+/**
+ * 1 if you wish to use the alpha star specified by AS_ALSTR, 0 otherwise
+ *
+ * @min 0
+ * @max 1
+ */
+PARAM_DEFINE_INT32(AS_ALST_SET, 1);
+
+/**
  * Sails position
  *
  * Default value for sails position. 0 = max sheet out, 0.56 = max sheet in.
@@ -57,8 +75,8 @@ PARAM_DEFINE_FLOAT(AS_SAIL, -1.0f);
  * Number of possibile sail positions.
  * Used in guidance_module to set sail position.
  *
- * @min 1 (max sheet out)
- * @max ? (max sheet in)
+ * @min 1
+ * @max ?
  */
 PARAM_DEFINE_INT32(AS_N_SPOS, 4);
 
@@ -270,6 +288,11 @@ PARAM_DEFINE_INT32(ASIM_TACK, 0);
 
 
 static struct pointers_param_qgc_s{
+
+    param_t alpha_star_pointer;         /**< pointer to param AS_ALST_ANG*/
+    param_t use_alpha_star_pointer;         /**< pointer to param AS_ALST_SET*/
+
+
     param_t sail_pointer;         /**< pointer to param AS_SAIL*/
 
     param_t sail_positions_pointer;       /**< pointer to param AS_N_SPOS*/
@@ -318,6 +341,9 @@ void param_init(struct parameters_qgc *params_p,
                 struct structs_topics_s *strs_p){
 
     //initialize pointer to parameters
+    pointers_param_qgc.alpha_star_pointer    = param_find("AS_ALST_ANG");
+    pointers_param_qgc.use_alpha_star_pointer    = param_find("AS_ALST_SET");
+
     pointers_param_qgc.sail_pointer    = param_find("AS_SAIL");
 
     pointers_param_qgc.sail_positions_pointer  = param_find("AS_N_SPOS");
@@ -370,6 +396,13 @@ void param_init(struct parameters_qgc *params_p,
 void param_update(struct parameters_qgc *params_p,
                   struct structs_topics_s *strs_p, bool update_path_param){
 
+    //alpha star
+    float alpha_tmp;
+    int32_t set_alpha;
+    param_get(pointers_param_qgc.alpha_star_pointer, &alpha_tmp);
+    param_get(pointers_param_qgc.use_alpha_star_pointer, &set_alpha);
+    if(set_alpha)
+        set_alpha_star(alpha_tmp);
 
     //sail_servo
     param_get(pointers_param_qgc.sail_pointer, &(params_p->sail_servo));
