@@ -1750,7 +1750,10 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_GUIDANCE.alpha = buf.boat_guidance_debug.alpha;
             log_msg.body.log_BOAT_GUIDANCE.rudder_action = buf.boat_guidance_debug.rudder_action;
             log_msg.body.log_BOAT_GUIDANCE.sail_action = buf.boat_guidance_debug.sail_action;
-            log_msg.body.log_BOAT_GUIDANCE.debug_val1 = buf.boat_guidance_debug.debug_val1;
+            log_msg.body.log_BOAT_GUIDANCE.next_grid_line = buf.boat_guidance_debug.next_grid_line;
+            log_msg.body.log_BOAT_GUIDANCE.x_race = buf.boat_guidance_debug.x_race;
+            log_msg.body.log_BOAT_GUIDANCE.y_race = buf.boat_guidance_debug.y_race;
+            log_msg.body.log_BOAT_GUIDANCE.should_tack = buf.boat_guidance_debug.should_tack;
             LOGBUFFER_WRITE_AND_COUNT(BGUD);
         }
 

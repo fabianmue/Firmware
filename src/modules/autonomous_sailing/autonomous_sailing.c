@@ -212,8 +212,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
             { .fd = subs.wind_sailing,              .events = POLLIN },
             { .fd = subs.parameter_update,          .events = POLLIN },
             { .fd = subs.att,                       .events = POLLIN },
-            { .fd = subs.boat_weather_station,      .events = POLLIN }//,
-            //{ .fd = subs.offboard_control_setpoint, .events = POLLIN }//prova
+            { .fd = subs.boat_weather_station,      .events = POLLIN }
     };
 
     thread_running = true;
@@ -280,14 +279,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // boat_weather_station updated
                     orb_copy(ORB_ID(boat_weather_station), subs.boat_weather_station, &(strs.boat_weather_station));
                 }
-//                if(fds[6].revents & POLLIN){//prova
-//                    // boat_weather_station updated
-//                    orb_copy(ORB_ID(offboard_control_setpoint),
-//                             subs.offboard_control_setpoint,
-//                             &(strs.offboard_control_setpoint));
-
-//                    strs.airspeed.true_airspeed_m_s = (float)strs.offboard_control_setpoint.position[0]; //prova
-//                }
             }
         }
 
@@ -310,8 +301,11 @@ int as_daemon_thread_main(int argc, char *argv[]){
         //always perfrom guidance module to control the boat
         guidance_module(&ref_act, &params, &strs, &pubs);
 
-        // Send out commands
+        //publish out commands
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
+
+        //publish debug value for post-processing
+        orb_publish(ORB_ID(boat_guidance_debug), pubs.boat_guidance_debug_pub, &(strs.boat_guidance_debug));
 
         #if SIMULATION_FLAG == 1
             orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
@@ -347,7 +341,6 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
     subs_p->att = orb_subscribe(ORB_ID(vehicle_attitude));
     subs_p->boat_weather_station = orb_subscribe(ORB_ID(boat_weather_station));
-    //subs_p->offboard_control_setpoint = oeb_subscribe(ORB_ID(offboard_control_setpoint));//prova
 
     if(subs_p->gps_raw == -1){
         warnx(" error on subscribing on vehicle_gps_position Topic \n");
@@ -378,11 +371,6 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
         warnx(" error on subscribing on boat_weather_station Topic \n");
         return false;
     }
-
-//    if(subs_p->offboard_control_setpoint == -1){//prova
-//        warnx(" error on subscribing on offboard_control_setpoint Topic \n");
-//        return false;
-//    }
 
     warnx(" subscribed to all topics \n");
 

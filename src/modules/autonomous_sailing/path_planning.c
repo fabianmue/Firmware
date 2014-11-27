@@ -196,6 +196,13 @@ void path_planning(struct reference_actions_s *ref_act_p,
         }
     }
 
+    //save second debug values for post-processing, other values set in guidance_module()
+    strs_p->boat_guidance_debug.next_grid_line = current_grid_goal_x_m;
+    strs_p->boat_guidance_debug.x_race = local_pos.x_race_m;
+    strs_p->boat_guidance_debug.y_race = local_pos.y_race_m;
+    strs_p->boat_guidance_debug.alpha_star = ref_act_p->alpha_star;
+    strs_p->boat_guidance_debug.should_tack = (ref_act_p->should_tack == true) ? 1 : 0;
+
     #if SIMULATION_FLAG == 1
 
             float pos_p[] = {0.1f,

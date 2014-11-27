@@ -447,7 +447,10 @@ struct log_BGUD_s{
     float alpha;
     float rudder_action;
     float sail_action;
-    float debug_val1;
+    float next_grid_line;
+    float x_race;
+    float y_race;
+    uint8_t should_tack;
 };
 
 //********************** End add *******************************
@@ -519,7 +522,7 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(WSAI, "ffff", "AngleApparent,SpeedApparent,AngleTrue,SpeedTrue"), //Added by Marco Tranzatto
     LOG_FORMAT(BWES, "fffffffff", "AccX,AccY,AccZ,Roll,Pitch,Heading,RollRate,PitchRate,YawRate"), //Added by Marco Tranzatto
     LOG_FORMAT(DEVA, "fff", "Float1, Float2, Float3"), //Added by Marco Tranzatto
-    LOG_FORMAT(BGUD, "fffff", "AlphaStar, Alpha, Rudder, Sail, Float1"), //Added by Marco Tranzatto
+    LOG_FORMAT(BGUD, "fffffffB", "AlphaStar,Alpha,Rudder,Sail,NextGrid,XRace,YRace,ShldTck"), //Added by Marco Tranzatto
 	/* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),

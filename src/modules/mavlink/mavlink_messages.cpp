@@ -75,7 +75,7 @@
 #include <systemlib/err.h>
 #include <mavlink/mavlink_log.h>
 
-#include <uORB/topics/wind_sailing.h>
+#include <uORB/topics/wind_sailing.h>//Added by Marco Tranzatto
 
 #include "mavlink_messages.h"
 #include "mavlink_main.h"

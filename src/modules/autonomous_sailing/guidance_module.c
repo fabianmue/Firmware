@@ -308,13 +308,12 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     //strs_p->airspeed.true_airspeed_m_s = alpha;
     #endif
 
-    //publish debug value for post-processing
+    //save first debug values for post-processing, other values set in path_planning()
     strs_p->boat_guidance_debug.timestamp = hrt_absolute_time();
-    strs_p->boat_guidance_debug.alpha_star = ref_act_p->alpha_star;
     strs_p->boat_guidance_debug.alpha = alpha;
     strs_p->boat_guidance_debug.rudder_action = rudder_command;
     strs_p->boat_guidance_debug.sail_action = sail_command;
 
-    orb_publish(ORB_ID(boat_guidance_debug), pubs_p->boat_guidance_debug_pub, &(strs_p->boat_guidance_debug));
+
 
 }
