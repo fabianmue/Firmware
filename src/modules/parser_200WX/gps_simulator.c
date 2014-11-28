@@ -44,7 +44,6 @@
 #include "gps_simulator.h"
 
 
-
 static int32_t elap_sec = 0;//start from midnight
 
 #if GPS_SIMULATION == 1 //save memory, define geo_steady_state only in simulation mode
@@ -353,7 +352,7 @@ void sim_steady_pos(char *buf, int *lgt){
     sprintf(buf, "GPGGA,hhmmss.ss,%4.4f,N,%4.4f,E,3,8,2,%d,M,********************* \
             GPVTG,182.9,T,181.0,M,0.0,N,0.0,K,A,*,\
             $,GPGSA,A,3,11,17,20,4,,,,,,,,,14.0,9.3,2*,55555...\
-            $GPZDA,%02u%02u%06.3f,14,11,2014,00,00*4...5555555555555555555555555555555555\0\0",
+            $GPZDA,%02u%02u%06.3f,28,11,2014,00,00*4...5555555555555555555555555555555555\0\0",
             lat, lon, alt, hh, mm, ss);
 
     *lgt = strlen(buf);

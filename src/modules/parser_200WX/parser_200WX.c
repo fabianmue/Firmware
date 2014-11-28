@@ -222,7 +222,7 @@ int parser_200WX_main(int argc, char *argv[])
 /**
  * mainloop of daemon.
  *
- * if TYPE_OF_ENVIRONMENT (located in ../autonomous_sailing/as_settings.h) is 1 then activeted also outdoor messages
+ * if TYPE_OF_ENVIRONMENT (settings.h) is 1 then activeted also outdoor messages
  */
 int parser_200WX_daemon_thread_main(int argc, char *argv[]) {
 
@@ -417,7 +417,7 @@ bool retrieve_data(int *wx_port_pointer,
 #endif
     }
 
-#if SAVE_DEBUG_VALUES
+#if SAVE_DEBUG_VALUES == 1
 
     //debug
     //att_raw_pointer->yaw = buffer_length; //cancella
@@ -626,7 +626,7 @@ void xdr_parser(const char *buffer, const int buffer_length,
 *
 * @param buffer                 buffer with data
 * @param buffer_length          length of buffer
-* @param gps_raw_pointer		pointer to handler returnd by orb_advertise
+* @param strs_p                 pointer to struct cointaining vehicle_gps_position struct
 */
 void gp_parser(const char *buffer, const int buffer_length,
                struct structs_topics_s   *strs_p){
@@ -700,19 +700,19 @@ void gp_parser(const char *buffer, const int buffer_length,
                         //--- satellites_used ---
 
                         // i   is the comma ','
-                        i ++;	// position to byte1 of number of satellites in use
+                        i++;	// position to byte1 of number of satellites in use
                         if(extract_until_char("float", &i, buffer, buffer_length, &satellites_used, ',')){
 
                             //--- eph ---
 
                             // i   is the comma ','
-                            i ++;	// position to byte1 of HDOP
+                            i++;	// position to byte1 of HDOP
                             if(extract_until_char("float", &i, buffer, buffer_length, &eph, ',')){
 
                                 //--- altitude ---
 
                                 // i   is the comma ','
-                                i ++;	// position to byte1 of altitude relative to MSL
+                                i++;	// position to byte1 of altitude relative to MSL
                                 if(extract_until_char("float", &i, buffer, buffer_length, &alt, ',')){
 
                                     //save data in the struct
@@ -730,16 +730,12 @@ void gp_parser(const char *buffer, const int buffer_length,
 
                                     //publish gps position only if there is GGA or VTG message.
                                     strs_p->gps_updated = true;
-
                                 }
                             }
                         }
-
                     }
                 }
             }
-
-
         }
         else if(buffer[i+2] == 'G' && buffer[i+3] == 'S' && buffer[i+4] == 'A'){
             /*found GPGSA message in buffer, starting from i
@@ -750,7 +746,6 @@ void gp_parser(const char *buffer, const int buffer_length,
 
             //cancella
             //debug_print_until_char(buffer, buffer_length, i, '*');
-
 
             i += 8;	// type of fix
 
@@ -783,7 +778,7 @@ void gp_parser(const char *buffer, const int buffer_length,
                  *  i
                 */
 
-                i ++;
+                i++;
 
                 //extract VDOP
                 if(extract_until_char("float", &i, buffer, buffer_length, &vdop, '*')){
@@ -887,19 +882,19 @@ void gp_parser(const char *buffer, const int buffer_length,
             //extract UTC time
             if(extract_until_char("double", &i, buffer, buffer_length, &ashtech_time, ',')){
                 //i is ',', i+1 is byte1 of day
-                i ++;
+                i++;
                 if(extract_until_char("int", &i, buffer, buffer_length, &day, ',')){
                     //i is ',', i+1 is byte1 of month
-                    i ++;
+                    i++;
                     if(extract_until_char("int", &i, buffer, buffer_length, &month, ',')){
                         //i is ',', i+1 is byte1 of year
-                        i ++;
+                        i++;
                         if(extract_until_char("int", &i, buffer, buffer_length, &year, ',')){
                             //i is ',', i+1 is byte1 of local_time_off_hour
-                            i ++;
+                            i++;
                             if(extract_until_char("int", &i, buffer, buffer_length, &local_time_off_hour, ',')){
                                 //i is ',', i+1 is byte1 of local_time_off_min
-                                i ++;
+                                i++;
                                 if(extract_until_char("int", &i, buffer, buffer_length, &local_time_off_min, '*')){
                                     int ashtech_hour = ashtech_time / 10000;
                                     int ashtech_minute = (ashtech_time - ashtech_hour * 10000) / 100;
@@ -921,22 +916,13 @@ void gp_parser(const char *buffer, const int buffer_length,
                                     strs_p->gps.timestamp_time = hrt_absolute_time();
 
                                     //publish gps position only if there is GGA or VTG message.
-
                                 }
-
                             }
-
                         }
                     }
                 }
             }
-
-
         }
-
-
-
-
     }
 }
 
