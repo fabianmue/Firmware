@@ -270,10 +270,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                     //update param
                     param_update(&params, &strs, true);
-
-                    #if SIMULATION_FLAG == 1
-                    //ref_act.should_tack = params.tack_sim;//cancella
-                    #endif
                 }
                 if(fds[4].revents & POLLIN){
                     // attitude updated

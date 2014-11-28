@@ -117,15 +117,6 @@ PARAM_DEFINE_FLOAT(AS_RUD_P, 0.03f);
  */
 PARAM_DEFINE_FLOAT(AS_RUD_I, 0.0f);
 
-/**
- * Proportional gain for sail PI.
- *
- *
- * @min 0
- * @max ?
- */
-//PARAM_DEFINE_FLOAT(AS_SAI_P, 0.03f);
-
 
 /**
  * Latitude of origin of NED system, in degrees * E7.
@@ -153,15 +144,6 @@ PARAM_DEFINE_INT32(AS_R_LON0_E7, 85605120);
  * @max ?
  */
 PARAM_DEFINE_INT32(AS_R_ALT0_E3, 406000);
-
-/**
- * Stop tack, used in guidance_module to decide whetever the tack maneuver is finisched
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_FLOAT(AS_STP_TCK, 2.0f);
 
 /**
  * AS_WINDOW, specifies the number of samples for the moving wind average mean.
@@ -294,15 +276,6 @@ PARAM_DEFINE_FLOAT(ASIM_COG_R, 0.0f);
 PARAM_DEFINE_FLOAT(ASIM_TWD_R, 0.0f);
 
 /**
- * 1 = boat should tack as soon as possibile
- *
- *
- * @min 0
- * @max 1
- */
-PARAM_DEFINE_INT32(ASIM_TACK, 0);
-
-/**
  * Simulated yaw, in rads, sign opposite to Dumas convention.
  *
  *
@@ -357,7 +330,6 @@ static struct pointers_param_qgc_s{
     param_t twd_sim_pointer; /**< pointer to param ASIM_TWD_R*/
     param_t cog_sim_pointer; /**< pointer to param ASIM_COG_R*/
 
-    param_t tack_sim_pointer;/**< pointer to params ASIM_TACK */
 
     param_t yaw_sim_pointer; /**< pointer to param ASIM_YAW_R*/
     #endif
@@ -381,7 +353,6 @@ void param_init(struct parameters_qgc *params_p,
 
     pointers_param_qgc.rud_p_gain_pointer  = param_find("AS_RUD_P");
     pointers_param_qgc.rud_i_gain_pointer  = param_find("AS_RUD_I");
-    //pointers_param_qgc.sai_p_gain_pointer  = param_find("AS_SAI_P");
 
     pointers_param_qgc.lat0_pointer    = param_find("AS_R_LAT0_E7");
     pointers_param_qgc.lon0_pointer    = param_find("AS_R_LON0_E7");
@@ -399,7 +370,6 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.alt_tmark_pointer    = param_find("AS_T_ALT_E3");
 
     pointers_param_qgc.grids_number_pointer    = param_find("AS_P_TOT_G");
-    //pointers_param_qgc.grid_index_pointer    = param_find("AS_P_INDEX");
     pointers_param_qgc.grid_x_pointer    = param_find("AS_P_X_M");
 
     pointers_param_qgc.grid_add_pointer = param_find("AS_P_ADD");
@@ -412,8 +382,6 @@ void param_init(struct parameters_qgc *params_p,
 
     pointers_param_qgc.cog_sim_pointer = param_find("ASIM_COG_R");
     pointers_param_qgc.twd_sim_pointer = param_find("ASIM_TWD_R");
-
-    pointers_param_qgc.tack_sim_pointer = param_find("ASIM_TACK");
 
     pointers_param_qgc.yaw_sim_pointer = param_find("ASIM_YAW_R");
 
@@ -551,9 +519,6 @@ void param_update(struct parameters_qgc *params_p,
 
     //twd_sim
     param_get(pointers_param_qgc.twd_sim_pointer, &(params_p->twd_sim));
-
-    //tack_sim
-    param_get(pointers_param_qgc.tack_sim_pointer, &(params_p->tack_sim));
 
     //yaw_sim
     param_get(pointers_param_qgc.yaw_sim_pointer, &(params_p->yaw_sim));

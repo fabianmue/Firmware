@@ -92,8 +92,6 @@ struct parameters_qgc{
     float twd_sim;
     float yaw_sim;
 
-    uint8_t tack_sim;
-
     #endif
 };
 
