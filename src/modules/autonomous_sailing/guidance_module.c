@@ -270,88 +270,49 @@ bool roll_stop_tack(float angle, uint8_t index_roll){
 */
 bool yaw_stop_tack(float angle, uint8_t index_yaw){
     bool stop = false;
-    float thrsh;
 
-    //TODO add robust check if some yaw angles are missing!
+    /**
+     * angle can be either the taw angle provided by Kalman filter (implemented in ekf_att_pos_estimator app),
+     * or the heading angle provided by the weather station magnetic sensor (measurements published in
+     * parser_200WX app). We will refer to these two angle as a general yaw angle called "angle".
+     * This angle provided by sensors is assumed to be positive on the East side (that is, going from
+     * North to South, passing through East), and it's negative on the West side (going from
+     * North to South, passing through West).
+     * Angle is 0 on the true North, -pi/2 on West, -pi on South, pi/2 on East, etc.
+     *
+     * If the boat during the tack maneuver is steering on the left, we must pay attention if the
+     * stern passes through South coming from the West side and going to the East side.
+     * If the boat is steering on the right, we must pay attention if the stern passes through South
+     * coming from the East side and going to the West side.
+     * In these special cases, we must "extend" the angle, ranging from -2pi to 2pi to avoid
+     * possibile errors due to yaw missing measurements by sensors.
+    */
 
     if(tack_data.tack_rudder_command > 0){
-        //we're steering on the left
-        if(tack_data.yaw_before_tack[index_yaw] > 0){
-            /* the boat before tacking had a "positive" heading,
-             * that is, its yaw angle was between North and South, East side.
-             * So we have to check if the difference between final and initial
-             * yaw angle is at least tack_data.yaw_before_tack[index_yaw].
-             * Remeber, tack_data.yaw_stop_tack is a positive value!
-            */
-            stop = ((angle - tack_data.yaw_before_tack[index_yaw]) <= -tack_data.yaw_stop_tack);
-        }
-        else{
-            /* the boat before tacking had a "negative" heading,
-             * that is, its yaw angle was between North and South, West side.
-             * So we have to check if the difference between final and initial
-             * yaw angle (either from Kalman filter or Weather station) is at least equal to
-             * tack_data.yaw_stop_tack.
-             * BE CAREFUL IF WE'RE PASSING THROUGH -PI PI (PASSING THROUGH SOUTH GOING FROM WEST TO EAST)
-            */
-            if(tack_data.yaw_before_tack[index_yaw] - tack_data.yaw_stop_tack >= -M_PI_F){
-                //stern during tack maneuver will not pass through south!
-                stop = ((angle - tack_data.yaw_before_tack[index_yaw]) <= -tack_data.yaw_stop_tack);
-            }
-            else{
-                /* PAY ATTENTION, tack maneuver will bring stern passing through south!
-                 * Compute a new value for the threshold.
-                 * See how many rads there are left "after" pi,
-                 * remeber: tack_data.yaw_stop_tack is a negative value!
-                */
-                thrsh = tack_data.yaw_stop_tack - (M_PI_F + tack_data.yaw_before_tack[index_yaw]);
-                /* pay attention, thrsh is a positive value, stop tack only if
-                 * angle is positive and the total difference between final and initial
-                 * yaw angle is at least tack_data.yaw_before_tack[index_yaw]
-                */
-                if(angle >= 0 && (angle - M_PI_F <= -thrsh))
-                    stop = true;
-            }
-        }
+        /* we're steering on the left, if yaw/heading angle before tacking was negative
+         * (West side) we must "extend" angle if it has swtiched from a negative
+         * value to a positive one.
+        */
+        if(tack_data.yaw_before_tack[index_yaw] < 0)
+            angle = (angle < 0) ? angle : -2 * M_PI_F + angle;
+
+        /* see if the difference between final and initial angle is at least yaw_stop_tac,
+         * remeber that angles have a sign!!!
+        */
+        stop = ((angle - tack_data.yaw_before_tack[index_yaw]) <= -tack_data.yaw_stop_tack);
     }
     else{
-        //we're steering on the right
-        if(tack_data.yaw_before_tack[index_yaw] < 0){
-            /* the boat before tacking had a "negative" heading,
-             * that is, its yaw angle was between North and South, West side.
-             * So we have to check if the difference between final and initial
-             * yaw angle is at least tack_data.yaw_before_tack[index_yaw].
-             * Remeber, tack_data.yaw_stop_tack is a positive value!
-            */
-            stop = ((angle - tack_data.yaw_before_tack[index_yaw]) >= tack_data.yaw_stop_tack);
-        }
-        else{
-            /* the boat before tacking had a "positive" heading,
-             * that is, its yaw angle was between North and South, East side.
-             * So we have to check if the difference between final and initial
-             * yaw angle (either from Kalman filter or Weather station) is at least equal to
-             * tack_data.yaw_stop_tack.
-             * BE CAREFUL IF WE'RE PASSING THROUGH PI PI (PASSING THROUGH SOUTH GOING FROM EAST TO WEST)
-            */
-            if(tack_data.yaw_before_tack[index_yaw] + tack_data.yaw_stop_tack <= M_PI_F){
-                //stern during tack maneuver will not pass through south!
-                stop = ((angle - tack_data.yaw_before_tack[index_yaw]) >= tack_data.yaw_stop_tack);
-            }
-            else{
-                /* PAY ATTENTION, tack maneuver will bring stern passing through south!
-                 * Compute a new value for the threshold.
-                 * See how many rads there are left "after" pi,
-                 * remeber: tack_data.yaw_stop_tack is a positive value!
-                */
-                thrsh = tack_data.yaw_stop_tack - (M_PI_F - tack_data.yaw_before_tack[index_yaw]);
-                /* pay attention, thrsh is a positive value, stop tack only if
-                 * angle is negative and the total difference between final and initial
-                 * yaw angle is at least tack_data.yaw_before_tack[index_yaw]
-                */
-                if(angle <= 0 && (angle - (-M_PI_F) >= thrsh))
-                    stop = true;
-            }
-        }
+        /* we're steering on the right, if yaw/heading angle before tacking was positive
+         * (East side) we must "extend" angle if it has swtiched from a positive
+         * value to a negative one.
+        */
+        if(tack_data.yaw_before_tack[index_yaw] > 0)
+            angle = (angle > 0) ? angle : 2 * M_PI_F + angle;
 
+        /* see if the difference between final and initial angle is at least yaw_stop_tac,
+         * remeber that angles have a sign!!!
+        */
+        stop = ((angle - tack_data.yaw_before_tack[index_yaw]) >= tack_data.yaw_stop_tack);
     }
 
 
