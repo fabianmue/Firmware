@@ -96,7 +96,7 @@ bool yaw_stop_tack(float angle, uint8_t index_yaw);
 void set_stop_tack(float roll_stop, float yaw_stop);
 
 /** @brief simple controller for sails*/
-float sail_controller(const struct structs_topics_s *strs_p);
+float sail_controller();
 
 /**
  * set the stop_tack value used in stop_tack_action()
@@ -221,17 +221,17 @@ bool is_tack_completed(const struct structs_topics_s *strs_p){
 
     #if SIMULATION_FLAG == 1
 
-    float pos_p[] = {0.1f,
-                     0.2f,
-                     0.3f,
-                     0.4f};
+//    float pos_p[] = {0.1f,
+//                     0.2f,
+//                     0.3f,
+//                     0.4f};
 
-    float val_p[] = {roll_stop_tack(strs_p->boat_weather_station.roll_r, 1),
-                    (float)yaw_stop_tack(strs_p->att.yaw, 0),
-                     strs_p->att.yaw,
-                    tack_data.yaw_before_tack[0]};
+//    float val_p[] = {roll_stop_tack(strs_p->boat_weather_station.roll_r, 1),
+//                    (float)yaw_stop_tack(strs_p->att.yaw, 0),
+//                     strs_p->att.yaw,
+//                    tack_data.yaw_before_tack[0]};
 
-    print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
+//    print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
     #endif
 
     //return logic "and" between these two conditions
@@ -322,14 +322,17 @@ bool yaw_stop_tack(float angle, uint8_t index_yaw){
 /**
  * Simple controller for sails.
 */
-float sail_controller(const struct structs_topics_s *strs_p){
+float sail_controller(){
 
     float abs_angle;
     float command;
     int32_t sector;
+    float mean_apparent;
 
-    abs_angle = (strs_p->wind_sailing.angle_apparent > 0) ? strs_p->wind_sailing.angle_apparent :
-                                                            -(strs_p->wind_sailing.angle_apparent);
+    mean_apparent = get_app_wind();
+
+    abs_angle = (mean_apparent > 0) ? mean_apparent :
+                                    -(mean_apparent);
 
     /*
      * See in which sector (from 0 to num set by set_sail_positions()) the absolute value of
@@ -389,7 +392,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 
     //sails control only if AS_SAIL param from QGC is negative
     if(param_qgc_p->sail_servo < 0.0f)
-        sail_command = sail_controller(strs_p);
+        sail_command = sail_controller();
     else
         sail_command = param_qgc_p->sail_servo;
 

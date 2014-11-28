@@ -258,6 +258,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // new WSAI values, copy new data
                     orb_copy(ORB_ID(wind_sailing), subs.wind_sailing, &(strs.wind_sailing));
 
+                    //update apparent wind direction in control data
+                    update_app_wind(strs.wind_sailing.angle_apparent);
                     #if SIMULATION_FLAG == 0
                     //update true wind direction in control data
                     update_twd(strs.wind_sailing.angle_true);
@@ -308,6 +310,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
         orb_publish(ORB_ID(boat_guidance_debug), pubs.boat_guidance_debug_pub, &(strs.boat_guidance_debug));
 
         #if SIMULATION_FLAG == 1
+            strs.airspeed.true_airspeed_m_s = get_app_wind();
             orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
             //fine cancella
         #endif

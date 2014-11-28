@@ -67,10 +67,14 @@ static struct{
 
 //filtered measurements
 static struct{
-    float* alpha_p; ///poniter to vector of last K values of true wind angle, [rad], according to Dumas angle definition (Chap 1.3)
+    float *alpha_p; ///poniter to vector of last K values of true wind angle, [rad], according to Dumas angle definition (Chap 1.3)
+    float *app_wind_p;///pointer to vector of last k_app values of apparent wind read by weather station
     uint16_t k;     ///number of elements in alpha_p
-    int16_t oldestValue; ///index of oldest value
+    uint16_t k_app;     ///number of elements in app_wind_p
+    int16_t oldestValue; ///index of oldest value in alpha_p
+    int16_t oldestValueApp; ///index of oldest value in app_wind_p
     float alpha;    ///moving average value from alpha_p
+    float apparent_wind;///average from app_wind_p
 }measurements_filtered;
 
 
@@ -86,9 +90,15 @@ void init_controller_data(void){
     measurements_filtered.k = 0;
     measurements_filtered.oldestValue = -1;
     measurements_filtered.alpha = 0.0f;
+    measurements_filtered.app_wind_p = NULL;
+    measurements_filtered.apparent_wind = 0.0f;
+    measurements_filtered.k_app = 0;
 
     //set k to 1 since a real value is not provided
     update_k(1);
+
+    //set k_app to 1 since a real value is not provided
+    update_k_app(1);
 
     #if PRINT_DEBUG == 1
     //printf("init_controller_data \n");
@@ -97,7 +107,40 @@ void init_controller_data(void){
 
 /** Free memory and allocate new space for new dimension
  *
- * @param k new dimension of the moving window
+ * @param k new dimension of the moving window for apparent wind
+*/
+void update_k_app(const uint16_t k){
+
+    //some controls before freeing memory
+    if(k == measurements_filtered.k_app || k == 0)
+        return; //nothing to do
+
+    if(measurements_filtered.app_wind_p != NULL)
+        free(measurements_filtered.app_wind_p); //free memory
+
+    measurements_filtered.app_wind_p = malloc(sizeof(float) * k);
+
+    measurements_filtered.k_app = k;
+
+    //initialize all the elements of alpha_p to 0
+    for(uint16_t i = 0; i < measurements_filtered.k_app; i++){
+        measurements_filtered.app_wind_p[i] = 0.0f;
+    }
+
+    measurements_filtered.oldestValueApp = 0;
+
+    measurements_filtered.apparent_wind = 0.0f;
+
+
+    #if PRINT_DEBUG == 1
+    //printf("update_k k: %d \n", measurements_filtered.k);
+    #endif
+
+}
+
+/** Free memory and allocate new space for new dimension
+ *
+ * @param k new dimension of the moving window for alpha
 */
 void update_k(const uint16_t k){
 
@@ -143,7 +186,45 @@ void update_cog(const float cog_r){
     #endif
 }
 
-/** Update ctrue wind (estimated) direction with a new value supplied by weather station
+/** Update apparent direction with a new value supplied by weather station
+ *
+ * @param app_r apparent wind direction [rad], positive on the right, negative on the left (Opposite to Dumas' convention)
+*/
+void update_app_wind(const float app_r){
+
+    //just for now, save oldest value of apparent wind direction
+    float oldestVal = measurements_filtered.app_wind_p[measurements_filtered.oldestValueApp];
+
+    //delete oldest value in app_wind_p to save app_r
+    measurements_filtered.app_wind_p[measurements_filtered.oldestValueApp] = app_r;
+
+    //update oldest value index
+    measurements_filtered.oldestValueApp++;
+
+    if(measurements_filtered.oldestValueApp >= measurements_filtered.k_app)
+        measurements_filtered.oldestValueApp = 0;
+
+    /* TODO Robust check when apparent angle switches between -pi and pi, the mean
+     * will be 0, but the "true" average apparent wind in this case is not blowing
+     * from the stern, but from the bow!
+    */
+
+    //update apparent wind mean
+//    measurements_filtered.apparent_wind = 0.0f;
+//    for(uint16_t i = 0; i < measurements_filtered.k_app; i++){
+
+//        measurements_filtered.apparent_wind += measurements_filtered.app_wind_p[i];
+//    }
+
+//    measurements_filtered.apparent_wind /= measurements_filtered.k_app;
+
+    measurements_filtered.apparent_wind = measurements_filtered.apparent_wind -
+                                          oldestVal / measurements_filtered.k_app +
+                                          app_r / measurements_filtered.k_app;
+
+}
+
+/** Update true wind (estimated) direction with a new value supplied by weather station
  *
  * @param twd_r true wind direction [rad], positive on the right, negative on the left (Opposite to Dumas' convention)
 */
@@ -243,5 +324,14 @@ float get_alpha(void){
     #endif
 
     return measurements_filtered.alpha;
+}
+
+/** Return the average value of apparent wind direction computed from the last k_app values
+ *
+ * @return moving average value of apparent wind direction
+*/
+float get_app_wind(void){
+
+    return measurements_filtered.apparent_wind;
 }
 

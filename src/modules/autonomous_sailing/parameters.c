@@ -146,13 +146,22 @@ PARAM_DEFINE_INT32(AS_R_LON0_E7, 85605120);
 PARAM_DEFINE_INT32(AS_R_ALT0_E3, 406000);
 
 /**
- * AS_WINDOW, specifies the number of samples for the moving wind average mean.
+ * AS_AL_WIN, specifies the number of samples for the moving average of true wind angle (alpha).
  *
  *
  * @min 1
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_WINDOW, 30);
+PARAM_DEFINE_INT32(AS_AL_WIN, 30);
+
+/**
+ * AS_APP_WIN, specifies the number of samples for the moving average of apparent wind direction.
+ *
+ *
+ * @min 1
+ * @max ?
+ */
+PARAM_DEFINE_INT32(AS_APP_WIN, 3);
 
 /**
  * AS_MEAN_WIND, specifies the mean wind direction [rad], in [-pi, pi].
@@ -300,7 +309,6 @@ static struct pointers_param_qgc_s{
 
     param_t rud_p_gain_pointer;       /**< pointer to param AS_RUD_P*/
     param_t rud_i_gain_pointer;       /**< pointer to param AS_RUD_I*/
-   // param_t sai_p_gain_pointer;       /**< pointer to param AS_SAI_P*/
 
     param_t lat0_pointer;         /**< pointer to param AS_R_LAT0_E7*/
     param_t lon0_pointer;         /**< pointer to param AS_R_LON0_E7*/
@@ -309,7 +317,8 @@ static struct pointers_param_qgc_s{
     param_t stop_tack_roll_pointer;      /**< pointer to param AS_SPTC_R*/
     param_t stop_tack_yaw_pointer;      /**< pointer to param AS_SPTC_Y_D */
 
-    param_t moving_window_pointer;/**< pointer to param AS_WINDOW*/
+    param_t moving_alpha_window_pointer;/**< pointer to param AS_AL_WIN*/
+    param_t moving_apparent_window_pointer;/**< pointer to param AS_APP_WIN*/
 
     param_t mean_wind_pointer;/**< pointer to param AS_MEAN_WIND_R*/
 
@@ -318,7 +327,6 @@ static struct pointers_param_qgc_s{
     param_t alt_tmark_pointer;         /**< pointer to param AS_T_ALT_E3*/
 
     param_t grids_number_pointer;         /**< pointer to param AS_P_TOT_G*/
-    //param_t grid_index_pointer;         /**< pointer to param AS_P_INDEX*/
     param_t grid_x_pointer;         /**< pointer to param AS_P_X_M*/
     param_t grid_add_pointer;         /**< pointer to param AS_P_ADD*/
 
@@ -361,7 +369,8 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.stop_tack_roll_pointer = param_find("AS_SPTC_R");
     pointers_param_qgc.stop_tack_yaw_pointer = param_find("AS_SPTC_Y_D");
 
-    pointers_param_qgc.moving_window_pointer = param_find("AS_WINDOW");
+    pointers_param_qgc.moving_alpha_window_pointer = param_find("AS_AL_WIN");
+    pointers_param_qgc.moving_apparent_window_pointer = param_find("AS_APP_WIN");
 
     pointers_param_qgc.mean_wind_pointer = param_find("AS_MEAN_WIND_R");
 
@@ -447,11 +456,15 @@ void param_update(struct parameters_qgc *params_p,
     //set it in the guidance_module
     set_stop_tack(roll_stop, yaw_stop);
 
-    //----- moving window
+    //----- moving windows
     uint16_t moving_window;
-    param_get(pointers_param_qgc.moving_window_pointer, &moving_window);
+    param_get(pointers_param_qgc.moving_alpha_window_pointer, &moving_window);
     //update window size using API in controller_data.h
     update_k(moving_window);
+
+    param_get(pointers_param_qgc.moving_apparent_window_pointer, &moving_window);
+    //update window size using API in controller_data.h
+    update_k_app(moving_window);
 
     //----- mean wind
     float mean_wind;

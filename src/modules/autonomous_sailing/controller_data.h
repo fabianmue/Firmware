@@ -49,8 +49,11 @@
 /** @brief initialize controller data before starting*/
 void init_controller_data(void);
 
-/** @brief modify size of the moving window*/
+/** @brief modify size of the moving window for alpha angle*/
 void update_k(const uint16_t k);
+
+/** @brief modify size of the moving window for apparent angle*/
+void update_k_app(const uint16_t k);
 
 /** @brief update course over ground with a new value*/
 void update_cog(const float cog_r);
@@ -58,7 +61,13 @@ void update_cog(const float cog_r);
 /** @brief update true wind (estimated) direction with a new value*/
 void update_twd(const float twd_r);
 
+/** @brief update apparent wind direction with a new value*/
+void update_app_wind(const float app_r);
+
 /** @brief get the average value of alpha*/
 float get_alpha(void);
+
+/** @brief get the average value of apparent wind*/
+float get_app_wind(void);
 
 #endif // CONTROLLER_DATA_H
