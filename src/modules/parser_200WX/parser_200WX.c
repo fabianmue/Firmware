@@ -660,7 +660,7 @@ void gp_parser(const char *buffer, const int buffer_length,
             return; //no GPXX found in buffer
 
         //Uncomment for debug
-        //debug_print_until_char(buffer, buffer_length, i, '*');
+        //debug_print_until_char(buffer, buffer_length, i, '*');//cancella
 
         if(buffer[i+2] == 'G' && buffer[i+3] == 'G' && buffer[i+4] == 'A'){
             /*found GPGGA message in buffer, starting from i
