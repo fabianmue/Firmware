@@ -27,6 +27,10 @@ mavlink stream -d /dev/ttyACM0 -s POSITION_TARGET_GLOBAL_INT -r 10
 usleep 100000
 #mavlink stream -d /dev/ttyACM0 -s WIND_SAILING_MSG -r 10
 #usleep 100000
+#mavlink stream -d /dev/ttyACM0 -s WIND_SAILING_MSG -r 3
+#usleep 100000
+#mavlink stream -d /dev/ttyACM0 -s GUID_DEBUG_MSG -r 3
+#usleep 100000
 
 # Exit shell to make it available to MAVLink
 exit

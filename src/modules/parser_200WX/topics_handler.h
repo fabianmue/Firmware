@@ -60,10 +60,10 @@ struct subscribtion_fd_s{
 };
 
 struct published_fd_s{
-    int gps;
-    int wind_sailing;
-    int boat_weather_station;
-    int debug_values;
+    orb_advert_t gps;
+    orb_advert_t wind_sailing;
+    orb_advert_t boat_weather_station;
+    orb_advert_t debug_values;
 };
 
 struct structs_topics_s{

@@ -89,7 +89,7 @@
 #define TIMEOUT_1SEC 1000
 
 //Global buffer for data from 200WX
-char buffer_global[400];
+static char buffer_global[400];
 
 //debug cancella
 //static char buffer_debug[500];
@@ -372,6 +372,9 @@ bool retrieve_data(int *wx_port_pointer,
 	// read UART when px4 sensors are updated
     buffer_length = read(*wx_port_pointer, buffer_global, sizeof(buffer_global));
 
+    //Uncomment for debug
+    //debug_print_nchar(buffer_global, buffer_length, 0, buffer_length); //cancella
+
     if(buffer_length < 1)
         return false;
 
@@ -649,6 +652,7 @@ void gp_parser(const char *buffer, const int buffer_length,
     int local_time_off_min __attribute__((unused)) = 0;
     uint8_t fix_type;
     float vdop;
+    //int start_msg=0;
 
 
     // it's worthless to check if there won't be enough data anyway..
@@ -658,6 +662,8 @@ void gp_parser(const char *buffer, const int buffer_length,
 
         if(i == -1)
             return; //no GPXX found in buffer
+
+        //start_msg = i;//cancella
 
         //Uncomment for debug
         //debug_print_until_char(buffer, buffer_length, i, '*');//cancella
@@ -730,6 +736,10 @@ void gp_parser(const char *buffer, const int buffer_length,
 
                                     //publish gps position only if there is GGA or VTG message.
                                     strs_p->gps_updated = true;
+
+                                    //cancella
+                                    //if(alt > 600)
+                                       // debug_print_nchar(buffer, buffer_length, 0, buffer_length); //cancella
                                 }
                             }
                         }
