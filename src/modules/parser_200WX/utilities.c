@@ -270,3 +270,47 @@ void debug_print_until_char(const char *buffer, const int length, const int star
     warnx("buf_len %d; start %d  real_end %d \n %s \n", length, start, start + i-1, str);
 }
 
+/**
+ * Check if the checksum attached in the nmea sentece after the char '*' is valid.
+ *
+ * Compute the checksum starting from index "start_msg" untill a '*' is found.
+ * Verify that the computed checksum is equal to the one attached after '*'.
+ *
+ * @param buffer        buffer with nmea sentence(s)
+ * @param buffer_length length of param buffer
+ * @param start_msg     position in buffer where the message starts (not '$', but the first letter)
+ * @return              true if computed checksum is equal to the one attached
+ */
+bool is_checksum_ok(const char *buffer, const int16_t buffer_length, const int16_t start_msg){
+
+
+    uint8_t checksum;
+    int16_t i;
+    bool checksum_ok = false;
+    char tmp[2];
+
+    //safety check
+    if(start_msg >= buffer_length)
+        return false; //avoid forbidden acces into buffer
+
+    //compute checksum from the first charachter, until the one before '*'
+    checksum = buffer[start_msg];
+    for(i = start_msg + 1; i < buffer_length && buffer[i] != '*'; i++){
+        checksum = checksum ^ buffer[i];
+    }
+
+    //now buffer[i] should be == '*', at i+1 should start the checksum attached to nmea sentece (2 chars)
+
+    //safety check
+    if((i + 2) >= buffer_length)
+        return false; //not enough byte in buffer to read the checksum attached
+
+    //use temporary buffer to print computed checksum
+    sprintf(tmp, "%02x", checksum);
+
+    if(tmp[0] == buffer[i+1] && tmp[1] == buffer[i+2])
+        checksum_ok = true;
+
+    return checksum_ok;
+}
+

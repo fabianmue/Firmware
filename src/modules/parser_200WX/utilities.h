@@ -77,4 +77,7 @@ void debug_print_nchar(const char *buffer, const int length, const int start, co
 /** @brief Print buffer on terminal */
 void debug_print_until_char(const char *buffer, const int length, const int start, const char stop_char);
 
+/** @brief Check if the checksum after '*' is valid */
+bool is_checksum_ok(const char *buffer, const int16_t buffer_length, const int16_t start_msg);
+
 #endif /* UTILITIES_H_ */
