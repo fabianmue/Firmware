@@ -113,6 +113,9 @@ void init_controller_data(void){
     //set k_app to 1 since a real value is not provided
     update_k_app(1);
 
+    //set k_twd to 1 since a real value is not provided
+    update_k_twd(1);
+
     #if PRINT_DEBUG == 1
     //printf("init_controller_data \n");
     #endif
@@ -281,6 +284,8 @@ void update_twd(const float twd_r){
 
     //set updated flag
     measurements_raw.twd_updated = true;
+
+    //TODO wind between -pi and pi will give as mean value 0, but it is NOT correct!!!
 
     //just for now, save oldest value of twd
     float oldestVal = measurements_filtered.twd_p[measurements_filtered.oldestValueTwd];
