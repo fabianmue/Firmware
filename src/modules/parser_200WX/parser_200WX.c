@@ -390,6 +390,7 @@ bool retrieve_data(int *wx_port_pointer,
 #if GPS_SIMULATION == 1
 
         //GPS signal simulation
+        //TODO add checksum if you want simulate GPS signal, otherwise it doesn't work
 
         char gps_fake[500];
         int length_fake;

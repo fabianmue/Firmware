@@ -128,17 +128,29 @@ void geo_to_race(const struct vehicle_global_position_s *gps_p,
      * a "reflection".
      *
      * Here we compute the final boat coordinate in Race frame by performing:
-     * rotation from NED frame in Race' frame (defined in set_mean_wind_angle),
-     * then we translate the origin of Race' from the origin of NED frame to the top mark,
+     *
+     * 1)rotation from NED frame in Race' frame (defined in set_mean_wind_angle),
+     * using the rotation matrix (Matlab form)
+     *
+     *      R_r'_ned =  [cos(mea_wind)   sin(mean_wind);
+     *                   -sin(mean_wind) cos(mean_wind)];
+     *
+     * then
+     * 2) we can write the homogeneous transformation matrix to convert coordinate
+     * from NED frame to Race' frame using p0 = [n0_dm; e0_dm]
+     *
+     *      T_r'_ned = [R_r'_ned    |   -R_r'_ned * p0
+     *                  0           |   1               ]
+     *
      * then we change the direction of Race' x-axis in order to have the new x-axis
-     * oriented as the wind direction. At this poin we have the Race frane.
+     * oriented as the wind direction. At this poin we have the Race frame.
     */
 
     //transform [north, east] coordinate from NED frame in [x, y] coordinate in Race frame
-    *x_dm_p = -ned_to_race_s.cos_mwd * north_dm + ned_to_race_s.sin_mwd * east_dm +
-            ned_to_race_s.cos_mwd * ned_to_race_s.n0_dm - ned_to_race_s.sin_mwd * ned_to_race_s.e0_dm;
+    *x_dm_p = -ned_to_race_s.cos_mwd * north_dm - ned_to_race_s.sin_mwd * east_dm +
+            ned_to_race_s.cos_mwd * ned_to_race_s.n0_dm + ned_to_race_s.sin_mwd * ned_to_race_s.e0_dm;
 
-    *y_dm_p = ned_to_race_s.sin_mwd * north_dm + ned_to_race_s.cos_mwd * east_dm -
+    *y_dm_p = -ned_to_race_s.sin_mwd * north_dm + ned_to_race_s.cos_mwd * east_dm +
             ned_to_race_s.sin_mwd * ned_to_race_s.n0_dm - ned_to_race_s.cos_mwd * ned_to_race_s.e0_dm;
 
 
