@@ -55,6 +55,9 @@ void update_k(const uint16_t k);
 /** @brief modify size of the moving window for apparent angle*/
 void update_k_app(const uint16_t k);
 
+/** @brief modify size of the moving window for true wind angle*/
+void update_k_twd(const uint16_t k);
+
 /** @brief update course over ground with a new value*/
 void update_cog(const float cog_r);
 
@@ -69,5 +72,8 @@ float get_alpha(void);
 
 /** @brief get the average value of apparent wind*/
 float get_app_wind(void);
+
+/** @brief get the average value oftrue wind direction*/
+float get_twd(void);
 
 #endif // CONTROLLER_DATA_H

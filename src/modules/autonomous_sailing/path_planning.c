@@ -46,6 +46,7 @@
     #define NULL 0
 #endif
 
+#define M_PI_F 3.14159265358979323846f
 
 //grid lines data
 static struct{
@@ -69,7 +70,8 @@ bool read_nex_grid(float *next_grid_p);
 /** @brief advise that current goal grid line has been reached*/
 void reached_current_grid(void);
 
-
+/** @brief get the number of the current grid line to reach (0 to grids_number) s*/
+int16_t get_grid_number(void);
 /**
  * Initialize the grid lines struct. Delete all the old grid lines (if any).
 */
@@ -155,6 +157,9 @@ bool read_nex_grid(float *next_grid_p){
     return false;
 }
 
+/**
+ * Notify that the current grid line has been reached
+*/
 void reached_current_grid(void){
     //update current_goal index if there is at least one new grid line to reach
     if(grid_lines.current_goal < grid_lines.last_goal){
@@ -184,8 +189,52 @@ void notify_tack_completed(void){
     ref_act.should_tack = false;
 }
 
+
+int16_t get_grid_number(void){
+    return grid_lines.current_goal;
+}
+
+void read_new_ref_action(struct reference_actions_s *ref_act_p,
+                         const struct structs_topics_s *strs_p){
+
+    float mean_wind_angle;
+    float twd;
+    int8_t wind_index;
+    int8_t haul_index;
+
+    //get mean wind angle set by QGC in navigation.h
+    mean_wind_angle = get_mean_wind_angle();
+
+    //get mean value of true wind direction read by weather station
+    twd = get_twd();
+
+    //for now, only simple model (A) where only 2 wind directions are allowed
+    /*
+     * consider mean_wind_angle as a new "true" North, so we can
+     * check if the mean true angle is NNW or NNE w.r.t. the mean_wind_angle,
+     * that is, our new North.
+    */
+
+    //rotate twd considering mean_wind_angle as the direction of the new true north
+    twd -= mean_wind_angle;
+
+    //check if twd needs to be constrained between [-pi, pi]
+    if(get_twd() < 0 && twd < -M_PI_F)
+        twd = 2 * M_PI_F + twd;
+    else if(get_twd() > 0 && twd > M_PI_F)
+        twd = twd - 2 * M_PI_F;
+
+    wind_index = (twd > 0) ? 2 : //wind from NNE w.r.t. our new "true" North
+                             1;  //wind from NNW w.r.t. our new "true" North
+
+    //TODO check if haul is ok as function of roll angle
+    haul_index = (strs_p->att.roll > 0) ? 1 : //port haul
+                                          2;  //starbord haul
+
+}
+
 void path_planning(struct reference_actions_s *ref_act_p,
-                   struct structs_topics_s *strs_p){
+                   struct local_position_race_s *local_pos_p){
 
     struct local_position_race_s local_pos;
     float tmp;
@@ -210,7 +259,10 @@ void path_planning(struct reference_actions_s *ref_act_p,
 
             //TODO see appropriate action
             //for now just tack
-            ref_act.should_tack = true;
+            //ref_act.should_tack = true;//ripristina
+
+            //read optimal action computed offline
+            read_new_ref_action(ref_act_p, &local_pos);
         }
     }
 

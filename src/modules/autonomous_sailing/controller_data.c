@@ -69,12 +69,19 @@ static struct{
 static struct{
     float *alpha_p; ///poniter to vector of last K values of true wind angle, [rad], according to Dumas angle definition (Chap 1.3)
     float *app_wind_p;///pointer to vector of last k_app values of apparent wind read by weather station
+    float *twd_p; ///pointer to vector of last k_twd values of true wind read by weather station
+
     uint16_t k;     ///number of elements in alpha_p
     uint16_t k_app;     ///number of elements in app_wind_p
+    uint16_t k_twd;     ///number of elements in twd_p
+
     int16_t oldestValue; ///index of oldest value in alpha_p
     int16_t oldestValueApp; ///index of oldest value in app_wind_p
+    int16_t oldestValueTwd; ///index of oldest value in twd_p
+
     float alpha;    ///moving average value from alpha_p
     float apparent_wind;///average from app_wind_p
+    float twd;///average from twd_p
 }measurements_filtered;
 
 
@@ -90,9 +97,15 @@ void init_controller_data(void){
     measurements_filtered.k = 0;
     measurements_filtered.oldestValue = -1;
     measurements_filtered.alpha = 0.0f;
+
     measurements_filtered.app_wind_p = NULL;
     measurements_filtered.apparent_wind = 0.0f;
     measurements_filtered.k_app = 0;
+
+    measurements_filtered.twd_p = NULL;
+    measurements_filtered.k_twd = 0;
+    measurements_filtered.oldestValueTwd = -1;
+    measurements_filtered.twd = 0.0f;
 
     //set k to 1 since a real value is not provided
     update_k(1);
@@ -130,6 +143,39 @@ void update_k_app(const uint16_t k){
     measurements_filtered.oldestValueApp = 0;
 
     measurements_filtered.apparent_wind = 0.0f;
+
+
+    #if PRINT_DEBUG == 1
+    //printf("update_k k: %d \n", measurements_filtered.k);
+    #endif
+
+}
+
+/** Free memory and allocate new space for new dimension
+ *
+ * @param k new dimension of the moving window for true wind direction
+*/
+void update_k_twd(const uint16_t k){
+
+    //some controls before freeing memory
+    if(k == measurements_filtered.k_twd || k == 0)
+        return; //nothing to do
+
+    if(measurements_filtered.twd_p != NULL)
+        free(measurements_filtered.twd_p); //free memory
+
+    measurements_filtered.twd_p = malloc(sizeof(float) * k);
+
+    measurements_filtered.k_twd = k;
+
+    //initialize all the elements of alpha_p to 0
+    for(uint16_t i = 0; i < measurements_filtered.k_twd; i++){
+        measurements_filtered.twd_p[i] = 0.0f;
+    }
+
+    measurements_filtered.oldestValueTwd = 0;
+
+    measurements_filtered.twd = 0.0f;
 
 
     #if PRINT_DEBUG == 1
@@ -236,6 +282,24 @@ void update_twd(const float twd_r){
     //set updated flag
     measurements_raw.twd_updated = true;
 
+    //just for now, save oldest value of twd
+    float oldestVal = measurements_filtered.twd_p[measurements_filtered.oldestValueTwd];
+
+    //delete oldest value in twd_p to save twd_r
+    measurements_filtered.twd_p[measurements_filtered.oldestValueTwd] = twd_r;
+
+    //update oldest value index
+    measurements_filtered.oldestValueTwd++;
+
+    if(measurements_filtered.oldestValueTwd >= measurements_filtered.k_twd)
+        measurements_filtered.oldestValueTwd = 0;
+
+    //update twd mean
+
+    measurements_filtered.twd = measurements_filtered.twd -
+                                          oldestVal / measurements_filtered.k_twd +
+                                          twd_r / measurements_filtered.k_twd;
+
     #if PRINT_DEBUG == 1
     printf("saved twd %2.3f \n", (double)measurements_raw.twd_r);
     #endif
@@ -333,5 +397,14 @@ float get_alpha(void){
 float get_app_wind(void){
 
     return measurements_filtered.apparent_wind;
+}
+
+/** Return the average value of true wind direction computed from the last k_twd values
+ *
+ * @return moving average value of true wind direction
+*/
+float get_twd(void){
+
+    return measurements_filtered.twd;
 }
 

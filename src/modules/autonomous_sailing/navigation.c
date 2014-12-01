@@ -76,6 +76,7 @@ static struct{
     float cos_mwd;  ///cos(mean wind direction)
     int32_t n0_dm;  ///north distance of origin of race frame from NED origin [dm]
     int32_t e0_dm;  ///east distance of origin of race frame from NED origin [dm]
+    float mean_wind_angle_r;///mean wind angle set by QGC
 }ned_to_race_s;
 
 
@@ -310,7 +311,15 @@ void set_mean_wind_angle(float mean_wind){
 
     ned_to_race_s.cos_mwd = (float)cos(mean_wind);
     ned_to_race_s.sin_mwd = (float)sin(mean_wind);
+    ned_to_race_s.mean_wind_angle_r = mean_wind;
 
+}
+
+/**
+ * get the mean wind angle with respect to true North.
+*/
+float get_mean_wind_angle(void){
+    return ned_to_race_s.mean_wind_angle_r;
 }
 
 /** Set the position of the top mark.

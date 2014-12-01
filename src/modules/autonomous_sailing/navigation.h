@@ -69,4 +69,7 @@ void set_pos_top_mark(const int32_t  *lat_d_e7_p, const int32_t  *lon_d_e7_p, co
 void navigation_module(const struct structs_topics_s *strs_p,
                        struct local_position_race_s *lp_p);
 
+/** @brief get the angle of the mean wind w.r.t. true North*/
+float get_mean_wind_angle(void);
+
 #endif /* NAVIGATION_H_ */
