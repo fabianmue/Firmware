@@ -6,5 +6,6 @@ SRCS				= autonomous_sailing.c \
                                         guidance_module.c \
                                         path_planning.c \
                                         hil_simulation.c \
-                                        simulation_utility.c
+                                        simulation_utility.c \
+                                        reference_actions.c
 					

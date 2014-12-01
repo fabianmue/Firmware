@@ -40,6 +40,7 @@
  */
 
 #include "path_planning.h"
+#include "reference_actions.c"
 
 #ifndef NULL
     #define NULL 0
