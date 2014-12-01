@@ -52,7 +52,7 @@
 #include <poll.h>
 #include <errno.h>
 #include <drivers/drv_hrt.h>
-
+#include <math.h>
 //setting for indoor or outdoor
 #include "settings.h"
 
@@ -765,6 +765,7 @@ void gp_parser(const char *buffer, const int buffer_length,
                 break;
             default:
                 fix_type = 1; //Error, no fix valid found in the message
+                break;
             }
 
             //i+1 is ',' go ahead and then skip 14 comas starting from i
