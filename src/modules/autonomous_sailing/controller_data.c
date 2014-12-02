@@ -57,6 +57,9 @@ void compute_avg(void);
 /** @brief filter new data computing alpha and a new avg value*/
 void filter_new_data(void);
 
+/** @brief compute a robust average of sensor "frame" measurements*/
+float robust_avg_sns(float prev_mean, float old_val, float new_val, const uint16_t k);
+
 //actual raw measurements from parser_200WX
 static struct{
     float cog_r; ///course over ground [rad] (NOT heading), according to Dumas angle definition (Chap 1.3)
@@ -413,3 +416,79 @@ float get_twd(void){
     return measurements_filtered.twd;
 }
 
+/**
+ * @biref extend ang in order to be in [0, sign(ref) * 2 * pi]
+ */
+float extend_angle(float ref, float ang){
+
+    if(ref > 0 && ang < 0)
+        ang = 2 * M_PI_F + ang;
+    else if(ref < 0 && ang > 0)
+        ang = -2 * M_PI_F + ang;
+
+
+    return ang;
+}
+
+/**
+ * float absolute value
+*/
+float my_fabs(float x1, float x2){
+    float diff = x1 -x2;
+
+    return (diff > 0) ? diff : -diff;
+}
+
+/**
+ * Update a pre-exsiting moving mean in a robust way.
+ *
+ * Angles measurements from weather station and GPS are in interval [-pi, pi].
+ *
+ *              0
+ *              |
+ *              |
+ *    -pi/2 ____|____ pi/2
+ *              |
+ *              |
+ *              |
+ *           -pi|pi
+ *
+ *
+ * If an angle switches between -pi and pi, a normal mean will return 0, that is wrong.
+ * This robust mean deletes the oldest value from the old mean and computes a robust mean (without
+ * the problem explained above) with a new value.
+ *
+ * @param old_mean      old mean to update
+ * @param oldest_val    oldest value in old_mean to delete
+ * @param new_val       new value to insert in the new men
+ * @param k             size of the window of the movign average
+ * @return              new robust mean
+*/
+float robust_avg_sns(float prev_mean, float old_val, float new_val, const uint16_t k){
+
+    float new_mean;
+    float ext_old_val;
+    float ext_new_val;
+
+    //extend old and new value in order to be in [0, sign(prev_mean) * 2 * pi]
+    ext_old_val = extend_angle(prev_mean, old_val);
+    ext_new_val = extend_angle(prev_mean, new_val);
+
+    //check which angle (the normal one or the extended one) is "closer" to our previous mean
+    if(my_abs(ext_new_val, prev_mean) < my_abs(new_val, prev_mean))
+        new_val = ext_new_val;
+
+    if(my_abs(ext_old_val, prev_mean) < my_abs(old_val, prev_mean))
+        old_val = ext_old_val;
+
+    //compute a new mean by deleting the oldest value and adding the new one
+    new_mean = prev_mean - old_val / k + new_val / k;
+
+    //make sure new mean is between [-pi, pi]
+    if(new_mean > M_PI_F)
+        new_mean = -2 * M_PI_F + new_mean;
+    else if(new_mean < -M_PI_F)
+        new_mean = 2 * M_PI_F + new_mean;
+
+    return new_mean;
+}
