@@ -409,8 +409,12 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 
     //update actuator value
     strs_p->actuators.control[0] = rudder_command;
-    strs_p->actuators.control[3] = sail_command;
+    //only for presentation
+    //strs_p->actuators.control[3] = sail_command;
 
+    strs_p->actuators.control[3] = (strs_p->wind_sailing.speed_apparent > 0.5f) ? sail_command :
+                                                                                  strs_p->actuators.control[3];
+    //stop presentation
 
 
     //save first debug values for post-processing, other values set in path_planning()
