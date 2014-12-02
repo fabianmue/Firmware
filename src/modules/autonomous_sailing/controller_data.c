@@ -245,7 +245,7 @@ void update_cog(const float cog_r){
 void update_app_wind(const float app_r){
 
     //just for now, save oldest value of apparent wind direction
-    float oldestVal = measurements_filtered.app_wind_p[measurements_filtered.oldestValueApp];
+    float oldest_val = measurements_filtered.app_wind_p[measurements_filtered.oldestValueApp];
 
     //delete oldest value in app_wind_p to save app_r
     measurements_filtered.app_wind_p[measurements_filtered.oldestValueApp] = app_r;
@@ -256,23 +256,14 @@ void update_app_wind(const float app_r){
     if(measurements_filtered.oldestValueApp >= measurements_filtered.k_app)
         measurements_filtered.oldestValueApp = 0;
 
-    /* TODO Robust check when apparent angle switches between -pi and pi, the mean
-     * will be 0, but the "true" average apparent wind in this case is not blowing
-     * from the stern, but from the bow!
-    */
+    //update apparent wind mean using a robust mean
+    measurements_filtered.apparent_wind = robust_avg_sns(measurements_filtered.apparent_wind,
+                                                         oldest_val, app_r,
+                                                         measurements_filtered.k_app);
 
-    //update apparent wind mean
-//    measurements_filtered.apparent_wind = 0.0f;
-//    for(uint16_t i = 0; i < measurements_filtered.k_app; i++){
-
-//        measurements_filtered.apparent_wind += measurements_filtered.app_wind_p[i];
-//    }
-
-//    measurements_filtered.apparent_wind /= measurements_filtered.k_app;
-
-    measurements_filtered.apparent_wind = measurements_filtered.apparent_wind -
-                                          oldestVal / measurements_filtered.k_app +
-                                          app_r / measurements_filtered.k_app;
+//    measurements_filtered.apparent_wind = measurements_filtered.apparent_wind -
+//                                          oldestVal / measurements_filtered.k_app +
+//                                          app_r / measurements_filtered.k_app;
 
 }
 
@@ -291,7 +282,7 @@ void update_twd(const float twd_r){
     //TODO wind between -pi and pi will give as mean value 0, but it is NOT correct!!!
 
     //just for now, save oldest value of twd
-    float oldestVal = measurements_filtered.twd_p[measurements_filtered.oldestValueTwd];
+    float oldest_val = measurements_filtered.twd_p[measurements_filtered.oldestValueTwd];
 
     //delete oldest value in twd_p to save twd_r
     measurements_filtered.twd_p[measurements_filtered.oldestValueTwd] = twd_r;
@@ -302,11 +293,14 @@ void update_twd(const float twd_r){
     if(measurements_filtered.oldestValueTwd >= measurements_filtered.k_twd)
         measurements_filtered.oldestValueTwd = 0;
 
-    //update twd mean
+    //update twd mean using a robust mean
+    measurements_filtered.twd = robust_avg_sns(measurements_filtered.twd,
+                                               oldest_val, twd_r,
+                                               measurements_filtered.k_twd);
 
-    measurements_filtered.twd = measurements_filtered.twd -
-                                          oldestVal / measurements_filtered.k_twd +
-                                          twd_r / measurements_filtered.k_twd;
+//    measurements_filtered.twd = measurements_filtered.twd -
+//                                          oldestVal / measurements_filtered.k_twd +
+//                                          twd_r / measurements_filtered.k_twd;
 
     #if PRINT_DEBUG == 1
     printf("saved twd %2.3f \n", (double)measurements_raw.twd_r);
@@ -431,7 +425,7 @@ float extend_angle(float ref, float ang){
 }
 
 /**
- * float absolute value
+ * float absolute value of the difference
 */
 float my_fabs(float x1, float x2){
     float diff = x1 -x2;
@@ -475,10 +469,10 @@ float robust_avg_sns(float prev_mean, float old_val, float new_val, const uint16
     ext_new_val = extend_angle(prev_mean, new_val);
 
     //check which angle (the normal one or the extended one) is "closer" to our previous mean
-    if(my_abs(ext_new_val, prev_mean) < my_abs(new_val, prev_mean))
+    if(my_fabs(ext_new_val, prev_mean) < my_fabs(new_val, prev_mean))
         new_val = ext_new_val;
 
-    if(my_abs(ext_old_val, prev_mean) < my_abs(old_val, prev_mean))
+    if(my_fabs(ext_old_val, prev_mean) < my_fabs(old_val, prev_mean))
         old_val = ext_old_val;
 
     //compute a new mean by deleting the oldest value and adding the new one

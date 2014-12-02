@@ -70,8 +70,12 @@ bool read_nex_grid(float *next_grid_p);
 /** @brief advise that current goal grid line has been reached*/
 void reached_current_grid(void);
 
-/** @brief get the number of the current grid line to reach (0 to grids_number) s*/
-int16_t get_grid_number(void);
+/** @brief compute the y_index to acces to refernce action matrixes*/
+int16_t compute_y_index(const struct local_position_race_s *local_pos_p);
+
+// /** @brief get the number of the current grid line to reach (0 to grids_number) s*/
+//int16_t get_grid_number(void);
+
 /**
  * Initialize the grid lines struct. Delete all the old grid lines (if any).
 */
@@ -190,17 +194,22 @@ void notify_tack_completed(void){
 }
 
 
-int16_t get_grid_number(void){
-    return grid_lines.current_goal;
-}
+//int16_t get_grid_number(void){
+//    return grid_lines.current_goal;
+//}
 
 void read_new_ref_action(struct reference_actions_s *ref_act_p,
-                         const struct structs_topics_s *strs_p){
+                         const struct structs_topics_s *strs_p,
+                         const struct local_position_race_s *local_pos_p){
 
-    float mean_wind_angle;
-    float twd;
+    float mean_wind_angle;  // mean wind angle set in QGC
+    float twd;              //moving average of true wind measurements
     int8_t wind_index;
     int8_t haul_index;
+    int8_t **matrix_actions;
+    int16_t number_current_line;
+    int16_t y_index;
+    int8_t next_action;
 
     //get mean wind angle set by QGC in navigation.h
     mean_wind_angle = get_mean_wind_angle();
@@ -229,12 +238,104 @@ void read_new_ref_action(struct reference_actions_s *ref_act_p,
 
     //TODO check if haul is ok as function of roll angle
     haul_index = (strs_p->att.roll > 0) ? 1 : //port haul
-                                          2;  //starbord haul
+                                          2;  //starboard haul
 
+    //tacke the appropriate matrix with optimal action for our current wind and haul states
+    if(wind_index == 1 && haul_index == 1)
+        matrix_actions = actions_w1_h1;
+    else if(wind_index == 1 && haul_index == 2)
+        matrix_actions = actions_w1_h2;
+    else if(wind_index == 2 && haul_index == 1)
+        matrix_actions = actions_w2_h1;
+    else if(wind_index == 2 && haul_index == 2)
+        matrix_actions = actions_w2_h2;
+
+    //take number of current grid line to reach
+    number_current_line = grid_lines.current_goal;
+    //sanity check
+    if(number_current_line < 0 || number_current_line >= grids_number)
+        return;
+
+    //compute y index (index of the closest discrete point in our grid line)
+    y_index = compute_y_index(local_pos_p);
+
+
+    //read next action to perform
+    next_action = matrix_actions[number_current_line][y_index];
+
+    /*
+     * reference actions computed offline.
+     * 1 = sail on starboard haul
+     * 2 = sail on port haul
+     * 3 = tack on the inner line
+     * -1 = error in accessing matrix
+    */
+
+    //for now just use alpha_star set by QCG, TODO see which alpha has to be used
+    switch(next_action){
+    case 1:
+        ref_act_p->alpha_star = ref_act.alpha_star;//TODO alpha_star from QGC HAS TO BE POSITIVE
+        break;
+
+    case 2:
+        ref_act_p->alpha_star = -ref_act.alpha_star;//TODO alpha_star from QGC HAS TO BE POSITIVE
+        break;
+    case 3:
+        ref_act_p->alpha_star = -ref_act_p->alpha_star; //after tack change haul
+        ref_act_p->should_tack = true;
+        break;
+    }
+}
+
+int16_t compute_y_index(const struct local_position_race_s *local_pos_p){
+
+    float division;
+    float y_abs;
+    int16_t y_index;
+    bool y_race_positive = true;
+    int16_t y_max_val =  y_max[grid_lines.current_goal];
+
+
+    if(local_pos_p->y_race_m >= 0){
+        y_abs = local_pos_p->y_race_m;
+        y_race_positive = true;
+    }
+    else{
+        y_abs = -local_pos_p->y_race_m;
+        y_race_positive = false;
+    }
+
+    //see how many times d_y (defined in reference_actions.c) is in y_abs
+    division = y_abs / d_y;
+
+    //test which discrete y-position on our grid line is closer
+
+    //if y_race is greater (smaller) than our farthest y-discrete point on the right (left), take it as y-point
+    if(division > y_max_val)
+        y_index = (y_race_positive) ?   2 * y_max_val :
+                                        0;
+    else{
+        //see which y-discrete-point is closer
+        if((division - ((int32_t)division) ) > 0.5f){
+            if(y_race_positive)
+                y_index = y_max_val + (int32_t)division + 1;//closer to the right point
+            else
+                y_index = y_max_val - (int32_t)division - 1;//closer to the left point
+        }
+        else{
+            if(y_race_positive)
+                y_index = y_max_val  + (int32_t)division;//closer to left point
+            else
+                y_index = y_max_val - (int32_t)division;//closer to the right point
+        }
+    }
+
+
+    return y_index;
 }
 
 void path_planning(struct reference_actions_s *ref_act_p,
-                   struct local_position_race_s *local_pos_p){
+                   struct structs_topics_s *strs_p){
 
     struct local_position_race_s local_pos;
     float tmp;
@@ -246,8 +347,13 @@ void path_planning(struct reference_actions_s *ref_act_p,
     if(current_grid_valid){
         //see if we have reached or exceeded our goal
         if(local_pos.x_race_m <= current_grid_goal_x_m){
+
+            //read optimal action computed offline
+            read_new_ref_action(ref_act_p, strs_p, &local_pos);
+
             //Advise we have reached the current target grid line
             reached_current_grid();
+
             //tacke the new grid line, if any
             if(read_nex_grid(&tmp)){
                 //there is at least another grid line to reach
@@ -260,9 +366,6 @@ void path_planning(struct reference_actions_s *ref_act_p,
             //TODO see appropriate action
             //for now just tack
             //ref_act.should_tack = true;//ripristina
-
-            //read optimal action computed offline
-            read_new_ref_action(ref_act_p, &local_pos);
         }
     }
 

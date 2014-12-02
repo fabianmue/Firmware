@@ -296,7 +296,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 update_twd(params.twd_sim);
             #endif
             //look into optimal path planning maps for reference actions
-            path_planning(&ref_act, &strs);//ripristina
+            path_planning(&ref_act, &strs);
             //fine cancella
         #endif
 
