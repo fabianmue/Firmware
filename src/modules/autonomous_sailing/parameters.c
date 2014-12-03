@@ -219,15 +219,6 @@ PARAM_DEFINE_INT32(AS_T_ALT_E3, 406000);
 PARAM_DEFINE_INT32(AS_P_TOT_G, 1);
 
 /**
- * Index of grid line to be set
- *
- *
- * @min 0
- * @max AS_P_TOT_G - 1
- */
-//PARAM_DEFINE_INT32(AS_P_INDEX, 0);
-
-/**
  * X coordinate in Race frame of grid line of index AS_P_INDEX, [m]
  *
  *
@@ -235,6 +226,7 @@ PARAM_DEFINE_INT32(AS_P_TOT_G, 1);
  * @max ?
  */
 PARAM_DEFINE_FLOAT(AS_P_X_M, 0);
+
 /**
  * 1 if you want to add a new grid line
  *
@@ -243,6 +235,27 @@ PARAM_DEFINE_FLOAT(AS_P_X_M, 0);
  * @max 1
  */
 PARAM_DEFINE_INT32(AS_P_ADD, 0);
+
+//------------------------------------- Parameters for starting optimal path following ----
+
+/**
+ * 1 if you want to start following optimal path trajectory
+ *
+ *
+ * @min 0
+ * @max 1
+ */
+PARAM_DEFINE_INT32(ASP_START, 0);
+
+/**
+ * Absolute value of reference angle with respect true wind [rad]
+ *
+ * Use Dumas'convention.
+ *
+ * @min 0
+ * @max pi
+ */
+PARAM_DEFINE_FLOAT(ASP_ALST_ANG, 0.5f);
 
 #if SIMULATION_FLAG == 1
 
@@ -340,6 +353,12 @@ static struct pointers_param_qgc_s{
     param_t grid_x_pointer;         /**< pointer to param AS_P_X_M*/
     param_t grid_add_pointer;         /**< pointer to param AS_P_ADD*/
 
+    //-- params for optimal path
+    param_t start_path_following_pointer;         /**< pointer to param ASP_START*/
+    param_t abs_alpha_star_pointer;         /**< pointer to param ASP_ALST_ANG*/
+
+    //-- simulation params
+
     #if SIMULATION_FLAG == 1
     param_t lat_sim_pointer; /**< pointer to param ASIM_LAT_E7*/
     param_t lon_sim_pointer; /**< pointer to param ASIM_LON_E7*/
@@ -393,6 +412,10 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.grid_x_pointer    = param_find("AS_P_X_M");
 
     pointers_param_qgc.grid_add_pointer = param_find("AS_P_ADD");
+
+    //-- optimal path following
+    pointers_param_qgc.start_path_following_pointer = param_find("ASP_START");
+    pointers_param_qgc.abs_alpha_star_pointer = param_find("ASP_ALST_ANG");
 
     #if SIMULATION_FLAG == 1
 
@@ -521,6 +544,16 @@ void param_update(struct parameters_qgc *params_p,
 
     //set the new number of grid lines
     set_grids_number(grids_number);
+
+    //-- params for optimal path following
+    //use these params only if update_path_param is true
+    if(update_path_param){
+        float abs_alpha_star;
+        int32_t start_following;
+
+        param_get(pointers_param_qgc.abs_alpha_star_pointer, &abs_alpha_star);
+        param_get(pointers_param_qgc.start_path_following_pointer, &start_following);
+    }
 
     #if SIMULATION_FLAG == 1
 

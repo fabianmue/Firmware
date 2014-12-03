@@ -56,6 +56,11 @@ static struct{
     int16_t last_goal;      ///index of the last grid line to reach
 }grid_lines;
 
+//optimal path following data
+static struct{
+    bool following_traj; ///true if we're already following the optimal trajector
+};
+
 static struct reference_actions_s ref_act = {.alpha_star = 0.5f, .should_tack = false};
 
 static float current_grid_goal_x_m = 0.0f;//current x coordinate of grid line to reach [m]

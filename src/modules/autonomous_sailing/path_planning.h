@@ -80,4 +80,7 @@ void set_alpha_star(float val);
 /** @brief notify that the tack maneuver is completed*/
 void notify_tack_completed(void);
 
+/** @brief start following optimal trajectory computed offline*/
+void start_following_optimal_path(int32_t start, float abs_alpha_star);
+
 #endif /* PATH_PLANNING_DATA_H_ */
