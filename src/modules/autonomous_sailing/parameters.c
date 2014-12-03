@@ -553,6 +553,11 @@ void param_update(struct parameters_qgc *params_p,
 
         param_get(pointers_param_qgc.abs_alpha_star_pointer, &abs_alpha_star);
         param_get(pointers_param_qgc.start_path_following_pointer, &start_following);
+        //make sure abs_alpha_star is positive
+        abs_alpha_star = (abs_alpha_star > 0) ? abs_alpha_star : -abs_alpha_star;
+
+        //pass these two values to path_planning module
+        start_following_optimal_path(start_following, abs_alpha_star);
     }
 
     #if SIMULATION_FLAG == 1

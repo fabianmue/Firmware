@@ -32,53 +32,35 @@
  *
  ****************************************************************************/
 /**
- * @file reference_actions.c
+ * @file reference_actions.h
  *
  * Reference actions computed offline.
  *
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#include "reference_actions.h"
+#include <stdint.h>
 
-/**
- * reference actions computed offline.
- * 1 = sail on starboard haul
- * 2 = sail on port haul
- * 3 = tack on the inner line
- * -1 = error in accessing matrix
-*/
+#ifndef REFERENCE_ACTIONS_H
+#define REFERENCE_ACTIONS_H
 
-int16_t total_grids_number = 4;
-
-float d_x = 1290.000;/// N / L
-
-float d_y = 300.945;
-
-int8_t actions_w1_h1[4][19] = {
-{2,2,2,2,2,2,2,2,2,2,2,2,2,-1,-1,-1,-1,-1,-1},
-{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
-{2,2,2,2,2,2,2,2,2,2,2,2,2,-1,-1,-1,-1,-1,-1},
-{2,2,2,2,2,2,2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}};
-
-int8_t actions_w1_h2[4][19] = {
-{2,2,2,2,2,2,2,2,2,2,2,2,2,-1,-1,-1,-1,-1,-1},
-{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3},
-{2,2,2,2,2,2,2,2,2,2,2,3,3,-1,-1,-1,-1,-1,-1},
-{2,2,1,1,1,1,3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}};
-
-int8_t actions_w2_h1[4][19] = {
-{3,3,3,3,3,3,3,3,3,3,3,3,3,-1,-1,-1,-1,-1,-1},
-{2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2},
-{2,2,3,3,3,3,3,3,3,3,3,2,2,-1,-1,-1,-1,-1,-1},
-{2,1,1,1,1,2,2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}};
-
-int8_t actions_w2_h2[4][19] = {
-{3,3,3,3,3,3,3,3,3,3,3,3,3,-1,-1,-1,-1,-1,-1},
-{2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-{2,3,3,3,3,3,3,3,3,3,3,3,3,-1,-1,-1,-1,-1,-1},
-{2,3,3,3,3,3,3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}};
-
-int16_t y_max[4] = {6,9,6,3};
+#include <stdint.h>
 
 
+extern int16_t total_grids_number;
+
+extern float d_x;
+
+extern float d_y;
+
+extern int8_t actions_w1_h1[4][19];
+
+extern int8_t actions_w1_h2[4][19];
+
+extern int8_t actions_w2_h1[4][19];
+
+extern int8_t actions_w2_h2[4][19];
+
+extern int16_t y_max[4];
+
+#endif // REFERENCE_ACTIONS_H

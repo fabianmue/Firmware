@@ -40,7 +40,7 @@
  */
 
 #include "path_planning.h"
-#include "reference_actions.c"
+#include "reference_actions.h"
 
 #ifndef NULL
     #define NULL 0
@@ -59,7 +59,12 @@ static struct{
 //optimal path following data
 static struct{
     bool following_traj; ///true if we're already following the optimal trajector
-};
+    float abs_alpha_star;///absolute value of Velocity Made Good
+}following_path_planning = {
+                            .following_traj = false,
+                            .abs_alpha_star = 0.5f
+                            };
+
 
 static struct reference_actions_s ref_act = {.alpha_star = 0.5f, .should_tack = false};
 
@@ -78,8 +83,14 @@ void reached_current_grid(void);
 /** @brief compute the y_index to acces to refernce action matrixes*/
 int16_t compute_y_index(const struct local_position_race_s *local_pos_p);
 
-// /** @brief get the number of the current grid line to reach (0 to grids_number) s*/
-//int16_t get_grid_number(void);
+/** @brief acces to optimal reference actions computed offline and take the next action to perform. */
+void read_new_ref_action(const struct structs_topics_s *strs_p,
+                         const struct local_position_race_s *local_pos_p);
+
+/** @boref based on actual local position, see which y discrete coordinate is closest.*/
+int16_t compute_y_index(const struct local_position_race_s *local_pos_p);
+
+
 
 /**
  * Initialize the grid lines struct. Delete all the old grid lines (if any).
@@ -199,12 +210,18 @@ void notify_tack_completed(void){
 }
 
 
-//int16_t get_grid_number(void){
-//    return grid_lines.current_goal;
-//}
-
-void read_new_ref_action(struct reference_actions_s *ref_act_p,
-                         const struct structs_topics_s *strs_p,
+/**
+ * Acces to optimal reference actions computed offline and take the next action to perform.
+ *
+ * See which is the closest discrete position (used in optimal path planning) to our actual position.
+ * Read wind and haul data, and combined these data to the current grid line index
+ * to acces to an appropriate matrix of optimal actions.
+ * Based on the closest y-coordinate on the actual grid line, read the next action to perform.
+ *
+ * @param strs_p        struct with sensors information
+ * @param local_pos_p   local position coordinate in Race fram
+*/
+void read_new_ref_action(const struct structs_topics_s *strs_p,
                          const struct local_position_race_s *local_pos_p){
 
     float mean_wind_angle;  // mean wind angle set in QGC
@@ -225,11 +242,11 @@ void read_new_ref_action(struct reference_actions_s *ref_act_p,
     //for now, only simple model (A) where only 2 wind directions are allowed
     /*
      * consider mean_wind_angle as a new "true" North, so we can
-     * check if the mean true angle is NNW or NNE w.r.t. the mean_wind_angle,
+     * check if the mean true angle (twd) is NNW or NNE w.r.t. the mean_wind_angle,
      * that is, our new North.
     */
 
-    //rotate twd considering mean_wind_angle as the direction of the new true north
+    //rotate twd considering mean_wind_angle as the direction of the new true North
     twd -= mean_wind_angle;
 
     //check if twd needs to be constrained between [-pi, pi]
@@ -255,10 +272,10 @@ void read_new_ref_action(struct reference_actions_s *ref_act_p,
     else if(wind_index == 2 && haul_index == 2)
         matrix_actions = actions_w2_h2;
 
-    //take number of current grid line to reach
+    //take the number of the current grid line we'vw just reached
     number_current_line = grid_lines.current_goal;
     //sanity check
-    if(number_current_line < 0 || number_current_line >= grids_number)
+    if(number_current_line < 0 || number_current_line >= total_grids_number)
         return;
 
     //compute y index (index of the closest discrete point in our grid line)
@@ -276,22 +293,25 @@ void read_new_ref_action(struct reference_actions_s *ref_act_p,
      * -1 = error in accessing matrix
     */
 
-    //for now just use alpha_star set by QCG, TODO see which alpha has to be used
+    //for now just use one alpha for model A, set by QCG
     switch(next_action){
     case 1:
-        ref_act_p->alpha_star = ref_act.alpha_star;//TODO alpha_star from QGC HAS TO BE POSITIVE
+        ref_act.alpha_star = following_path_planning.abs_alpha_star;
         break;
 
     case 2:
-        ref_act_p->alpha_star = -ref_act.alpha_star;//TODO alpha_star from QGC HAS TO BE POSITIVE
+        ref_act.alpha_star = -following_path_planning.abs_alpha_star;
         break;
     case 3:
-        ref_act_p->alpha_star = -ref_act_p->alpha_star; //after tack change haul
-        ref_act_p->should_tack = true;
+        ref_act.alpha_star = -ref_act.alpha_star; //after tack change haul
+        ref_act.should_tack = true;
         break;
     }
 }
 
+/**
+ * Based on actual local position, see which y discrete coordinate is closest.
+*/
 int16_t compute_y_index(const struct local_position_race_s *local_pos_p){
 
     float division;
@@ -339,6 +359,16 @@ int16_t compute_y_index(const struct local_position_race_s *local_pos_p){
     return y_index;
 }
 
+/**
+ * Based on a new global position estimate, see if there is a new reference action to perform.
+ *
+ * Convert the global position coordinate in a coordinate in Race frame.
+ * Check if we've passed a grid line, if so, see which is the next reference action
+ * to pass to guidance_module.
+ *
+ * @param ref_act_p     pointer to struct which will contain next reference action to perform
+ * @param strs_p        pointer to struct with data
+*/
 void path_planning(struct reference_actions_s *ref_act_p,
                    struct structs_topics_s *strs_p){
 
@@ -353,13 +383,16 @@ void path_planning(struct reference_actions_s *ref_act_p,
         //see if we have reached or exceeded our goal
         if(local_pos.x_race_m <= current_grid_goal_x_m){
 
-            //read optimal action computed offline
-            read_new_ref_action(ref_act_p, strs_p, &local_pos);
+            //read optimal action computed offline, if QCG told us to use it
+            if(following_path_planning.following_traj == true)
+                read_new_ref_action(strs_p, &local_pos);
+            else
+                ref_act.should_tack = true;
 
             //Advise we have reached the current target grid line
             reached_current_grid();
 
-            //tacke the new grid line, if any
+            //take the new grid line, if any
             if(read_nex_grid(&tmp)){
                 //there is at least another grid line to reach
                 current_grid_goal_x_m = tmp;
@@ -367,10 +400,6 @@ void path_planning(struct reference_actions_s *ref_act_p,
             }
             else //no new grid line to reach
                 current_grid_valid = false;
-
-            //TODO see appropriate action
-            //for now just tack
-            //ref_act.should_tack = true;//ripristina
         }
     }
 
@@ -384,4 +413,42 @@ void path_planning(struct reference_actions_s *ref_act_p,
     strs_p->boat_guidance_debug.alpha_star = ref_act_p->alpha_star;
     strs_p->boat_guidance_debug.should_tack = (ref_act_p->should_tack == true) ? 1 : 0;
 
+}
+
+/**
+ * Start/stop following a pre-computed optimal path.
+ *
+ * @param start             1 if you wish to start following the pre-computed optimal path, 0 otherwise
+ * @param abs_alpha_star    absolute value of true wind angle (alpha angle, in Dumas' thesis)
+*/
+void start_following_optimal_path(int32_t start, float abs_alpha_star){
+
+    if(start){
+        //check if we're starting now
+        if(following_path_planning.following_traj == false){
+            //set up the total number of grid lines
+            set_grids_number(total_grids_number);
+            //we'are starting, add grid lines for optimal path computed offline
+            for(int16_t i = total_grids_number; i > 0; i--){
+                //the first grid line is the farthest from the top mark, etc..
+                set_grid(i * d_x);
+            }
+            //remember that we've just started
+            following_path_planning.following_traj = true;
+            //set the absolute value of alpha star
+            following_path_planning.abs_alpha_star = abs_alpha_star;
+        }
+        //else: nothing to do, we're already following optimal trajectory
+    }
+    else{
+        //stop following optimal path
+        if(following_path_planning.following_traj == true){
+            //stop following optimal trajectory, delete all the grid lines inserted
+            set_grids_number(1);
+
+            //remember that we stopped following optimal trajecotry
+            following_path_planning.following_traj = false;
+        }
+        //else: nothing to do, we're not following any trajectory
+    }
 }
