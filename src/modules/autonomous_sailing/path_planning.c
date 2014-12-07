@@ -84,11 +84,17 @@ void reached_current_grid(void);
 int16_t compute_y_index(const struct local_position_race_s *local_pos_p);
 
 /** @brief acces to optimal reference actions computed offline and take the next action to perform. */
-void read_new_ref_action(const struct structs_topics_s *strs_p,
+void read_new_ref_action(struct structs_topics_s *strs_p,
                          const struct local_position_race_s *local_pos_p);
 
 /** @boref based on actual local position, see which y discrete coordinate is closest.*/
 int16_t compute_y_index(const struct local_position_race_s *local_pos_p);
+
+/** @brief set number of grid lines*/
+void set_grids_number(int16_t size);
+
+/** @brief set the x coordinate of a grid line*/
+void set_grid(float x_m);
 
 
 
@@ -135,6 +141,19 @@ void set_grids_number(int16_t size){
 }
 
 /**
+ * Set the new number of total grid lines. Calling this function you will delete
+ * all the previous grid lines. Next grid line to be reach is that one with index = 0
+ * Grid line number can be set by QGroundControl ONLY IF the boat is not
+ * following the optimal path pre_computed offline
+ *
+ * @param size  total number of new grid lines
+*/
+void set_grids_number_qgc(int16_t size){
+    if(following_path_planning.following_traj == false)
+        set_grids_number(size);
+}
+
+/**
  * Set the x coordinate in Race frame of a grid line.
  * Grid lines are inserted with a FIFO policy.
  *
@@ -156,6 +175,19 @@ void set_grid(float x_m){
         current_grid_valid = true;
     }
 
+}
+
+/**
+ * Set the x coordinate in Race frame of a grid line.
+ * Grid lines are inserted with a FIFO policy.
+ * A Grid line can be set by QGroundControl ONLY IF the boat is not
+ * following the optimal path pre_computed offline
+ *
+ * @param x_m       x coordinate [m] in Race frame of the new grid line
+*/
+void set_grid_qgc(float x_m){
+    if(following_path_planning.following_traj == false)
+        set_grid(x_m);
 }
 
 /**
@@ -221,14 +253,14 @@ void notify_tack_completed(void){
  * @param strs_p        struct with sensors information
  * @param local_pos_p   local position coordinate in Race fram
 */
-void read_new_ref_action(const struct structs_topics_s *strs_p,
+void read_new_ref_action(struct structs_topics_s *strs_p,
                          const struct local_position_race_s *local_pos_p){
 
     float mean_wind_angle;  // mean wind angle set in QGC
     float twd;              //moving average of true wind measurements
     int8_t wind_index;
     int8_t haul_index;
-    int8_t **matrix_actions;
+    int8_t (*matrix_actions)[actions_row_number][actions_col_number]; //pointer to next action matrix
     int16_t number_current_line;
     int16_t y_index;
     int8_t next_action;
@@ -262,28 +294,27 @@ void read_new_ref_action(const struct structs_topics_s *strs_p,
     haul_index = (strs_p->att.roll > 0) ? 1 : //port haul
                                           2;  //starboard haul
 
-    //tacke the appropriate matrix with optimal action for our current wind and haul states
+    //take the appropriate matrix with optimal action for our current wind and haul states
     if(wind_index == 1 && haul_index == 1)
-        matrix_actions = actions_w1_h1;
+        matrix_actions = &actions_w1_h1;
     else if(wind_index == 1 && haul_index == 2)
-        matrix_actions = actions_w1_h2;
+        matrix_actions = &actions_w1_h2;
     else if(wind_index == 2 && haul_index == 1)
-        matrix_actions = actions_w2_h1;
+        matrix_actions = &actions_w2_h1;
     else if(wind_index == 2 && haul_index == 2)
-        matrix_actions = actions_w2_h2;
+        matrix_actions = &actions_w2_h2;
 
-    //take the number of the current grid line we'vw just reached
+    //take the number of the current grid line we've just reached
     number_current_line = grid_lines.current_goal;
     //sanity check
     if(number_current_line < 0 || number_current_line >= total_grids_number)
         return;
 
-    //compute y index (index of the closest discrete point in our grid line)
+    //compute y index (index of the closest discrete point in our grid line
     y_index = compute_y_index(local_pos_p);
 
-
     //read next action to perform
-    next_action = matrix_actions[number_current_line][y_index];
+    next_action = matrix_actions[0][number_current_line][y_index];
 
     /*
      * reference actions computed offline.
@@ -315,46 +346,35 @@ void read_new_ref_action(const struct structs_topics_s *strs_p,
 int16_t compute_y_index(const struct local_position_race_s *local_pos_p){
 
     float division;
-    float y_abs;
     int16_t y_index;
-    bool y_race_positive = true;
     int16_t y_max_val =  y_max[grid_lines.current_goal];
 
-
-    if(local_pos_p->y_race_m >= 0){
-        y_abs = local_pos_p->y_race_m;
-        y_race_positive = true;
-    }
-    else{
-        y_abs = -local_pos_p->y_race_m;
-        y_race_positive = false;
-    }
-
-    //see how many times d_y (defined in reference_actions.c) is in y_abs
-    division = y_abs / d_y;
+    //see how many times d_y (defined in reference_actions.c) is in local_pos_p->y_race_m
+    division = local_pos_p->y_race_m / d_y;
 
     //test which discrete y-position on our grid line is closer
 
     //if y_race is greater (smaller) than our farthest y-discrete point on the right (left), take it as y-point
-    if(division > y_max_val)
-        y_index = (y_race_positive) ?   2 * y_max_val :
-                                        0;
+    if(division > y_max_val || division < - y_max_val){
+        y_index = (division > 0) ?   2 * y_max_val :
+                                     0;
+    }
     else{
         //see which y-discrete-point is closer
-        if((division - ((int32_t)division) ) > 0.5f){
-            if(y_race_positive)
-                y_index = y_max_val + (int32_t)division + 1;//closer to the right point
+        if(division > 0){
+            if(division - (int32_t)division > 0.5f)
+                y_index = y_max_val + (int32_t)division + 1;    //closer to the right point
             else
-                y_index = y_max_val - (int32_t)division - 1;//closer to the left point
+               y_index = y_max_val + (int32_t)division;         //closer to the left point
         }
+
         else{
-            if(y_race_positive)
-                y_index = y_max_val  + (int32_t)division;//closer to left point
+            if(division - (int32_t)division < -0.5f)
+                y_index = y_max_val + (int32_t)division - 1;    //closer to the left point
             else
-                y_index = y_max_val - (int32_t)division;//closer to the right point
+               y_index = y_max_val + (int32_t)division;         //closer to the right point
         }
     }
-
 
     return y_index;
 }
@@ -386,8 +406,11 @@ void path_planning(struct reference_actions_s *ref_act_p,
             //read optimal action computed offline, if QCG told us to use it
             if(following_path_planning.following_traj == true)
                 read_new_ref_action(strs_p, &local_pos);
-            else
+            else{
                 ref_act.should_tack = true;
+                //change alpha to change haul
+                ref_act.alpha_star = -ref_act.alpha_star;
+            }
 
             //Advise we have reached the current target grid line
             reached_current_grid();
@@ -401,10 +424,6 @@ void path_planning(struct reference_actions_s *ref_act_p,
             else{
                 //no new grid line to reach
                 current_grid_valid = false;
-                if(following_path_planning.following_traj == false){
-                    //change alpha to change haul
-                    ref_act.alpha_star = -ref_act.alpha_star;
-                }
             }
         }
     }

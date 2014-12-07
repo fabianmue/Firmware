@@ -48,19 +48,17 @@
 
 
 extern int16_t total_grids_number;
-
 extern float d_x;
-
 extern float d_y;
 
-extern int8_t actions_w1_h1[4][19];
+extern int8_t actions_w1_h1[2][13];
+extern int8_t actions_w1_h2[2][13];
+extern int8_t actions_w2_h1[2][13];
+extern int8_t actions_w2_h2[2][13];
 
-extern int8_t actions_w1_h2[4][19];
+extern int16_t actions_row_number;
+extern int16_t actions_col_number;
 
-extern int8_t actions_w2_h1[4][19];
-
-extern int8_t actions_w2_h2[4][19];
-
-extern int16_t y_max[4];
+extern int16_t y_max[2];
 
 #endif // REFERENCE_ACTIONS_H

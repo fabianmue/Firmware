@@ -539,11 +539,11 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.grid_add_pointer, &temp);
     if(temp > 0 && update_path_param){
         //set x coordinate of a new grid line
-        set_grid(grids_x_m);
+        set_grid_qgc(grids_x_m);
     }
 
     //set the new number of grid lines
-    set_grids_number(grids_number);
+    set_grids_number_qgc(grids_number);
 
     //-- params for optimal path following
     //use these params only if update_path_param is true

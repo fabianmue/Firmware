@@ -221,17 +221,17 @@ bool is_tack_completed(const struct structs_topics_s *strs_p){
 
     #if SIMULATION_FLAG == 1
 
-//    float pos_p[] = {0.1f,
-//                     0.2f,
-//                     0.3f,
-//                     0.4f};
+    float pos_p[] = {0.1f,
+                     0.2f,
+                     0.3f,
+                     0.4f};
 
-//    float val_p[] = {roll_stop_tack(strs_p->boat_weather_station.roll_r, 1),
-//                    (float)yaw_stop_tack(strs_p->att.yaw, 0),
-//                     strs_p->att.yaw,
-//                    tack_data.yaw_before_tack[0]};
+    float val_p[] = {roll_stop_tack(strs_p->boat_weather_station.roll_r, 1),
+                    (float)yaw_stop_tack(strs_p->att.yaw, 0),
+                     strs_p->att.yaw,
+                    tack_data.yaw_before_tack[0]};
 
-//    print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
+    print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
     #endif
 
     //return logic "and" between these two conditions
