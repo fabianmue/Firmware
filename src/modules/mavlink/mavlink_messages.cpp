@@ -2037,7 +2037,7 @@ public:
 
     unsigned get_size()
     {
-        return 4 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 6 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
     }
 
 private:
@@ -2081,6 +2081,16 @@ protected:
 
             snprintf(msg.name, sizeof(msg.name), "next grid");
             msg.value = boat_guidance_debug.next_grid_line;
+
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "twd mean");
+            msg.value = boat_guidance_debug.twd_mean;
+
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "app mean");
+            msg.value = boat_guidance_debug.app_mean;
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 

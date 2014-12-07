@@ -418,4 +418,6 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     strs_p->boat_guidance_debug.alpha = alpha;
     strs_p->boat_guidance_debug.rudder_action = rudder_command;
     strs_p->boat_guidance_debug.sail_action = sail_command;
+    strs_p->boat_guidance_debug.twd_mean = get_twd();
+    strs_p->boat_guidance_debug.app_mean = get_app_wind();
 }

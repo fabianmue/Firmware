@@ -239,7 +239,7 @@ PARAM_DEFINE_INT32(AS_P_ADD, 0);
 //------------------------------------- Parameters for starting optimal path following ----
 
 /**
- * 1 if you want to start following optimal path trajectory
+ * 1 if you want to start following optimal path trajectory, 0 if yo want to insert each grid line
  *
  *
  * @min 0

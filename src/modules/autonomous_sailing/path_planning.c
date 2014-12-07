@@ -398,8 +398,14 @@ void path_planning(struct reference_actions_s *ref_act_p,
                 current_grid_goal_x_m = tmp;
                 current_grid_valid = true;
             }
-            else //no new grid line to reach
+            else{
+                //no new grid line to reach
                 current_grid_valid = false;
+                if(following_path_planning.following_traj == false){
+                    //change alpha to change haul
+                    ref_act.alpha_star = -ref_act.alpha_star;
+                }
+            }
         }
     }
 

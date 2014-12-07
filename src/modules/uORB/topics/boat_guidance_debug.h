@@ -51,6 +51,8 @@ struct boat_guidance_debug_s {
     float x_race;               ///current x-coordinate [m] in Race frame
     float y_race;               ///current y-coordinate [m] in Race frame
     uint8_t should_tack;         ///1 if boat should tack  as soon as possibile
+    float twd_mean;             /**< True wind diretion mean value*/
+    float app_mean;             /**< Apparent wind direction mean value*/
 };
 
 ORB_DECLARE(boat_guidance_debug);
