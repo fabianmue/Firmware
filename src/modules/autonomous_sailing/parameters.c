@@ -256,10 +256,10 @@ PARAM_DEFINE_INT32(AS_P_ADD, 0);
 //------------------------------------- Parameters for starting optimal path following ----
 
 /**
- * 1 if you want to start following optimal path trajectory, 0 if yo want to insert each grid line
+ * 1 if you want to start following optimal path trajectory, 0 or -1 if you want to insert each grid line
  *
  *
- * @min 0
+ * @min -1
  * @max 1
  */
 PARAM_DEFINE_INT32(ASP_START, 0);

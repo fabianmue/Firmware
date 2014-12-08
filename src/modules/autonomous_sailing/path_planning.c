@@ -448,7 +448,7 @@ void path_planning(struct reference_actions_s *ref_act_p,
 */
 void start_following_optimal_path(int32_t start, float abs_alpha_star){
 
-    if(start){
+    if(start > 0){
         //check if we're starting now
         if(following_path_planning.following_traj == false){
             //set up the total number of grid lines
