@@ -319,8 +319,8 @@ bool yaw_stop_tack(float angle, uint8_t index_yaw){
      * Angle is 0 on the true North, -pi/2 on West, -pi on South, pi/2 on East, etc.
      *
      * If the boat during the tack maneuver is steering on the left, we must pay attention if the
-     * stern passes through South coming from the West side and going to the East side.
-     * If the boat is steering on the right, we must pay attention if the stern passes through South
+     * bow passes through South coming from the West side and going to the East side.
+     * If the boat is steering on the right, we must pay attention if the bow passes through South
      * coming from the East side and going to the West side.
      * In these special cases, we must "extend" the angle, ranging from -2pi to 2pi to avoid
      * possibile errors due to yaw missing measurements by sensors.
