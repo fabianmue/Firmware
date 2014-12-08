@@ -1754,6 +1754,8 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_GUIDANCE.x_race = buf.boat_guidance_debug.x_race;
             log_msg.body.log_BOAT_GUIDANCE.y_race = buf.boat_guidance_debug.y_race;
             log_msg.body.log_BOAT_GUIDANCE.should_tack = buf.boat_guidance_debug.should_tack;
+            log_msg.body.log_BOAT_GUIDANCE.twd_mean = buf.boat_guidance_debug.twd_mean;
+            log_msg.body.log_BOAT_GUIDANCE.app_mean = buf.boat_guidance_debug.app_mean;
             LOGBUFFER_WRITE_AND_COUNT(BGUD);
         }
 

@@ -57,6 +57,9 @@ void compute_avg(void);
 /** @brief filter new data computing alpha and a new avg value*/
 void filter_new_data(void);
 
+/** @brief compute a robust average of sensor "frame" measurements*/
+float robust_avg_sns(float prev_mean, float old_val, float new_val, const uint16_t k);
+
 //actual raw measurements from parser_200WX
 static struct{
     float cog_r; ///course over ground [rad] (NOT heading), according to Dumas angle definition (Chap 1.3)
@@ -69,12 +72,19 @@ static struct{
 static struct{
     float *alpha_p; ///poniter to vector of last K values of true wind angle, [rad], according to Dumas angle definition (Chap 1.3)
     float *app_wind_p;///pointer to vector of last k_app values of apparent wind read by weather station
+    float *twd_p; ///pointer to vector of last k_twd values of true wind read by weather station
+
     uint16_t k;     ///number of elements in alpha_p
     uint16_t k_app;     ///number of elements in app_wind_p
+    uint16_t k_twd;     ///number of elements in twd_p
+
     int16_t oldestValue; ///index of oldest value in alpha_p
     int16_t oldestValueApp; ///index of oldest value in app_wind_p
+    int16_t oldestValueTwd; ///index of oldest value in twd_p
+
     float alpha;    ///moving average value from alpha_p
     float apparent_wind;///average from app_wind_p
+    float twd;///average from twd_p
 }measurements_filtered;
 
 
@@ -90,15 +100,24 @@ void init_controller_data(void){
     measurements_filtered.k = 0;
     measurements_filtered.oldestValue = -1;
     measurements_filtered.alpha = 0.0f;
+
     measurements_filtered.app_wind_p = NULL;
     measurements_filtered.apparent_wind = 0.0f;
     measurements_filtered.k_app = 0;
+
+    measurements_filtered.twd_p = NULL;
+    measurements_filtered.k_twd = 0;
+    measurements_filtered.oldestValueTwd = -1;
+    measurements_filtered.twd = 0.0f;
 
     //set k to 1 since a real value is not provided
     update_k(1);
 
     //set k_app to 1 since a real value is not provided
     update_k_app(1);
+
+    //set k_twd to 1 since a real value is not provided
+    update_k_twd(1);
 
     #if PRINT_DEBUG == 1
     //printf("init_controller_data \n");
@@ -130,6 +149,39 @@ void update_k_app(const uint16_t k){
     measurements_filtered.oldestValueApp = 0;
 
     measurements_filtered.apparent_wind = 0.0f;
+
+
+    #if PRINT_DEBUG == 1
+    //printf("update_k k: %d \n", measurements_filtered.k);
+    #endif
+
+}
+
+/** Free memory and allocate new space for new dimension
+ *
+ * @param k new dimension of the moving window for true wind direction
+*/
+void update_k_twd(const uint16_t k){
+
+    //some controls before freeing memory
+    if(k == measurements_filtered.k_twd || k == 0)
+        return; //nothing to do
+
+    if(measurements_filtered.twd_p != NULL)
+        free(measurements_filtered.twd_p); //free memory
+
+    measurements_filtered.twd_p = malloc(sizeof(float) * k);
+
+    measurements_filtered.k_twd = k;
+
+    //initialize all the elements of alpha_p to 0
+    for(uint16_t i = 0; i < measurements_filtered.k_twd; i++){
+        measurements_filtered.twd_p[i] = 0.0f;
+    }
+
+    measurements_filtered.oldestValueTwd = 0;
+
+    measurements_filtered.twd = 0.0f;
 
 
     #if PRINT_DEBUG == 1
@@ -193,7 +245,7 @@ void update_cog(const float cog_r){
 void update_app_wind(const float app_r){
 
     //just for now, save oldest value of apparent wind direction
-    float oldestVal = measurements_filtered.app_wind_p[measurements_filtered.oldestValueApp];
+    float oldest_val = measurements_filtered.app_wind_p[measurements_filtered.oldestValueApp];
 
     //delete oldest value in app_wind_p to save app_r
     measurements_filtered.app_wind_p[measurements_filtered.oldestValueApp] = app_r;
@@ -204,23 +256,14 @@ void update_app_wind(const float app_r){
     if(measurements_filtered.oldestValueApp >= measurements_filtered.k_app)
         measurements_filtered.oldestValueApp = 0;
 
-    /* TODO Robust check when apparent angle switches between -pi and pi, the mean
-     * will be 0, but the "true" average apparent wind in this case is not blowing
-     * from the stern, but from the bow!
-    */
+    //update apparent wind mean using a robust mean
+    measurements_filtered.apparent_wind = robust_avg_sns(measurements_filtered.apparent_wind,
+                                                         oldest_val, app_r,
+                                                         measurements_filtered.k_app);
 
-    //update apparent wind mean
-//    measurements_filtered.apparent_wind = 0.0f;
-//    for(uint16_t i = 0; i < measurements_filtered.k_app; i++){
-
-//        measurements_filtered.apparent_wind += measurements_filtered.app_wind_p[i];
-//    }
-
-//    measurements_filtered.apparent_wind /= measurements_filtered.k_app;
-
-    measurements_filtered.apparent_wind = measurements_filtered.apparent_wind -
-                                          oldestVal / measurements_filtered.k_app +
-                                          app_r / measurements_filtered.k_app;
+//    measurements_filtered.apparent_wind = measurements_filtered.apparent_wind -
+//                                          oldestVal / measurements_filtered.k_app +
+//                                          app_r / measurements_filtered.k_app;
 
 }
 
@@ -235,6 +278,29 @@ void update_twd(const float twd_r){
 
     //set updated flag
     measurements_raw.twd_updated = true;
+
+    //TODO wind between -pi and pi will give as mean value 0, but it is NOT correct!!!
+
+    //just for now, save oldest value of twd
+    float oldest_val = measurements_filtered.twd_p[measurements_filtered.oldestValueTwd];
+
+    //delete oldest value in twd_p to save twd_r
+    measurements_filtered.twd_p[measurements_filtered.oldestValueTwd] = twd_r;
+
+    //update oldest value index
+    measurements_filtered.oldestValueTwd++;
+
+    if(measurements_filtered.oldestValueTwd >= measurements_filtered.k_twd)
+        measurements_filtered.oldestValueTwd = 0;
+
+    //update twd mean using a robust mean
+    measurements_filtered.twd = robust_avg_sns(measurements_filtered.twd,
+                                               oldest_val, twd_r,
+                                               measurements_filtered.k_twd);
+
+//    measurements_filtered.twd = measurements_filtered.twd -
+//                                          oldestVal / measurements_filtered.k_twd +
+//                                          twd_r / measurements_filtered.k_twd;
 
     #if PRINT_DEBUG == 1
     printf("saved twd %2.3f \n", (double)measurements_raw.twd_r);
@@ -335,3 +401,88 @@ float get_app_wind(void){
     return measurements_filtered.apparent_wind;
 }
 
+/** Return the average value of true wind direction computed from the last k_twd values
+ *
+ * @return moving average value of true wind direction
+*/
+float get_twd(void){
+
+    return measurements_filtered.twd;
+}
+
+/**
+ * @biref extend ang in order to be in [0, sign(ref) * 2 * pi]
+ */
+float extend_angle(float ref, float ang){
+
+    if(ref > 0 && ang < 0)
+        ang = 2 * M_PI_F + ang;
+    else if(ref < 0 && ang > 0)
+        ang = -2 * M_PI_F + ang;
+
+
+    return ang;
+}
+
+/**
+ * float absolute value of the difference
+*/
+float my_fabs(float x1, float x2){
+    float diff = x1 -x2;
+
+    return (diff > 0) ? diff : -diff;
+}
+
+/**
+ * Update a pre-exsiting moving mean in a robust way.
+ *
+ * Angles measurements from weather station and GPS are in interval [-pi, pi].
+ *
+ *              0
+ *              |
+ *              |
+ *    -pi/2 ____|____ pi/2
+ *              |
+ *              |
+ *              |
+ *           -pi|pi
+ *
+ *
+ * If an angle switches between -pi and pi, a normal mean will return 0, that is wrong.
+ * This robust mean deletes the oldest value from the old mean and computes a robust mean (without
+ * the problem explained above) with a new value.
+ *
+ * @param old_mean      old mean to update
+ * @param oldest_val    oldest value in old_mean to delete
+ * @param new_val       new value to insert in the new men
+ * @param k             size of the window of the movign average
+ * @return              new robust mean
+*/
+float robust_avg_sns(float prev_mean, float old_val, float new_val, const uint16_t k){
+
+    float new_mean;
+    float ext_old_val;
+    float ext_new_val;
+
+    //extend old and new value in order to be in [0, sign(prev_mean) * 2 * pi]
+    ext_old_val = extend_angle(prev_mean, old_val);
+    ext_new_val = extend_angle(prev_mean, new_val);
+
+    //check which angle (the normal one or the extended one) is "closer" to our previous mean
+    if(my_fabs(ext_new_val, prev_mean) < my_fabs(new_val, prev_mean))
+        new_val = ext_new_val;
+
+    if(my_fabs(ext_old_val, prev_mean) < my_fabs(old_val, prev_mean))
+        old_val = ext_old_val;
+
+    //compute a new mean by deleting the oldest value and adding the new one
+    new_mean = prev_mean - old_val / k + new_val / k;
+
+    //make sure new mean is between [-pi, pi]
+    if(new_mean > M_PI_F)
+        new_mean = -2 * M_PI_F + new_mean;
+    else if(new_mean < -M_PI_F)
+        new_mean = 2 * M_PI_F + new_mean;
+
+    return new_mean;
+}

@@ -117,6 +117,23 @@ PARAM_DEFINE_FLOAT(AS_RUD_P, 0.03f);
  */
 PARAM_DEFINE_FLOAT(AS_RUD_I, 0.0f);
 
+/**
+ * Constant used in conditionl integral to adjust den.
+ *
+ *
+ * @min 0
+ * @max ?
+ */
+PARAM_DEFINE_FLOAT(AS_RUD_C, 1.0f);
+
+/**
+ * 1 if you wish to use a condition integral PI. 0 otherwise
+ *
+ * @min 0
+ * @max 1
+ */
+PARAM_DEFINE_INT32(AS_RUD_CONDPI, 1);
+
 
 /**
  * Latitude of origin of NED system, in degrees * E7.
@@ -146,22 +163,31 @@ PARAM_DEFINE_INT32(AS_R_LON0_E7, 85605120);
 PARAM_DEFINE_INT32(AS_R_ALT0_E3, 406000);
 
 /**
- * AS_AL_WIN, specifies the number of samples for the moving average of true wind angle (alpha).
+ * AS_WIN_AL, specifies the number of samples for the moving average of true wind angle (alpha).
  *
  *
  * @min 1
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_AL_WIN, 30);
+PARAM_DEFINE_INT32(AS_WIN_AL, 30);
 
 /**
- * AS_APP_WIN, specifies the number of samples for the moving average of apparent wind direction.
+ * AS_WIN_APP, specifies the number of samples for the moving average of apparent wind direction.
  *
  *
  * @min 1
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_APP_WIN, 3);
+PARAM_DEFINE_INT32(AS_WIN_APP, 3);
+
+/**
+ * AS_WIN_TWD, specifies the number of samples for the moving average of true wind direction.
+ *
+ *
+ * @min 1
+ * @max ?
+ */
+PARAM_DEFINE_INT32(AS_WIN_TWD, 3);
 
 /**
  * AS_MEAN_WIND, specifies the mean wind direction [rad], in [-pi, pi].
@@ -210,15 +236,6 @@ PARAM_DEFINE_INT32(AS_T_ALT_E3, 406000);
 PARAM_DEFINE_INT32(AS_P_TOT_G, 1);
 
 /**
- * Index of grid line to be set
- *
- *
- * @min 0
- * @max AS_P_TOT_G - 1
- */
-//PARAM_DEFINE_INT32(AS_P_INDEX, 0);
-
-/**
  * X coordinate in Race frame of grid line of index AS_P_INDEX, [m]
  *
  *
@@ -226,6 +243,7 @@ PARAM_DEFINE_INT32(AS_P_TOT_G, 1);
  * @max ?
  */
 PARAM_DEFINE_FLOAT(AS_P_X_M, 0);
+
 /**
  * 1 if you want to add a new grid line
  *
@@ -234,6 +252,27 @@ PARAM_DEFINE_FLOAT(AS_P_X_M, 0);
  * @max 1
  */
 PARAM_DEFINE_INT32(AS_P_ADD, 0);
+
+//------------------------------------- Parameters for starting optimal path following ----
+
+/**
+ * 1 if you want to start following optimal path trajectory, 0 if yo want to insert each grid line
+ *
+ *
+ * @min 0
+ * @max 1
+ */
+PARAM_DEFINE_INT32(ASP_START, 0);
+
+/**
+ * Absolute value of reference angle with respect true wind [rad]
+ *
+ * Use Dumas'convention.
+ *
+ * @min 0
+ * @max pi
+ */
+PARAM_DEFINE_FLOAT(ASP_ALST_ANG, 0.5f);
 
 #if SIMULATION_FLAG == 1
 
@@ -309,6 +348,8 @@ static struct pointers_param_qgc_s{
 
     param_t rud_p_gain_pointer;       /**< pointer to param AS_RUD_P*/
     param_t rud_i_gain_pointer;       /**< pointer to param AS_RUD_I*/
+    param_t rud_c_pointer;       /**< pointer to param AS_RUD_C*/
+    param_t rud_conditional_pi_pointer;       /**< pointer to param AS_RUD_CONDPI*/
 
     param_t lat0_pointer;         /**< pointer to param AS_R_LAT0_E7*/
     param_t lon0_pointer;         /**< pointer to param AS_R_LON0_E7*/
@@ -317,8 +358,9 @@ static struct pointers_param_qgc_s{
     param_t stop_tack_roll_pointer;      /**< pointer to param AS_SPTC_R*/
     param_t stop_tack_yaw_pointer;      /**< pointer to param AS_SPTC_Y_D */
 
-    param_t moving_alpha_window_pointer;/**< pointer to param AS_AL_WIN*/
-    param_t moving_apparent_window_pointer;/**< pointer to param AS_APP_WIN*/
+    param_t moving_alpha_window_pointer;/**< pointer to param AS_WIN_AL*/
+    param_t moving_apparent_window_pointer;/**< pointer to param AS_WIN_APP*/
+    param_t moving_twd_window_pointer;/**< pointer to param AS_WIN_TWD*/
 
     param_t mean_wind_pointer;/**< pointer to param AS_MEAN_WIND_R*/
 
@@ -329,6 +371,12 @@ static struct pointers_param_qgc_s{
     param_t grids_number_pointer;         /**< pointer to param AS_P_TOT_G*/
     param_t grid_x_pointer;         /**< pointer to param AS_P_X_M*/
     param_t grid_add_pointer;         /**< pointer to param AS_P_ADD*/
+
+    //-- params for optimal path
+    param_t start_path_following_pointer;         /**< pointer to param ASP_START*/
+    param_t abs_alpha_star_pointer;         /**< pointer to param ASP_ALST_ANG*/
+
+    //-- simulation params
 
     #if SIMULATION_FLAG == 1
     param_t lat_sim_pointer; /**< pointer to param ASIM_LAT_E7*/
@@ -361,6 +409,8 @@ void param_init(struct parameters_qgc *params_p,
 
     pointers_param_qgc.rud_p_gain_pointer  = param_find("AS_RUD_P");
     pointers_param_qgc.rud_i_gain_pointer  = param_find("AS_RUD_I");
+    pointers_param_qgc.rud_c_pointer  = param_find("AS_RUD_C");
+    pointers_param_qgc.rud_conditional_pi_pointer  = param_find("AS_RUD_CONDPI");
 
     pointers_param_qgc.lat0_pointer    = param_find("AS_R_LAT0_E7");
     pointers_param_qgc.lon0_pointer    = param_find("AS_R_LON0_E7");
@@ -369,8 +419,9 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.stop_tack_roll_pointer = param_find("AS_SPTC_R");
     pointers_param_qgc.stop_tack_yaw_pointer = param_find("AS_SPTC_Y_D");
 
-    pointers_param_qgc.moving_alpha_window_pointer = param_find("AS_AL_WIN");
-    pointers_param_qgc.moving_apparent_window_pointer = param_find("AS_APP_WIN");
+    pointers_param_qgc.moving_alpha_window_pointer = param_find("AS_WIN_AL");
+    pointers_param_qgc.moving_apparent_window_pointer = param_find("AS_WIN_APP");
+    pointers_param_qgc.moving_twd_window_pointer = param_find("AS_WIN_TWD");
 
     pointers_param_qgc.mean_wind_pointer = param_find("AS_MEAN_WIND_R");
 
@@ -382,6 +433,10 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.grid_x_pointer    = param_find("AS_P_X_M");
 
     pointers_param_qgc.grid_add_pointer = param_find("AS_P_ADD");
+
+    //-- optimal path following
+    pointers_param_qgc.start_path_following_pointer = param_find("ASP_START");
+    pointers_param_qgc.abs_alpha_star_pointer = param_find("ASP_ALST_ANG");
 
     #if SIMULATION_FLAG == 1
 
@@ -423,11 +478,18 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.sail_positions_pointer, &positions_temp);
     set_sail_positions(positions_temp);
 
-    //----- p_gain for rudder PI
-    param_get(pointers_param_qgc.rud_p_gain_pointer, &(params_p->rudder_p_gain));
+    //----- param for rudder PI
+    float rud_p;
+    float rud_i;
+    float rud_c;
+    int32_t use_cond_pi;
 
-    //----- i_gain for rudder PI
-    param_get(pointers_param_qgc.rud_i_gain_pointer, &(params_p->rudder_i_gain));
+    param_get(pointers_param_qgc.rud_p_gain_pointer, &rud_p);
+    param_get(pointers_param_qgc.rud_i_gain_pointer, &rud_i);
+    param_get(pointers_param_qgc.rud_c_pointer, &rud_c);
+    param_get(pointers_param_qgc.rud_conditional_pi_pointer, &use_cond_pi);
+
+    set_pi_rudder_data(rud_p, rud_i, rud_c, use_cond_pi);
 
     //p_gain for sail P
     //param_get(pointers_param_qgc.sai_p_gain_pointer, &(params_p->sail_p_gain));
@@ -466,6 +528,10 @@ void param_update(struct parameters_qgc *params_p,
     //update window size using API in controller_data.h
     update_k_app(moving_window);
 
+    param_get(pointers_param_qgc.moving_twd_window_pointer, &moving_window);
+    //update window size using API in controller_data.h
+    update_k_twd(moving_window);
+
     //----- mean wind
     float mean_wind;
     param_get(pointers_param_qgc.mean_wind_pointer, &mean_wind);
@@ -501,11 +567,26 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.grid_add_pointer, &temp);
     if(temp > 0 && update_path_param){
         //set x coordinate of a new grid line
-        set_grid(grids_x_m);
+        set_grid_qgc(grids_x_m);
     }
 
     //set the new number of grid lines
-    set_grids_number(grids_number);
+    set_grids_number_qgc(grids_number);
+
+    //-- params for optimal path following
+    //use these params only if update_path_param is true
+    if(update_path_param){
+        float abs_alpha_star;
+        int32_t start_following;
+
+        param_get(pointers_param_qgc.abs_alpha_star_pointer, &abs_alpha_star);
+        param_get(pointers_param_qgc.start_path_following_pointer, &start_following);
+        //make sure abs_alpha_star is positive
+        abs_alpha_star = (abs_alpha_star > 0) ? abs_alpha_star : -abs_alpha_star;
+
+        //pass these two values to path_planning module
+        start_following_optimal_path(start_following, abs_alpha_star);
+    }
 
     #if SIMULATION_FLAG == 1
 

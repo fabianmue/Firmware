@@ -89,7 +89,7 @@
 #define TIMEOUT_1SEC 1000
 
 //Global buffer for data from 200WX
-static char buffer_global[400];
+static char buffer_global[500];
 
 //debug cancella
 //static char buffer_debug[500];

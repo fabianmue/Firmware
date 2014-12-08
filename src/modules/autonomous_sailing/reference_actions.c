@@ -39,7 +39,7 @@
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#include <stdint.h>
+#include "reference_actions.h"
 
 /**
  * reference actions computed offline.
@@ -48,5 +48,32 @@
  * 3 = tack on the inner line
  * -1 = error in accessing matrix
 */
+
+int16_t total_grids_number = 2;
+
+float d_x = 50.0f;/// N / L
+
+float d_y = 50.0f;
+
+int8_t actions_w1_h1[2][13] = {
+{3,3,3,3,3,3,3,3,3,3,3,3,3},
+{3,3,3,3,3,3,3,-1,-1,-1,-1,-1,-1}};
+
+int8_t actions_w1_h2[2][13] = {
+{3,3,3,3,3,3,3,3,3,3,3,3,3},
+{3,3,3,3,3,3,3,-1,-1,-1,-1,-1,-1}};
+
+int8_t actions_w2_h1[2][13] = {
+{3,3,3,3,3,3,3,3,3,3,3,3,3},
+{3,3,3,3,3,3,3,-1,-1,-1,-1,-1,-1}};
+
+int8_t actions_w2_h2[2][13] = {
+{3,3,3,3,3,3,3,3,3,3,3,3,3},
+{3,3,3,3,3,3,3,-1,-1,-1,-1,-1,-1}};
+
+int16_t actions_row_number = 2;
+int16_t actions_col_number = 13;
+
+int16_t y_max[2] = {6,3};
 
 

@@ -48,12 +48,12 @@ static float sum_error_pi = 0.0f; ///error sum from iterations of guidance_modul
 
 //static data for tack action
 static struct{
-    bool boat_is_tacking;
-    float tack_rudder_command;
-    float roll_before_tack[2];
-    float yaw_before_tack[2];
-    float roll_stop_tack;
-    float yaw_stop_tack;
+    bool boat_is_tacking;       ///true if boat is performing a tack maneuver
+    float tack_rudder_command;  ///value of the rudder command during tack
+    float roll_before_tack[2];  ///roll angles (from EKF and weather station) before tacking
+    float yaw_before_tack[2];   ///yaw angles (from EKF and weather station) before tacking
+    float roll_stop_tack;       ///value used to check first condition, @see roll_stop_tack
+    float yaw_stop_tack;        ///value used to check second condition, @see yaw_stop_tack
 }tack_data =    {
                     .boat_is_tacking = false,//true if boat is performing a tack maneuver
                     .tack_rudder_command = 0.0f,
@@ -74,10 +74,21 @@ static struct{
                             .command_quantum = SAIL_SATURATION/4.0f //initial guess: 4 available positions
                         };
 
+//stic data for rudder PI controller
+static struct{
+    float p;                ///proportional gain
+    float i;                ///integral gain
+    float c;                ///constant for condition integral
+    bool use_conditional;   ///1 if PI with condition integral is in use
+} pi_rudder_data =  {
+                        .p = 0.0f,
+                        .i = 0.0f,
+                        .c = 1.0f,
+                        .use_conditional = true
+                    };
 
 /** @brief PI controller with conditional integration*/
-float pi_controller(const float *ref_p, const float *meas_p,
-                    const struct parameters_qgc *param_qgc_p);
+float pi_controller(const float *ref_p, const float *meas_p);
 
 /** @brief if the boat should tack, perform tack maneuver*/
 float tack_action(struct reference_actions_s *ref_act_p,
@@ -109,8 +120,10 @@ void set_stop_tack(float roll_stop, float yaw_stop){
 
 /** PI controller to compute the input for the rudder servo motor.
  *
- * Perform ret(t) = P * error(t) + I_c * sum_{k = 0}^{t}(error(k)) where
- * the constant I_c = I / (1 + error(t)^2). P and I are qcg parameters.
+ * If a conditional PI is in use, perform ret(t) = P * error(t) + I_c * sum_{k = 0}^{t}(error(k))
+ * where the constant I_c = I / (1 + c * error(t)^2).
+ * Otherwise use a normal digital PI: ret(t) = P * error(t) + I * sum_{k = 0}^{t}(error(k))
+ * P and I are qcg parameters.
  *
  * @param ref_p         pointer to reference value
  * @param meas_p        pointer to measurements value
@@ -118,27 +131,52 @@ void set_stop_tack(float roll_stop, float yaw_stop){
  *
  * @return input value for actuator of rudder
 */
-float pi_controller(const float *ref_p, const float *meas_p,
-                    const struct parameters_qgc *param_qgc_p){
+float pi_controller(const float *ref_p, const float *meas_p){
 
     float error;
-    float i_conditioned; //integral condition constant
+    float i_gain; //integral constant
     float action;
 
     error = *ref_p - *meas_p;
 
-    //integral constant for conditional integration, this is for anti-wind up!
-    i_conditioned = param_qgc_p->rudder_i_gain / (1.0f + error * error);
+    if(pi_rudder_data.use_conditional){
+        //integral constant for conditional integration, this is for anti-wind up!
+        i_gain = pi_rudder_data.i / (1.0f + pi_rudder_data.c * error * error);
+    }
+    else{
+        //use normal digital PI
+        i_gain = pi_rudder_data.i;
+    }
 
     //update sum error
     sum_error_pi += error;
 
-    //TODO check if sum_error_pi has to be set to 0 once in a while
+    //TODO check if below is ok
+    if(sum_error_pi > M_PI_F)
+        sum_error_pi = M_PI_F;
+    else if(sum_error_pi < -M_PI_F)
+        sum_error_pi = -M_PI_F;
 
     //command = P * error + I * sum{error}
-    action = param_qgc_p->rudder_p_gain * error + i_conditioned * sum_error_pi;
+    action = pi_rudder_data.p * error + i_gain * sum_error_pi;
 
     return action;
+}
+
+/**
+ * Set data of PI.
+ *
+ * @param p                 proportional gain
+ * @param i                 integral gain
+ * @param c                 used in conditional integral
+ * @param use_conditional   1 if you wish to use the conditionl integral
+*/
+void set_pi_rudder_data(float p, float i, float c, int32_t use_conditional){
+
+    pi_rudder_data.p = p;
+    pi_rudder_data.i = i;
+    pi_rudder_data.c = c;
+    pi_rudder_data.use_conditional = (use_conditional > 0) ? true : false;
 }
 
 /** Perform tack maneuver.
@@ -219,7 +257,7 @@ bool is_tack_completed(const struct structs_topics_s *strs_p){
     second_cond = yaw_stop_tack(strs_p->att.yaw, 0) ||
                      yaw_stop_tack(strs_p->boat_weather_station.heading_tn, 1);
 
-    #if SIMULATION_FLAG == 1
+//    #if SIMULATION_FLAG == 1
 
 //    float pos_p[] = {0.1f,
 //                     0.2f,
@@ -232,7 +270,7 @@ bool is_tack_completed(const struct structs_topics_s *strs_p){
 //                    tack_data.yaw_before_tack[0]};
 
 //    print_debug_mode(pos_p, val_p, sizeof(pos_p) / sizeof(float), strs_p);
-    #endif
+//    #endif
 
     //return logic "and" between these two conditions
     return (first_cond && second_cond);
@@ -387,7 +425,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
         //if the boat should not tack, compute rudder action to follow reference alpha
 
         //PI controller for rudder
-        rudder_command = pi_controller(&(ref_act_p->alpha_star), &alpha, param_qgc_p);
+        rudder_command = pi_controller(&(ref_act_p->alpha_star), &alpha);
     }
 
     //sails control only if AS_SAIL param from QGC is negative
@@ -422,4 +460,6 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     strs_p->boat_guidance_debug.alpha = alpha;
     strs_p->boat_guidance_debug.rudder_action = rudder_command;
     strs_p->boat_guidance_debug.sail_action = sail_command;
+    strs_p->boat_guidance_debug.twd_mean = get_twd();
+    strs_p->boat_guidance_debug.app_mean = get_app_wind();
 }

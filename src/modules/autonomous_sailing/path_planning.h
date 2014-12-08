@@ -64,11 +64,11 @@ struct reference_actions_s{
 /** @brief Initialize the grid lines struct.*/
 void init_grids(void);
 
-/** @brief set number of grid lines*/
-void set_grids_number(int16_t size);
+/** @brief set number of grid lines from QGroundControl*/
+void set_grids_number_qgc(int16_t size);
 
-/** @brief set the x coordinate of a grid line*/
-void set_grid(float x_m);
+/** @brief set the x coordinate of a grid line from QGroundControl*/
+void set_grid_qgc(float x_m);
 
 /** @brief based on gps position decide reference actions*/
 void path_planning(struct reference_actions_s *ref_act_p,
@@ -79,5 +79,8 @@ void set_alpha_star(float val);
 
 /** @brief notify that the tack maneuver is completed*/
 void notify_tack_completed(void);
+
+/** @brief start following optimal trajectory computed offline*/
+void start_following_optimal_path(int32_t start, float abs_alpha_star);
 
 #endif /* PATH_PLANNING_DATA_H_ */

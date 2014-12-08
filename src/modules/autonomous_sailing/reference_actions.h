@@ -32,40 +32,33 @@
  *
  ****************************************************************************/
 /**
- * @file guidance_module.h
+ * @file reference_actions.h
  *
- * Guidance module.
- * Implementation of controller(s) used to make the boat sailing autonomously.
+ * Reference actions computed offline.
  *
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#ifndef GUIDANCE_MODULE_H
-#define GUIDANCE_MODULE_H
+#include <stdint.h>
 
-#include <math.h>
+#ifndef REFERENCE_ACTIONS_H
+#define REFERENCE_ACTIONS_H
 
-#include "path_planning.h"
-#include "parameters.h"
-#include "topics_handler.h"
-#include "controller_data.h"
-#include "simulation_utility.h"
+#include <stdint.h>
 
-#define RUDDER_SATURATION 0.9f
-#define SAIL_SATURATION 0.56f
 
-/** @brief Implement next control action*/
-void guidance_module(struct reference_actions_s *ref_act_p,
-                     const struct parameters_qgc *param_qgc_p,
-                     struct structs_topics_s *strs_p);
+extern int16_t total_grids_number;
+extern float d_x;
+extern float d_y;
 
-/** @brief Set the stop value to see if the tack maneuver is completed*/
-void set_stop_tack(float roll_stop, float yaw_stop);
+extern int8_t actions_w1_h1[2][13];
+extern int8_t actions_w1_h2[2][13];
+extern int8_t actions_w2_h1[2][13];
+extern int8_t actions_w2_h2[2][13];
 
-/** @brief Set the number of positions the sail can be at*/
-void set_sail_positions(int32_t num);
+extern int16_t actions_row_number;
+extern int16_t actions_col_number;
 
-/** @brief Set data of the PI which controls rudder*/
-void set_pi_rudder_data(float p, float i, float c, int32_t use_conditional);
+extern int16_t y_max[2];
 
-#endif //GUIDANCE_MODULE_H
+#endif // REFERENCE_ACTIONS_H

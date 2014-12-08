@@ -72,7 +72,7 @@
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
 
 #if SIMULATION_FLAG == 1 //defined in parameter.h
-    #define TIMEOUT_POLL 200 //ms between every simulation
+    #define TIMEOUT_POLL 400 //ms between every simulation
 #else
     #define TIMEOUT_POLL 1000 //normal usage set to 1 sec the timeout
 #endif
@@ -296,7 +296,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 update_twd(params.twd_sim);
             #endif
             //look into optimal path planning maps for reference actions
-            path_planning(&ref_act, &strs);//ripristina
+            path_planning(&ref_act, &strs);
             //fine cancella
         #endif
 
@@ -310,7 +310,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
         orb_publish(ORB_ID(boat_guidance_debug), pubs.boat_guidance_debug_pub, &(strs.boat_guidance_debug));
 
         #if SIMULATION_FLAG == 1
-            strs.airspeed.true_airspeed_m_s = get_app_wind();
+            //strs.airspeed.true_airspeed_m_s = ref_act.alpha_star;
             orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
             //fine cancella
         #endif
