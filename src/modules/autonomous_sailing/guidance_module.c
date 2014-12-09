@@ -181,10 +181,10 @@ float pi_controller(const float *ref_p, const float *meas_p){
     else{
         //use normal digital PI, with anti wind-up constant
 
-        //compute input for anti wind-up componenet
+        //compute input for anti wind-up component
         float input_kaw = rudder_saturation(pi_rudder_data.last_command) - pi_rudder_data.last_command;
 
-        //update sum error using anti wind-up componenet
+        //update sum error using anti wind-up component
         pi_rudder_data.sum_error_pi += (error + pi_rudder_data.kaw * input_kaw);
 
         integral_part = pi_rudder_data.i * pi_rudder_data.sum_error_pi;

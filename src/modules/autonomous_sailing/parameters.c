@@ -196,7 +196,7 @@ PARAM_DEFINE_INT32(AS_WIN_AL, 30);
  * @min 1
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_WIN_APP, 3);
+PARAM_DEFINE_INT32(AS_WIN_APP, 10);
 
 /**
  * AS_WIN_TWD, specifies the number of samples for the moving average of true wind direction.
@@ -205,7 +205,7 @@ PARAM_DEFINE_INT32(AS_WIN_APP, 3);
  * @min 1
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_WIN_TWD, 3);
+PARAM_DEFINE_INT32(AS_WIN_TWD, 5);
 
 /**
  * AS_MEAN_WIND, specifies the mean wind direction [rad], in [-pi, pi].
