@@ -45,6 +45,8 @@
 #define M_PI_F 3.14159265358979323846f
 #define TWO_M_PI_F 6.28318530717959f
 
+static char txt_msg[250]; ///used to send messages to QGC
+
 //static float sum_error_pi = 0.0f; ///error sum from iterations of guidance_module, used in PI
 
 //static data for tack action
@@ -225,8 +227,6 @@ void set_pi_rudder_data(float p, float i, float cp, float ci, int32_t use_condit
         pi_rudder_data.sum_error_pi = 0.0f;
 
         //send message to QGC
-        char txt_msg[250];
-
         if(use_conditional > 0)
             sprintf(txt_msg, "Switched to PI with conditional integration.");
         else
@@ -264,6 +264,9 @@ float tack_action(struct reference_actions_s *ref_act_p,
             //notify to path_planning that we've completed the tack action
             notify_tack_completed();
 
+            //notify to QGroundControl that we've completed the tack action
+            sprintf(txt_msg, "Tack completed.");
+            send_log_info(txt_msg);
         }
         else{
             //keep on tack maneuver
