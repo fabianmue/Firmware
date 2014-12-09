@@ -32,58 +32,28 @@
  *
  ****************************************************************************/
 /**
- * @file path_planning_data.h
+ * @file send_msg_qgc.c
  *
- * Store all optimal path planning data.
+ * Send message to QGroundControl
  *
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#ifndef PATH_PLANNING_DATA_H_
-#define PATH_PLANNING_DATA_H_
-
-#include <stdio.h>//bool type
-
-//navigation module
-#include "navigation.h"
-
-#include "topics_handler.h"
-
-#include "parameters.h"
-
-#include <math.h>
-
-#include <string.h>
-
-//log messages to QGroundControl
 #include "send_msg_qgc.h"
 
-// reference actions for the guidance_module
-struct reference_actions_s{
-    float alpha_star; ///optimal heading w.r.t. true wind direction
-    bool should_tack; ///true if boat should tack as soon as possible
-};
+static int mavlink_fd = -1;
 
-/** @brief Initialize the grid lines struct.*/
-void init_grids(void);
+/**
+ * Open MAVLINK_LOG_DEVICE
+*/
+void init_msg_module(void){
+    mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
+}
 
-/** @brief set number of grid lines from QGroundControl*/
-void set_grids_number_qgc(int16_t size);
-
-/** @brief set the x coordinate of a grid line from QGroundControl*/
-void set_grid_qgc(float x_m);
-
-/** @brief based on gps position decide reference actions*/
-void path_planning(struct reference_actions_s *ref_act_p,
-                   struct structs_topics_s *strs_p);
-
-/** @brief set a new value for reference alpha star*/
-void set_alpha_star(float val);
-
-/** @brief notify that the tack maneuver is completed*/
-void notify_tack_completed(void);
-
-/** @brief start following optimal trajectory computed offline*/
-void start_following_optimal_path(int32_t start, float abs_alpha_star);
-
-#endif /* PATH_PLANNING_DATA_H_ */
+/**
+ * Send log info message
+ */
+void send_log_info(const char *txt){
+    if(mavlink_fd > -1)
+        mavlink_log_info(mavlink_fd, txt);
+}

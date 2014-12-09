@@ -161,8 +161,15 @@ void set_grids_number_qgc(int16_t size){
 */
 void set_grid(float x_m){
 
-    if(grid_lines.last_goal >= grid_lines.size)
+    char txt_msg[250];
+
+    if(grid_lines.last_goal >= grid_lines.size){
+        //send msg to QGC via mavlink
+        strcpy(txt_msg, "Not enough space to add a grid line.");
+        send_log_info(txt_msg);
+
         return; //not enough space to add a new grid line
+    }
 
     //enough space, add the new grid line
     grid_lines.last_goal++;
@@ -175,6 +182,9 @@ void set_grid(float x_m){
         current_grid_valid = true;
     }
 
+    //send a message to QGC to tell that everything is ok
+    sprintf(txt_msg, "Added grid number %d at %3.2f meters.", grid_lines.last_goal, (double)x_m);
+    send_log_info(txt_msg);
 }
 
 /**

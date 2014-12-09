@@ -46,6 +46,8 @@
 #include <errno.h>
 #include <poll.h>
 
+//navigation module
+#include "navigation.h"
 
 //parameters from QGroundControl
 #include "parameters.h"
@@ -191,6 +193,9 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
     //initialize grid lines in Race frame
     init_grids();
+
+    //init message module
+    init_msg_module();
 
     //subscribe/advertise interested topics
     as_topics(&subs, &pubs, &strs);
