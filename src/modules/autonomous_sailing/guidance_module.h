@@ -66,6 +66,6 @@ void set_stop_tack(float roll_stop, float yaw_stop);
 void set_sail_positions(int32_t num);
 
 /** @brief Set data of the PI which controls rudder*/
-void set_pi_rudder_data(float p, float i, float c, int32_t use_conditional);
+void set_pi_rudder_data(float p, float i, float c, int32_t use_conditional, float kaw);
 
 #endif //GUIDANCE_MODULE_H

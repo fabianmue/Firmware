@@ -118,6 +118,15 @@ PARAM_DEFINE_FLOAT(AS_RUD_P, 0.03f);
 PARAM_DEFINE_FLOAT(AS_RUD_I, 0.0f);
 
 /**
+ * Constant fo anti-wind up in normal digital PI
+ *
+ *
+ * @min 0
+ * @max ?
+ */
+PARAM_DEFINE_FLOAT(AS_RUD_KAW, 0.5f);
+
+/**
  * Constant used in conditionl integral to adjust den.
  *
  *
@@ -132,7 +141,7 @@ PARAM_DEFINE_FLOAT(AS_RUD_C, 1.0f);
  * @min 0
  * @max 1
  */
-PARAM_DEFINE_INT32(AS_RUD_CONDPI, 1);
+PARAM_DEFINE_INT32(AS_RUD_CONDPI, 0);
 
 
 /**
@@ -348,6 +357,7 @@ static struct pointers_param_qgc_s{
 
     param_t rud_p_gain_pointer;       /**< pointer to param AS_RUD_P*/
     param_t rud_i_gain_pointer;       /**< pointer to param AS_RUD_I*/
+    param_t rud_kaw_pointer;       /**< pointer to param AS_RUD_KAW*/
     param_t rud_c_pointer;       /**< pointer to param AS_RUD_C*/
     param_t rud_conditional_pi_pointer;       /**< pointer to param AS_RUD_CONDPI*/
 
@@ -409,6 +419,7 @@ void param_init(struct parameters_qgc *params_p,
 
     pointers_param_qgc.rud_p_gain_pointer  = param_find("AS_RUD_P");
     pointers_param_qgc.rud_i_gain_pointer  = param_find("AS_RUD_I");
+    pointers_param_qgc.rud_kaw_pointer = param_find("AS_RUD_KAW");
     pointers_param_qgc.rud_c_pointer  = param_find("AS_RUD_C");
     pointers_param_qgc.rud_conditional_pi_pointer  = param_find("AS_RUD_CONDPI");
 
@@ -482,14 +493,16 @@ void param_update(struct parameters_qgc *params_p,
     float rud_p;
     float rud_i;
     float rud_c;
+    float rud_kaw;
     int32_t use_cond_pi;
 
     param_get(pointers_param_qgc.rud_p_gain_pointer, &rud_p);
     param_get(pointers_param_qgc.rud_i_gain_pointer, &rud_i);
+    param_get(pointers_param_qgc.rud_kaw_pointer, &rud_kaw);
     param_get(pointers_param_qgc.rud_c_pointer, &rud_c);
     param_get(pointers_param_qgc.rud_conditional_pi_pointer, &use_cond_pi);
 
-    set_pi_rudder_data(rud_p, rud_i, rud_c, use_cond_pi);
+    set_pi_rudder_data(rud_p, rud_i, rud_c, use_cond_pi, rud_kaw);
 
     //p_gain for sail P
     //param_get(pointers_param_qgc.sai_p_gain_pointer, &(params_p->sail_p_gain));

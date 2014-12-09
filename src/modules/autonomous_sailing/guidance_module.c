@@ -43,8 +43,9 @@
 #include "guidance_module.h"
 
 #define M_PI_F 3.14159265358979323846f
+#define TWO_M_PI_F 6.28318530717959f
 
-static float sum_error_pi = 0.0f; ///error sum from iterations of guidance_module, used in PI
+//static float sum_error_pi = 0.0f; ///error sum from iterations of guidance_module, used in PI
 
 //static data for tack action
 static struct{
@@ -78,13 +79,19 @@ static struct{
 static struct{
     float p;                ///proportional gain
     float i;                ///integral gain
+    float kaw;              ///constant fo anti-wind up in normal digital PI
     float c;                ///constant for condition integral
     bool use_conditional;   ///1 if PI with condition integral is in use
+    float last_command;     ///last command provided by the PI
+    float sum_error_pi;     ///error sum from iterations of guidance_module, used in PI
 } pi_rudder_data =  {
                         .p = 0.0f,
                         .i = 0.0f,
+                        .kaw = 0.5f,
                         .c = 1.0f,
-                        .use_conditional = true
+                        .use_conditional = true,
+                        .last_command = 0.0f,
+                        .sum_error_pi = 0.0f
                     };
 
 /** @brief PI controller with conditional integration*/
@@ -108,6 +115,9 @@ void set_stop_tack(float roll_stop, float yaw_stop);
 
 /** @brief simple controller for sails*/
 float sail_controller();
+
+/** @brief saturation on command to the rudder servo motor*/
+float rudder_saturation(float command);
 
 /**
  * set the stop_tack value used in stop_tack_action()
@@ -134,31 +144,45 @@ void set_stop_tack(float roll_stop, float yaw_stop){
 float pi_controller(const float *ref_p, const float *meas_p){
 
     float error;
-    float i_gain; //integral constant
+    float integral_part = 0.0f;
     float action;
 
     error = *ref_p - *meas_p;
 
+
     if(pi_rudder_data.use_conditional){
+        //Conditional Integration
+
+        //update sum error
+        pi_rudder_data.sum_error_pi += error;
+
+        //TODO check if below is ok
+//        if(pi_rudder_data.sum_error_pi > TWO_M_PI_F)
+//            pi_rudder_data.sum_error_pi = TWO_M_PI_F;
+//        else if(pi_rudder_data.sum_error_pi < -TWO_M_PI_F)
+//            pi_rudder_data.sum_error_pi = -TWO_M_PI_F;
+
         //integral constant for conditional integration, this is for anti-wind up!
-        i_gain = pi_rudder_data.i / (1.0f + pi_rudder_data.c * error * error);
+        float i_gain = pi_rudder_data.i / (1.0f + pi_rudder_data.c * error * error);
+        integral_part = i_gain * pi_rudder_data.sum_error_pi;
     }
     else{
-        //use normal digital PI
-        i_gain = pi_rudder_data.i;
+        //use normal digital PI, with anti wind-up constant
+
+        //compute input for anti wind-up componenet
+        float input_kaw = rudder_saturation(pi_rudder_data.last_command) - pi_rudder_data.last_command;
+
+        //update sum error using anti wind-up componenet
+        pi_rudder_data.sum_error_pi += (error + pi_rudder_data.kaw * input_kaw);
+
+        integral_part = pi_rudder_data.i * (pi_rudder_data.sum_error_pi);
     }
 
-    //update sum error
-    sum_error_pi += error;
-
-    //TODO check if below is ok
-    if(sum_error_pi > M_PI_F)
-        sum_error_pi = M_PI_F;
-    else if(sum_error_pi < -M_PI_F)
-        sum_error_pi = -M_PI_F;
-
     //command = P * error + I * sum{error}
-    action = pi_rudder_data.p * error + i_gain * sum_error_pi;
+    action = pi_rudder_data.p * error + integral_part;
+
+    //update last_command
+    pi_rudder_data.last_command = action;
 
     return action;
 }
@@ -170,12 +194,24 @@ float pi_controller(const float *ref_p, const float *meas_p){
  * @param i                 integral gain
  * @param c                 used in conditional integral
  * @param use_conditional   1 if you wish to use the conditionl integral
+ * @param kaw               constant used for anti-wind up in normal PI
 */
-void set_pi_rudder_data(float p, float i, float c, int32_t use_conditional){
+void set_pi_rudder_data(float p, float i, float c, int32_t use_conditional, float kaw){
 
     pi_rudder_data.p = p;
     pi_rudder_data.i = i;
+    pi_rudder_data.kaw = kaw;
     pi_rudder_data.c = c;
+
+    //check if we have switched from normal to conditional PI or viceversa
+    if((pi_rudder_data.use_conditional == true && use_conditional <= 0) ||
+       (pi_rudder_data.use_conditional == false && use_conditional > 0)){
+
+        //reset PI internal data
+        pi_rudder_data.last_command = 0.0f;
+        pi_rudder_data.sum_error_pi = 0.0f;
+    }
+
     pi_rudder_data.use_conditional = (use_conditional > 0) ? true : false;
 }
 
@@ -403,6 +439,19 @@ void set_sail_positions(int32_t num){
     sail_controller_data.command_quantum = SAIL_SATURATION / (float)num;
 }
 
+/**
+ * Saturation of rudder command, according to rudder servo motor limits
+*/
+float rudder_saturation(float command){
+
+    if(command > RUDDER_SATURATION)
+        command = RUDDER_SATURATION;
+    else if(command < -RUDDER_SATURATION)
+        command = -RUDDER_SATURATION;
+
+    return command;
+}
+
 /** Implement reference actions provided by optimal path planning*/
 void guidance_module(struct reference_actions_s *ref_act_p,
                      const struct parameters_qgc *param_qgc_p,
@@ -435,10 +484,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
         sail_command = param_qgc_p->sail_servo;
 
     //saturation for safety reason
-    if(rudder_command > RUDDER_SATURATION)
-        rudder_command = RUDDER_SATURATION;
-    else if(rudder_command < -RUDDER_SATURATION)
-        rudder_command = -RUDDER_SATURATION;
+    rudder_command = rudder_saturation(rudder_command);
 
     if(sail_command < 0.0f)
         sail_command = 0.0f;
