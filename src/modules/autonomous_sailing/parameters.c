@@ -127,13 +127,22 @@ PARAM_DEFINE_FLOAT(AS_RUD_I, 0.0f);
 PARAM_DEFINE_FLOAT(AS_RUD_KAW, 0.5f);
 
 /**
- * Constant used in conditionl integral to adjust den.
+ * Constant used in conditionl integral to adjust denominator in integral action.
  *
  *
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_FLOAT(AS_RUD_C, 1.0f);
+PARAM_DEFINE_FLOAT(AS_RUD_CI, 1.0f);
+
+/**
+ * Constant used in conditionl integral to adjust denominator in proportional action.
+ *
+ *
+ * @min 0
+ * @max ?
+ */
+PARAM_DEFINE_FLOAT(AS_RUD_CP, 1.0f);
 
 /**
  * 1 if you wish to use a condition integral PI. 0 otherwise
@@ -358,7 +367,8 @@ static struct pointers_param_qgc_s{
     param_t rud_p_gain_pointer;       /**< pointer to param AS_RUD_P*/
     param_t rud_i_gain_pointer;       /**< pointer to param AS_RUD_I*/
     param_t rud_kaw_pointer;       /**< pointer to param AS_RUD_KAW*/
-    param_t rud_c_pointer;       /**< pointer to param AS_RUD_C*/
+    param_t rud_ci_pointer;       /**< pointer to param AS_RUD_CI*/
+    param_t rud_cp_pointer;       /**< pointer to param AS_RUD_CP*/
     param_t rud_conditional_pi_pointer;       /**< pointer to param AS_RUD_CONDPI*/
 
     param_t lat0_pointer;         /**< pointer to param AS_R_LAT0_E7*/
@@ -420,7 +430,8 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.rud_p_gain_pointer  = param_find("AS_RUD_P");
     pointers_param_qgc.rud_i_gain_pointer  = param_find("AS_RUD_I");
     pointers_param_qgc.rud_kaw_pointer = param_find("AS_RUD_KAW");
-    pointers_param_qgc.rud_c_pointer  = param_find("AS_RUD_C");
+    pointers_param_qgc.rud_ci_pointer  = param_find("AS_RUD_CI");
+    pointers_param_qgc.rud_cp_pointer  = param_find("AS_RUD_CP");
     pointers_param_qgc.rud_conditional_pi_pointer  = param_find("AS_RUD_CONDPI");
 
     pointers_param_qgc.lat0_pointer    = param_find("AS_R_LAT0_E7");
@@ -492,17 +503,19 @@ void param_update(struct parameters_qgc *params_p,
     //----- param for rudder PI
     float rud_p;
     float rud_i;
-    float rud_c;
+    float rud_ci;
+    float rud_cp;
     float rud_kaw;
     int32_t use_cond_pi;
 
     param_get(pointers_param_qgc.rud_p_gain_pointer, &rud_p);
     param_get(pointers_param_qgc.rud_i_gain_pointer, &rud_i);
     param_get(pointers_param_qgc.rud_kaw_pointer, &rud_kaw);
-    param_get(pointers_param_qgc.rud_c_pointer, &rud_c);
+    param_get(pointers_param_qgc.rud_ci_pointer, &rud_ci);
+    param_get(pointers_param_qgc.rud_cp_pointer, &rud_cp);
     param_get(pointers_param_qgc.rud_conditional_pi_pointer, &use_cond_pi);
 
-    set_pi_rudder_data(rud_p, rud_i, rud_c, use_cond_pi, rud_kaw);
+    set_pi_rudder_data(rud_p, rud_i, rud_cp, rud_ci, use_cond_pi, rud_kaw);
 
     //p_gain for sail P
     //param_get(pointers_param_qgc.sai_p_gain_pointer, &(params_p->sail_p_gain));

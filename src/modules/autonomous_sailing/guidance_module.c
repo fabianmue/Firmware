@@ -80,7 +80,8 @@ static struct{
     float p;                ///proportional gain
     float i;                ///integral gain
     float kaw;              ///constant fo anti-wind up in normal digital PI
-    float c;                ///constant for condition integral
+    float cp;                ///constant for condition integral, in proportional action
+    float ci;                ///constant for condition integral, in integral action
     bool use_conditional;   ///1 if PI with condition integral is in use
     float last_command;     ///last command provided by the PI
     float sum_error_pi;     ///error sum from iterations of guidance_module, used in PI
@@ -88,7 +89,8 @@ static struct{
                         .p = 0.0f,
                         .i = 0.0f,
                         .kaw = 0.5f,
-                        .c = 1.0f,
+                        .cp = 1.0f,
+                        .ci = 1.0f,
                         .use_conditional = true,
                         .last_command = 0.0f,
                         .sum_error_pi = 0.0f
@@ -145,6 +147,7 @@ float pi_controller(const float *ref_p, const float *meas_p){
 
     float error;
     float integral_part = 0.0f;
+    float proportional_part = 0.0f;
     float action;
 
     error = *ref_p - *meas_p;
@@ -153,6 +156,9 @@ float pi_controller(const float *ref_p, const float *meas_p){
     if(pi_rudder_data.use_conditional){
         //Conditional Integration
 
+        float abs_error;
+
+        abs_error = (error > 0) ? error : -error;
         //update sum error
         pi_rudder_data.sum_error_pi += error;
 
@@ -163,8 +169,12 @@ float pi_controller(const float *ref_p, const float *meas_p){
 //            pi_rudder_data.sum_error_pi = -TWO_M_PI_F;
 
         //integral constant for conditional integration, this is for anti-wind up!
-        float i_gain = pi_rudder_data.i / (1.0f + pi_rudder_data.c * error * error);
+        float i_gain = pi_rudder_data.i / (1.0f + pi_rudder_data.ci * error * error);
         integral_part = i_gain * pi_rudder_data.sum_error_pi;
+
+        //proportional action
+        float p_gain = pi_rudder_data.p / (1.0f + pi_rudder_data.cp * abs_error);
+        proportional_part = p_gain * error;
     }
     else{
         //use normal digital PI, with anti wind-up constant
@@ -175,11 +185,13 @@ float pi_controller(const float *ref_p, const float *meas_p){
         //update sum error using anti wind-up componenet
         pi_rudder_data.sum_error_pi += (error + pi_rudder_data.kaw * input_kaw);
 
-        integral_part = pi_rudder_data.i * (pi_rudder_data.sum_error_pi);
+        integral_part = pi_rudder_data.i * pi_rudder_data.sum_error_pi;
+
+        proportional_part = pi_rudder_data.p * error;
     }
 
     //command = P * error + I * sum{error}
-    action = pi_rudder_data.p * error + integral_part;
+    action = proportional_part + integral_part;
 
     //update last_command
     pi_rudder_data.last_command = action;
@@ -196,12 +208,13 @@ float pi_controller(const float *ref_p, const float *meas_p){
  * @param use_conditional   1 if you wish to use the conditionl integral
  * @param kaw               constant used for anti-wind up in normal PI
 */
-void set_pi_rudder_data(float p, float i, float c, int32_t use_conditional, float kaw){
+void set_pi_rudder_data(float p, float i, float cp, float ci, int32_t use_conditional, float kaw){
 
     pi_rudder_data.p = p;
     pi_rudder_data.i = i;
     pi_rudder_data.kaw = kaw;
-    pi_rudder_data.c = c;
+    pi_rudder_data.cp = cp;
+    pi_rudder_data.ci = ci;
 
     //check if we have switched from normal to conditional PI or viceversa
     if((pi_rudder_data.use_conditional == true && use_conditional <= 0) ||
