@@ -51,6 +51,9 @@
 #include "controller_data.h"
 #include "simulation_utility.h"
 
+//log messages to QGroundControl
+#include "send_msg_qgc.h"
+
 #define RUDDER_SATURATION 0.9f
 #define SAIL_SATURATION 0.56f
 

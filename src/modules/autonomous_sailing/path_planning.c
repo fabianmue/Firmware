@@ -138,6 +138,11 @@ void set_grids_number(int16_t size){
     current_grid_goal_x_m = 0;
     current_grid_valid = false;
 
+    //send a message to QGC to tell that grid lines queue has been reset
+    char txt_msg[250];
+    sprintf(txt_msg, "Grid lines queue reset.");
+    send_log_info(txt_msg);
+
 }
 
 /**
@@ -182,7 +187,7 @@ void set_grid(float x_m){
         current_grid_valid = true;
     }
 
-    //send a message to QGC to tell that everything is ok
+    //send a message to QGC to tell that a new grid line has been added
     sprintf(txt_msg, "Added grid number %d at %3.2f meters.", grid_lines.last_goal, (double)x_m);
     send_log_info(txt_msg);
 }

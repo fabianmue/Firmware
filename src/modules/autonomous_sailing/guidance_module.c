@@ -210,6 +210,16 @@ void set_pi_rudder_data(float p, float i, float c, int32_t use_conditional, floa
         //reset PI internal data
         pi_rudder_data.last_command = 0.0f;
         pi_rudder_data.sum_error_pi = 0.0f;
+
+        //send message to QGC
+        char txt_msg[250];
+
+        if(use_conditional > 0)
+            sprintf(txt_msg, "Switched to PI with conditional integration.");
+        else
+            sprintf(txt_msg, "Switched to normal PI with anti wind-up gain.");
+
+        send_log_info(txt_msg);
     }
 
     pi_rudder_data.use_conditional = (use_conditional > 0) ? true : false;
