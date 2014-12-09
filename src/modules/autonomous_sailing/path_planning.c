@@ -48,6 +48,8 @@
 
 #define M_PI_F 3.14159265358979323846f
 
+static char txt_msg[250]; ///used to send messages to QGC
+
 //grid lines data
 static struct{
     float *x_m_p;           ///array of x coordinates [m] of grid lines, in Race frame
@@ -139,8 +141,7 @@ void set_grids_number(int16_t size){
     current_grid_valid = false;
 
     //send a message to QGC to tell that grid lines queue has been reset
-    char txt_msg[250];
-    sprintf(txt_msg, "Grid lines queue reset.");
+    sprintf(txt_msg, "Grid lines queue reset, new dim: %d.", size);
     send_log_info(txt_msg);
 
 }
@@ -166,9 +167,8 @@ void set_grids_number_qgc(int16_t size){
 */
 void set_grid(float x_m){
 
-    char txt_msg[250];
-
-    if(grid_lines.last_goal >= grid_lines.size){
+    //if last_goal != -1, it is the position of the last grid line inserted
+    if((grid_lines.last_goal + 1) >= grid_lines.size){
         //send msg to QGC via mavlink
         strcpy(txt_msg, "Not enough space to add a grid line.");
         send_log_info(txt_msg);
@@ -177,7 +177,7 @@ void set_grid(float x_m){
     }
 
     //enough space, add the new grid line
-    grid_lines.last_goal++;
+    grid_lines.last_goal = grid_lines.last_goal + 1;
     grid_lines.x_m_p[grid_lines.last_goal] = x_m;
 
     //if this is the first grid line inserted, it's the current goal grid line
@@ -238,6 +238,10 @@ void reached_current_grid(void){
         grid_lines.current_goal = -1;
         grid_lines.last_goal = -1;
     }
+
+    //send a message to QGC to tell that a new grid line has been reached
+    sprintf(txt_msg, "Grid line reached.");
+    send_log_info(txt_msg);
 }
 
 /**
@@ -477,6 +481,10 @@ void start_following_optimal_path(int32_t start, float abs_alpha_star){
             following_path_planning.following_traj = true;
             //set the absolute value of alpha star
             following_path_planning.abs_alpha_star = abs_alpha_star;
+
+            //send a message to QGC
+            sprintf(txt_msg, "Starting following optimal path.");
+            send_log_info(txt_msg);
         }
         //else: nothing to do, we're already following optimal trajectory
     }
@@ -488,6 +496,10 @@ void start_following_optimal_path(int32_t start, float abs_alpha_star){
 
             //remember that we stopped following optimal trajecotry
             following_path_planning.following_traj = false;
+
+            //send a message to QGC
+            sprintf(txt_msg, "Stopping following optimal path.");
+            send_log_info(txt_msg);
         }
         //else: nothing to do, we're not following any trajectory
     }
