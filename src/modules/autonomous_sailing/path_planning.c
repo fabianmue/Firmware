@@ -239,17 +239,23 @@ void reached_current_grid(void){
         grid_lines.last_goal = -1;
     }
 
-    //send a message to QGC to tell that a new grid line has been reached
-    sprintf(txt_msg, "Grid line reached.");
-    send_log_info(txt_msg);
+    /*send a message to QGC to tell that a new grid line has been reached,
+     * only if we are not following an optimal path
+    */
+    if(following_path_planning.following_traj == false){
+        sprintf(txt_msg, "Grid line reached.");
+        send_log_info(txt_msg);
+    }
 }
 
 /**
- * Set new value for reference alpha
+ * Set new value for reference alpha, only possibile if the boat is not following optimal path
 */
 void set_alpha_star(float val){
 
-    ref_act.alpha_star = val;
+    if(following_path_planning.following_traj == false){
+        ref_act.alpha_star = val;
+    }
 }
 
 /**
@@ -310,8 +316,14 @@ void read_new_ref_action(struct structs_topics_s *strs_p,
                              1;  //wind from NNW w.r.t. our new "true" North
 
     //TODO check if haul is ok as function of roll angle
-    haul_index = (strs_p->att.roll > 0) ? 1 : //port haul
-                                          2;  //starboard haul
+//    haul_index = (strs_p->att.roll > 0) ? 1 : //port haul
+//                                          2;  //starboard haul
+
+    /*if ref_act.alpha_star is < 0, we were sailing on port haul, otherwise
+     * we were sailing on starboard haul.
+    */
+    haul_index = (ref_act.alpha_star < 0) ? 1 : //port haul
+                                            2;  //satrboard haul
 
     //take the appropriate matrix with optimal action for our current wind and haul states
     if(wind_index == 1 && haul_index == 1)
@@ -332,29 +344,61 @@ void read_new_ref_action(struct structs_topics_s *strs_p,
     //compute y index (index of the closest discrete point in our grid line
     y_index = compute_y_index(local_pos_p);
 
+    #if SIMULATION_FLAG == 1
+    //cancella
+    //strs_p->airspeed.true_airspeed_m_s = y_index;
+    #endif
+
     //read next action to perform
     next_action = matrix_actions[0][number_current_line][y_index];
 
     /*
      * reference actions computed offline.
-     * 1 = sail on starboard haul
+     * 3 = sail on starboard haul
      * 2 = sail on port haul
-     * 3 = tack on the inner line
+     * 1 = tack on the inner line
      * -1 = error in accessing matrix
     */
 
     //for now just use one alpha for model A, set by QCG
     switch(next_action){
     case 1:
-        ref_act.alpha_star = following_path_planning.abs_alpha_star;
+        //tack against inner layline
+        ref_act.should_tack = true;
+        //change haul
+        ref_act.alpha_star = -ref_act.alpha_star;
+
+        //send a message to QGC
+        sprintf(txt_msg, "Ref act: tack on inner layline.");
+        send_log_info(txt_msg);
         break;
 
     case 2:
+        //sail on port haul, check if a tack has to be performed
+        //if we were sailing on starboard haul, before sailing on port haul we have to tack
+        if(ref_act.alpha_star > 0){
+            ref_act.should_tack = true;
+        }
+        //after tacking, sail on port haul
         ref_act.alpha_star = -following_path_planning.abs_alpha_star;
+
+        //send a message to QGC
+        sprintf(txt_msg, "Ref act: sail on port haul.");
+        send_log_info(txt_msg);
         break;
+
     case 3:
-        ref_act.alpha_star = -ref_act.alpha_star; //after tack change haul
-        ref_act.should_tack = true;
+        //sail on starboard haul, check if a tack has to be performed
+        //if we were sailing on port haul, before sailing on starboard haul we have to tack
+        if(ref_act.alpha_star < 0){
+            ref_act.should_tack = true;
+        }
+        //after tacking, sail on starboard haul
+        ref_act.alpha_star = following_path_planning.abs_alpha_star;
+
+        //send a message to QGC
+        sprintf(txt_msg, "Ref act: sail on starboard haul.");
+        send_log_info(txt_msg);
         break;
     }
 }

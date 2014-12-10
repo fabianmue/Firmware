@@ -340,7 +340,7 @@ void filter_new_data(void){
     float instant_alpha = measurements_raw.cog_r - measurements_raw.twd_r;
 
     //if |instant_alpha|<= pi/2 we're sailing upwind, so everything is ok
-    //constrain alpha to be the CLOSER angle between TWD and COG
+    //constrain alpha to be the CLOSEST angle between TWD and COG
     if(instant_alpha > M_PI_F) instant_alpha = instant_alpha - TWO_PI_F;
     else if(instant_alpha < -M_PI_F) instant_alpha = instant_alpha + TWO_PI_F;
 
