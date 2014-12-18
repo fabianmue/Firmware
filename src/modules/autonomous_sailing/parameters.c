@@ -326,31 +326,31 @@ PARAM_DEFINE_INT32(ASIM_LON_E7, 85605120);
 PARAM_DEFINE_INT32(ASIM_ALT_E3, 406000);
 
 /**
- * Simulated Course over ground, in rads, sign opposite to Dumas convention.
+ * Simulated Course over ground, in deg, sign opposite to Dumas convention.
  *
  *
- * @min -pi
- * @max pi
+ * @min -180
+ * @max 180
  */
-PARAM_DEFINE_FLOAT(ASIM_COG_R, 0.0f);
+PARAM_DEFINE_FLOAT(ASIM_COG_D, 0.0f);
 
 /**
- * Simulated true wind direction, in rads, sign opposite to Dumas convention.
+ * Simulated true wind direction, in deg, sign opposite to Dumas convention.
  *
  *
- * @min -pi
- * @max pi
+ * @min -180
+ * @max 180
  */
-PARAM_DEFINE_FLOAT(ASIM_TWD_R, 0.0f);
+PARAM_DEFINE_FLOAT(ASIM_TWD_D, 0.0f);
 
 /**
- * Simulated yaw, in rads, sign opposite to Dumas convention.
+ * Simulated yaw, in deg, sign opposite to Dumas convention.
  *
  *
- * @min -pi
- * @max pi
+ * @min -180
+ * @max 180
  */
-PARAM_DEFINE_FLOAT(ASIM_YAW_R, 0.0f);
+PARAM_DEFINE_FLOAT(ASIM_YAW_D, 0.0f);
 
 #endif
 
@@ -405,11 +405,11 @@ static struct pointers_param_qgc_s{
     param_t lon_sim_pointer; /**< pointer to param ASIM_LON_E7*/
     param_t alt_sim_pointer; /**< pointer to param ASIM_ALt_E3*/
 
-    param_t twd_sim_pointer; /**< pointer to param ASIM_TWD_R*/
-    param_t cog_sim_pointer; /**< pointer to param ASIM_COG_R*/
+    param_t twd_sim_pointer; /**< pointer to param ASIM_TWD_D*/
+    param_t cog_sim_pointer; /**< pointer to param ASP_ALST_ANG_D*/
 
 
-    param_t yaw_sim_pointer; /**< pointer to param ASIM_YAW_R*/
+    param_t yaw_sim_pointer; /**< pointer to param ASIM_YAW_D*/
     #endif
 }pointers_param_qgc;
 
@@ -469,10 +469,10 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.lon_sim_pointer = param_find("ASIM_LON_E7");
     pointers_param_qgc.alt_sim_pointer = param_find("ASIM_ALT_E3");
 
-    pointers_param_qgc.cog_sim_pointer = param_find("ASIM_COG_R");
-    pointers_param_qgc.twd_sim_pointer = param_find("ASIM_TWD_R");
+    pointers_param_qgc.cog_sim_pointer = param_find("ASP_ALST_ANG_D");
+    pointers_param_qgc.twd_sim_pointer = param_find("ASIM_TWD_D");
 
-    pointers_param_qgc.yaw_sim_pointer = param_find("ASIM_YAW_R");
+    pointers_param_qgc.yaw_sim_pointer = param_find("ASIM_YAW_D");
 
     #endif
 
@@ -671,12 +671,18 @@ void param_update(struct parameters_qgc *params_p,
 
     //cog_sim
     param_get(pointers_param_qgc.cog_sim_pointer, &(params_p->cog_sim));
+    //convert cog in rad
+    params_p->cog_sim = params_p->cog_sim * deg2rad;
 
     //twd_sim
     param_get(pointers_param_qgc.twd_sim_pointer, &(params_p->twd_sim));
+    //convert twd_sim in rad
+    params_p->twd_sim = params_p->twd_sim * deg2rad;
 
     //yaw_sim
     param_get(pointers_param_qgc.yaw_sim_pointer, &(params_p->yaw_sim));
+    //convert yaw_sim in rad
+    params_p->yaw_sim = params_p->yaw_sim * deg2rad;
 
     //set them in the appropriate struct to simulate heading changing
     strs_p->att.yaw = params_p->yaw_sim;
