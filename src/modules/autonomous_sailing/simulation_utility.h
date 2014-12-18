@@ -4,6 +4,9 @@
 #include "parameters.h"
 #include "topics_handler.h"
 
+//settings
+#include "settings.h"
+
 
 void print_debug_mode(float *pos_p, float *val_p, int numb, struct structs_topics_s *strs_p);
 

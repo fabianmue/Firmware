@@ -67,6 +67,9 @@
 //hardware in the loop simulation
 #include "hil_simulation.h"
 
+//settings
+#include "settings.h"
+
 // To be able to use the "parameter function" from Q ground control:
 #include <systemlib/param/param.h>
 #include <systemlib/systemlib.h>
@@ -243,6 +246,13 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // new vehicle_gps_position data
                     orb_copy(ORB_ID(vehicle_gps_position), subs.gps_raw, &(strs.gps_raw));
 
+                    #if SAVE_DEBUG_VALUES == 1
+                    //save time when this action is performed
+                    strs.debug_values.timestamp = hrt_absolute_time();
+                    strs.debug_values.float_val_2 = strs.debug_values.timestamp / 1e3;
+                    strs.debug_updated = true;
+                    #endif
+
                     #if SIMULATION_FLAG == 0
                     //update course over ground in control data
                     update_cog(strs.gps_raw.cog_rad);
@@ -252,11 +262,18 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 if(fds[1].revents & POLLIN){
                     // new vehicle_global_position data
 
-                    //copy GPS data
+                    //copy GPOS data
                     orb_copy(ORB_ID(vehicle_global_position), subs.gps_filtered, &(strs.gps_filtered));
 
                     //look into optimal path planning maps for reference actions
                     path_planning(&ref_act, &strs);
+
+                    #if SAVE_DEBUG_VALUES == 1
+                    //save time when this action is performed
+                    strs.debug_values.timestamp = hrt_absolute_time();
+                    strs.debug_values.float_val_1 = strs.debug_values.timestamp / 1e3;
+                    strs.debug_updated = true;
+                    #endif
 
                 }
                 if(fds[2].revents & POLLIN){
@@ -265,6 +282,14 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                     //update apparent wind direction in control data
                     update_app_wind(strs.wind_sailing.angle_apparent);
+
+                    #if SAVE_DEBUG_VALUES == 1
+                    //save time when this action is performed
+                    strs.debug_values.timestamp = hrt_absolute_time();
+                    strs.debug_values.float_val_3 = strs.debug_values.timestamp / 1e3;
+                    strs.debug_updated = true;
+                    #endif
+
                     #if SIMULATION_FLAG == 0
                     //update true wind direction in control data
                     update_twd(strs.wind_sailing.angle_true);
@@ -314,10 +339,18 @@ int as_daemon_thread_main(int argc, char *argv[]){
         //publish debug value for post-processing
         orb_publish(ORB_ID(boat_guidance_debug), pubs.boat_guidance_debug_pub, &(strs.boat_guidance_debug));
 
+        #if SAVE_DEBUG_VALUES == 1
+        //publish debug data if updated
+        if(strs.debug_updated){
+            orb_publish(ORB_ID(debug_values), pubs.debug_values, &(strs.debug_values));
+            strs.debug_updated = false;
+        }
+        #endif
+
         #if SIMULATION_FLAG == 1
-            //strs.airspeed.true_airspeed_m_s = ref_act.alpha_star;
-            orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
-            //fine cancella
+        //strs.airspeed.true_airspeed_m_s = ref_act.alpha_star;
+        orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
+        //fine cancella
         #endif
 	}
 
@@ -386,10 +419,17 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     memset(&(strs_p->boat_guidance_debug), 0, sizeof(strs_p->boat_guidance_debug));
     pubs_p->boat_guidance_debug_pub = orb_advertise(ORB_ID(boat_guidance_debug), &(strs_p->boat_guidance_debug));
 
+    #if SAVE_DEBUG_VALUES == 1
+    // advertise debug_values topic
+    memset(&(strs_p->debug_values), 0, sizeof(strs_p->debug_values));
+    strs_p->debug_values.timestamp = hrt_absolute_time();
+    pubs_p->debug_values = orb_advertise(ORB_ID(debug_values), &(strs_p->debug_values));
+    strs_p->debug_updated = false;
+    #endif
+
     #if SIMULATION_FLAG == 1
     memset(&(strs_p->airspeed), 0, sizeof(strs_p->airspeed));
     pubs_p->airspeed = orb_advertise(ORB_ID(airspeed), &(strs_p->airspeed));
-
     #endif
     return true;
 }

@@ -55,6 +55,9 @@
 
 #include <string.h>
 
+//settings
+#include "settings.h"
+
 //log messages to QGroundControl
 #include "send_msg_qgc.h"
 

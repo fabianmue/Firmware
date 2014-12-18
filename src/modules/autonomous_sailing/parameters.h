@@ -42,7 +42,6 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
-#define SIMULATION_FLAG 0 ///1 if you're testing autonomous sailing app indoor, PLEASE SET INDOOR PARSER_200WX
 
 #include <systemlib/param/param.h>
 #include <stdio.h>//bool type
@@ -57,36 +56,15 @@
 
 #include "guidance_module.h"
 
+//settings
+#include "settings.h"
+
 //struct for local copy of parameter from QGroundControl
 struct parameters_qgc{
     //float rudder_servo;
     float sail_servo;
 
-    //float rudder_p_gain;
-    //float rudder_i_gain;
-    //float sail_p_gain;
-
-//    int32_t lat0;
-//    int32_t lon0;
-//    int32_t alt0;
-
-//    uint16_t moving_window;
-
-//    float mean_wind;
-
-//    int32_t lat_tmark;
-//    int32_t lon_tmark;
-//    int32_t alt_tmark;
-
-//    int32_t grids_number;
-//    int32_t grids_index;
-//    float grids_x_m;
-
     #ifdef SIMULATION_FLAG
-
-//    int32_t lat_sim;
-//    int32_t lon_sim;
-//    int32_t alt_sim;
 
     float cog_sim;
     float twd_sim;

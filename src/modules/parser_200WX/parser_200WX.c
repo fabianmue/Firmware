@@ -340,15 +340,15 @@ bool parser_variables_init(int *wx_port_pointer,
     pubs_p->wind_sailing = orb_advertise(ORB_ID(wind_sailing), &(strs_p->wind_sailing));
 
     // advertise debug_values topic
-    memset(&(strs_p->debug_values), 0, sizeof(strs_p->debug_values));
-    strs_p->debug_values.timestamp = hrt_absolute_time();
-    pubs_p->debug_values = orb_advertise(ORB_ID(debug_values), &(strs_p->debug_values));
+    //memset(&(strs_p->debug_values), 0, sizeof(strs_p->debug_values));
+    //strs_p->debug_values.timestamp = hrt_absolute_time();
+    //pubs_p->debug_values = orb_advertise(ORB_ID(debug_values), &(strs_p->debug_values));
 
     //none topic has been updated yet
     strs_p->gps_updated = false;
     strs_p->wind_updated = false;
     strs_p->boat_weather_station_updated = false;
-    strs_p->debug_updated = false;
+    //strs_p->debug_updated = false;
 
     return true;
 }
@@ -436,31 +436,6 @@ bool retrieve_data(int *wx_port_pointer,
     strs_p->debug_values.float_val_3 = strs_p->debug_values.timestamp / 1e3;
 
     strs_p->debug_updated = true;
-
-    //cancella
-//    warnx("b_lgt %d \t debug_index %d \n", buffer_length, debug_index);
-
-//    if(debug_index < 500){
-//        for(int i = 0; i < buffer_length && debug_index < 500; i++){
-//            buffer_debug[debug_index] = buffer_global[i];
-//            debug_index++;
-//        }
-
-//        if(debug_index < 500){
-//            buffer_debug[debug_index] = '@';
-//            debug_index++;
-//        }
-//        if(debug_index < 500){
-//            buffer_debug[debug_index] = '\n';
-//            debug_index++;
-//        }
-
-//    }
-//    else{
-//        debug_print_nchar(buffer_debug, 500, 0, 499);
-//        debug_index = 0;
-//    }
-    //end debug
 
 #endif
 

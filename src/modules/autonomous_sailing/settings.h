@@ -35,7 +35,7 @@
 /**
  * @file settings.h
  *
- * Settings for parser_200WX apps
+ * Settings for autonomous_sailing apps
  *
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
@@ -43,10 +43,8 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#define AS_TYPE_OF_ENVIRONMENT 1/**< 0 = indoor, 1 = outdoor*/
+#define SIMULATION_FLAG 0 ///1 if you're testing autonomous sailing app indoor, PLEASE SET INDOOR PARSER_200WX
 
-#define GPS_SIMULATION 0    //1 to simulate GPS signal
-
-//#define SAVE_DEBUG_VALUES 1 //1 to use debug_values topic for debug purpose
+#define SAVE_DEBUG_VALUES 1 //1 to use debug_values topic for debug purpose
 
 #endif // SETTINGS_H
