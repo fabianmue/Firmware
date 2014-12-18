@@ -243,3 +243,7 @@ ORB_DEFINE(debug_values, struct debug_values_s);
 //Added by Marco Tranzatto
 #include "topics/boat_guidance_debug.h"
 ORB_DEFINE(boat_guidance_debug, struct boat_guidance_debug_s);
+
+//Added by Marco Tranzatto
+#include "topics/boat_qgc_param.h"
+ORB_DEFINE(boat_qgc_param, struct boat_qgc_param_s);
