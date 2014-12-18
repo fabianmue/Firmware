@@ -2037,7 +2037,7 @@ public:
 
     unsigned get_size()
     {
-        return 6 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 7 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
     }
 
 private:
@@ -2094,7 +2094,10 @@ protected:
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
+            snprintf(msg.name, sizeof(msg.name), "rudder cmd");
+            msg.value = boat_guidance_debug.rudder_action;
 
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
         }
     }
 };
