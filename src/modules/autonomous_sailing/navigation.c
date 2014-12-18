@@ -47,7 +47,7 @@ static const double squared_one_minus_flatness_m = 0.99330561993959; ///(1-flatn
 
 static const double  squared_earth_radius_m = 40680631590769; ///(arth_radius)^2 in meters
 
-static const float deg2rad = 0.017453292f; // pi / 180
+static const float deg2rad = 0.0174532925199433f; // pi / 180
 
 static float cosPhi = 0.0f;    ///cos(lat0)
 

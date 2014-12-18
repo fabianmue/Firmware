@@ -42,6 +42,8 @@
 
 #include "parameters.h"
 
+static const float deg2rad = 0.0174532925199433f; // pi / 180
+
 /**
  * Stop tack, used in guidance_module to decide whetever the tack maneuver is finished using yaw.
  * Offset in degrees.
@@ -62,14 +64,14 @@ PARAM_DEFINE_FLOAT(AS_SPTC_Y_D, 60.0f);
 PARAM_DEFINE_FLOAT(AS_SPTC_R, 2.0f);
 
 /**
- * Reference angle with respect true wind [rad]
+ * Reference angle with respect true wind [deg]
  *
  * Use Dumas'convention.
  *
- * @min -pi
- * @max pi
+ * @min -180
+ * @max 180
  */
-PARAM_DEFINE_FLOAT(AS_ALST_ANG, 0.5f);
+PARAM_DEFINE_FLOAT(AS_ALST_ANG_D, 35.0f);
 
 /**
  * 1 if you wish to use the alpha star specified by AS_ALSTR, 0 otherwise
@@ -208,14 +210,14 @@ PARAM_DEFINE_INT32(AS_WIN_APP, 10);
 PARAM_DEFINE_INT32(AS_WIN_TWD, 5);
 
 /**
- * AS_MEAN_WIND, specifies the mean wind direction [rad], in [-pi, pi].
+ * AS_MEAN_WIND_D, specifies the mean wind direction [deg], in [-180, 180].
  * Positive on the right (going from North to East), negative on the left (going from North to West).
  *
  *
- * @min -pi
- * @max pi
+ * @min -180
+ * @max 180
  */
-PARAM_DEFINE_FLOAT(AS_MEAN_WIND_R, 0.0f);
+PARAM_DEFINE_FLOAT(AS_MEAN_WIND_D, 0.0f);
 
 /**
  * Latitude of top mark, in degrees * E7.
@@ -283,14 +285,14 @@ PARAM_DEFINE_INT32(AS_P_ADD, 0);
 PARAM_DEFINE_INT32(ASP_START, 0);
 
 /**
- * Absolute value of reference angle with respect true wind [rad]
+ * Absolute value of reference angle with respect true wind [deg]
  *
  * Use Dumas'convention.
  *
  * @min 0
- * @max pi
+ * @max 180
  */
-PARAM_DEFINE_FLOAT(ASP_ALST_ANG, 0.5f);
+PARAM_DEFINE_FLOAT(ASP_ALST_ANG_D, 35.0f);
 
 #if SIMULATION_FLAG == 1
 
@@ -356,7 +358,7 @@ PARAM_DEFINE_FLOAT(ASIM_YAW_R, 0.0f);
 
 static struct pointers_param_qgc_s{
 
-    param_t alpha_star_pointer;         /**< pointer to param AS_ALST_ANG*/
+    param_t alpha_star_pointer;         /**< pointer to param AS_ALST_ANG_D*/
     param_t use_alpha_star_pointer;         /**< pointer to param AS_ALST_SET*/
 
 
@@ -382,7 +384,7 @@ static struct pointers_param_qgc_s{
     param_t moving_apparent_window_pointer;/**< pointer to param AS_WIN_APP*/
     param_t moving_twd_window_pointer;/**< pointer to param AS_WIN_TWD*/
 
-    param_t mean_wind_pointer;/**< pointer to param AS_MEAN_WIND_R*/
+    param_t mean_wind_pointer;/**< pointer to param AS_MEAN_WIND_D*/
 
     param_t lat_tmark_pointer;         /**< pointer to param AS_T_LAT_E7*/
     param_t lon_tmark_pointer;         /**< pointer to param AS_T_LON_E7*/
@@ -394,7 +396,7 @@ static struct pointers_param_qgc_s{
 
     //-- params for optimal path
     param_t start_path_following_pointer;         /**< pointer to param ASP_START*/
-    param_t abs_alpha_star_pointer;         /**< pointer to param ASP_ALST_ANG*/
+    param_t abs_alpha_star_pointer;         /**< pointer to param ASP_ALST_ANG_D*/
 
     //-- simulation params
 
@@ -421,7 +423,7 @@ void param_init(struct parameters_qgc *params_p,
                 const struct published_fd_s *pubs_p){
 
     //initialize pointer to parameters
-    pointers_param_qgc.alpha_star_pointer    = param_find("AS_ALST_ANG");
+    pointers_param_qgc.alpha_star_pointer    = param_find("AS_ALST_ANG_D");
     pointers_param_qgc.use_alpha_star_pointer    = param_find("AS_ALST_SET");
 
     pointers_param_qgc.sail_pointer    = param_find("AS_SAIL");
@@ -446,7 +448,7 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.moving_apparent_window_pointer = param_find("AS_WIN_APP");
     pointers_param_qgc.moving_twd_window_pointer = param_find("AS_WIN_TWD");
 
-    pointers_param_qgc.mean_wind_pointer = param_find("AS_MEAN_WIND_R");
+    pointers_param_qgc.mean_wind_pointer = param_find("AS_MEAN_WIND_D");
 
     pointers_param_qgc.lat_tmark_pointer    = param_find("AS_T_LAT_E7");
     pointers_param_qgc.lon_tmark_pointer    = param_find("AS_T_LON_E7");
@@ -459,7 +461,7 @@ void param_init(struct parameters_qgc *params_p,
 
     //-- optimal path following
     pointers_param_qgc.start_path_following_pointer = param_find("ASP_START");
-    pointers_param_qgc.abs_alpha_star_pointer = param_find("ASP_ALST_ANG");
+    pointers_param_qgc.abs_alpha_star_pointer = param_find("ASP_ALST_ANG_D");
 
     #if SIMULATION_FLAG == 1
 
@@ -490,6 +492,8 @@ void param_update(struct parameters_qgc *params_p,
     float alpha_tmp;
     int32_t set_alpha;
     param_get(pointers_param_qgc.alpha_star_pointer, &alpha_tmp);
+    //convert alpha in rad
+    alpha_tmp = alpha_tmp * deg2rad;
     param_get(pointers_param_qgc.use_alpha_star_pointer, &set_alpha);
     if(set_alpha)
         set_alpha_star(alpha_tmp);
@@ -566,6 +570,8 @@ void param_update(struct parameters_qgc *params_p,
     //----- mean wind
     float mean_wind;
     param_get(pointers_param_qgc.mean_wind_pointer, &mean_wind);
+    //convert mean_wind in rad
+    mean_wind = mean_wind * deg2rad;
     //set mean wind angle in navigation.h
     set_mean_wind_angle(mean_wind);
 
@@ -611,6 +617,8 @@ void param_update(struct parameters_qgc *params_p,
         int32_t start_following;
 
         param_get(pointers_param_qgc.abs_alpha_star_pointer, &abs_alpha_star);
+        //convert deg in rad
+        abs_alpha_star = abs_alpha_star * deg2rad;
         param_get(pointers_param_qgc.start_path_following_pointer, &start_following);
         //make sure abs_alpha_star is positive
         abs_alpha_star = (abs_alpha_star > 0) ? abs_alpha_star : -abs_alpha_star;
