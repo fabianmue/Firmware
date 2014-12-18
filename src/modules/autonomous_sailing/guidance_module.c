@@ -481,32 +481,30 @@ void guidance_module(struct reference_actions_s *ref_act_p,
                      const struct parameters_qgc *param_qgc_p,
                      struct structs_topics_s *strs_p){
 
-    float alpha;
+    float alpha;                //angle with respect to the wind
     float rudder_command = 0.0f;
     float sail_command = 0.0f;
-
-    //rudder control
 
     //get alpha from the moving average value of the last k values of instant alpha
     alpha = get_alpha();
 
     if(ref_act_p->should_tack){
-
+        //perform tack action
         rudder_command = tack_action(ref_act_p, strs_p);
+        //during tack ease off the sails
+        sail_command = SAIL_SATURATION;
     }
     if(!(ref_act_p->should_tack)){
-        //if the boat should not tack, compute rudder action to follow reference alpha
-
+        //if the boat should not tack, compute rudder and sails actions to follow reference alpha
         //PI controller for rudder
         rudder_command = pi_controller(&(ref_act_p->alpha_star), &alpha);
+
+        //sails control only if AS_SAIL param from QGC is negative
+        if(param_qgc_p->sail_servo < 0.0f)
+            sail_command = sail_controller();
+        else
+            sail_command = param_qgc_p->sail_servo;
     }
-
-    //sails control only if AS_SAIL param from QGC is negative
-    if(param_qgc_p->sail_servo < 0.0f)
-        sail_command = sail_controller();
-    else
-        sail_command = param_qgc_p->sail_servo;
-
     //saturation for safety reason
     rudder_command = rudder_saturation(rudder_command);
 
@@ -517,11 +515,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 
     //update actuator value
     strs_p->actuators.control[0] = rudder_command;
-    //only for presentation
-    //strs_p->actuators.control[3] = sail_command;
-
-    strs_p->actuators.control[3] = (strs_p->wind_sailing.speed_apparent > 0.5f) ? sail_command :
-                                                                                  strs_p->actuators.control[3];
+    strs_p->actuators.control[3] =  sail_command;
     //stop presentation
 
 
