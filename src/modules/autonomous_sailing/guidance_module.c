@@ -154,21 +154,13 @@ float pi_controller(const float *ref_p, const float *meas_p){
 
     error = *ref_p - *meas_p;
 
-
     if(pi_rudder_data.use_conditional){
         //Conditional Integration
-
         float abs_error;
 
         abs_error = (error > 0) ? error : -error;
         //update sum error
         pi_rudder_data.sum_error_pi += error;
-
-        //TODO check if below is ok
-//        if(pi_rudder_data.sum_error_pi > TWO_M_PI_F)
-//            pi_rudder_data.sum_error_pi = TWO_M_PI_F;
-//        else if(pi_rudder_data.sum_error_pi < -TWO_M_PI_F)
-//            pi_rudder_data.sum_error_pi = -TWO_M_PI_F;
 
         //integral constant for conditional integration, this is for anti-wind up!
         float i_gain = pi_rudder_data.i / (1.0f + pi_rudder_data.ci * error * error);
@@ -276,9 +268,15 @@ float tack_action(struct reference_actions_s *ref_act_p,
     else{
         //we must start tack maneuver
         tack_data.boat_is_tacking = true;
-        //invert rudder command and set it to the maximum value
-        tack_data.tack_rudder_command = (strs_p->actuators.control[0] > 0) ? (-RUDDER_SATURATION):
-                                                                              RUDDER_SATURATION;
+        /* If we are sailing on port (starboard) haul, that is alpha_star is < (>) 0,
+         * move the rudder on the right (left) most position to tack.
+         *
+         * Pay attention: when path_planning module set should_tack = true, it even
+         * changed the alpha_star, so to see at which haul we are sailing before tacking,
+         * we must change the sign of alpha_star!
+        */
+        tack_data.tack_rudder_command = (-ref_act_p->alpha_star < 0) ? (-RUDDER_SATURATION):
+                                                                        RUDDER_SATURATION;
         //save actual roll and yaw angles
         tack_data.roll_before_tack[0] = strs_p->att.roll;
         tack_data.roll_before_tack[1] = strs_p->boat_weather_station.roll_r;

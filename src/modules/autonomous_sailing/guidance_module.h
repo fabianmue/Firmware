@@ -54,7 +54,7 @@
 //log messages to QGroundControl
 #include "send_msg_qgc.h"
 
-#define RUDDER_SATURATION 0.9f
+#define RUDDER_SATURATION 0.9f/// 0.9f = left most rudder position, -0.9f, right most rudder position
 #define SAIL_SATURATION 0.56f
 
 /** @brief Implement next control action*/
