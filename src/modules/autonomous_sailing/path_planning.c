@@ -56,6 +56,7 @@ static struct{
     int16_t size;           ///size of array x_m_p
     int16_t current_goal;   ///index of current grid line to reach
     int16_t last_goal;      ///index of the last grid line to reach
+    int16_t grids_inserted; /// number of grid lines inserted
 }grid_lines;
 
 //optimal path following data
@@ -107,6 +108,7 @@ void init_grids(void){
 
     grid_lines.x_m_p = NULL;
     grid_lines.size = 0;
+    grid_lines.grids_inserted = 0;
 
     //set to 1 the number of grid lines before a real number is used
     set_grids_number(1);
@@ -139,6 +141,7 @@ void set_grids_number(int16_t size){
     grid_lines.last_goal = -1;
     current_grid_goal_x_m = 0;
     current_grid_valid = false;
+    grid_lines.grids_inserted = 0;
 
     //send a message to QGC to tell that grid lines queue has been reset
     sprintf(txt_msg, "Grid lines queue reset, new dim: %d.", size);
@@ -186,6 +189,8 @@ void set_grid(float x_m){
         current_grid_goal_x_m = x_m;
         current_grid_valid = true;
     }
+
+    grid_lines.grids_inserted++;
 
     //send a message to QGC to tell that a new grid line has been added
     sprintf(txt_msg, "Added grid number %d at %3.2f meters.", grid_lines.last_goal, (double)x_m);
@@ -546,5 +551,33 @@ void start_following_optimal_path(int32_t start, float abs_alpha_star){
             send_log_info(txt_msg);
         }
         //else: nothing to do, we're not following any trajectory
+    }
+}
+
+void reuse_last_grids(bool use){
+    if(use){
+        //copy all the grid lines inserted
+        float *old_grids = malloc(sizeof(float) * grid_lines.grids_inserted);
+        int16_t old_real_size = grid_lines.grids_inserted;
+
+        for(int16_t i = 0; i < old_real_size; i++)
+            old_grids[i] = grid_lines.x_m_p[i];
+
+        /*reset grid lines number to grid_lines.size + 1
+         * (so you are sure that current and last goal will be reset),
+         * then allocate a proper size of grid lines and insert them
+        */
+        set_grids_number(grid_lines.size + 1);
+        set_grids_number(old_real_size);
+
+        for(int16_t i = 0; i < old_real_size; i++)
+            set_grid(old_grids[i]);
+
+        //delete old_grids
+        free(old_grids);
+
+        //send a message to QGC
+        sprintf(txt_msg, "Reinserted previous grid lines.");
+        send_log_info(txt_msg);
     }
 }

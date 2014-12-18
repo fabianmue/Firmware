@@ -273,6 +273,15 @@ PARAM_DEFINE_FLOAT(AS_P_X_M, 0);
  */
 PARAM_DEFINE_INT32(AS_P_ADD, 0);
 
+/**
+ * 1 if you want to re-insert the same grid lines you used before
+ *
+ *
+ * @min 0
+ * @max 1
+ */
+PARAM_DEFINE_INT32(AS_REIN_GRS, 0);
+
 //------------------------------------- Parameters for starting optimal path following ----
 
 /**
@@ -397,6 +406,7 @@ static struct pointers_param_qgc_s{
     //-- params for optimal path
     param_t start_path_following_pointer;         /**< pointer to param ASP_START*/
     param_t abs_alpha_star_pointer;         /**< pointer to param ASP_ALST_ANG_D*/
+    param_t repeat_past_grids_pointer;    /**< pointer to param AS_REIN_GRS */
 
     //-- simulation params
 
@@ -406,7 +416,7 @@ static struct pointers_param_qgc_s{
     param_t alt_sim_pointer; /**< pointer to param ASIM_ALt_E3*/
 
     param_t twd_sim_pointer; /**< pointer to param ASIM_TWD_D*/
-    param_t cog_sim_pointer; /**< pointer to param ASP_ALST_ANG_D*/
+    param_t cog_sim_pointer; /**< pointer to param ASIM_COG_D*/
 
 
     param_t yaw_sim_pointer; /**< pointer to param ASIM_YAW_D*/
@@ -462,6 +472,7 @@ void param_init(struct parameters_qgc *params_p,
     //-- optimal path following
     pointers_param_qgc.start_path_following_pointer = param_find("ASP_START");
     pointers_param_qgc.abs_alpha_star_pointer = param_find("ASP_ALST_ANG_D");
+    pointers_param_qgc.repeat_past_grids_pointer = param_find("AS_REIN_GRS");
 
     #if SIMULATION_FLAG == 1
 
@@ -469,7 +480,7 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.lon_sim_pointer = param_find("ASIM_LON_E7");
     pointers_param_qgc.alt_sim_pointer = param_find("ASIM_ALT_E3");
 
-    pointers_param_qgc.cog_sim_pointer = param_find("ASP_ALST_ANG_D");
+    pointers_param_qgc.cog_sim_pointer = param_find("ASIM_COG_D");
     pointers_param_qgc.twd_sim_pointer = param_find("ASIM_TWD_D");
 
     pointers_param_qgc.yaw_sim_pointer = param_find("ASIM_YAW_D");
@@ -609,6 +620,10 @@ void param_update(struct parameters_qgc *params_p,
 
     //set the new number of grid lines
     set_grids_number_qgc(grids_number);
+
+    param_get(pointers_param_qgc.repeat_past_grids_pointer, &temp);
+    bool use_last_grids = (temp > 0) ? true : false;
+    reuse_last_grids(use_last_grids);
 
     //-- params for optimal path following
     //use these params only if update_path_param is true

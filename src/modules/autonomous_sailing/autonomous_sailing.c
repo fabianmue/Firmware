@@ -283,12 +283,12 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     //update apparent wind direction in control data
                     update_app_wind(strs.wind_sailing.angle_apparent);
 
-                    #if SAVE_DEBUG_VALUES == 1
-                    //save time when this action is performed
-                    strs.debug_values.timestamp = hrt_absolute_time();
-                    strs.debug_values.float_val_3 = strs.debug_values.timestamp / 1e3;
-                    strs.debug_updated = true;
-                    #endif
+//                    #if SAVE_DEBUG_VALUES == 1
+//                    //save time when this action is performed
+//                    strs.debug_values.timestamp = hrt_absolute_time();
+//                    strs.debug_values.float_val_3 = strs.debug_values.timestamp / 1e3;
+//                    strs.debug_updated = true;
+//                    #endif
 
                     #if SIMULATION_FLAG == 0
                     //update true wind direction in control data
@@ -306,6 +306,13 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 if(fds[4].revents & POLLIN){
                     // attitude updated
                     orb_copy(ORB_ID(vehicle_attitude), subs.att, &(strs.att));
+
+                    #if SAVE_DEBUG_VALUES == 1
+                    //save time when this action is performed
+                    strs.debug_values.timestamp = hrt_absolute_time();
+                    strs.debug_values.float_val_3 = strs.debug_values.timestamp / 1e3;
+                    strs.debug_updated = true;
+                    #endif
                 }
                 if(fds[5].revents & POLLIN){
                     // boat_weather_station updated
