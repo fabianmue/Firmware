@@ -13,7 +13,7 @@
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/debug_values.h>
-
+#include <uORB/topics/boat_qgc_param.h>
 
 //only for debug on qcg
 #include <uORB/topics/airspeed.h>
@@ -31,6 +31,8 @@ struct published_fd_s{
     orb_advert_t actuator_pub;
     orb_advert_t boat_guidance_debug_pub;
     orb_advert_t debug_values;
+    orb_advert_t boat_qgc_param1;
+    orb_advert_t boat_qgc_param2;
 
     //only for debug on qGC
     orb_advert_t airspeed;
@@ -46,6 +48,8 @@ struct structs_topics_s{
    struct vehicle_attitude_s att;
    struct boat_weather_station_s boat_weather_station;
    struct debug_values_s debug_values;
+   struct boat_qgc_param1_s boat_qgc_param1;
+   struct boat_qgc_param2_s boat_qgc_param2;
 
    bool debug_updated;
 

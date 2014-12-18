@@ -455,9 +455,9 @@ struct log_BGUD_s{
     float app_mean;
 };
 
-/* --- BOAT PARAM FROM QGC -------------------------------------------------*/
-#define LOG_BQGC_MSG 59
-struct log_BQGC_s{
+/* --- BOAT PARAM1 FROM QGC -------------------------------------------------*/
+#define LOG_QGC1_MSG 59
+struct log_QGC1_s{
     float rud_p;
     float rud_i;
     float rud_kaw;
@@ -471,6 +471,11 @@ struct log_BQGC_s{
     int32_t lonT;
     int32_t altT;
     float mean_wind_direction_r;
+};
+
+/* --- BOAT PARAM2 FROM QGC -------------------------------------------------*/
+#define LOG_QGC2_MSG 60
+struct log_QGC2_s{
     uint16_t window_alpha;
     uint16_t window_apparent;
     uint16_t window_twd;
@@ -546,7 +551,8 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(BWES, "fffffffff", "AccX,AccY,AccZ,Roll,Pitch,Heading,RollRate,PitchRate,YawRate"), //Added by Marco Tranzatto
     LOG_FORMAT(DEVA, "fff", "Float1, Float2, Float3"), //Added by Marco Tranzatto
     LOG_FORMAT(BGUD, "fffffffBff", "AlphaStar,Alpha,Rudder,Sail,NextGrid,XRace,YRace,ShldTck,TwdAvg,AppAvg"), //Added by Marco Tranzatto
-    LOG_FORMAT(BQGC, "fffffBLLfLLffBBB", "P,I,Kaw,Cp,Ci,CondPI,Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind,WinAlp,WinApp,WinTWD"), //Added by Marco Tranzatto
+    LOG_FORMAT(QGC1, "fffffBLLfLLff", "P,I,Kaw,Cp,Ci,CondPI,Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
+    LOG_FORMAT(QGC2, "HHH", "WinAlp,WinApp,WinTWD"), //Added by Marco Tranzatto
 	/* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),

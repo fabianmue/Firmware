@@ -417,7 +417,8 @@ static struct pointers_param_qgc_s{
 *
 */
 void param_init(struct parameters_qgc *params_p,
-                struct structs_topics_s *strs_p){
+                struct structs_topics_s *strs_p,
+                const struct published_fd_s *pubs_p){
 
     //initialize pointer to parameters
     pointers_param_qgc.alpha_star_pointer    = param_find("AS_ALST_ANG");
@@ -474,7 +475,7 @@ void param_init(struct parameters_qgc *params_p,
     #endif
 
     //get parameters but do not add any grid lines at start up
-    param_update(params_p, strs_p, false);
+    param_update(params_p, strs_p, false, pubs_p);
 
 }
 
@@ -482,7 +483,8 @@ void param_init(struct parameters_qgc *params_p,
  *
 */
 void param_update(struct parameters_qgc *params_p,
-                  struct structs_topics_s *strs_p, bool update_path_param){
+                  struct structs_topics_s *strs_p, bool update_path_param,
+                  const struct published_fd_s *pubs_p){
 
     //----- alpha star
     float alpha_tmp;
@@ -545,18 +547,21 @@ void param_update(struct parameters_qgc *params_p,
     set_stop_tack(roll_stop, yaw_stop);
 
     //----- moving windows
-    uint16_t moving_window;
-    param_get(pointers_param_qgc.moving_alpha_window_pointer, &moving_window);
-    //update window size using API in controller_data.h
-    update_k(moving_window);
+    uint16_t window_alpha;
+    uint16_t window_apparent;
+    uint16_t window_twd;
 
-    param_get(pointers_param_qgc.moving_apparent_window_pointer, &moving_window);
+    param_get(pointers_param_qgc.moving_alpha_window_pointer, &window_alpha);
     //update window size using API in controller_data.h
-    update_k_app(moving_window);
+    update_k(window_alpha);
 
-    param_get(pointers_param_qgc.moving_twd_window_pointer, &moving_window);
+    param_get(pointers_param_qgc.moving_apparent_window_pointer, &window_apparent);
     //update window size using API in controller_data.h
-    update_k_twd(moving_window);
+    update_k_app(window_apparent);
+
+    param_get(pointers_param_qgc.moving_twd_window_pointer, &window_twd);
+    //update window size using API in controller_data.h
+    update_k_twd(window_twd);
 
     //----- mean wind
     float mean_wind;
@@ -613,6 +618,28 @@ void param_update(struct parameters_qgc *params_p,
         //pass these two values to path_planning module
         start_following_optimal_path(start_following, abs_alpha_star);
     }
+
+    //save interested param in boat_qgc_param and publish this topic
+    strs_p->boat_qgc_param1.timestamp = hrt_absolute_time();
+    strs_p->boat_qgc_param1.rud_p = rud_p;
+    strs_p->boat_qgc_param1.rud_i = rud_i;
+    strs_p->boat_qgc_param1.rud_kaw = rud_kaw;
+    strs_p->boat_qgc_param1.rud_cp = rud_cp;
+    strs_p->boat_qgc_param1.rud_ci = rud_ci;
+    strs_p->boat_qgc_param1.lat0 = lat0;
+    strs_p->boat_qgc_param1.lon0 = lon0;
+    strs_p->boat_qgc_param1.alt0 = alt0;
+    strs_p->boat_qgc_param1.latT = lat_tmark;
+    strs_p->boat_qgc_param1.lonT = lon_tmark;
+    strs_p->boat_qgc_param1.altT = alt_tmark;
+    strs_p->boat_qgc_param1.mean_wind_direction_r = mean_wind;
+    orb_publish(ORB_ID(boat_qgc_param1), pubs_p->boat_qgc_param1, &(strs_p->boat_qgc_param1));
+
+    strs_p->boat_qgc_param2.timestamp = hrt_absolute_time();
+    strs_p->boat_qgc_param2.window_alpha = window_alpha;
+    strs_p->boat_qgc_param2.window_apparent = window_apparent;
+    strs_p->boat_qgc_param2.window_twd = window_twd;
+    orb_publish(ORB_ID(boat_qgc_param2), pubs_p->boat_qgc_param2, &(strs_p->boat_qgc_param2));
 
     #if SIMULATION_FLAG == 1
 

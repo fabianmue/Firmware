@@ -41,7 +41,7 @@
 
 #include <stdint.h>
 
-struct boat_qgc_param_s {
+struct boat_qgc_param1_s {
     uint64_t timestamp;
     float rud_p;            /// P constant of the PI controller of the rudder
     float rud_i;            /// I constant of the PI controller of the rudder
@@ -56,11 +56,16 @@ struct boat_qgc_param_s {
     int32_t lonT;           /// Longitude in 1E-7 degrees of the top mark buoy
     int32_t altT;           /// Altitude in 1E-3 meters (millimeters) above MSL of the top mark buoy
     float mean_wind_direction_r;    /// Mean wind direction used to set X-axis direction of the race frame
+};
+
+struct boat_qgc_param2_s {
+    uint64_t timestamp;
     uint16_t window_alpha;      /// Window size of moving average filter of alpha
     uint16_t window_apparent;   /// Window size of moving average filter of apparent wind
     uint16_t window_twd;        /// Window size of moving average filter of twd
 };
 
-ORB_DECLARE(boat_qgc_param);
+ORB_DECLARE(boat_qgc_param1);
+ORB_DECLARE(boat_qgc_param2);
 
 #endif // BOAT_QGC_PARAM_H

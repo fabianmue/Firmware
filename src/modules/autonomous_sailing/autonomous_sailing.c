@@ -204,7 +204,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
     as_topics(&subs, &pubs, &strs);
 
     //initialize local copy of parameters from QGroundControl
-    param_init(&params, &strs);
+    param_init(&params, &strs, &pubs);
 
 	// try to initiliaze actuators
     if(!actuators_init(&pubs, &strs)){
@@ -301,7 +301,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     orb_copy(ORB_ID(parameter_update), subs.parameter_update, &(strs.update));
 
                     //update param
-                    param_update(&params, &strs, true);
+                    param_update(&params, &strs, true, &pubs);
                 }
                 if(fds[4].revents & POLLIN){
                     // attitude updated
@@ -415,12 +415,19 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
 
     warnx(" subscribed to all topics \n");
 
-    //advertise topics
+    //advertise topic boat_guidance_debug
     memset(&(strs_p->boat_guidance_debug), 0, sizeof(strs_p->boat_guidance_debug));
     pubs_p->boat_guidance_debug_pub = orb_advertise(ORB_ID(boat_guidance_debug), &(strs_p->boat_guidance_debug));
 
+    //advertise topic boat_qgc_param
+    memset(&(strs_p->boat_qgc_param1), 0, sizeof(strs_p->boat_qgc_param1));
+    pubs_p->boat_qgc_param1 = orb_advertise(ORB_ID(boat_qgc_param1), &(strs_p->boat_qgc_param1));
+    memset(&(strs_p->boat_qgc_param2), 0, sizeof(strs_p->boat_qgc_param2));
+    pubs_p->boat_qgc_param2 = orb_advertise(ORB_ID(boat_qgc_param2), &(strs_p->boat_qgc_param2));
+
+
     #if SAVE_DEBUG_VALUES == 1
-    // advertise debug_values topic
+    //advertise debug_values topic
     memset(&(strs_p->debug_values), 0, sizeof(strs_p->debug_values));
     strs_p->debug_values.timestamp = hrt_absolute_time();
     pubs_p->debug_values = orb_advertise(ORB_ID(debug_values), &(strs_p->debug_values));
