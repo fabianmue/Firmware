@@ -58,7 +58,7 @@ void compute_avg(void);
 void filter_new_data(void);
 
 /** @brief compute a robust average of sensor "frame" measurements*/
-float robust_avg_sns(float prev_mean, float old_val, float new_val, const uint16_t k);
+float robust_avg_sns(float *p_meas, const uint16_t k);
 
 //actual raw measurements from parser_200WX
 static struct{
@@ -244,9 +244,6 @@ void update_cog(const float cog_r){
 */
 void update_app_wind(const float app_r){
 
-    //just for now, save oldest value of apparent wind direction
-    float oldest_val = measurements_filtered.app_wind_p[measurements_filtered.oldestValueApp];
-
     //delete oldest value in app_wind_p to save app_r
     measurements_filtered.app_wind_p[measurements_filtered.oldestValueApp] = app_r;
 
@@ -257,13 +254,8 @@ void update_app_wind(const float app_r){
         measurements_filtered.oldestValueApp = 0;
 
     //update apparent wind mean using a robust mean
-    measurements_filtered.apparent_wind = robust_avg_sns(measurements_filtered.apparent_wind,
-                                                         oldest_val, app_r,
+    measurements_filtered.apparent_wind = robust_avg_sns(measurements_filtered.app_wind_p,
                                                          measurements_filtered.k_app);
-
-//    measurements_filtered.apparent_wind = measurements_filtered.apparent_wind -
-//                                          oldestVal / measurements_filtered.k_app +
-//                                          app_r / measurements_filtered.k_app;
 
 }
 
@@ -281,9 +273,6 @@ void update_twd(const float twd_r){
 
     //TODO wind between -pi and pi will give as mean value 0, but it is NOT correct!!!
 
-    //just for now, save oldest value of twd
-    float oldest_val = measurements_filtered.twd_p[measurements_filtered.oldestValueTwd];
-
     //delete oldest value in twd_p to save twd_r
     measurements_filtered.twd_p[measurements_filtered.oldestValueTwd] = twd_r;
 
@@ -294,13 +283,8 @@ void update_twd(const float twd_r){
         measurements_filtered.oldestValueTwd = 0;
 
     //update twd mean using a robust mean
-    measurements_filtered.twd = robust_avg_sns(measurements_filtered.twd,
-                                               oldest_val, twd_r,
+    measurements_filtered.twd = robust_avg_sns(measurements_filtered.twd_p,
                                                measurements_filtered.k_twd);
-
-//    measurements_filtered.twd = measurements_filtered.twd -
-//                                          oldestVal / measurements_filtered.k_twd +
-//                                          twd_r / measurements_filtered.k_twd;
 
     #if PRINT_DEBUG == 1
     printf("saved twd %2.3f \n", (double)measurements_raw.twd_r);
@@ -424,65 +408,76 @@ float extend_angle(float ref, float ang){
     return ang;
 }
 
-/**
- * float absolute value of the difference
-*/
-float my_fabs(float x1, float x2){
-    float diff = x1 -x2;
 
-    return (diff > 0) ? diff : -diff;
-}
 
 /**
  * Update a pre-exsiting moving mean in a robust way.
  *
  * Angles measurements from weather station and GPS are in interval [-pi, pi].
  *
- *              0
- *              |
- *              |
- *    -pi/2 ____|____ pi/2
- *              |
- *              |
- *              |
- *           -pi|pi
+ *                North
+ *
+ *                  0
+ *                  |
+ *                  |
+ *  West  -pi/2 ____|____ pi/2  East
+ *                  |
+ *                  |
+ *                  |
+ *               -pi|pi
+ *
+ *                 South
  *
  *
  * If an angle switches between -pi and pi, a normal mean will return 0, that is wrong.
- * This robust mean deletes the oldest value from the old mean and computes a robust mean (without
- * the problem explained above) with a new value.
+ * This robust mean uses the Mitsuta method to compute a "robust" mean.
  *
- * @param old_mean      old mean to update
- * @param oldest_val    oldest value in old_mean to delete
- * @param new_val       new value to insert in the new men
- * @param k             size of the window of the movign average
+ * @param p_meas        array containing angles to mean
+ * @param k             number of element in p_meas
  * @return              new robust mean
 */
-float robust_avg_sns(float prev_mean, float old_val, float new_val, const uint16_t k){
+float robust_avg_sns(float *p_meas, const uint16_t k){
 
     float new_mean;
-    float ext_old_val;
-    float ext_new_val;
+    float D;
+    float delta;
+    float sum;
+    float tmp_meas;
 
-    //extend old and new value in order to be in [0, sign(prev_mean) * 2 * pi]
-    ext_old_val = extend_angle(prev_mean, old_val);
-    ext_new_val = extend_angle(prev_mean, new_val);
+    /*Be careful: Mitsuta method only works if angles are between 0 and 2*pi AND if
+    if consecutive raw readings differ by less than pi */
 
-    //check which angle (the normal one or the extended one) is "closer" to our previous mean
-    if(my_fabs(ext_new_val, prev_mean) < my_fabs(new_val, prev_mean))
-        new_val = ext_new_val;
+    //convert angle read from interval [-pi, pi] to [0, 2pi]
+    tmp_meas = (p_meas[0] < 0) ? p_meas[0] + TWO_PI_F : p_meas[0];
+    sum = tmp_meas;
+    D = tmp_meas;
 
-    if(my_fabs(ext_old_val, prev_mean) < my_fabs(old_val, prev_mean))
-        old_val = ext_old_val;
+    for(uint16 i = 1; i < k; i++){
+        //convert sensor angle from interval [-pi, pi] to [0, 2pi]
+        tmp_meas = (p_meas[i] < 0) ? p_meas[i] + TWO_PI_F : p_meas[i];
 
-    //compute a new mean by deleting the oldest value and adding the new one
-    new_mean = prev_mean - old_val / k + new_val / k;
+        delta = tmp_meas - D;
 
-    //make sure new mean is between [-pi, pi]
-    if(new_mean > M_PI_F)
-        new_mean = -2 * M_PI_F + new_mean;
-    else if(new_mean < -M_PI_F)
-        new_mean = 2 * M_PI_F + new_mean;
+        if(delta < -M_PI_F)
+            D = D + delta + TWO_PI_F;
+        else if(delta < M_PI_F)
+            D = D + delta;
+        else
+            D = D + delta - TWO_PI_F;
+
+        sum = sum + D;
+    }
+    //compute mean
+    new_mean = sum / k;
+
+    //additional cautions
+    if(new_mean < 0)
+        new_mean = new_mean + TWO_PI_F;
+    else if(new_mean > TWO_PI_F)
+        new_mean = new_mean - TWO_PI_F;
+
+    //convert new_mean from Mitsuta convention to sensor convention
+    new_mean = (new_mean > M_PI_F) ? new_mean - TWO_PI_F : new_mean;
 
     return new_mean;
 }
