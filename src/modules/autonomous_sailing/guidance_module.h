@@ -55,7 +55,10 @@
 #include "send_msg_qgc.h"
 
 #define RUDDER_SATURATION 0.9f /// 0.9f = left most rudder position, -0.9f, right most rudder position
+#define RUDDER_45_LEFT 0.9f /// rudder in at 45 deg and the boat steers on the left
+
 #define SAIL_SATURATION 0.56f  /// 0.56f = ease off sail as much as possibile. 0.0f = close sails
+#define SAIL_20 0.56f   ///sails are opened ad 20 deg
 
 /** @brief Implement next control action*/
 void guidance_module(struct reference_actions_s *ref_act_p,

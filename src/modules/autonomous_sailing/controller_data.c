@@ -394,19 +394,19 @@ float get_twd(void){
     return measurements_filtered.twd;
 }
 
-/**
- * @biref extend ang in order to be in [0, sign(ref) * 2 * pi]
- */
-float extend_angle(float ref, float ang){
+// cancella
+// * @biref extend ang in order to be in [0, sign(ref) * 2 * pi]
+// */
+//float extend_angle(float ref, float ang){
 
-    if(ref > 0 && ang < 0)
-        ang = 2 * M_PI_F + ang;
-    else if(ref < 0 && ang > 0)
-        ang = -2 * M_PI_F + ang;
+//    if(ref > 0 && ang < 0)
+//        ang = 2 * M_PI_F + ang;
+//    else if(ref < 0 && ang > 0)
+//        ang = -2 * M_PI_F + ang;
 
 
-    return ang;
-}
+//    return ang;
+//}
 
 
 
@@ -452,7 +452,7 @@ float robust_avg_sns(float *p_meas, const uint16_t k){
     sum = tmp_meas;
     D = tmp_meas;
 
-    for(uint16 i = 1; i < k; i++){
+    for(uint16_t i = 1; i < k; i++){
         //convert sensor angle from interval [-pi, pi] to [0, 2pi]
         tmp_meas = (p_meas[i] < 0) ? p_meas[i] + TWO_PI_F : p_meas[i];
 
