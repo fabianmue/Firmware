@@ -314,9 +314,9 @@ void tack_action(struct reference_actions_s *ref_act_p,
      * it is unlikely to have a CorseOverGround value from the GPS to compute a
      * new alpha angle, we use an alpha angle computed with the yaw angle.
      * The yaw angle is provided by the Kalman Filter and we can have a new value
-     * of it one every 0.01 second (more or less).
+     * of it very frequently.
     */
-    float alpha_yaw = 0.0f;
+    float alpha_yaw = get_alpha_yaw();
 
     //use variable sailing_at_port_haul to see which tack maneuver has to be used
     if(sailing_at_port_haul)

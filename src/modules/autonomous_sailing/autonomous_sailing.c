@@ -206,6 +206,9 @@ int as_daemon_thread_main(int argc, char *argv[]){
     //initialize local copy of parameters from QGroundControl
     param_init(&params, &strs, &pubs);
 
+    //limit update rate of attitude every 50 milliseconds --> f = 20 Hz
+     orb_set_interval(subs.att, 50);
+
 	// try to initiliaze actuators
     if(!actuators_init(&pubs, &strs)){
 		// something went wrong
@@ -306,6 +309,9 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 if(fds[4].revents & POLLIN){
                     // attitude updated
                     orb_copy(ORB_ID(vehicle_attitude), subs.att, &(strs.att));
+
+                    //update yaw in controller_data module
+                    update_yaw(strs.att.yaw);
 
                     #if SAVE_DEBUG_VALUES == 1
                     //save time when this action is performed

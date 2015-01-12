@@ -47,6 +47,7 @@
 #include <stdlib.h>
 
 
+
 /** @brief initialize controller data before starting*/
 void init_controller_data(void);
 
@@ -76,5 +77,11 @@ float get_app_wind(void);
 
 /** @brief get the average value oftrue wind direction*/
 float get_twd(void);
+
+/** @brief update yaw angle (w.r.t. true North)*/
+void update_yaw(const float yaw_r);
+
+/** @brief compute alpha angle using yaw angle instead of course over ground*/
+float get_alpha_yaw(void);
 
 #endif // CONTROLLER_DATA_H
