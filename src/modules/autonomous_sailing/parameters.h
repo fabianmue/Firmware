@@ -61,7 +61,6 @@
 
 //struct for local copy of parameter from QGroundControl
 struct parameters_qgc{
-    //float rudder_servo;
     float sail_servo;
 
     #ifdef SIMULATION_FLAG
@@ -69,6 +68,7 @@ struct parameters_qgc{
     float cog_sim;
     float twd_sim;
     float yaw_sim;
+    float deva1;
 
     #endif
 };

@@ -66,7 +66,7 @@ static struct{
     float twd_r; ///true wind estimated direction [rad], according to Dumas angle definition (Chap 1.3)
     bool cog_updated;///true if cog_r has been updated and the new value has to be used to compute a new instant alpha
     bool twd_updated;///true if twd_r has been updated and the new value has to be used to compute a new instant alpha
-    float yaw_r;///last yaw (w.r.t. true North) angle provided by the Kalman filter, according to Dumas angle definition (Chap 1.3)
+    float yaw_r;///last yaw (w.r.t. true North) angle provided by the Kalman filter, according to our sensor convention
     uint64_t time_last_cog_update;///last time when cog_r has been updated
 }measurements_raw;
 
@@ -416,18 +416,18 @@ float get_alpha(void){
 
 /** Return the average value of apparent wind direction computed from the last k_app values
  *
- * @return moving average value of apparent wind direction
+ * @return moving average value of apparent wind direction in sensor frame
 */
-float get_app_wind(void){
+float get_app_wind_sns(void){
 
     return measurements_filtered.apparent_wind;
 }
 
 /** Return the average value of true wind direction computed from the last k_twd values
  *
- * @return moving average value of true wind direction, Dumas' sign convention
+ * @return moving average value of true wind direction in sensor frame
 */
-float get_twd(void){
+float get_twd_sns(void){
 
     return measurements_filtered.twd;
 }
@@ -508,8 +508,8 @@ float robust_avg_sns(float *p_meas, const uint16_t k){
  * Update yaw angle value.
 */
 void update_yaw(const float yaw_r){
-    //save yaw according to Dumas angle definition (Chap 1.3, Dumas' thesis)
-    measurements_raw.yaw_r = -yaw_r;
+    //save yaw according to sensor convention
+    measurements_raw.yaw_r = yaw_r;
 }
 
 /**
@@ -527,8 +527,14 @@ float get_alpha_yaw(void){
      * we use it "as it is" without using any moving average filter.
      * get_twd() provides a robust (@see robust_avg_sns) true wind angle
      * measurement mean value.
+     *
+     * Be careful: alpha = yaw - twd, with yaw and twd expressed with
+     * Dumas'angle convention! Dumas'convention is opposite to our
+     * sensro conventin, so we have to change sign to everything.
+     * Starting from measurements in sensor convention, alpha
+     * can be computed as alpha = twd_sensors_convention - yaw_sensor_convention
     */
-    alpha = measurements_raw.yaw_r - get_twd();
+    alpha = get_twd_sns() - measurements_raw.yaw_r;
 
     //if |instant_alpha|<= pi/2 we're sailing upwind, so everything is ok
     //constrain alpha to be the CLOSEST angle between TWD and COG

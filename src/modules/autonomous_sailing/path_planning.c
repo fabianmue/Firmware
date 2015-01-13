@@ -299,7 +299,7 @@ void read_new_ref_action(struct structs_topics_s *strs_p,
     mean_wind_angle = get_mean_wind_angle();
 
     //get mean value of true wind direction read by weather station
-    twd = get_twd();
+    twd = get_twd_sns();
 
     //for now, only simple model (A) where only 2 wind directions are allowed
     /*
@@ -312,9 +312,9 @@ void read_new_ref_action(struct structs_topics_s *strs_p,
     twd -= mean_wind_angle;
 
     //check if twd needs to be constrained between [-pi, pi]
-    if(get_twd() < 0 && twd < -M_PI_F)
+    if(get_twd_sns() < 0 && twd < -M_PI_F)
         twd = 2 * M_PI_F + twd;
-    else if(get_twd() > 0 && twd > M_PI_F)
+    else if(get_twd_sns() > 0 && twd > M_PI_F)
         twd = twd - 2 * M_PI_F;
 
     wind_index = (twd > 0) ? 2 : //wind from NNE w.r.t. our new "true" North

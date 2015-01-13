@@ -54,11 +54,11 @@
 //log messages to QGroundControl
 #include "send_msg_qgc.h"
 
-#define RUDDER_SATURATION 0.9f /// 0.9f = left most rudder position, -0.9f, right most rudder position
-#define RUDDER_45_LEFT 0.9f /// rudder in at 45 deg and the boat steers on the left
+#define RUDDER_SATURATION 0.9f /// 0.9f = most left rudder position, -0.9f, most right rudder position
+#define RUDDER_45_LEFT 0.85f /// rudder at 45 deg and the boat steers on the left
 
 #define SAIL_SATURATION 0.56f  /// 0.56f = ease off sail as much as possibile. 0.0f = close sails
-#define SAIL_20 0.56f   ///sails are opened ad 20 deg
+#define SAIL_20 0.56f   ///sails are opened at 20 deg
 
 /** @brief Implement next control action*/
 void guidance_module(struct reference_actions_s *ref_act_p,
@@ -74,4 +74,9 @@ void set_sail_positions(int32_t num);
 /** @brief Set data of the PI which controls rudder*/
 void set_pi_rudder_data(float p, float i, float cp, float ci, int32_t use_conditional, float kaw);
 
+/** @brief set which kind of tack maneuver should be performed */
+void set_tack_type(uint16_t tack_type);
+
+/** @brief set the absolute value of the alpha angle at which the sails are closed and opened*/
+void set_alpha_sails_limit(float alpha_r_abs_closed, float alpha_r_abs_opened);
 #endif //GUIDANCE_MODULE_H

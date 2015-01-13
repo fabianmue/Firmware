@@ -63,6 +63,7 @@ struct boat_qgc_param2_s {
     uint16_t window_alpha;      /// Window size of moving average filter of alpha
     uint16_t window_apparent;   /// Window size of moving average filter of apparent wind
     uint16_t window_twd;        /// Window size of moving average filter of twd
+    uint16_t type_of_tack;      ///type of tack set by AS_TY_TCK parameter
 };
 
 ORB_DECLARE(boat_qgc_param1);

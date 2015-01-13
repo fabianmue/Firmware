@@ -1795,6 +1795,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_QGC_PARAM2.window_alpha = buf.boat_qgc_param2.window_alpha;
             log_msg.body.log_BOAT_QGC_PARAM2.window_apparent = buf.boat_qgc_param2.window_apparent;
             log_msg.body.log_BOAT_QGC_PARAM2.window_twd = buf.boat_qgc_param2.window_twd;
+            log_msg.body.log_BOAT_QGC_PARAM2.type_of_tack = buf.boat_qgc_param2.type_of_tack;
             LOGBUFFER_WRITE_AND_COUNT(QGC2);
         }
 

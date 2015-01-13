@@ -72,11 +72,11 @@ void update_app_wind(const float app_r);
 /** @brief get the average value of alpha*/
 float get_alpha(void);
 
-/** @brief get the average value of apparent wind*/
-float get_app_wind(void);
+/** @brief get the average value of apparent wind in sensor frame*/
+float get_app_wind_sns(void);
 
-/** @brief get the average value oftrue wind direction*/
-float get_twd(void);
+/** @brief get the average value oftrue wind direction in sensor frame*/
+float get_twd_sns(void);
 
 /** @brief update yaw angle (w.r.t. true North)*/
 void update_yaw(const float yaw_r);

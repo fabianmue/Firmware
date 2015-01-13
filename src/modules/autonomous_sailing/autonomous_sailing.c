@@ -310,8 +310,10 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // attitude updated
                     orb_copy(ORB_ID(vehicle_attitude), subs.att, &(strs.att));
 
+                    #if SIMULATION_FLAG == 0
                     //update yaw in controller_data module
                     update_yaw(strs.att.yaw);
+                    #endif
 
                     #if SAVE_DEBUG_VALUES == 1
                     //save time when this action is performed
@@ -337,6 +339,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
             #else
                 update_cog(params.cog_sim);
                 update_twd(params.twd_sim);
+                update_yaw(params.yaw_sim);
             #endif
             //look into optimal path planning maps for reference actions
             path_planning(&ref_act, &strs);
