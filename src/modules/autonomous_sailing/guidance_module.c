@@ -68,14 +68,14 @@ static struct{
                     .yaw_stop_tack = 1.04f //more or less 60 degress
                 };
 
-//static data for sails controller
-static struct{
-    float position_quantum;
-    float command_quantum;
-}sail_controller_data = {
-                            .position_quantum = M_PI_F/4.0f, //initial guess: 4 available positions
-                            .command_quantum = SAIL_SATURATION/4.0f //initial guess: 4 available positions
-                        };
+// //static data for sails controller
+//static struct{
+//    float position_quantum;
+//    float command_quantum;
+//}sail_controller_data = {
+//                            .position_quantum = M_PI_F/4.0f, //initial guess: 4 available positions
+//                            .command_quantum = SAIL_SATURATION/4.0f //initial guess: 4 available positions
+//                        };
 
 //stic data for rudder PI controller
 static struct{
@@ -118,8 +118,8 @@ bool yaw_stop_tack(float angle, uint8_t index_yaw);
 /** @brief set the stop_tack value used in stop_tack_action()*/
 void set_stop_tack(float roll_stop, float yaw_stop);
 
-/** @brief simple controller for sails*/
-float sail_controller();
+/** @brief rule based control system for sails during upwind sailing*/
+float sail_controller(float alpha);
 
 /** @brief saturation on command to the rudder servo motor*/
 float rudder_saturation(float command);
@@ -270,23 +270,11 @@ void tack_action(struct reference_actions_s *ref_act_p,
             sprintf(txt_msg, "Tack completed.");
             send_log_info(txt_msg);
         }
-//        else{
-//            //keep on tack maneuver
-//            command = tack_data.tack_rudder_command;
-//        }
     }
     else{
         //we must start tack maneuver
         tack_data.boat_is_tacking = true;
-//        /* If we are sailing on port (starboard) haul, that is alpha_star is < (>) 0,
-//         * move the rudder on the right (left) most position to tack.
-//         *
-//         * Pay attention: when path_planning module set should_tack = true, it even
-//         * changed the alpha_star, so to see at which haul we are sailing before tacking,
-//         * we must change the sign of alpha_star!
-//        */
-//        tack_data.tack_rudder_command = (-ref_act_p->alpha_star < 0) ? (-RUDDER_SATURATION):
-//                                                                        RUDDER_SATURATION;
+
         //save actual roll and yaw angles
         tack_data.roll_before_tack[0] = strs_p->att.roll;
         tack_data.roll_before_tack[1] = strs_p->boat_weather_station.roll_r;
@@ -323,9 +311,6 @@ void tack_action(struct reference_actions_s *ref_act_p,
         helmsman_tack_p2s(alpha_yaw, p_rudder_cmd, p_sails_cmd);
     else
         helmsman_tack_s2p(alpha_yaw, p_rudder_cmd, p_sails_cmd);
-
-
-
 }
 
 /** Determine when a tack maneuver is completed
@@ -456,50 +441,66 @@ bool yaw_stop_tack(float angle, uint8_t index_yaw){
 }
 
 /**
- * Simple controller for sails.
+ * Simple rule based control system for sails.
+ * Look at the alpha angle to set how much the sails should be opened or closed.
+ *
+ * The uotput should be used to control the sails while the boat is sailing
+ * upwind and it is not tacking.
+ *
+ * @param alpha angle with respect to the wind
 */
-float sail_controller(){
+float sail_controller(float alpha){
 
-    float abs_angle;
-    float command;
-    int32_t sector;
-    float mean_apparent;
+//    float abs_angle;
+//    float command;
+//    int32_t sector;
+//    float mean_apparent;
 
-    mean_apparent = get_app_wind();
+//    mean_apparent = get_app_wind();
 
-    abs_angle = (mean_apparent > 0) ? mean_apparent :
-                                    -(mean_apparent);
+//    abs_angle = (mean_apparent > 0) ? mean_apparent :
+//                                    -(mean_apparent);
 
-    /*
-     * See in which sector (from 0 to num set by set_sail_positions()) the absolute value of
-     * apparent wind direction is.
-    */
-    sector = (int32_t)(abs_angle / sail_controller_data.position_quantum);
+//    /*
+//     * See in which sector (from 0 to num set by set_sail_positions()) the absolute value of
+//     * apparent wind direction is.
+//    */
+//    sector = (int32_t)(abs_angle / sail_controller_data.position_quantum);
 
-    /*
-     * If it is in sector 0, then tighten the sail (giving SAIL_SATURATION as command).
-     * If it is in the last sector, ease off the sail (giving 0 as command).
-     * Use a linear value in a middle sector.
-    */
-    command = SAIL_SATURATION - (sector * sail_controller_data.command_quantum);
+//    /*
+//     * If it is in sector 0, then tighten the sail (giving SAIL_SATURATION as command).
+//     * If it is in the last sector, ease off the sail (giving 0 as command).
+//     * Use a linear value in a middle sector.
+//    */
+//    command = SAIL_SATURATION - (sector * sail_controller_data.command_quantum);
 
-    return command;
+//    return command;
+    float sails = 0.0f;
+
+    if(alpha <= -0.5235987f)//alpha <= -30 deg
+        sails = (-SAIL_20 / 1.047197f) * alpha - SAIL_20 * 0.5f;
+    else if(alpha <= 0.5235987f) // -30deg < alpha <= 30deg
+        sails = 0.0f;
+    else //alpha > 30 deg
+        sails = (SAIL_20 / 1.047197f) * alpha - SAIL_20 * 0.5f;
+
+    return sails;
 }
 
-/**
- * Set a new value for the numbers of positions at which the sail can be at.
- * There are "num" positions available for the sails.
-*/
-void set_sail_positions(int32_t num){
+// /**
+// * Set a new value for the numbers of positions at which the sail can be at.
+// * There are "num" positions available for the sails.
+//*/
+//void set_sail_positions(int32_t num){
 
-    /*There are "num" available positions for the sail. Each of the
-     * is large pi / num. In this way the absolute value of apparent wind is in a sector
-     * numbered from 0 to num-1.
-    */
+//    /*There are "num" available positions for the sail. Each of the
+//     * is large pi / num. In this way the absolute value of apparent wind is in a sector
+//     * numbered from 0 to num-1.
+//    */
 
-    sail_controller_data.position_quantum = M_PI_F / (float)num;
-    sail_controller_data.command_quantum = SAIL_SATURATION / (float)num;
-}
+//    sail_controller_data.position_quantum = M_PI_F / (float)num;
+//    sail_controller_data.command_quantum = SAIL_SATURATION / (float)num;
+//}
 
 /**
  * Saturation of rudder command, according to rudder servo motor limits
@@ -519,7 +520,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
                      const struct parameters_qgc *param_qgc_p,
                      struct structs_topics_s *strs_p){
 
-    float alpha;                //angle with respect to the wind
+    float alpha;//angle with respect to the wind
     float rudder_command = 0.0f;
     float sail_command = 0.0f;
 
@@ -537,7 +538,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 
         //sails control only if AS_SAIL param from QGC is negative
         if(param_qgc_p->sail_servo < 0.0f)
-            sail_command = sail_controller();
+            sail_command = sail_controller(alpha);
         else
             sail_command = param_qgc_p->sail_servo;
     }
@@ -574,31 +575,31 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 void helmsman_tack_p2s(float alpha, float *p_rud, float *p_sails){
 
     //rule based for rudder control
-    if(alpha <= -0.523598f)
+    if(alpha <= -0.523598f)//alpha <= -30deg
         *p_rud = RUDDER_45_LEFT;
-    else if(alpha <= 0.0f)
+    else if(alpha <= 0.0f)//-30deg < alpha <= 0deg
         *p_rud =  (-RUDDER_45_LEFT /  0.523598f) * alpha;
-    else if(alpha <= 0.31416f)
+    else if(alpha <= 0.31416f)//0deg < alpha <= 18deg
         *p_rud =  (RUDDER_45_LEFT /  0.31416f) * alpha;
-    else if(alpha <= 0.38397f)
+    else if(alpha <= 0.38397f)//18deg < alpha <= 22deg
         *p_rud = RUDDER_45_LEFT;
-    else if(alpha <= 0.69813f)
+    else if(alpha <= 0.69813f)//22deg < alpha <= 40deg
         *p_rud = (-RUDDER_45_LEFT / 0.31416f) * alpha + (RUDDER_45_LEFT / 0.31416f) * 0.69813f;
-    else
+    else//alpha > 40deg
         *p_rud = 0;
 
     //rule based for sails control
-    if(alpha <=  -0.523598f)
+    if(alpha <=  -0.523598f)//alpha <= -30deg
         *p_sails = (-SAIL_20 / 1.047197f) * alpha - SAIL_20 * 0.5f;
-    else if(alpha <= 0.0872664f)
+    else if(alpha <= 0.0872664f)//-30deg < alpha <= 5deg
         *p_sails = 0;
-    else if(alpha <= 0.270526f)
+    else if(alpha <= 0.270526f)//5deg < alpha <= 15.5deg
         *p_sails = (SAIL_20 / 0.183259f) * alpha - (SAIL_20 *  0.476190f);
-    else if(alpha <= 0.3403392f)
+    else if(alpha <= 0.3403392f)//15.5deg < alpha <= 19.5deg
         *p_sails = SAIL_20;
-    else if(alpha <= 0.523598f)
+    else if(alpha <= 0.523598f)//19.5deg < alpha <= 30deg
         *p_sails = (-SAIL_20 / 0.183259f) * alpha + (SAIL_20 *  2.857142857f);
-    else
+    else//alpha > 30deg
         *p_sails = 0.0f;
 }
 
