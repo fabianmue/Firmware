@@ -66,7 +66,7 @@ static struct{
     float twd_r; ///true wind estimated direction [rad], according to Dumas angle definition (Chap 1.3)
     bool cog_updated;///true if cog_r has been updated and the new value has to be used to compute a new instant alpha
     bool twd_updated;///true if twd_r has been updated and the new value has to be used to compute a new instant alpha
-    float yaw_r;///last yaw (w.r.t. true North) angle provided by the Kalman filter
+    float yaw_r;///last yaw (w.r.t. true North) angle provided by the Kalman filter, according to Dumas angle definition (Chap 1.3)
     uint64_t time_last_cog_update;///last time when cog_r has been updated
 }measurements_raw;
 
@@ -288,13 +288,11 @@ void update_app_wind(const float app_r){
 */
 void update_twd(const float twd_r){
 
-    //save cog according to Dumas angle definition (Chap 1.3)
+    //save twd according to Dumas angle definition (Chap 1.3)
     measurements_raw.twd_r = -1 * twd_r;
 
     //set updated flag
     measurements_raw.twd_updated = true;
-
-    //TODO wind between -pi and pi will give as mean value 0, but it is NOT correct!!!
 
     //delete oldest value in twd_p to save twd_r
     measurements_filtered.twd_p[measurements_filtered.oldestValueTwd] = twd_r;
@@ -427,7 +425,7 @@ float get_app_wind(void){
 
 /** Return the average value of true wind direction computed from the last k_twd values
  *
- * @return moving average value of true wind direction
+ * @return moving average value of true wind direction, Dumas' sign convention
 */
 float get_twd(void){
 
@@ -510,7 +508,8 @@ float robust_avg_sns(float *p_meas, const uint16_t k){
  * Update yaw angle value.
 */
 void update_yaw(const float yaw_r){
-    measurements_raw.yaw_r = yaw_r;
+    //save yaw according to Dumas angle definition (Chap 1.3, Dumas' thesis)
+    measurements_raw.yaw_r = -yaw_r;
 }
 
 /**
