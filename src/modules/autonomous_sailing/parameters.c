@@ -44,24 +44,7 @@
 
 static const float deg2rad = 0.0174532925199433f; // pi / 180
 
-/**
- * Stop tack, used in guidance_module to decide whetever the tack maneuver is finished using yaw.
- * Offset in degrees.
- *
- *
- * @min -180
- * @max 180
- */
-PARAM_DEFINE_FLOAT(AS_SPTC_Y_D, 60.0f);
 
-/**
- * Stop tack, used in guidance_module to decide whetever the tack maneuver is finished using roll angle
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_FLOAT(AS_SPTC_R, 2.0f);
 
 /**
  * Reference angle with respect true wind [deg]
@@ -84,13 +67,68 @@ PARAM_DEFINE_INT32(AS_ALST_SET, 1);
 /**
  * Sails position
  *
- * Default value for sails position. 0 = max sheet out, 0.56 = max sheet in.
+ * Default value for sails position. 0 = fully closed, 0.56 = fully opened.
  * If a negative value is set, then the sail control is in charge to control sails.
  *
- * @min 0 (max sheet out)
- * @max 0.56 (max sheet in)
+ * @min 0
+ * @max 0.56
  */
 PARAM_DEFINE_FLOAT(AS_SAIL, -1.0f);
+
+
+//-------------- under work
+/**
+ * Rudder maximum command when tacking from port haul to starboard haul
+ *
+ *
+ * @min 0
+ * @max 0.9
+ */
+PARAM_DEFINE_FLOAT(AS_TK_RD_CMD, 0.85f);
+
+/**
+ * Positive alpha angle [deg] at which rudder command should be equal to
+ * AS_TK_RD_CMD.
+ *
+ * @min 0
+ * @max 180
+ */
+PARAM_DEFINE_FLOAT(AS_TK_RD_AL, 20.0f);
+
+/**
+ * Sails command when sails should be considered fully closed.
+ *
+ * @min 0
+ * @max 0.56
+ */
+PARAM_DEFINE_FLOAT(AS_SAI_CL_CMD, 0.56f);
+
+/**
+ * Positive alpha angle [deg] at which sails should start opening
+ *
+ * @min 0
+ * @max 180
+ */
+PARAM_DEFINE_FLOAT(AS_SAI_CL_AL, 45.0f);
+
+/**
+ * Positive alpha angle [deg] at which sails should be fully opened
+ *
+ * @min 0
+ * @max 180
+ */
+PARAM_DEFINE_FLOAT(AS_SAI_OP_AL, 150.0f);
+
+/**
+ * Positive alpha angle [deg] at which tack from port to starboard
+ * should be considered completed
+ *
+ * @min 0
+ * @max 180
+ */
+PARAM_DEFINE_FLOAT(AS_TK_ST_AL, 35.0f);
+
+//-------------- end under work
 
 /**
  * Type of tack maneuver
@@ -195,7 +233,7 @@ PARAM_DEFINE_INT32(AS_R_ALT0_E3, 406000);
  * @min 1
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_WIN_AL, 30);
+PARAM_DEFINE_INT32(AS_WIN_AL, 10);
 
 /**
  * AS_WIN_APP, specifies the number of samples for the moving average of apparent wind direction.
@@ -213,7 +251,7 @@ PARAM_DEFINE_INT32(AS_WIN_APP, 10);
  * @min 1
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_WIN_TWD, 5);
+PARAM_DEFINE_INT32(AS_WIN_TWD, 10);
 
 /**
  * AS_MEAN_WIND_D, specifies the mean wind direction [deg], in [-180, 180].
@@ -288,15 +326,7 @@ PARAM_DEFINE_INT32(AS_P_ADD, 0);
  */
 PARAM_DEFINE_INT32(AS_REIN_GRS, 0);
 
-/**
- * absolute value of alpha angle at wich the sails are closed when sailing upwind
-*/
-PARAM_DEFINE_FLOAT(AS_AL_SAI_CL, 30.0f);
 
-/**
- * absolute value of alpha angle at wich the sails are opened when sailing upwind
-*/
-PARAM_DEFINE_FLOAT(AS_AL_SAI_OP, 60.0f);
 
 //------------------------------------- Parameters for starting optimal path following ----
 
@@ -403,12 +433,17 @@ static struct pointers_param_qgc_s{
     param_t rud_cp_pointer;       /**< pointer to param AS_RUD_CP*/
     param_t rud_conditional_pi_pointer;       /**< pointer to param AS_RUD_CONDPI*/
 
+    param_t tack_rudder_cmd;        /**< pointer to param AS_TK_RD_CMD*/
+    param_t tack_rudder_alpha;      /**< pointer to param AS_TK_RD_AL*/
+    param_t sails_closed_cmd;       /**< pointer to param AS_SAI_CL_CMD*/
+    param_t sails_closed_alpha;     /**< pointer to param AS_SAI_CL_AL*/
+    param_t sails_opened_alpha;     /**< pointer to param AS_SAI_OP_AL*/
+    param_t tack_stop_alpha;        /**< pointer to param AS_TK_ST_AL*/
+
     param_t lat0_pointer;         /**< pointer to param AS_R_LAT0_E7*/
     param_t lon0_pointer;         /**< pointer to param AS_R_LON0_E7*/
     param_t alt0_pointer;         /**< pointer to param AS_R_ALT0_E3*/
 
-    param_t stop_tack_roll_pointer;      /**< pointer to param AS_SPTC_R*/
-    param_t stop_tack_yaw_pointer;      /**< pointer to param AS_SPTC_Y_D */
 
     param_t moving_alpha_window_pointer;/**< pointer to param AS_WIN_AL*/
     param_t moving_apparent_window_pointer;/**< pointer to param AS_WIN_APP*/
@@ -428,10 +463,6 @@ static struct pointers_param_qgc_s{
     param_t start_path_following_pointer;         /**< pointer to param ASP_START*/
     param_t abs_alpha_star_pointer;         /**< pointer to param ASP_ALST_ANG_D*/
     param_t repeat_past_grids_pointer;    /**< pointer to param AS_REIN_GRS */
-
-    //--- params for sail controller when sailig upwind
-    param_t alpha_sail_closed_pointer; /**< pointer to param AS_AL_SAI_CL*/
-    param_t alpha_sail_opened_pointer; /**< pointer to param AS_AL_SAI_OP*/
 
     //-- simulation params
 
@@ -477,9 +508,6 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.lon0_pointer    = param_find("AS_R_LON0_E7");
     pointers_param_qgc.alt0_pointer    = param_find("AS_R_ALT0_E3");
 
-    pointers_param_qgc.stop_tack_roll_pointer = param_find("AS_SPTC_R");
-    pointers_param_qgc.stop_tack_yaw_pointer = param_find("AS_SPTC_Y_D");
-
     pointers_param_qgc.moving_alpha_window_pointer = param_find("AS_WIN_AL");
     pointers_param_qgc.moving_apparent_window_pointer = param_find("AS_WIN_APP");
     pointers_param_qgc.moving_twd_window_pointer = param_find("AS_WIN_TWD");
@@ -499,10 +527,6 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.start_path_following_pointer = param_find("ASP_START");
     pointers_param_qgc.abs_alpha_star_pointer = param_find("ASP_ALST_ANG_D");
     pointers_param_qgc.repeat_past_grids_pointer = param_find("AS_REIN_GRS");
-
-    //--- sail controler
-    pointers_param_qgc.alpha_sail_closed_pointer = param_find("AS_AL_SAI_CL");
-    pointers_param_qgc.alpha_sail_opened_pointer = param_find("AS_AL_SAI_OP");
 
     #if SIMULATION_FLAG == 1
 
@@ -543,22 +567,24 @@ void param_update(struct parameters_qgc *params_p,
     //----- sail_servo
     param_get(pointers_param_qgc.sail_pointer, &(params_p->sail_servo));
 
-//    //----- number of possibile sail positions
-//    int32_t positions_temp;
-//    param_get(pointers_param_qgc.sail_positions_pointer, &positions_temp);
-//    set_sail_positions(positions_temp);
     //----- tack type
     int32_t tack_type;
-    param_get(pointers_param_qgc.tack_type_pointer, &tack_type);
-    set_tack_type((uint16_t)tack_type);
+    float alpha_min_stop_tack_r;
 
-    //----- param for rudder PI
+    param_get(pointers_param_qgc.tack_type_pointer, &tack_type);
+    param_get(pointers_param_qgc.tack_stop_alpha, &alpha_min_stop_tack_r);
+    alpha_min_stop_tack_r = alpha_min_stop_tack_r * deg2rad;
+    set_tack_data((uint16_t)tack_type, alpha_min_stop_tack_r);
+
+    //----- param for rudder controller
     float rud_p;
     float rud_i;
     float rud_ci;
     float rud_cp;
     float rud_kaw;
     int32_t use_cond_pi;
+    float alpha_rudder_45_r;
+    float rud_cmd_45_left;
 
     param_get(pointers_param_qgc.rud_p_gain_pointer, &rud_p);
     param_get(pointers_param_qgc.rud_i_gain_pointer, &rud_i);
@@ -567,10 +593,23 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.rud_cp_pointer, &rud_cp);
     param_get(pointers_param_qgc.rud_conditional_pi_pointer, &use_cond_pi);
 
-    set_pi_rudder_data(rud_p, rud_i, rud_cp, rud_ci, use_cond_pi, rud_kaw);
+    param_get(pointers_param_qgc.tack_rudder_cmd, &alpha_rudder_45_r);
+    param_get(pointers_param_qgc.tack_rudder_cmd, &rud_cmd_45_left);
+    alpha_rudder_45_r = alpha_rudder_45_r * deg2rad;
 
-    //p_gain for sail P
-    //param_get(pointers_param_qgc.sai_p_gain_pointer, &(params_p->sail_p_gain));
+    set_rudder_data(rud_p, rud_i, rud_cp, rud_ci, use_cond_pi, rud_kaw,
+                    alpha_rudder_45_r, rud_cmd_45_left);
+
+    //----- sails controller
+    float sail_closed_cmd;
+    float alpha_sail_closed_r;
+    float alpha_sail_opened_r;
+
+    param_get(pointers_param_qgc.sails_closed_cmd, &sail_closed_cmd);
+    param_get(pointers_param_qgc.sails_closed_alpha, &alpha_sail_closed_r);
+    param_get(pointers_param_qgc.sails_opened_alpha, &alpha_sail_opened_r);
+
+    set_sail_data(sail_closed_cmd, alpha_sail_closed_r, alpha_sail_opened_r);
 
     //----- reference geo coordinate
     int32_t lat0;
@@ -588,13 +627,6 @@ void param_update(struct parameters_qgc *params_p,
     //update NED origin using API in navigation.h
     set_ref0(&lat0, &lon0, &alt0);
 
-    //----- stop tack values
-    float roll_stop;
-    float yaw_stop;
-    param_get(pointers_param_qgc.stop_tack_roll_pointer, &roll_stop);
-    param_get(pointers_param_qgc.stop_tack_yaw_pointer, &yaw_stop);
-    //set it in the guidance_module
-    set_stop_tack(roll_stop, yaw_stop);
 
     //----- moving windows
     uint16_t window_alpha;
@@ -676,16 +708,6 @@ void param_update(struct parameters_qgc *params_p,
         //pass these two values to path_planning module
         start_following_optimal_path(start_following, abs_alpha_star);
     }
-
-    //--- sail controllers
-    float tmp_alpha_close;
-    float tmp_alpha_open;
-    param_get(pointers_param_qgc.alpha_sail_closed_pointer, &tmp_alpha_close);
-    param_get(pointers_param_qgc.alpha_sail_opened_pointer, &tmp_alpha_open);
-    //convert in rad
-    tmp_alpha_close = tmp_alpha_close * deg2rad;
-    tmp_alpha_open = tmp_alpha_open * deg2rad;
-    set_alpha_sails_limit(tmp_alpha_close, tmp_alpha_open);
 
     //save interested param in boat_qgc_param and publish this topic
     strs_p->boat_qgc_param1.timestamp = hrt_absolute_time();

@@ -57,7 +57,8 @@
 #define RUDDER_SATURATION 0.9f /// 0.9f = most left rudder position, -0.9f, most right rudder position
 #define RUDDER_45_LEFT 0.85f /// rudder at 45 deg and the boat steers on the left
 
-#define SAIL_SATURATION 0.56f  /// 0.56f = ease off sail as much as possibile. 0.0f = close sails
+#define SAIL_SATURATION 0.56f  /// 0.56f = sails fully closed; 0.0f = sails fully opened
+#define SAIL_FULLY_OPENED 0.0f
 #define SAIL_20 0.56f   ///sails are opened at 20 deg
 
 /** @brief Implement next control action*/
@@ -65,18 +66,15 @@ void guidance_module(struct reference_actions_s *ref_act_p,
                      const struct parameters_qgc *param_qgc_p,
                      struct structs_topics_s *strs_p);
 
-/** @brief Set the stop value to see if the tack maneuver is completed*/
-void set_stop_tack(float roll_stop, float yaw_stop);
-
-/** @brief Set the number of positions the sail can be at*/
-void set_sail_positions(int32_t num);
 
 /** @brief Set data of the PI which controls rudder*/
-void set_pi_rudder_data(float p, float i, float cp, float ci, int32_t use_conditional, float kaw);
+void set_rudder_data(float p, float i, float cp,
+                     float ci, int32_t use_conditional, float kaw,
+                     float alpha_rudder_45_r, float rud_cmd_45_left);
 
 /** @brief set which kind of tack maneuver should be performed */
-void set_tack_type(uint16_t tack_type);
+void set_tack_data(uint16_t tack_type, float alpha_min_stop_tack_r);
 
-/** @brief set the absolute value of the alpha angle at which the sails are closed and opened*/
-void set_alpha_sails_limit(float alpha_r_abs_closed, float alpha_r_abs_opened);
+/** @brief set data of the sail controller*/
+void set_sail_data(float sail_closed_cmd, float alpha_sail_closed_r, float alpha_sail_opened_r);
 #endif //GUIDANCE_MODULE_H
