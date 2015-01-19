@@ -76,7 +76,6 @@ PARAM_DEFINE_INT32(AS_ALST_SET, 1);
 PARAM_DEFINE_FLOAT(AS_SAIL, -1.0f);
 
 
-//-------------- under work
 /**
  * Rudder maximum command when tacking from port haul to starboard haul
  *
@@ -128,7 +127,6 @@ PARAM_DEFINE_FLOAT(AS_SAI_OP_AL, 150.0f);
  */
 PARAM_DEFINE_FLOAT(AS_TK_ST_AL, 35.0f);
 
-//-------------- end under work
 
 /**
  * Type of tack maneuver
@@ -504,6 +502,13 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.rud_cp_pointer  = param_find("AS_RUD_CP");
     pointers_param_qgc.rud_conditional_pi_pointer  = param_find("AS_RUD_CONDPI");
 
+    pointers_param_qgc.tack_rudder_cmd = param_find("AS_TK_RD_CMD");
+    pointers_param_qgc.tack_rudder_alpha = param_find("AS_TK_RD_AL");
+    pointers_param_qgc.sails_closed_cmd = param_find("AS_SAI_CL_CMD");
+    pointers_param_qgc.sails_closed_alpha = param_find("AS_SAI_CL_AL");
+    pointers_param_qgc.sails_opened_alpha = param_find("AS_SAI_OP_AL");
+    pointers_param_qgc.tack_stop_alpha = param_find("AS_TK_ST_AL");
+
     pointers_param_qgc.lat0_pointer    = param_find("AS_R_LAT0_E7");
     pointers_param_qgc.lon0_pointer    = param_find("AS_R_LON0_E7");
     pointers_param_qgc.alt0_pointer    = param_find("AS_R_ALT0_E3");
@@ -593,7 +598,7 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.rud_cp_pointer, &rud_cp);
     param_get(pointers_param_qgc.rud_conditional_pi_pointer, &use_cond_pi);
 
-    param_get(pointers_param_qgc.tack_rudder_cmd, &alpha_rudder_45_r);
+    param_get(pointers_param_qgc.tack_rudder_alpha, &alpha_rudder_45_r);
     param_get(pointers_param_qgc.tack_rudder_cmd, &rud_cmd_45_left);
     alpha_rudder_45_r = alpha_rudder_45_r * deg2rad;
 
@@ -608,6 +613,9 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.sails_closed_cmd, &sail_closed_cmd);
     param_get(pointers_param_qgc.sails_closed_alpha, &alpha_sail_closed_r);
     param_get(pointers_param_qgc.sails_opened_alpha, &alpha_sail_opened_r);
+
+    alpha_sail_closed_r = alpha_sail_closed_r * deg2rad;
+    alpha_sail_opened_r = alpha_sail_opened_r * deg2rad;
 
     set_sail_data(sail_closed_cmd, alpha_sail_closed_r, alpha_sail_opened_r);
 

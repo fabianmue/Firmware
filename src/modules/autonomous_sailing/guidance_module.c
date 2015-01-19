@@ -555,14 +555,14 @@ float sail_controller(float alpha){
 
     else if(alpha <= - sail_controller_data.alpha_sail_closed_r)
         sail = sail_controller_data.positive_slope *
-                (alpha + sail_controller_data.alpha_sail_closed_r);
+                (alpha + sail_controller_data.alpha_sail_opened_r);
 
     else if(alpha <= sail_controller_data.alpha_sail_closed_r)
         sail = sail_controller_data.sail_closed_cmd;
 
     else if(alpha <= sail_controller_data.alpha_sail_opened_r)
-        sail = sail_controller_data.positive_slope *
-                (alpha - sail_controller_data.alpha_sail_closed_r);
+        sail = -sail_controller_data.positive_slope *
+                (alpha - sail_controller_data.alpha_sail_opened_r);
 
     else //alpha > sail_controller_data.alpha_sail_opened_r
         sail = SAIL_FULLY_OPENED;
