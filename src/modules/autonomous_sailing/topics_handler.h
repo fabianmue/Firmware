@@ -46,7 +46,7 @@ struct structs_topics_s{
    struct boat_guidance_debug_s boat_guidance_debug;
    struct parameter_update_s update;
    struct vehicle_attitude_s att;
-   struct boat_weather_station_s boat_weather_station;
+   //struct boat_weather_station_s boat_weather_station;
    struct debug_values_s debug_values;
    struct boat_qgc_param1_s boat_qgc_param1;
    struct boat_qgc_param2_s boat_qgc_param2;
