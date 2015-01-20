@@ -588,7 +588,7 @@ void helmsman1_tack_p2s(float alpha, float *p_rud, float *p_sails){
     //rule based controller for the rudder
     if(alpha <= rud_x1_alpha)//alpha <= rud_x1_alpha
         *p_rud = rud_45_left;
-    else if(alpha <= rud_x2_alpha) //use linear slope until x23
+    else if(alpha <= rud_x2_alpha) //use linear slope until x2
         *p_rud = (- rud_45_left / (rud_x2_alpha - rud_x1_alpha))
                  * (alpha - rud_x2_alpha);
     else //alpha > rud_x2_alpha
