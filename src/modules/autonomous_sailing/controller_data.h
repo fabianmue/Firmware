@@ -84,4 +84,7 @@ void update_yaw(const float yaw_r);
 /** @brief compute alpha angle using yaw angle instead of course over ground*/
 float get_alpha_yaw(void);
 
+/** @brief set the maximum time after that alpha = alpha_yaw if cod not updated*/
+void set_max_time_cog_not_up(float max_time_cog_not_up_sec);
+
 #endif // CONTROLLER_DATA_H

@@ -337,6 +337,12 @@ PARAM_DEFINE_INT32(AS_P_ADD, 0);
  */
 PARAM_DEFINE_INT32(AS_REIN_GRS, 0);
 
+/**
+ * Set how much time should passed without any new cog value.
+ * @see set_max_time_cog_not_up
+ */
+PARAM_DEFINE_FLOAT(AS_COG_DELAY_S, 1.5f);
+
 
 
 //------------------------------------- Parameters for starting optimal path following ----
@@ -476,6 +482,9 @@ static struct pointers_param_qgc_s{
     param_t abs_alpha_star_pointer;         /**< pointer to param ASP_ALST_ANG_D*/
     param_t repeat_past_grids_pointer;    /**< pointer to param AS_REIN_GRS */
 
+    //---cog delay
+    param_t cog_max_delay_pointer;/**< pointer to param AS_COG_DELAY_S*/
+
     //-- simulation params
 
     #if SIMULATION_FLAG == 1
@@ -547,6 +556,9 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.start_path_following_pointer = param_find("ASP_START");
     pointers_param_qgc.abs_alpha_star_pointer = param_find("ASP_ALST_ANG_D");
     pointers_param_qgc.repeat_past_grids_pointer = param_find("AS_REIN_GRS");
+
+    //----cog delay
+    pointers_param_qgc.cog_max_delay_pointer = param_find("AS_COG_DELAY_S");
 
     #if SIMULATION_FLAG == 1
 
@@ -735,6 +747,11 @@ void param_update(struct parameters_qgc *params_p,
         //pass these two values to path_planning module
         start_following_optimal_path(start_following, abs_alpha_star);
     }
+
+    //--- cog delay
+    float cog_max_delay_sec;
+    param_get(pointers_param_qgc.cog_max_delay_pointer, &cog_max_delay_sec);
+    set_max_time_cog_not_up(cog_max_delay_sec);
 
     //save interested param in boat_qgc_param and publish this topic
     strs_p->boat_qgc_param1.timestamp = hrt_absolute_time();

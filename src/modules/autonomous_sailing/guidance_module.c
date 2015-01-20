@@ -715,6 +715,11 @@ void guidance_module(struct reference_actions_s *ref_act_p,
             sail_command = param_qgc_p->sail_servo;
     }
 
+    #if SIMULATION_FLAG == 1
+    //debug
+    //rudder_command = param_qgc_p->deva1;
+    #endif
+
 
     //saturation for safety reason
     rudder_command = rudder_saturation(rudder_command);

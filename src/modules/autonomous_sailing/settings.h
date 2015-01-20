@@ -43,8 +43,8 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#define SIMULATION_FLAG 1 ///1 if you're testing autonomous sailing app indoor, PLEASE SET INDOOR PARSER_200WX
+#define SIMULATION_FLAG 0 ///1 if you're testing autonomous sailing app indoor, PLEASE SET INDOOR PARSER_200WX
 
-#define SAVE_DEBUG_VALUES 1 //1 to use debug_values topic for debug purpose
+#define SAVE_DEBUG_VALUES 0 //1 to use debug_values topic for debug purpose
 
 #endif // SETTINGS_H

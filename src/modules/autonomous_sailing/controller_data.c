@@ -60,6 +60,9 @@ void filter_new_data(void);
 /** @brief compute a robust average of sensor "frame" measurements*/
 float robust_avg_sns(float *p_meas, const uint16_t k);
 
+/** @brief compute lambda value to compute a linear combination of alpha_cog and alpha_yaw*/
+float lambda_alpha(void);
+
 //actual raw measurements from parser_200WX
 static struct{
     float cog_r; ///course over ground [rad] (NOT heading), according to Dumas angle definition (Chap 1.3)
@@ -93,9 +96,21 @@ static struct{
 static struct{
     uint64_t max_time_cog_not_up;//maximum time without updating cog, in microseconds
 }user_params = {
-    .max_time_cog_not_up = 1 * 1000000 //1 sec
+    .max_time_cog_not_up = 2 * 1000000//micro seconds
 };
 
+/**
+ * Set max_time_cog_not_up.
+ *
+ * The alpha angle is computed using a convex combination of alpha_cog and
+ * alpha_yaw. If the cog value from the gps is not updated for more than
+ * max_time_cog_not_up seconds, then alpha will be equal to alpha_yaw.
+ *
+ * @param max_time_cog_not_up_sec   seconds used in @see lambda_alpha() to compute lambda
+*/
+void set_max_time_cog_not_up(float max_time_cog_not_up_sec){
+    user_params.max_time_cog_not_up = (uint64_t)(max_time_cog_not_up_sec * 1000000.0f);
+}
 
 /** Initialize all the structures necessary to compute moving average window of true wind angle (alpha)*/
 void init_controller_data(void){
@@ -312,11 +327,20 @@ void update_twd(const float twd_r){
     #endif
 }
 
-/** Compute moving average from values in alpha_p */
+/**
+ * Compute moving average from values in alpha_p.
+ *
+ * Since the CourseOverGround value (cog) provided by the gps could soffer of time
+ * delays (even up tp 10 seconds), the alpha angle computed is a convex mean between the
+ * alpha_cog (that is, the alpha angle computed using cog value) and alpha_yaw (@see alpha_yaw).
+ *
+ * This convex combination is computed using @see lambda_alpha().
+*/
 void compute_avg(void){
 
     float temp = 0.0f;
-    float temp_avg;
+    float alpha_cog;
+    float lambda;
 
     for(uint16_t i = 0; i < measurements_filtered.k; i++){
         temp += measurements_filtered.alpha_p[i];
@@ -327,23 +351,25 @@ void compute_avg(void){
     }
 
     //compute average value of alpha. This alpha used the cog values, see later.
-    temp_avg = temp / measurements_filtered.k;
+    alpha_cog = temp / measurements_filtered.k;
 
     /*
      * Since cog values provided by the GPS can suffer of a low frequency updating, the
      * alpha angle computed with not updated cog values can be quite different from the real one.
      * To avoid this, we check the difference between the actual absolute time
      * and the last time che cog has been update (@see update_cog).
-     * If this difference is greater than max_time_cog_not_up,
-     * then we use the alpha angle
-     * computed using the yaw angle instead of the one computed with
-     * the course over ground angle.
+     * Use lambda_alpha to compute a convex combination from alpha_cog and alpha_yaw
+     * based on the difference of time between the actual time and the last time the cog
+     * has been updated
     */
-    if((hrt_absolute_time() - measurements_raw.time_last_cog_update) <=
-            user_params.max_time_cog_not_up)
-        measurements_filtered.alpha = temp_avg;
-    else
-        measurements_filtered.alpha = get_alpha_yaw();
+    lambda = lambda_alpha();
+    measurements_filtered.alpha = (1.0f - lambda) * alpha_cog + lambda * get_alpha_yaw();
+    //cancella
+//    if((hrt_absolute_time() - measurements_raw.time_last_cog_update) <=
+//            user_params.max_time_cog_not_up)
+//        measurements_filtered.alpha = alpha_cog;
+//    else
+//        measurements_filtered.alpha = get_alpha_yaw();
 
     #if PRINT_DEBUG == 1
     printf("temp %2.3f \n", (double)temp);
@@ -537,9 +563,45 @@ float get_alpha_yaw(void){
     alpha = get_twd_sns() - measurements_raw.yaw_r;
 
     //if |instant_alpha|<= pi/2 we're sailing upwind, so everything is ok
-    //constrain alpha to be the CLOSEST angle between TWD and COG
+    //constrain alpha to be the CLOSEST angle between TWD and yaw
     if(alpha > M_PI_F) alpha = alpha - TWO_PI_F;
     else if(alpha < -M_PI_F) alpha = alpha + TWO_PI_F;
 
     return alpha;
+}
+
+/**
+ * Compute lambda coefficient based on how much time is passed
+ * since the last COG value was updated from the gps.
+ *
+ * This lambda value should be used to compute a mean alpha like:
+ * alpha = (1 - lambda) * alpha_cog + lambda * alpha_yaw
+*/
+float lambda_alpha(void){
+
+    uint64_t diff_us;
+    float diff_norm;
+    float lambda = 0.0f;
+
+    /* compute the time difference from the actual time and the
+     * last time the cog value was updated (@see update_cog) and
+     * normalize max_time_cog_not_up
+    */
+    diff_us = hrt_absolute_time() - measurements_raw.time_last_cog_update;
+    diff_norm = diff_us / ((float)user_params.max_time_cog_not_up);
+
+    if(diff_us >= user_params.max_time_cog_not_up){
+        lambda = 1.0f;
+    }
+    else{
+        lambda = diff_norm;
+    }
+
+    //make sure lambda is between 0 and 1
+    if(lambda < 0.0f)
+        lambda = 0.0f;
+    else if(lambda > 1.0f)
+        lambda = 1.0f;
+
+    return lambda;
 }
