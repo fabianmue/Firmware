@@ -67,7 +67,7 @@ PARAM_DEFINE_INT32(AS_ALST_SET, 1);
 /**
  * Sails position
  *
- * Default value for sails position. 0 = fully closed, 0.56 = fully opened.
+ * Default value for sails position. 0.56 = fully closed, 0.0 = fully opened.
  * If a negative value is set, then the sail control is in charge to control sails.
  *
  * @min 0
@@ -77,22 +77,32 @@ PARAM_DEFINE_FLOAT(AS_SAIL, -1.0f);
 
 
 /**
- * Rudder maximum command when tacking from port haul to starboard haul
+ * Rudder maximum command when tacking from port haul to starboard haul.
+ * It has to be a positive value!
  *
  *
  * @min 0
  * @max 0.9
  */
-PARAM_DEFINE_FLOAT(AS_TK_RD_CMD, 0.85f);
+PARAM_DEFINE_FLOAT(AS_RD_45_CMD, 0.85f);
 
 /**
- * Positive alpha angle [deg] at which rudder command should be equal to
- * AS_TK_RD_CMD.
+ * Alpha angle [deg] at which rudder command should be equal to
+ * 0 when tacking from port haul to starboard haul.
  *
  * @min 0
  * @max 180
  */
-PARAM_DEFINE_FLOAT(AS_TK_RD_AL, 20.0f);
+PARAM_DEFINE_FLOAT(AS_RD_X1_AL, 0.0f);
+
+/**
+ * Alpha angle [deg] at which rudder command should be equal to
+ * AS_RD_45_CMD when tacking from port haul to starboard haul.
+ *
+ * @min 0
+ * @max 180
+ */
+PARAM_DEFINE_FLOAT(AS_RD_X2_AL, 20.0f);
 
 /**
  * Sails command when sails should be considered fully closed.
@@ -108,7 +118,7 @@ PARAM_DEFINE_FLOAT(AS_SAI_CL_CMD, 0.56f);
  * @min 0
  * @max 180
  */
-PARAM_DEFINE_FLOAT(AS_SAI_CL_AL, 45.0f);
+PARAM_DEFINE_FLOAT(AS_SAI_X1_AL, 45.0f);
 
 /**
  * Positive alpha angle [deg] at which sails should be fully opened
@@ -116,7 +126,7 @@ PARAM_DEFINE_FLOAT(AS_SAI_CL_AL, 45.0f);
  * @min 0
  * @max 180
  */
-PARAM_DEFINE_FLOAT(AS_SAI_OP_AL, 150.0f);
+PARAM_DEFINE_FLOAT(AS_SAI_X2_AL, 150.0f);
 
 /**
  * Positive alpha angle [deg] at which tack from port to starboard
@@ -131,15 +141,18 @@ PARAM_DEFINE_FLOAT(AS_TK_ST_AL, 35.0f);
 /**
  * Type of tack maneuver
  *
- * Tack maneuver can be performed in two different ways.
+ * Tack maneuver can be performed in three different ways.
  * The first one (type is equal to 0) is performed by using a "standard" input sequence
- * as a real helmsman would do. @see helmsman_tack_p2s and @see helmsman_tack_s2p.
- * The second one (type is equal to 1) is performed by changing only the reference
+ * as a real helmsman would do. @see helmsman0_tack_p2s and @see helmsman0_tack_s2p.
+ * The second one (type is equal to 1) is slightly different from the "standard" helmsman maneuver
+ * but it is still reasonable to think of it as a maneuver that helmsman would do.
+ * @see helmsman1_tack_p2s and @see helmsman1_tack_s2p.
+ * The third one (type is equal to 2) is performed by changing only the reference
  * angle with respect to the wind (alpha) and then "wait" for the PI controller
  * of the rudder to follow this changing.
  *
  * @min 0
- * @max 1
+ * @max 2
  */
 PARAM_DEFINE_INT32(AS_TY_TCK, 0);
 
@@ -431,11 +444,12 @@ static struct pointers_param_qgc_s{
     param_t rud_cp_pointer;       /**< pointer to param AS_RUD_CP*/
     param_t rud_conditional_pi_pointer;       /**< pointer to param AS_RUD_CONDPI*/
 
-    param_t tack_rudder_cmd;        /**< pointer to param AS_TK_RD_CMD*/
-    param_t tack_rudder_alpha;      /**< pointer to param AS_TK_RD_AL*/
+    param_t tack_rudder_cmd;        /**< pointer to param AS_RD_45_CMD*/
+    param_t tack_rudder_x1;      /**< pointer to param AS_RD_X1_AL*/
+    param_t tack_rudder_x2;      /**< pointer to param AS_RD_X2_AL*/
     param_t sails_closed_cmd;       /**< pointer to param AS_SAI_CL_CMD*/
-    param_t sails_closed_alpha;     /**< pointer to param AS_SAI_CL_AL*/
-    param_t sails_opened_alpha;     /**< pointer to param AS_SAI_OP_AL*/
+    param_t sails_closed_alpha;     /**< pointer to param AS_SAI_X1_AL*/
+    param_t sails_opened_alpha;     /**< pointer to param AS_SAI_X2_AL*/
     param_t tack_stop_alpha;        /**< pointer to param AS_TK_ST_AL*/
 
     param_t lat0_pointer;         /**< pointer to param AS_R_LAT0_E7*/
@@ -502,11 +516,12 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.rud_cp_pointer  = param_find("AS_RUD_CP");
     pointers_param_qgc.rud_conditional_pi_pointer  = param_find("AS_RUD_CONDPI");
 
-    pointers_param_qgc.tack_rudder_cmd = param_find("AS_TK_RD_CMD");
-    pointers_param_qgc.tack_rudder_alpha = param_find("AS_TK_RD_AL");
+    pointers_param_qgc.tack_rudder_cmd = param_find("AS_RD_45_CMD");
+    pointers_param_qgc.tack_rudder_x1 = param_find("AS_RD_X1_AL");
+    pointers_param_qgc.tack_rudder_x2 = param_find("AS_RD_X2_AL");
     pointers_param_qgc.sails_closed_cmd = param_find("AS_SAI_CL_CMD");
-    pointers_param_qgc.sails_closed_alpha = param_find("AS_SAI_CL_AL");
-    pointers_param_qgc.sails_opened_alpha = param_find("AS_SAI_OP_AL");
+    pointers_param_qgc.sails_closed_alpha = param_find("AS_SAI_X1_AL");
+    pointers_param_qgc.sails_opened_alpha = param_find("AS_SAI_X2_AL");
     pointers_param_qgc.tack_stop_alpha = param_find("AS_TK_ST_AL");
 
     pointers_param_qgc.lat0_pointer    = param_find("AS_R_LAT0_E7");
@@ -588,7 +603,8 @@ void param_update(struct parameters_qgc *params_p,
     float rud_cp;
     float rud_kaw;
     int32_t use_cond_pi;
-    float alpha_rudder_45_r;
+    float alpha_rudder_x1_r;
+    float alpha_rudder_x2_r;
     float rud_cmd_45_left;
 
     param_get(pointers_param_qgc.rud_p_gain_pointer, &rud_p);
@@ -598,12 +614,15 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.rud_cp_pointer, &rud_cp);
     param_get(pointers_param_qgc.rud_conditional_pi_pointer, &use_cond_pi);
 
-    param_get(pointers_param_qgc.tack_rudder_alpha, &alpha_rudder_45_r);
+    param_get(pointers_param_qgc.tack_rudder_x1, &alpha_rudder_x1_r);
+    param_get(pointers_param_qgc.tack_rudder_x2, &alpha_rudder_x2_r);
     param_get(pointers_param_qgc.tack_rudder_cmd, &rud_cmd_45_left);
-    alpha_rudder_45_r = alpha_rudder_45_r * deg2rad;
+
+    alpha_rudder_x1_r = alpha_rudder_x1_r * deg2rad;
+    alpha_rudder_x2_r = alpha_rudder_x2_r * deg2rad;
 
     set_rudder_data(rud_p, rud_i, rud_cp, rud_ci, use_cond_pi, rud_kaw,
-                    alpha_rudder_45_r, rud_cmd_45_left);
+                    alpha_rudder_x1_r, alpha_rudder_x2_r, rud_cmd_45_left);
 
     //----- sails controller
     float sail_closed_cmd;

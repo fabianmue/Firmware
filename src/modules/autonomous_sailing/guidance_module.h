@@ -70,7 +70,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 /** @brief Set data of the PI which controls rudder*/
 void set_rudder_data(float p, float i, float cp,
                      float ci, int32_t use_conditional, float kaw,
-                     float alpha_rudder_45_r, float rud_cmd_45_left);
+                     float alpha_rudder_x1_r, float alpha_rudder_x2_r, float rud_cmd_45_left);
 
 /** @brief set which kind of tack maneuver should be performed */
 void set_tack_data(uint16_t tack_type, float alpha_min_stop_tack_r);
