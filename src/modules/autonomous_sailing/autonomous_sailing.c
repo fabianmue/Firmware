@@ -249,13 +249,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // new vehicle_gps_position data
                     orb_copy(ORB_ID(vehicle_gps_position), subs.gps_raw, &(strs.gps_raw));
 
-                    #if SAVE_DEBUG_VALUES == 1
-                    //save time when this action is performed
-                    strs.debug_values.timestamp = hrt_absolute_time();
-                    strs.debug_values.float_val_2 = strs.debug_values.timestamp / 1e3;
-                    strs.debug_updated = true;
-                    #endif
-
                     #if SIMULATION_FLAG == 0
                     //update course over ground in control data
                     update_cog(strs.gps_raw.cog_rad);
@@ -271,13 +264,15 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     //look into optimal path planning maps for reference actions
                     path_planning(&ref_act, &strs);
 
+                    //update NED velocities in navigation module
+                    update_ned_vel(strs.gps_filtered.vel_n, strs.gps_filtered.vel_e, strs.gps_filtered.vel_d);
+
                     #if SAVE_DEBUG_VALUES == 1
-                    //save time when this action is performed
+                    //save u velocity
                     strs.debug_values.timestamp = hrt_absolute_time();
-                    strs.debug_values.float_val_1 = strs.debug_values.timestamp / 1e3;
+                    strs.debug_values.float_val_1 = get_u_vel();
                     strs.debug_updated = true;
                     #endif
-
                 }
                 if(fds[2].revents & POLLIN){
                     // new WSAI values, copy new data
@@ -285,13 +280,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                     //update apparent wind direction in control data
                     update_app_wind(strs.wind_sailing.angle_apparent);
-
-//                    #if SAVE_DEBUG_VALUES == 1
-//                    //save time when this action is performed
-//                    strs.debug_values.timestamp = hrt_absolute_time();
-//                    strs.debug_values.float_val_3 = strs.debug_values.timestamp / 1e3;
-//                    strs.debug_updated = true;
-//                    #endif
 
                     #if SIMULATION_FLAG == 0
                     //update true wind direction in control data
@@ -313,13 +301,9 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     #if SIMULATION_FLAG == 0
                     //update yaw in controller_data module
                     update_yaw(strs.att.yaw);
-                    #endif
 
-                    #if SAVE_DEBUG_VALUES == 1
-                    //save time when this action is performed
-                    strs.debug_values.timestamp = hrt_absolute_time();
-                    strs.debug_values.float_val_3 = strs.debug_values.timestamp / 1e3;
-                    strs.debug_updated = true;
+                    //update rotation matrix from body to ned in navigation module
+                    update_r_ned_body(strs.att.R, strs.att.R_valid);
                     #endif
                 }
                 /*if(fds[5].revents & POLLIN){

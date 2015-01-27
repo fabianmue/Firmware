@@ -72,4 +72,13 @@ void navigation_module(const struct structs_topics_s *strs_p,
 /** @brief get the angle of the mean wind w.r.t. true North*/
 float get_mean_wind_angle(void);
 
+/** @brief update rotation matrix body to world*/
+void update_r_ned_body(float R[3][3], bool valid_matrix);
+
+/** @brief update volicities on the NED frame*/
+void update_ned_vel(float vn, float ve, float vd);
+
+/** @brief get longitudinal velocity in the body frame*/
+float get_u_vel(void);
+
 #endif /* NAVIGATION_H_ */

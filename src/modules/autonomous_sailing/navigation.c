@@ -71,6 +71,13 @@ static const float E3 = 1000.0f;
 
 static const float E1 = 10.0f;
 
+//rotation matrix from body frame to NED frame
+static float R_ned_body[3][3] = {{0.0f, 0.0f, 0.0f},
+                                {0.0f, 0.0f, 0.0f},
+                                {0.0f, 0.0f, 0.0f}};
+//velocities in NEd frame
+static float vel_ned[3] = {0.0f, 0.0f, 0.0f};
+
 static struct{
     float sin_mwd;  ///sin(mean wind direction)
     float cos_mwd;  ///cos(mean wind direction)
@@ -379,5 +386,42 @@ void navigation_module(const struct structs_topics_s *strs_p,
     //convert local position from decimeters to meters
     lp_p->x_race_m = (float)x_dm / E1;
     lp_p->y_race_m = (float)y_dm / E1;
+}
 
+/**
+ * Update the rotation matrix that converts coordinates from body frame to NED frame.
+*/
+void update_r_ned_body(float R[3][3], bool valid_matrix){
+    if(valid_matrix){
+        for(int8_t i = 0; i < 3; i++){
+            for(int8_t j = 0; j < 3; j++){
+                R_ned_body[i][j] = R[i][j];
+            }
+        }
+    }
+}
+
+/**
+ * Update velocities in the NEd frame
+*/
+void update_ned_vel(float vn, float ve, float vd){
+    vel_ned[0] = vn;
+    vel_ned[1] = ve;
+    vel_ned[2] = vd;
+}
+
+/**
+ * Get longitudinal velocity in the body frame
+*/
+float get_u_vel(void){
+
+    /* Use R_ned_body to rotate vel_ned from NED frame to body frame.
+     * Rememebr that R_ned_body conerts coordinates from body frame to NED frame.
+     * So we mast transponse it, that is, using its coloumns.
+    */
+    float u;
+
+    u = R_ned_body[0][0] * vel_ned[0] + R_ned_body[1][0] * vel_ned[1] + R_ned_body[2][0] * vel_ned[2];
+
+    return u;
 }
