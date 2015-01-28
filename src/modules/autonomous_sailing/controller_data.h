@@ -60,31 +60,31 @@ void update_k_app(const uint16_t k);
 /** @brief modify size of the moving window for true wind angle*/
 void update_k_twd(const uint16_t k);
 
-/** @brief update course over ground with a new value*/
-void update_cog(const float cog_r);
+/** @brief update course over ground with a new raw value from the GPS*/
+void update_raw_cog(const float cog_r);
 
-/** @brief update true wind (estimated) direction with a new value*/
-void update_twd(const float twd_r);
+/** @brief update true wind (estimated) raw direction with a new value*/
+void update_raw_twd(const float twd_r);
 
-/** @brief update apparent wind direction with a new value*/
-void update_app_wind(const float app_r);
+/** @brief update apparent wind raw direction with a new value*/
+void update_raw_app_wind(const float app_r);
 
 /** @brief get the average value of alpha*/
-float get_alpha(void);
+float get_alpha_dumas(void);
 
 /** @brief get the average value of apparent wind in sensor frame*/
 float get_app_wind_sns(void);
 
-/** @brief get the average value oftrue wind direction in sensor frame*/
+/** @brief get the average value of true wind direction in sensor frame*/
 float get_twd_sns(void);
 
 /** @brief update yaw angle (w.r.t. true North)*/
-void update_yaw(const float yaw_r);
+void update_raw_yaw(const float yaw_r);
 
-/** @brief compute alpha angle using yaw angle instead of course over ground*/
-float get_alpha_yaw(void);
+/** @brief get alpha_yaw in Dumas' convention*/
+float get_alpha_yaw_dumas(void);
 
-/** @brief set the maximum time after that alpha = alpha_yaw if cod not updated*/
+/** @brief set the maximum time after that alpha = alpha_yaw if cog not updated*/
 void set_max_time_cog_not_up(float max_time_cog_not_up_sec);
 
 #endif // CONTROLLER_DATA_H

@@ -51,25 +51,23 @@
 #endif
 
 //private functions
-/** @brief compute moving average to calculate true wind angle (alpha)*/
-void compute_avg(void);
-
-/** @brief filter new data computing alpha and a new avg value*/
-void filter_new_data(void);
+/** @brief compute a new value for alpha in our sensor convention*/
+void update_alpha_sns(void);
 
 /** @brief compute a robust average of sensor "frame" measurements*/
 float robust_avg_sns(float *p_meas, const uint16_t k);
 
 /** @brief compute lambda value to compute a linear combination of alpha_cog and alpha_yaw*/
-float lambda_alpha(void);
+float compute_lambda(void);
+
+/** @brief compute instant alpha in sensor frame*/
+float compute_instant_alpha_sns(float angle);
 
 //actual raw measurements from parser_200WX
 static struct{
-    float cog_r; ///course over ground [rad] (NOT heading), according to Dumas angle definition (Chap 1.3)
-    float twd_r; ///true wind estimated direction [rad], according to Dumas angle definition (Chap 1.3)
-    bool cog_updated;///true if cog_r has been updated and the new value has to be used to compute a new instant alpha
-    bool twd_updated;///true if twd_r has been updated and the new value has to be used to compute a new instant alpha
-    float yaw_r;///last yaw (w.r.t. true North) angle provided by the Kalman filter, according to our sensor convention
+    float cog_sns;///last cog value supplied by the gps
+    float alpha_cog_sns;///last alpha angle computed using cog, according to our sensor convention
+    float alpha_yaw_sns;/// last alpha angle computed using yaw, according to our sensor convention
     uint64_t time_last_cog_update;///last time when cog_r has been updated
 }measurements_raw;
 
@@ -87,9 +85,9 @@ static struct{
     int16_t oldestValueApp; ///index of oldest value in app_wind_p
     int16_t oldestValueTwd; ///index of oldest value in twd_p
 
-    float alpha;    ///moving average value from alpha_p
-    float apparent_wind;///average from app_wind_p
-    float twd;///average from twd_p
+    float alpha_sns;    ///moving average value from alpha_p
+    float apparent_wind_sns;///average from app_wind_p
+    float twd_sns;///average from twd_p
 }measurements_filtered;
 
 //other user's paramters
@@ -106,7 +104,7 @@ static struct{
  * alpha_yaw. If the cog value from the gps is not updated for more than
  * max_time_cog_not_up seconds, then alpha will be equal to alpha_yaw.
  *
- * @param max_time_cog_not_up_sec   seconds used in @see lambda_alpha() to compute lambda
+ * @param max_time_cog_not_up_sec   seconds used in @see compute_lambda() to compute lambda
 */
 void set_max_time_cog_not_up(float max_time_cog_not_up_sec){
     user_params.max_time_cog_not_up = (uint64_t)(max_time_cog_not_up_sec * 1000000.0f);
@@ -114,25 +112,23 @@ void set_max_time_cog_not_up(float max_time_cog_not_up_sec){
 
 /** Initialize all the structures necessary to compute moving average window of true wind angle (alpha)*/
 void init_controller_data(void){
-
-    measurements_raw.cog_r = 0.0f;
-    measurements_raw.twd_r = 0.0f;
-    measurements_raw.cog_updated = false;
-    measurements_raw.twd_updated = false;
+    measurements_raw.alpha_cog_sns = 0.0f;
+    measurements_raw.alpha_yaw_sns = 0.0f;
+    measurements_raw.cog_sns = 0.0f;
 
     measurements_filtered.alpha_p = NULL;
     measurements_filtered.k = 0;
     measurements_filtered.oldestValue = -1;
-    measurements_filtered.alpha = 0.0f;
+    measurements_filtered.alpha_sns = 0.0f;
 
     measurements_filtered.app_wind_p = NULL;
-    measurements_filtered.apparent_wind = 0.0f;
+    measurements_filtered.apparent_wind_sns = 0.0f;
     measurements_filtered.k_app = 0;
 
     measurements_filtered.twd_p = NULL;
     measurements_filtered.k_twd = 0;
     measurements_filtered.oldestValueTwd = -1;
-    measurements_filtered.twd = 0.0f;
+    measurements_filtered.twd_sns = 0.0f;
 
     //set k to 1 since a real value is not provided
     update_k(1);
@@ -142,10 +138,6 @@ void init_controller_data(void){
 
     //set k_twd to 1 since a real value is not provided
     update_k_twd(1);
-
-    #if PRINT_DEBUG == 1
-    //printf("init_controller_data \n");
-    #endif
 }
 
 /** Free memory and allocate new space for new dimension
@@ -172,13 +164,7 @@ void update_k_app(const uint16_t k){
 
     measurements_filtered.oldestValueApp = 0;
 
-    measurements_filtered.apparent_wind = 0.0f;
-
-
-    #if PRINT_DEBUG == 1
-    //printf("update_k k: %d \n", measurements_filtered.k);
-    #endif
-
+    measurements_filtered.apparent_wind_sns = 0.0f;
 }
 
 /** Free memory and allocate new space for new dimension
@@ -205,13 +191,7 @@ void update_k_twd(const uint16_t k){
 
     measurements_filtered.oldestValueTwd = 0;
 
-    measurements_filtered.twd = 0.0f;
-
-
-    #if PRINT_DEBUG == 1
-    //printf("update_k k: %d \n", measurements_filtered.k);
-    #endif
-
+    measurements_filtered.twd_sns = 0.0f;
 }
 
 /** Free memory and allocate new space for new dimension
@@ -237,50 +217,62 @@ void update_k(const uint16_t k){
     }
 
     measurements_filtered.oldestValue = 0;
+}
 
+/**
+ * Compute the alpha angle in our sensor convention
+ *
+ * The alpha angle is computed using the param angle minus
+ * the averaged value of the true wind direction supplied by
+ * @see get_twd_sns()
+ *
+ * @param angle     yaw or cog angle, in sensor convention
+ * @return          instant alpha computed using angle, in sensor frame
+*/
+float compute_instant_alpha_sns(float angle)
+{
+    float alpha;
 
-    #if PRINT_DEBUG == 1
-    //printf("update_k k: %d \n", measurements_filtered.k);
-    #endif
+    //alpha = angle - twd; use the twd supplied by the moving average filter
+    alpha = angle - get_twd_sns();
 
+    //constrain alpha to be the CLOSEST angle between TWD and angle
+    if(alpha > M_PI_F) alpha = alpha - TWO_PI_F;
+    else if(alpha < -M_PI_F) alpha = alpha + TWO_PI_F;
+
+    return alpha;
 }
 
 /**
  * Update course over ground with a new value supplied by GPS.
  *
- * Set the flag of cog_updated only if the new cog_r supplied is different
- * from the last one. This is necessary because when no cog message
- * is received by parser_200WX, the cog value remains constant.
+ * Compute a new value of alpha_cog using the new cog value.
  *
- * @param cog_r course over ground [rad], positive on the right, negative on the left (Opposite to Dumas' convention)
+ * @param cog_r course over ground [rad], according to our sensor convention
 */
-void update_cog(const float cog_r){
+void update_raw_cog(const float cog_r){
 
-    //save cog according to Dumas angle definition (Chap 1.3, Dumas' thesis)
-    float cog_r_dumas = -1 * cog_r;
-
-    //check if cog_r_dumas is different from the previous cog_r value saved
-    if(cog_r_dumas != measurements_raw.cog_r){
+    //check if cog_r is different from the previous cog_r value saved
+    if(cog_r != measurements_raw.cog_sns){
         //save new cog value
-        measurements_raw.cog_r = cog_r_dumas;
-
-        //set updated flag
-        measurements_raw.cog_updated = true;
+        measurements_raw.cog_sns = cog_r;
 
         //update time when a new cog has been provided
         measurements_raw.time_last_cog_update = hrt_absolute_time();
-    }
 
-    #if PRINT_DEBUG == 1
-    printf("saved cog %2.3f \n", (double)measurements_raw.cog_r);
-    #endif
+        //compute a new value for alpha_cog and save it
+        measurements_raw.alpha_cog_sns = compute_instant_alpha_sns(cog_r);
+
+        //since there is a new value of alpha_cog, update the alpha value in the sensor frame
+        update_alpha_sns();
+    }
 }
 
 /** Update apparent direction with a new value supplied by weather station
  *
  * @param app_r apparent wind direction [rad], positive on the right, negative on the left (Opposite to Dumas' convention)
 */
-void update_app_wind(const float app_r){
+void update_raw_app_wind(const float app_r){
 
     //delete oldest value in app_wind_p to save app_r
     measurements_filtered.app_wind_p[measurements_filtered.oldestValueApp] = app_r;
@@ -292,8 +284,8 @@ void update_app_wind(const float app_r){
         measurements_filtered.oldestValueApp = 0;
 
     //update apparent wind mean using a robust mean
-    measurements_filtered.apparent_wind = robust_avg_sns(measurements_filtered.app_wind_p,
-                                                         measurements_filtered.k_app);
+    measurements_filtered.apparent_wind_sns = robust_avg_sns(measurements_filtered.app_wind_p,
+                                                             measurements_filtered.k_app);
 
 }
 
@@ -301,13 +293,7 @@ void update_app_wind(const float app_r){
  *
  * @param twd_r true wind direction [rad], positive on the right, negative on the left (Opposite to Dumas' convention)
 */
-void update_twd(const float twd_r){
-
-    //save twd according to Dumas angle definition (Chap 1.3)
-    measurements_raw.twd_r = -1 * twd_r;
-
-    //set updated flag
-    measurements_raw.twd_updated = true;
+void update_raw_twd(const float twd_r){
 
     //delete oldest value in twd_p to save twd_r
     measurements_filtered.twd_p[measurements_filtered.oldestValueTwd] = twd_r;
@@ -319,81 +305,30 @@ void update_twd(const float twd_r){
         measurements_filtered.oldestValueTwd = 0;
 
     //update twd mean using a robust mean
-    measurements_filtered.twd = robust_avg_sns(measurements_filtered.twd_p,
-                                               measurements_filtered.k_twd);
-
-    #if PRINT_DEBUG == 1
-    printf("saved twd %2.3f \n", (double)measurements_raw.twd_r);
-    #endif
+    measurements_filtered.twd_sns = robust_avg_sns(measurements_filtered.twd_p,
+                                                   measurements_filtered.k_twd);
 }
+
 
 /**
- * Compute moving average from values in alpha_p.
+ * Compute a new value for the alpha angle in our sensor frame.
  *
- * Since the CourseOverGround value (cog) provided by the gps could soffer of time
- * delays (even up tp 10 seconds), the alpha angle computed is a convex mean between the
- * alpha_cog (that is, the alpha angle computed using cog value) and alpha_yaw (@see alpha_yaw).
- *
- * This convex combination is computed using @see lambda_alpha().
+ * Compute a convex combination of alpha_cog and alpha_yaw based on time, then
+ * update the vector containing the old value of alpha and use
+ * @see robust_avg_sns() with these values.
 */
-void compute_avg(void){
+void update_alpha_sns(void){
 
-    float temp = 0.0f;
-    float alpha_cog;
+    float alpha_lambda_sns;
     float lambda;
 
-    for(uint16_t i = 0; i < measurements_filtered.k; i++){
-        temp += measurements_filtered.alpha_p[i];
+    //compute the convex combination between alpha_cog and alpha_yaw
+    lambda = compute_lambda();
+    alpha_lambda_sns = (1.0f - lambda) * measurements_raw.alpha_cog_sns +
+                    lambda * measurements_raw.alpha_yaw_sns;
 
-        #if PRINT_DEBUG == 1
-        printf(" measurements_filtered.alpha_p[%d] %2.3f \n", i, (double) measurements_filtered.alpha_p[i]);
-        #endif
-    }
-
-    //compute average value of alpha. This alpha used the cog values, see later.
-    alpha_cog = temp / measurements_filtered.k;
-
-    /*
-     * Since cog values provided by the GPS can suffer of a low frequency updating, the
-     * alpha angle computed with not updated cog values can be quite different from the real one.
-     * To avoid this, we check the difference between the actual absolute time
-     * and the last time che cog has been update (@see update_cog).
-     * Use lambda_alpha to compute a convex combination from alpha_cog and alpha_yaw
-     * based on the difference of time between the actual time and the last time the cog
-     * has been updated
-    */
-    lambda = lambda_alpha();
-    measurements_filtered.alpha = (1.0f - lambda) * alpha_cog + lambda * get_alpha_yaw();
-    //cancella
-//    if((hrt_absolute_time() - measurements_raw.time_last_cog_update) <=
-//            user_params.max_time_cog_not_up)
-//        measurements_filtered.alpha = alpha_cog;
-//    else
-//        measurements_filtered.alpha = get_alpha_yaw();
-
-    #if PRINT_DEBUG == 1
-    printf("temp %2.3f \n", (double)temp);
-    //printf("measurements_filtered.k %2.3f \n", (double)measurements_filtered.k);
-    //printf("measurements_filtered.alpha %2.3f \n", (double)measurements_filtered.alpha);
-    #endif
-}
-
-/** Compute instant alpha from a new cog and/or twd value.
- *  Should be called only if either cog_r or twd_r have been updated.
- *  At the end, set flags of updated to false.
-*/
-void filter_new_data(void){
-
-    //cog or twd has just been updated, compute new istant alpha according to Dumas
-    float instant_alpha = measurements_raw.cog_r - measurements_raw.twd_r;
-
-    //if |instant_alpha|<= pi/2 we're sailing upwind, so everything is ok
-    //constrain alpha to be the CLOSEST angle between TWD and COG
-    if(instant_alpha > M_PI_F) instant_alpha = instant_alpha - TWO_PI_F;
-    else if(instant_alpha < -M_PI_F) instant_alpha = instant_alpha + TWO_PI_F;
-
-    //save new data by deleting the oldest value
-    measurements_filtered.alpha_p[measurements_filtered.oldestValue] = instant_alpha;
+    //save new alpha_lambda by deleting the oldest value
+    measurements_filtered.alpha_p[measurements_filtered.oldestValue] = alpha_lambda_sns;
 
     //update oldest value index
     measurements_filtered.oldestValue++;
@@ -401,43 +336,23 @@ void filter_new_data(void){
     if(measurements_filtered.oldestValue >= measurements_filtered.k)
         measurements_filtered.oldestValue = 0;
 
-    //set updated flag to false 'cause cog and twd values have been used
-    measurements_raw.cog_updated = false;
-    measurements_raw.twd_updated = false;
-
-    #if PRINT_DEBUG == 1
-    //printf("instant_alpha %2.3f \n", (double)instant_alpha);
-    //printf("New oldestValue %d \n", measurements_filtered.oldestValue);
-    #endif
+    //use @see robust_avg_sns function to compute a robust mean of alpha angle
+    measurements_filtered.alpha_sns = robust_avg_sns(measurements_filtered.alpha_p,
+                                                     measurements_filtered.k);
 
 }
 
 /** Return the average value of alpha computed from the last k values
  *
- * Before returing avg value, checks if either cog_r or twd_r have been updated.
- * If so, computes a new instant alpha and add it to the vector alpha_p.
- * Then computes new avg alpha and return it.
- * If neither cog_r nor twd_r have been updated, returns old value of alpha.
+ * The angle with respect to the wind (alpha) is obtained from the
+ * application of a moving average filter to alpha_lambda.
  *
- * @return moving average value of true wind angle from the last k values of instant alpha.
+ * @return alpha angle (angle with respect to the true wind) in Dumas's convention.
 */
-float get_alpha(void){
+float get_alpha_dumas(void){
 
-    //check if either cog_r or twd_r have been updated
-    if(measurements_raw.cog_updated || measurements_raw.twd_updated){
-
-        //compute new instant alpha by filtering the new data
-        filter_new_data();
-
-        //compute new mean alpha
-        compute_avg();
-    }
-
-    #if PRINT_DEBUG == 1
-    //printf(" *** get_alpha.alpha %2.3f *** \n", (double)measurements_filtered.alpha);
-    #endif
-
-    return measurements_filtered.alpha;
+    //alpha in Dumas' convention is opposite to alpha in our sensor frame
+    return -measurements_filtered.alpha_sns;
 }
 
 /** Return the average value of apparent wind direction computed from the last k_app values
@@ -446,7 +361,7 @@ float get_alpha(void){
 */
 float get_app_wind_sns(void){
 
-    return measurements_filtered.apparent_wind;
+    return measurements_filtered.apparent_wind_sns;
 }
 
 /** Return the average value of true wind direction computed from the last k_twd values
@@ -455,7 +370,7 @@ float get_app_wind_sns(void){
 */
 float get_twd_sns(void){
 
-    return measurements_filtered.twd;
+    return measurements_filtered.twd_sns;
 }
 
 /**
@@ -532,59 +447,48 @@ float robust_avg_sns(float *p_meas, const uint16_t k){
 
 /**
  * Update yaw angle value.
+ *
+ * @param yaw_r heading angle provided by the Kalman filter.
 */
-void update_yaw(const float yaw_r){
-    //save yaw according to sensor convention
-    measurements_raw.yaw_r = yaw_r;
+void update_raw_yaw(const float yaw_r){
+    //compute a new value for alpha_yaw using yaw_r
+    measurements_raw.alpha_yaw_sns = compute_instant_alpha_sns(yaw_r);
+
+    //since there is a new value of alpha_yaw, update the alpha_sns value
+    update_alpha_sns();
 }
 
 /**
  * Get alpha angle (angle with respet to the wind) using yaw angle.
  *
- * @see get_alpha uses course over ground provided by the GPS raw measurements
- * to compute the alpha angle. This function computes alpha = yaw - twd, where
- * yaw is the last yaw angle provided by the Kalman filter and set by @see update_yaw.
- * twd is the value provided by @see get_twd().
+ * This function computes alpha = yaw - twd.
+ * The results is in Dumas' convention.
+ *
+ * @return alpha_yaw in Dumas' convention
 */
-float get_alpha_yaw(void){
-    float alpha;
+float get_alpha_yaw_dumas(void){
 
-    /* Since yaw angle provided by the Kalman filter is already a filtered value,
-     * we use it "as it is" without using any moving average filter.
-     * get_twd() provides a robust (@see robust_avg_sns) true wind angle
-     * measurement mean value.
-     *
-     * Be careful: alpha = yaw - twd, with yaw and twd expressed with
-     * Dumas'angle convention! Dumas'convention is opposite to our
-     * sensro conventin, so we have to change sign to everything.
-     * Starting from measurements in sensor convention, alpha
-     * can be computed as alpha = twd_sensors_convention - yaw_sensor_convention
-    */
-    alpha = get_twd_sns() - measurements_raw.yaw_r;
-
-    //if |instant_alpha|<= pi/2 we're sailing upwind, so everything is ok
-    //constrain alpha to be the CLOSEST angle between TWD and yaw
-    if(alpha > M_PI_F) alpha = alpha - TWO_PI_F;
-    else if(alpha < -M_PI_F) alpha = alpha + TWO_PI_F;
-
-    return alpha;
+    /* Since Dumas' convention is opposite to our sensor convention,
+     * just change the sign of alpha_yaw_sns
+     */
+    return -measurements_raw.alpha_yaw_sns;
 }
 
 /**
- * Compute lambda coefficient based on how much time is passed
+ * Compute lambda coefficient based on how much time has elapsed
  * since the last COG value was updated from the gps.
  *
  * This lambda value should be used to compute a mean alpha like:
  * alpha = (1 - lambda) * alpha_cog + lambda * alpha_yaw
 */
-float lambda_alpha(void){
+float compute_lambda(void){
 
     uint64_t diff_us;
     float diff_norm;
     float lambda = 0.0f;
 
     /* compute the time difference from the actual time and the
-     * last time the cog value was updated (@see update_cog) and
+     * last time the cog value was updated (@see update_raw_cog) and
      * normalize max_time_cog_not_up
     */
     diff_us = hrt_absolute_time() - measurements_raw.time_last_cog_update;

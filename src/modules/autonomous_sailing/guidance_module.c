@@ -388,18 +388,14 @@ void helmsman_tack(struct reference_actions_s *ref_act_p,
 
 
     /* Helmsman tack maneuver uses the alpha angle value as input in the rule
-      * based control system. Since the tack is quite fast and during the maneuver
-      * it is unlikely to have a  new CorseOverGround value from the GPS to compute a
-      * new alpha angle, we use an alpha angle computed with the yaw angle.
-      * The yaw angle is provided by the Kalman Filter and we can have a new value
-      * of it very frequently.
-     */
-    float alpha_yaw = get_alpha_yaw();
+      * based control system.
+    */
+    float alpha = get_alpha_dumas();
 
     //check if we've already started tacking, or if this is the first time
     if(tack_data.boat_is_tacking){
         //we have already started the tack maneuver, check if it's completed
-        if(is_tack_completed(alpha_yaw)){
+        if(is_tack_completed(alpha)){
 
             //we have just completed the tack maneuver
             tack_completed(ref_act_p);
@@ -428,15 +424,15 @@ void helmsman_tack(struct reference_actions_s *ref_act_p,
     */
     if(tack_data.sailing_at_port_haul){
         if(tack_data.tack_type == 0)
-            helmsman0_tack_p2s(alpha_yaw, p_rudder_cmd, p_sails_cmd);
+            helmsman0_tack_p2s(alpha, p_rudder_cmd, p_sails_cmd);
         else
-            helmsman1_tack_p2s(alpha_yaw, p_rudder_cmd, p_sails_cmd);
+            helmsman1_tack_p2s(alpha, p_rudder_cmd, p_sails_cmd);
     }
     else{
         if(tack_data.tack_type == 0)
-            helmsman0_tack_s2p(alpha_yaw, p_rudder_cmd, p_sails_cmd);
+            helmsman0_tack_s2p(alpha, p_rudder_cmd, p_sails_cmd);
         else
-            helmsman1_tack_s2p(alpha_yaw, p_rudder_cmd, p_sails_cmd);
+            helmsman1_tack_s2p(alpha, p_rudder_cmd, p_sails_cmd);
     }
 }
 
@@ -468,7 +464,7 @@ void tack_completed(struct reference_actions_s *ref_act_p){
  * If the boat was sailing on starboard haul before tacking, the tack maneuver is considered
  * cmpleted if the alpha is less or equals to -alpha_min_stop_tack_r, @see set_tack_data() .
  *
- * @param alpha     actual alpha angle. Should be alpha_yaw @see get_alpha_yaw()
+ * @param alpha     actual alpha angle.
  */
 bool is_tack_completed(float alpha){
 
@@ -696,7 +692,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     float sail_command = 0.0f;
 
     //get alpha from the moving average value of the last k values of instant alpha
-    alpha = get_alpha();
+    alpha = get_alpha_dumas();
 
     //check if path_planning() told us to tack
     if(ref_act_p->should_tack){

@@ -251,7 +251,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                     #if SIMULATION_FLAG == 0
                     //update course over ground in control data
-                    update_cog(strs.gps_raw.cog_rad);
+                    update_raw_cog(strs.gps_raw.cog_rad);
                     #endif
 
                 }
@@ -279,11 +279,11 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     orb_copy(ORB_ID(wind_sailing), subs.wind_sailing, &(strs.wind_sailing));
 
                     //update apparent wind direction in control data
-                    update_app_wind(strs.wind_sailing.angle_apparent);
+                    update_raw_app_wind(strs.wind_sailing.angle_apparent);
 
                     #if SIMULATION_FLAG == 0
                     //update true wind direction in control data
-                    update_twd(strs.wind_sailing.angle_true);
+                    update_raw_twd(strs.wind_sailing.angle_true);
                     #endif
                 }
                 if(fds[3].revents & POLLIN){
@@ -300,7 +300,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                     #if SIMULATION_FLAG == 0
                     //update yaw in controller_data module
-                    update_yaw(strs.att.yaw);
+                    update_raw_yaw(strs.att.yaw);
 
                     //update rotation matrix from body to ned in navigation module
                     update_r_ned_body(strs.att.R, strs.att.R_valid);
@@ -318,12 +318,12 @@ int as_daemon_thread_main(int argc, char *argv[]){
             #if HIL_SIM == 1
                 float cog, twd;
                 get_data_hil(&cog, &twd);
-                update_cog(cog);
-                update_twd(twd);
+                update_raw_cog(cog);
+                update_raw_twd(twd);
             #else
-                update_cog(params.cog_sim);
-                update_twd(params.twd_sim);
-                update_yaw(params.yaw_sim);
+                update_raw_cog(params.cog_sim);
+                update_raw_twd(params.twd_sim);
+                update_raw_yaw(params.yaw_sim);
             #endif
             //look into optimal path planning maps for reference actions
             path_planning(&ref_act, &strs);
