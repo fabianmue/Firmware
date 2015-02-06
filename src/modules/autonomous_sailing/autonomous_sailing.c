@@ -299,8 +299,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     orb_copy(ORB_ID(vehicle_attitude), subs.att, &(strs.att));
 
                     #if SIMULATION_FLAG == 0
-                    //update yaw in controller_data module
-                    update_raw_yaw(strs.att.yaw);
+                    //update yaw and yawRate in controller_data module
+                    update_raw_yaw_yaw_rate(strs.att.yaw, strs.att.yaw_rate);
 
                     //update rotation matrix from body to ned in navigation module
                     update_r_ned_body(strs.att.R, strs.att.R_valid);
@@ -323,7 +323,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
             #else
                 update_raw_cog(params.cog_sim);
                 update_raw_twd(params.twd_sim);
-                update_raw_yaw(params.yaw_sim);
+                update_raw_yaw_yaw_rate(params.yaw_sim, 0.0f);//dummy yawRate value
             #endif
             //look into optimal path planning maps for reference actions
             path_planning(&ref_act, &strs);

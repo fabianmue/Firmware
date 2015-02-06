@@ -10,3 +10,4 @@ SRCS				= autonomous_sailing.c \
                                         reference_actions.c \
                                         send_msg_qgc.c
 					
+OBJS += mpc_boatTack.o

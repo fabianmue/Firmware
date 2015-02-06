@@ -50,6 +50,7 @@
 #include "topics_handler.h"
 #include "controller_data.h"
 #include "simulation_utility.h"
+#include "mpc_boatTack.h"
 
 //log messages to QGroundControl
 #include "send_msg_qgc.h"
@@ -77,4 +78,8 @@ void set_tack_data(uint16_t tack_type, float alpha_min_stop_tack_r);
 
 /** @brief set data of the sail controller*/
 void set_sail_data(float sail_closed_cmd, float alpha_sail_closed_r, float alpha_sail_opened_r);
+
+/** @brief set lqr gain for lqr tack maneuver*/
+void set_lqr_gain(float lqr_k1, float lqr_k2, float lqr_k3);
+
 #endif //GUIDANCE_MODULE_H

@@ -69,6 +69,7 @@ static struct{
     float alpha_cog_sns;///last alpha angle computed using cog, according to our sensor convention
     float alpha_yaw_sns;/// last alpha angle computed using yaw, according to our sensor convention
     uint64_t time_last_cog_update;///last time when cog_r has been updated
+    float yaw_rate_sns; ///last yaw rate [rad/s], according to our sensor convention
 }measurements_raw;
 
 //filtered measurements
@@ -446,13 +447,17 @@ float robust_avg_sns(float *p_meas, const uint16_t k){
 }
 
 /**
- * Update yaw angle value.
+ * Update yaw angle  and yawRate value.
  *
  * @param yaw_r heading angle provided by the Kalman filter.
+ * @param yaw_aret_r yaw rate value provided by the Kalman filter.
 */
-void update_raw_yaw(const float yaw_r){
+void update_raw_yaw_yaw_rate(float yaw_r, float yaw_rate_r){
     //compute a new value for alpha_yaw using yaw_r
     measurements_raw.alpha_yaw_sns = compute_instant_alpha_sns(yaw_r);
+
+    //save yawRate
+    measurements_raw.yaw_rate_sns = yaw_rate_r;
 
     //since there is a new value of alpha_yaw, update the alpha_sns value
     update_alpha_sns();
@@ -508,4 +513,11 @@ float compute_lambda(void){
         lambda = 1.0f;
 
     return lambda;
+}
+
+/**
+ * Get latest yaw rate value in sensor frame.
+*/
+float get_yaw_rate_sns(void){
+    return measurements_raw.yaw_rate_sns;
 }

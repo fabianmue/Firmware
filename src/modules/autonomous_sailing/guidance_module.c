@@ -56,11 +56,20 @@ static struct{
     uint16_t tack_type;         ///type of tack action to perform
     bool sailing_at_port_haul;///true if the boat was sailing on port haul before tacking
     float alpha_min_stop_tack_r;///minimum value of alpha in the new haul in order to stop tacking
+    float state_extended_model[3];///state of the model used by LQR and MPC
+    float rudder_latest; ///latest rudder command gave by either LQR or MPC
+    //static data for MPC tack
+    mpc_boatTack_params mpc_boatTack_params_s; ///params to fill before calling the solver
+    mpc_boatTack_output mpc_boatTack_output_s; ///optimal rudder control
+    mpc_boatTack_info mpc_boatTack_info_s; ///solver output
+    //matrix gain for LQR tack
+    float lqr_gain[3];
 }tack_data =    {
                     .boat_is_tacking = false,//true if boat is performing a tack maneuver
                     .tack_type = 0, //tack as helmsam would do
                     .sailing_at_port_haul = true,//dummy initial guess
-                    .alpha_min_stop_tack_r = 0.610865238f //35.0f * deg2rad
+                    .alpha_min_stop_tack_r = 0.610865238f, //35.0f * deg2rad
+                    .rudder_latest = 0.0f
                 };
 
  //static data for sails controller
@@ -143,10 +152,23 @@ void helmsman_tack(struct reference_actions_s *ref_act_p,
 /** @brief action to perform when tack maneuver is completed*/
 void tack_completed(struct reference_actions_s *ref_act_p);
 
+/** @brief tack action performed with the LQR controller*/
+void lqr_tack(float *p_rudder_cmd);
+
 /** @brief dummy abs function for float value*/
 float my_fabs(float x){
     x = (x > 0.0f) ? x : -x;
     return x;
+}
+
+/**
+ * Set LQR gain for tack maneuver type 3
+ *
+*/
+void set_lqr_gain(float lqr_k1, float lqr_k2, float lqr_k3){
+    tack_data.lqr_gain[0] = lqr_k1;
+    tack_data.lqr_gain[1] = lqr_k2;
+    tack_data.lqr_gain[2] = lqr_k3;
 }
 
 /**
@@ -186,15 +208,21 @@ void set_sail_data(float sail_closed_cmd, float alpha_sail_closed_r, float alpha
 
 
 /**
- * Tack maneuver can be performed in three different ways.
+ * Tack maneuver can be performed in five different ways.
  * The first one (type is equal to 0) is performed by using a "standard" input sequence
  * as a real helmsman would do. @see helmsman0_tack_p2s and @see helmsman0_tack_s2p.
+ *
  * The second one (type is equal to 1) is slightly different from the "standard" helmsman maneuver
  * but it is still reasonable to think of it as a maneuver that helmsman would do.
  * @see helmsman1_tack_p2s and @see helmsman1_tack_s2p.
+ *
  * The Third one (type is equal to 2) is performed by changing only the reference
  * angle with respect to the wind (alpha) and then "wait" for the PI controller
  * of the rudder to follow this changing.
+ *
+ * The fourth one (type equal to 3) is performed by a LQR controller.
+ *
+ * The fifth one (type equal to 4) is performed by a MPC controller.
  *
  * @param tack_type               type of tack to perform
  * @param alpha_min_stop_tack_r   minimum absolute value of alpha[rad] in the haul to stop tack
@@ -215,8 +243,12 @@ void set_tack_data(uint16_t tack_type, float alpha_min_stop_tack_r){
             sprintf(txt_msg, "Tack as helmsman0.");
         else if(tack_type == 1)
             sprintf(txt_msg, "Tack as helmsman1.");
-        else
+        else if(tack_type == 2)
             sprintf(txt_msg, "Implicit (PI) Tack.");
+        else if(tack_type == 3)
+            sprintf(txt_msg, "LQR Tack.");
+        else if(tack_type == 4)
+            sprintf(txt_msg, "MPC Tack.");
 
         send_log_info(txt_msg);
     }
@@ -357,7 +389,7 @@ void tack_action(struct reference_actions_s *ref_act_p,
         //perform tack maneuver as helmsman would do
         helmsman_tack(ref_act_p, p_rudder_cmd, p_sails_cmd);
     }
-    else{
+    else if(tack_data.tack_type == 2){
         /*perform tack maneuver by simply returning the control of rudder
          * and sails to normal controller.
          *
@@ -373,6 +405,32 @@ void tack_action(struct reference_actions_s *ref_act_p,
         */
 
         tack_completed(ref_act_p);
+    }
+    else{
+        //LQR or MPC tack, compute actual state value for the extended model
+
+        //yaw rate from measurements
+        tack_data.state_extended_model[0] = get_yaw_rate_sns();
+
+        /* difference from the actual yaw and the desired yaw, assuming true wind
+         * will be constant for the whole tack there is no drift (in general these
+         * two assumptions are not true, but it is the best we can do).
+        */
+        tack_data.state_extended_model[1] = ref_act_p->alpha_star - get_alpha_dumas();
+
+        //latest command gave to the rudder
+        tack_data.state_extended_model[2] = tack_data.rudder_latest;
+
+        if(tack_data.tack_type == 3){
+            //LQR controller
+            lqr_tack(p_rudder_cmd);
+        }
+        else{
+            //MPC controller
+        }
+
+        //use standard sail controller
+        *p_sails_cmd = sail_controller(get_alpha_dumas());
     }
 }
 
@@ -620,6 +678,17 @@ void helmsman1_tack_s2p(float alpha, float *p_rud, float *p_sails){
     *p_rud = -rudder_port;
 }
 
+/**
+ * Compute optimal rudder command for the tack maneuver with LQR controller.
+ *
+ * rudder = Gain_lqr * state_extended_model
+*/
+void lqr_tack(float *p_rudder_cmd){
+    //apply LQR gain matrix to the actual state of the extended model
+    *p_rudder_cmd = tack_data.lqr_gain[0] * tack_data.state_extended_model[0] +
+                    tack_data.lqr_gain[1] * tack_data.state_extended_model[1] +
+                    tack_data.lqr_gain[2] * tack_data.state_extended_model[2];
+}
 
 /**
  * Simple rule based control system for the sails.
@@ -724,6 +793,9 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     //update actuator value
     strs_p->actuators.control[0] = rudder_command;
     strs_p->actuators.control[3] =  sail_command;
+
+    //update rudder_latest in any case, even if we are not tacking
+    tack_data.rudder_latest = rudder_command;
 
     //save first debug values for post-processing, other values set in path_planning()
     strs_p->boat_guidance_debug.timestamp = hrt_absolute_time();

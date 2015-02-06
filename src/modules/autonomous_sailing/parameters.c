@@ -345,26 +345,26 @@ PARAM_DEFINE_FLOAT(AS_COG_DELAY_S, 1.5f);
 
 
 
-//------------------------------------- Parameters for starting optimal path following ----
+//------------------------------------- Parameters for optimal tack maneuver ----
+
 
 /**
- * 1 if you want to start following optimal path trajectory, 0 or -1 if you want to insert each grid line
+ * First value of the optimal gain matrix K, for the LQR controller
  *
- *
- * @min -1
- * @max 1
  */
-PARAM_DEFINE_INT32(ASP_START, 0);
+PARAM_DEFINE_FLOAT(AST_LQR_K1, -0.1067f);
 
 /**
- * Absolute value of reference angle with respect true wind [deg]
+ * Second value of the optimal gain matrix K, for the LQR controller
  *
- * Use Dumas'convention.
- *
- * @min 0
- * @max 180
  */
-PARAM_DEFINE_FLOAT(ASP_ALST_ANG_D, 35.0f);
+PARAM_DEFINE_FLOAT(AST_LQR_K2, -1.3144f);
+
+/**
+ * Third value of the optimal gain matrix K, for the LQR controller
+ *
+ */
+PARAM_DEFINE_FLOAT(AST_LQR_K3, 0.1361f);
 
 #if SIMULATION_FLAG == 1
 
@@ -476,11 +476,12 @@ static struct pointers_param_qgc_s{
     param_t grids_number_pointer;         /**< pointer to param AS_P_TOT_G*/
     param_t grid_x_pointer;         /**< pointer to param AS_P_X_M*/
     param_t grid_add_pointer;         /**< pointer to param AS_P_ADD*/
-
-    //-- params for optimal path
-    param_t start_path_following_pointer;         /**< pointer to param ASP_START*/
-    param_t abs_alpha_star_pointer;         /**< pointer to param ASP_ALST_ANG_D*/
     param_t repeat_past_grids_pointer;    /**< pointer to param AS_REIN_GRS */
+
+    //-- params for LQR controller
+    param_t lqr_k1_poniter; /**< pointer to  AST_LQR_K1*/
+    param_t lqr_k2_poniter; /**< pointer to  AST_LQR_K2*/
+    param_t lqr_k3_poniter; /**< pointer to  AST_LQR_K3*/
 
     //---cog delay
     param_t cog_max_delay_pointer;/**< pointer to param AS_COG_DELAY_S*/
@@ -551,11 +552,12 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.grid_x_pointer    = param_find("AS_P_X_M");
 
     pointers_param_qgc.grid_add_pointer = param_find("AS_P_ADD");
-
-    //-- optimal path following
-    pointers_param_qgc.start_path_following_pointer = param_find("ASP_START");
-    pointers_param_qgc.abs_alpha_star_pointer = param_find("ASP_ALST_ANG_D");
     pointers_param_qgc.repeat_past_grids_pointer = param_find("AS_REIN_GRS");
+
+    //--- param for lqr controller
+    pointers_param_qgc.lqr_k1_poniter = param_find("AST_LQR_K1");
+    pointers_param_qgc.lqr_k2_poniter = param_find("AST_LQR_K2");
+    pointers_param_qgc.lqr_k3_poniter = param_find("AST_LQR_K3");
 
     //----cog delay
     pointers_param_qgc.cog_max_delay_pointer = param_find("AS_COG_DELAY_S");
@@ -731,22 +733,18 @@ void param_update(struct parameters_qgc *params_p,
     bool use_last_grids = (temp > 0) ? true : false;
     reuse_last_grids(use_last_grids);
 
-    //-- params for optimal path following
-    //use these params only if update_path_param is true
-    if(update_path_param){
-        float abs_alpha_star;
-        int32_t start_following;
 
-        param_get(pointers_param_qgc.abs_alpha_star_pointer, &abs_alpha_star);
-        //convert deg in rad
-        abs_alpha_star = abs_alpha_star * deg2rad;
-        param_get(pointers_param_qgc.start_path_following_pointer, &start_following);
-        //make sure abs_alpha_star is positive
-        abs_alpha_star = (abs_alpha_star > 0) ? abs_alpha_star : -abs_alpha_star;
 
-        //pass these two values to path_planning module
-        start_following_optimal_path(start_following, abs_alpha_star);
-    }
+    //-- param for LQR controller
+    float lqr_k1;
+    float lqr_k2;
+    float lqr_k3;
+
+    param_get(pointers_param_qgc.lqr_k1_poniter, &lqr_k1);
+    param_get(pointers_param_qgc.lqr_k2_poniter, &lqr_k2);
+    param_get(pointers_param_qgc.lqr_k3_poniter, &lqr_k3);
+
+    set_lqr_gain(lqr_k1, lqr_k2, lqr_k3);
 
     //--- cog delay
     float cog_max_delay_sec;

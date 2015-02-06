@@ -78,13 +78,16 @@ float get_app_wind_sns(void);
 /** @brief get the average value of true wind direction in sensor frame*/
 float get_twd_sns(void);
 
-/** @brief update yaw angle (w.r.t. true North)*/
-void update_raw_yaw(const float yaw_r);
+/** @brief update yaw and yawRate (w.r.t. true North)*/
+void update_raw_yaw_yaw_rate(float yaw_r, float yaw_rate_r);
 
 /** @brief get alpha_yaw in Dumas' convention*/
 float get_alpha_yaw_dumas(void);
 
 /** @brief set the maximum time after that alpha = alpha_yaw if cog not updated*/
 void set_max_time_cog_not_up(float max_time_cog_not_up_sec);
+
+/** @brief get latest yawRate value*/
+float get_yaw_rate_sns(void);
 
 #endif // CONTROLLER_DATA_H
