@@ -84,7 +84,7 @@ static struct{
     float kaw;              ///constant fo anti-wind up in normal digital PI
     float cp;                ///constant for condition integral, in proportional action
     float ci;                ///constant for condition integral, in integral action
-    bool use_conditional;   ///1 if PI with condition integral is in use
+    bool rudder_controller_type; /// 0 = standard PI 1 = conditional PI 2 = LQR
     float last_command;     ///last command provided by the PI
     float sum_error_pi;     ///error sum from iterations of guidance_module, used in PI
     float rud_cmd_45_left;  ///rudder command to set the rudder at 45 deg and make boat steer left
@@ -96,7 +96,7 @@ static struct{
                                 .kaw = 0.5f,
                                 .cp = 1.0f,
                                 .ci = 1.0f,
-                                .use_conditional = true,
+                                .rudder_controller_type = 0,//start with standard PI
                                 .last_command = 0.0f,
                                 .sum_error_pi = 0.0f,
                                 .rud_cmd_45_left = 0.85f,//RUDDER_45_LEFT,
@@ -284,7 +284,7 @@ float pi_controller(const float *ref_p, const float *meas_p){
 
     error = *ref_p - *meas_p;
 
-    if(rudder_controller_data.use_conditional){
+    if(rudder_controller_data.rudder_controller_type == 1){
         //Conditional Integration
         float abs_error;
 
@@ -326,14 +326,14 @@ float pi_controller(const float *ref_p, const float *meas_p){
 /**
  * Set rudder controller data.
  *
- * @param p                 proportional gain
- * @param i                 integral gain
- * @param c                 used in conditional integral
- * @param use_conditional   1 if you wish to use the conditionl integral
- * @param kaw               constant used for anti-wind up in normal PI
+ * @param p                         proportional gain
+ * @param i                         integral gain
+ * @param c                         used in conditional integral
+ * @param rudder_controller_type    0 = standard PI, 1 = conditional PI, 2 = LQR
+ * @param kaw                       constant used for anti-wind up in normal PI
 */
 void set_rudder_data(float p, float i, float cp,
-                     float ci, int32_t use_conditional, float kaw,
+                     float ci, int32_t rudder_controller_type, float kaw,
                      float alpha_rudder_x1_r, float alpha_rudder_x2_r, float rud_cmd_45_left){
 
     rudder_controller_data.p = p;
@@ -342,24 +342,25 @@ void set_rudder_data(float p, float i, float cp,
     rudder_controller_data.cp = cp;
     rudder_controller_data.ci = ci;
 
-    //check if we have switched from normal to conditional PI or viceversa
-    if((rudder_controller_data.use_conditional == true && use_conditional <= 0) ||
-       (rudder_controller_data.use_conditional == false && use_conditional > 0)){
+    //check if we have changed the type of rudder controller
+    if(rudder_controller_data.rudder_controller_type != rudder_controller_type){
+        //save new type of controller
+        rudder_controller_data.rudder_controller_type = rudder_controller_type;
 
         //reset PI internal data
         rudder_controller_data.last_command = 0.0f;
         rudder_controller_data.sum_error_pi = 0.0f;
 
         //send message to QGC
-        if(use_conditional > 0)
-            sprintf(txt_msg, "Switched to PI with conditional integration.");
-        else
+        if(rudder_controller_type == 0)
             sprintf(txt_msg, "Switched to normal PI with anti wind-up gain.");
+        else if(rudder_controller_type == 1)
+            sprintf(txt_msg, "Switched to conditional PI.");
+        else
+            sprintf(txt_msg, "Switched to LQR controller.");
 
         send_log_info(txt_msg);
     }
-
-    rudder_controller_data.use_conditional = (use_conditional > 0) ? true : false;
 
     //make sure rud_cmd_45_left does not exceed rud limits
     rud_cmd_45_left = rudder_saturation(rud_cmd_45_left);
@@ -801,8 +802,14 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     }
     if(!(ref_act_p->should_tack)){
         //if the boat should not tack, compute rudder and sails actions to follow reference alpha
-        //PI controller for rudder
-        rudder_command = pi_controller(&(ref_act_p->alpha_star), &alpha);
+        if(rudder_controller_data.rudder_controller_type != 2){
+            //PI controller for rudder
+            rudder_command = pi_controller(&(ref_act_p->alpha_star), &alpha);
+        }
+        else{
+            //LQR controller
+            lqr_control_rudder(&rudder_command, ref_act_p);
+        }
 
         //sails control only if AS_SAIL param from QGC is negative
         if(param_qgc_p->sail_servo < 0.0f)
