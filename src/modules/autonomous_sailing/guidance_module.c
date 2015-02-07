@@ -56,20 +56,11 @@ static struct{
     uint16_t tack_type;         ///type of tack action to perform
     bool sailing_at_port_haul;///true if the boat was sailing on port haul before tacking
     float alpha_min_stop_tack_r;///minimum value of alpha in the new haul in order to stop tacking
-    float state_extended_model[3];///state of the model used by LQR and MPC
-    float rudder_latest; ///latest rudder command gave by either LQR or MPC
-    //static data for MPC tack
-    mpc_boatTack_params mpc_boatTack_params_s; ///params to fill before calling the solver
-    mpc_boatTack_output mpc_boatTack_output_s; ///optimal rudder control
-    mpc_boatTack_info mpc_boatTack_info_s; ///solver output
-    //matrix gain for LQR tack
-    float lqr_gain[3];
 }tack_data =    {
                     .boat_is_tacking = false,//true if boat is performing a tack maneuver
                     .tack_type = 0, //tack as helmsam would do
                     .sailing_at_port_haul = true,//dummy initial guess
-                    .alpha_min_stop_tack_r = 0.610865238f, //35.0f * deg2rad
-                    .rudder_latest = 0.0f
+                    .alpha_min_stop_tack_r = 0.610865238f //35.0f * deg2rad
                 };
 
  //static data for sails controller
@@ -113,6 +104,19 @@ static struct{
                                 .alpha_rudder_x2_r =  0.3490658503f//20.0f * deg2rad
                             };
 
+//static data for LQR and MPC controllers
+static struct {
+    float state_extended_model[3];///state of the model used by LQR and MPC
+    float rudder_latest; ///latest rudder command gave by either LQR or MPC
+    //static data for MPC tack
+    mpc_boatTack_params mpc_boatTack_params_s; ///params to fill before calling the solver
+    mpc_boatTack_output mpc_boatTack_output_s; ///optimal rudder control
+    mpc_boatTack_info mpc_boatTack_info_s; ///solver output
+    //matrix gain for LQR tack
+    float lqr_gain[3];
+} optimal_control_data =    {
+                                .rudder_latest = 0.0f
+                            };
 
 /** @brief PI controller with conditional integration*/
 float pi_controller(const float *ref_p, const float *meas_p);
@@ -152,8 +156,11 @@ void helmsman_tack(struct reference_actions_s *ref_act_p,
 /** @brief action to perform when tack maneuver is completed*/
 void tack_completed(struct reference_actions_s *ref_act_p);
 
-/** @brief tack action performed with the LQR controller*/
-void lqr_tack(float *p_rudder_cmd);
+/** @brief control rudder using LQR controller*/
+void lqr_control_rudder(float *p_rudder_cmd, const struct reference_actions_s *ref_act_p);
+
+/** @brief compute actual state of the extended model used by both LQR and MPC*/
+void compute_state_extended_model(const struct reference_actions_s *ref_act_p);
 
 /** @brief dummy abs function for float value*/
 float my_fabs(float x){
@@ -162,13 +169,13 @@ float my_fabs(float x){
 }
 
 /**
- * Set LQR gain for tack maneuver type 3
+ * Set LQR gain.
  *
 */
 void set_lqr_gain(float lqr_k1, float lqr_k2, float lqr_k3){
-    tack_data.lqr_gain[0] = lqr_k1;
-    tack_data.lqr_gain[1] = lqr_k2;
-    tack_data.lqr_gain[2] = lqr_k3;
+    optimal_control_data.lqr_gain[0] = lqr_k1;
+    optimal_control_data.lqr_gain[1] = lqr_k2;
+    optimal_control_data.lqr_gain[2] = lqr_k3;
 }
 
 /**
@@ -406,32 +413,20 @@ void tack_action(struct reference_actions_s *ref_act_p,
 
         tack_completed(ref_act_p);
     }
+    else if(tack_data.tack_type == 3){
+        //LQR controller
+        lqr_control_rudder(p_rudder_cmd, ref_act_p);
+        //use standard sail controller
+        *p_sails_cmd = sail_controller(get_alpha_dumas());
+    }
     else{
-        //LQR or MPC tack, compute actual state value for the extended model
-
-        //yaw rate from measurements
-        tack_data.state_extended_model[0] = get_yaw_rate_sns();
-
-        /* difference from the actual yaw and the desired yaw, assuming true wind
-         * will be constant for the whole tack there is no drift (in general these
-         * two assumptions are not true, but it is the best we can do).
-        */
-        tack_data.state_extended_model[1] = ref_act_p->alpha_star - get_alpha_dumas();
-
-        //latest command gave to the rudder
-        tack_data.state_extended_model[2] = tack_data.rudder_latest;
-
-        if(tack_data.tack_type == 3){
-            //LQR controller
-            lqr_tack(p_rudder_cmd);
-        }
-        else{
-            //MPC controller
-        }
+        //MPC controller
+        //TODO MPC
 
         //use standard sail controller
         *p_sails_cmd = sail_controller(get_alpha_dumas());
     }
+
 }
 
 /**
@@ -679,15 +674,51 @@ void helmsman1_tack_s2p(float alpha, float *p_rud, float *p_sails){
 }
 
 /**
- * Compute optimal rudder command for the tack maneuver with LQR controller.
+ * Compute optimal rudder command based on the LQR controller.
  *
- * rudder = Gain_lqr * state_extended_model
+ * Based on the extended state model (@see compute_state_extended_model), the rudder command
+ * at step k is given by rudder_k = rudder_{k-1} + K_LQR * state_extended_model.
 */
-void lqr_tack(float *p_rudder_cmd){
-    //apply LQR gain matrix to the actual state of the extended model
-    *p_rudder_cmd = tack_data.lqr_gain[0] * tack_data.state_extended_model[0] +
-                    tack_data.lqr_gain[1] * tack_data.state_extended_model[1] +
-                    tack_data.lqr_gain[2] * tack_data.state_extended_model[2];
+void lqr_control_rudder(float *p_rudder_cmd, const struct reference_actions_s *ref_act_p){
+    float u_k; //optimal input of the extended state model
+
+    //compute the new state of the extended model based on the latest measurements
+    compute_state_extended_model(ref_act_p);
+
+    /*apply LQR gain matrix to the actual state of the extended model,
+     * this will give you the u_k of the extended state model
+    */
+    u_k = optimal_control_data.lqr_gain[0] * optimal_control_data.state_extended_model[0] +
+          optimal_control_data.lqr_gain[1] * optimal_control_data.state_extended_model[1] +
+          optimal_control_data.lqr_gain[2] * optimal_control_data.state_extended_model[2];
+
+    //compute rudder command at step k to give to the real system: u_k + rudder_{k-1}
+    *p_rudder_cmd = u_k + optimal_control_data.state_extended_model[2];
+}
+
+/**
+ * Compute the actual state of the extended model used by both LQR and MPC.
+ *
+ * The state of the extended model is: x_k = [yawRate_k; yaw_k; rudder_{k-1}],
+ * where yawRate and yaw are expressed in our sensor frame.
+ *
+ * The input of the extended model is u_k = rudder_k - rudder_{k-1}.
+ *
+ * The updated state value is stored in optimal_control_data.state_extended_model.
+*/
+void compute_state_extended_model(const struct reference_actions_s *ref_act_p){
+
+    //yaw rate from measurements
+    optimal_control_data.state_extended_model[0] = get_yaw_rate_sns();
+
+    /* difference from the actual yaw and the desired yaw, assuming true wind
+     * will be constant and there will be no drift (in general these
+     * two assumptions are not true, but it is the best we can do).
+    */
+    optimal_control_data.state_extended_model[1] = ref_act_p->alpha_star - get_alpha_dumas();
+
+    //latest command given to the rudder
+    optimal_control_data.state_extended_model[2] = optimal_control_data.rudder_latest;
 }
 
 /**
@@ -795,7 +826,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     strs_p->actuators.control[3] =  sail_command;
 
     //update rudder_latest in any case, even if we are not tacking
-    tack_data.rudder_latest = rudder_command;
+    optimal_control_data.rudder_latest = rudder_command;
 
     //save first debug values for post-processing, other values set in path_planning()
     strs_p->boat_guidance_debug.timestamp = hrt_absolute_time();
