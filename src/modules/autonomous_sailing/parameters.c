@@ -784,6 +784,15 @@ void param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param2.type_of_tack = (uint16_t)tack_type;
     orb_publish(ORB_ID(boat_qgc_param2), pubs_p->boat_qgc_param2, &(strs_p->boat_qgc_param2));
 
+    //save boat_opt_matrices
+    strs_p->boat_opt_matrices.timestamp = hrt_absolute_time();
+    strs_p->boat_opt_matrices.lqr_k1 = lqr_k1;
+    strs_p->boat_opt_matrices.lqr_k2 = lqr_k2;
+    strs_p->boat_opt_matrices.lqr_k3 = lqr_k3;
+    //TODO ADD MPC PARAMETERS
+
+    orb_publish(ORB_ID(boat_opt_matrices), pubs_p->boat_opt_matrices, &(strs_p->boat_opt_matrices));
+
     #if SIMULATION_FLAG == 1
 
     //----- simulation coordinates

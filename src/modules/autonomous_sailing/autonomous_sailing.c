@@ -339,6 +339,12 @@ int as_daemon_thread_main(int argc, char *argv[]){
         //publish debug value for post-processing
         orb_publish(ORB_ID(boat_guidance_debug), pubs.boat_guidance_debug_pub, &(strs.boat_guidance_debug));
 
+        //publish boat_opt_control if updated
+        if(strs.boat_opt_control_updated){
+            orb_publish(ORB_ID(boat_opt_control), pubs.boat_opt_control, &(strs.boat_opt_control));
+            strs.boat_opt_control_updated = false;
+        }
+
         #if SAVE_DEBUG_VALUES == 1
         //publish debug data if updated
         if(strs.debug_updated){
@@ -425,6 +431,12 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     memset(&(strs_p->boat_qgc_param2), 0, sizeof(strs_p->boat_qgc_param2));
     pubs_p->boat_qgc_param2 = orb_advertise(ORB_ID(boat_qgc_param2), &(strs_p->boat_qgc_param2));
 
+    //adertise topic boat_opt_matrices
+    memset(&(strs_p->boat_opt_matrices), 0, sizeof(strs_p->boat_opt_matrices));
+
+    //adertise topic boat_opt_control
+    memset(&(strs_p->boat_opt_control), 0, sizeof(strs_p->boat_opt_control));
+    strs_p->boat_opt_control_updated = false;
 
     #if SAVE_DEBUG_VALUES == 1
     //advertise debug_values topic

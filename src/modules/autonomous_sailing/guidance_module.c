@@ -123,7 +123,8 @@ float pi_controller(const float *ref_p, const float *meas_p);
 
 /** @brief if the boat should tack, perform tack maneuver*/
 void tack_action(struct reference_actions_s *ref_act_p,
-                 float *p_rudder_cmd, float *p_sails_cmd);
+                 float *p_rudder_cmd, float *p_sails_cmd,
+                 struct structs_topics_s *strs_p);
 
 /** @brief determine if the tack maneuver is finished*/
 bool is_tack_completed(float alpha);
@@ -157,7 +158,9 @@ void helmsman_tack(struct reference_actions_s *ref_act_p,
 void tack_completed(struct reference_actions_s *ref_act_p);
 
 /** @brief control rudder using LQR controller*/
-void lqr_control_rudder(float *p_rudder_cmd, const struct reference_actions_s *ref_act_p);
+void lqr_control_rudder(float *p_rudder_cmd,
+                        const struct reference_actions_s *ref_act_p,
+                        struct structs_topics_s *strs_p);
 
 /** @brief compute actual state of the extended model used by both LQR and MPC*/
 void compute_state_extended_model(const struct reference_actions_s *ref_act_p);
@@ -384,9 +387,11 @@ void set_rudder_data(float p, float i, float cp,
  * @param strs_p        pointer to topics data
  * @param p_rudder_cmd  pointer where rudder command will be returned
  * @param p_sails_cmd   pointer where sails command will be returned
+ * @param strs_p        pointer to structs_topics_s
 */
 void tack_action(struct reference_actions_s *ref_act_p,
-                 float *p_rudder_cmd, float *p_sails_cmd){
+                 float *p_rudder_cmd, float *p_sails_cmd,
+                 struct structs_topics_s *strs_p){
 
 
     /*we are here beacuse ref_act_p->should_tack is true, so boat should tack.
@@ -416,7 +421,7 @@ void tack_action(struct reference_actions_s *ref_act_p,
     }
     else if(tack_data.tack_type == 3){
         //LQR controller
-        lqr_control_rudder(p_rudder_cmd, ref_act_p);
+        lqr_control_rudder(p_rudder_cmd, ref_act_p, strs_p);
         //use standard sail controller
         *p_sails_cmd = sail_controller(get_alpha_dumas());
     }
@@ -680,7 +685,9 @@ void helmsman1_tack_s2p(float alpha, float *p_rud, float *p_sails){
  * Based on the extended state model (@see compute_state_extended_model), the rudder command
  * at step k is given by rudder_k = rudder_{k-1} + K_LQR * state_extended_model.
 */
-void lqr_control_rudder(float *p_rudder_cmd, const struct reference_actions_s *ref_act_p){
+void lqr_control_rudder(float *p_rudder_cmd,
+                        const struct reference_actions_s *ref_act_p,
+                        struct structs_topics_s *strs_p){
     float u_k; //optimal input of the extended state model
 
     //compute the new state of the extended model based on the latest measurements
@@ -695,6 +702,17 @@ void lqr_control_rudder(float *p_rudder_cmd, const struct reference_actions_s *r
 
     //compute rudder command at step k to give to the real system: u_k + rudder_{k-1}
     *p_rudder_cmd = u_k + optimal_control_data.state_extended_model[2];
+
+    //save optimal control data
+    strs_p->boat_opt_control.timestamp = hrt_absolute_time();
+    strs_p->boat_opt_control.x1 = optimal_control_data.state_extended_model[0];
+    strs_p->boat_opt_control.x2 = optimal_control_data.state_extended_model[1];
+    strs_p->boat_opt_control.x3 = optimal_control_data.state_extended_model[2];
+    strs_p->boat_opt_control.opt_rud = *p_rudder_cmd; // optimal rudder command computed
+    strs_p->boat_opt_control.type_controller = 0;     // I am the LQR control, set 0 on type
+
+    //signal that boat_opt_control has been updated
+    strs_p->boat_opt_control_updated = true;
 }
 
 /**
@@ -798,7 +816,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     //check if path_planning() told us to tack
     if(ref_act_p->should_tack){
         //perform tack maneuver
-        tack_action(ref_act_p, &rudder_command, &sail_command);
+        tack_action(ref_act_p, &rudder_command, &sail_command, strs_p);
     }
     if(!(ref_act_p->should_tack)){
         //if the boat should not tack, compute rudder and sails actions to follow reference alpha
@@ -808,7 +826,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
         }
         else{
             //LQR controller
-            lqr_control_rudder(&rudder_command, ref_act_p);
+            lqr_control_rudder(&rudder_command, ref_act_p, strs_p);
         }
 
         //sails control only if AS_SAIL param from QGC is negative
