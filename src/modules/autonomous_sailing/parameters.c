@@ -354,26 +354,75 @@ PARAM_DEFINE_FLOAT(AS_COG_DELAY_S, 1.5f);
 
 
 
-//------------------------------------- Parameters for optimal tack maneuver ----
+//------------------------------------- Parameters for optimal control ----
 
 
 /**
  * First value of the optimal gain matrix K, for the LQR controller
  *
  */
-PARAM_DEFINE_FLOAT(AST_LQR_K1, -0.1067f);
+PARAM_DEFINE_FLOAT(ASO_LQR_K1, -0.1067f);
 
 /**
  * Second value of the optimal gain matrix K, for the LQR controller
  *
  */
-PARAM_DEFINE_FLOAT(AST_LQR_K2, -1.3144f);
+PARAM_DEFINE_FLOAT(ASO_LQR_K2, -1.3144f);
 
 /**
- * Third value of the optimal gain matrix K, for the LQR controller
- *
+ * First value of the Hessina cost matrix, for the MPC
  */
-PARAM_DEFINE_FLOAT(AST_LQR_K3, 0.1361f);
+PARAM_DEFINE_FLOAT(ASO_MPC_H1, 0.0f);
+
+/**
+ * Second value of the Hessina cost matrix, for the MPC
+ */
+PARAM_DEFINE_FLOAT(ASO_MPC_H2, 0.0f);
+
+/**
+ * Third value of the Hessina cost matrix, for the MPC
+ */
+PARAM_DEFINE_FLOAT(ASO_MPC_H3, 0.0f);
+
+/**
+ * Fourth value of the Hessina cost matrix, for the MPC
+ */
+PARAM_DEFINE_FLOAT(ASO_MPC_H4, 0.0f);
+
+/**
+ * First lower bound value, for the MPC
+ */
+PARAM_DEFINE_FLOAT(ASO_MPC_LB1, 0.0f);
+
+/**
+ * Second lower bound value, for the MPC
+ */
+PARAM_DEFINE_FLOAT(ASO_MPC_LB2, 0.0f);
+
+/**
+ * First upper bound value, for the MPC
+ */
+PARAM_DEFINE_FLOAT(ASO_MPC_UB1, 0.0f);
+
+/**
+ * Second upper bound value, for the MPC
+ */
+PARAM_DEFINE_FLOAT(ASO_MPC_UB2, 0.0f);
+
+/**
+ * Hessian matrix for final cost, only for state, not for input. For the MPC.
+ */
+PARAM_DEFINE_FLOAT(ASO_MPC_HF22, 0.0f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF23, 0.0f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF24, 0.0f);
+
+PARAM_DEFINE_FLOAT(ASO_MPC_HF32, 0.0f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF33, 0.0f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF34, 0.0f);
+
+PARAM_DEFINE_FLOAT(ASO_MPC_HF42, 0.0f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF43, 0.0f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF44, 0.0f);
 
 #if SIMULATION_FLAG == 1
 
@@ -488,9 +537,33 @@ static struct pointers_param_qgc_s{
     param_t repeat_past_grids_pointer;    /**< pointer to param AS_REIN_GRS */
 
     //-- params for LQR controller
-    param_t lqr_k1_poniter; /**< pointer to  AST_LQR_K1*/
-    param_t lqr_k2_poniter; /**< pointer to  AST_LQR_K2*/
-    param_t lqr_k3_poniter; /**< pointer to  AST_LQR_K3*/
+    param_t lqr_k1_poniter; /**< pointer to  ASO_LQR_K1*/
+    param_t lqr_k2_poniter; /**< pointer to  ASO_LQR_K2*/
+    param_t lqr_k3_poniter; /**< pointer to  ASO_LQR_K3*/
+
+    //-- params for MPC controller
+    param_t mpc_h1_pointer; /**< pointer to ASO_MPC_H1*/
+    param_t mpc_h2_pointer; /**< pointer to ASO_MPC_H2*/
+    param_t mpc_h3_pointer; /**< pointer to ASO_MPC_H3*/
+    param_t mpc_h4_pointer; /**< pointer to ASO_MPC_H4*/
+
+    param_t mpc_lb1_pointer; /**< pointer to ASO_MPC_LB1*/
+    param_t mpc_lb2_pointer; /**< pointer to ASO_MPC_LB2*/
+
+    param_t mpc_ub1_pointer; /**< pointer to ASO_MPC_UB1*/
+    param_t mpc_ub2_pointer; /**< pointer to ASO_MPC_UB1*/
+
+    param_t mpc_hf_22_pointer; /**< pointer to ASO_MPC_HF22*/
+    param_t mpc_hf_23_pointer; /**< pointer to ASO_MPC_HF23*/
+    param_t mpc_hf_24_pointer; /**< pointer to ASO_MPC_HF24*/
+
+    param_t mpc_hf_32_pointer; /**< pointer to ASO_MPC_HF32*/
+    param_t mpc_hf_33_pointer; /**< pointer to ASO_MPC_HF33*/
+    param_t mpc_hf_34_pointer; /**< pointer to ASO_MPC_HF34*/
+
+    param_t mpc_hf_42_pointer; /**< pointer to ASO_MPC_HF42*/
+    param_t mpc_hf_43_pointer; /**< pointer to ASO_MPC_HF43*/
+    param_t mpc_hf_44_pointer; /**< pointer to ASO_MPC_HF44*/
 
     //---cog delay
     param_t cog_max_delay_pointer;/**< pointer to param AS_COG_DELAY_S*/
@@ -563,10 +636,34 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.grid_add_pointer = param_find("AS_P_ADD");
     pointers_param_qgc.repeat_past_grids_pointer = param_find("AS_REIN_GRS");
 
-    //--- param for lqr controller
-    pointers_param_qgc.lqr_k1_poniter = param_find("AST_LQR_K1");
-    pointers_param_qgc.lqr_k2_poniter = param_find("AST_LQR_K2");
-    pointers_param_qgc.lqr_k3_poniter = param_find("AST_LQR_K3");
+    //--- params for lqr controller
+    pointers_param_qgc.lqr_k1_poniter = param_find("ASO_LQR_K1");
+    pointers_param_qgc.lqr_k2_poniter = param_find("ASO_LQR_K2");
+    pointers_param_qgc.lqr_k3_poniter = param_find("ASO_LQR_K3");
+
+    //--- params for MPC controller
+    pointers_param_qgc.mpc_h1_pointer = param_find("ASO_MPC_H1");
+    pointers_param_qgc.mpc_h2_pointer = param_find("ASO_MPC_H2");
+    pointers_param_qgc.mpc_h3_pointer = param_find("ASO_MPC_H3");
+    pointers_param_qgc.mpc_h4_pointer = param_find("ASO_MPC_H4");
+
+    pointers_param_qgc.mpc_lb1_pointer = param_find("ASO_MPC_LB1");
+    pointers_param_qgc.mpc_lb2_pointer = param_find("ASO_MPC_LB2");
+
+    pointers_param_qgc.mpc_ub1_pointer = param_find("ASO_MPC_UB1");
+    pointers_param_qgc.mpc_ub2_pointer = param_find("ASO_MPC_UB2");
+
+    pointers_param_qgc.mpc_hf_22_pointer = param_find("ASO_MPC_HF22");
+    pointers_param_qgc.mpc_hf_23_pointer = param_find("ASO_MPC_HF23");
+    pointers_param_qgc.mpc_hf_24_pointer = param_find("ASO_MPC_HF24");
+
+    pointers_param_qgc.mpc_hf_32_pointer = param_find("ASO_MPC_HF32");
+    pointers_param_qgc.mpc_hf_33_pointer = param_find("ASO_MPC_HF33");
+    pointers_param_qgc.mpc_hf_34_pointer = param_find("ASO_MPC_HF34");
+
+    pointers_param_qgc.mpc_hf_42_pointer = param_find("ASO_MPC_HF42");
+    pointers_param_qgc.mpc_hf_43_pointer = param_find("ASO_MPC_HF43");
+    pointers_param_qgc.mpc_hf_44_pointer = param_find("ASO_MPC_HF44");
 
     //----cog delay
     pointers_param_qgc.cog_max_delay_pointer = param_find("AS_COG_DELAY_S");
@@ -755,6 +852,37 @@ void param_update(struct parameters_qgc *params_p,
 
     set_lqr_gain(lqr_k1, lqr_k2, lqr_k3);
 
+    //-- param for MPC controller
+    float mpc_h[4];
+    float mpc_lb[2];
+    float mpc_ub[2];
+    float mpc_hf[3][3];
+
+    param_get(pointers_param_qgc.mpc_h1_pointer, &mpc_h[0]);
+    param_get(pointers_param_qgc.mpc_h2_pointer, &mpc_h[1]);
+    param_get(pointers_param_qgc.mpc_h3_pointer, &mpc_h[2]);
+    param_get(pointers_param_qgc.mpc_h4_pointer, &mpc_h[3]);
+
+    param_get(pointers_param_qgc.mpc_lb1_pointer, &mpc_lb[0]);
+    param_get(pointers_param_qgc.mpc_lb2_pointer, &mpc_lb[1]);
+
+    param_get(pointers_param_qgc.mpc_ub1_pointer, &mpc_ub[0]);
+    param_get(pointers_param_qgc.mpc_ub2_pointer, &mpc_ub[1]);
+
+    param_get(pointers_param_qgc.mpc_hf_22_pointer, &mpc_hf[0][0]);
+    param_get(pointers_param_qgc.mpc_hf_23_pointer, &mpc_hf[0][1]);
+    param_get(pointers_param_qgc.mpc_hf_24_pointer, &mpc_hf[0][2]);
+
+    param_get(pointers_param_qgc.mpc_hf_32_pointer, &mpc_hf[1][0]);
+    param_get(pointers_param_qgc.mpc_hf_33_pointer, &mpc_hf[1][1]);
+    param_get(pointers_param_qgc.mpc_hf_34_pointer, &mpc_hf[1][2]);
+
+    param_get(pointers_param_qgc.mpc_hf_42_pointer, &mpc_hf[2][0]);
+    param_get(pointers_param_qgc.mpc_hf_43_pointer, &mpc_hf[2][1]);
+    param_get(pointers_param_qgc.mpc_hf_44_pointer, &mpc_hf[2][2]);
+
+    set_mpc_data(mpc_h, mpc_lb, mpc_ub, mpc_hf);
+
     //--- cog delay
     float cog_max_delay_sec;
     param_get(pointers_param_qgc.cog_max_delay_pointer, &cog_max_delay_sec);
@@ -786,10 +914,21 @@ void param_update(struct parameters_qgc *params_p,
 
     //save boat_opt_matrices
     strs_p->boat_opt_matrices.timestamp = hrt_absolute_time();
+
     strs_p->boat_opt_matrices.lqr_k1 = lqr_k1;
     strs_p->boat_opt_matrices.lqr_k2 = lqr_k2;
     strs_p->boat_opt_matrices.lqr_k3 = lqr_k3;
-    //TODO ADD MPC PARAMETERS
+
+    strs_p->boat_opt_matrices.mpc_h1 = mpc_h[0];
+    strs_p->boat_opt_matrices.mpc_h2 = mpc_h[1];
+    strs_p->boat_opt_matrices.mpc_h3 = mpc_h[2];
+    strs_p->boat_opt_matrices.mpc_h4 = mpc_h[3];
+
+    strs_p->boat_opt_matrices.mpc_lb1 = mpc_lb[0];
+    strs_p->boat_opt_matrices.mpc_lb2 = mpc_lb[1];
+
+    strs_p->boat_opt_matrices.mpc_ub1 = mpc_ub[0];
+    strs_p->boat_opt_matrices.mpc_ub2 = mpc_ub[1];
 
     orb_publish(ORB_ID(boat_opt_matrices), pubs_p->boat_opt_matrices, &(strs_p->boat_opt_matrices));
 

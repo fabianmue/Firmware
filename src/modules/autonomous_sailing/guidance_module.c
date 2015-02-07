@@ -162,6 +162,11 @@ void lqr_control_rudder(float *p_rudder_cmd,
                         const struct reference_actions_s *ref_act_p,
                         struct structs_topics_s *strs_p);
 
+/** @brief control rudder using MPC controller*/
+void mpc_control_rudder(float *p_rudder_cmd,
+                        const struct reference_actions_s *ref_act_p,
+                        struct structs_topics_s *strs_p);
+
 /** @brief compute actual state of the extended model used by both LQR and MPC*/
 void compute_state_extended_model(const struct reference_actions_s *ref_act_p);
 
@@ -427,8 +432,7 @@ void tack_action(struct reference_actions_s *ref_act_p,
     }
     else{
         //MPC controller
-        //TODO MPC
-
+        mpc_control_rudder(p_rudder_cmd, ref_act_p, strs_p);
         //use standard sail controller
         *p_sails_cmd = sail_controller(get_alpha_dumas());
     }
@@ -710,6 +714,112 @@ void lqr_control_rudder(float *p_rudder_cmd,
     strs_p->boat_opt_control.x3 = optimal_control_data.state_extended_model[2];
     strs_p->boat_opt_control.opt_rud = *p_rudder_cmd; // optimal rudder command computed
     strs_p->boat_opt_control.type_controller = 0;     // I am the LQR control, set 0 on type
+
+    //signal that boat_opt_control has been updated
+    strs_p->boat_opt_control_updated = true;
+}
+
+/**
+ * Set MPC cost matrix, lower bound and upper bound.
+ *
+ * The MPC cost function is: sum_{i=1}^{prediction_horizon}(z_i^T * h * z_i) +
+ * + z_{prediction_horizon+1}^T * h_final * z_{prediction_horizon+1}.
+ * Where z_i = [u_i; xExtended_{i+1}]; where xExtended_i is the extended
+ * state of the linear model estimated offline.
+ * @see compute_state_extended_model.
+ *
+ * @param h        diagonal element of H matrix
+ * @param lb       lower bounds
+ * @param ub       upper bounds
+ * @param h_final  final cost, only for the state
+*/
+void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3]){
+
+    //set Hessina matrix
+    for(uint8_t i = 0; i < 4; i++)
+        optimal_control_data.mpc_boatTack_params_s.Hessians[i] = h[i];
+
+    //set lower bound values
+    for(uint8_t i = 0; i < 2; i++)
+        optimal_control_data.mpc_boatTack_params_s.lowerBound[i] = lb[i];
+
+    //set upper bound values
+    for(uint8_t i = 0; i < 2; i++)
+        optimal_control_data.mpc_boatTack_params_s.upperBound[i] = ub[i];
+
+    /* The real matrix HessinaFinal is about the input and the state of the system,
+     * since we want a final cost only for the state at the end of the horizon, we
+     * set the first row and coulumn of HessinaFinal to 0.
+     * HessinaFinal is matrix of size [4 x 4] (column major format)
+    */
+    uint8_t index_hf;
+
+    //first go by the whole row i, and then increment column j
+    for(uint8_t j = 0; j < 4; j++){
+        for(uint8_t i = 0; i < 4; i++){
+            /*remember that HessianFinal is 4x4 (column major format), so from i and j we must
+             * have a new index to acced into the vector HessiansFinal
+            */
+            index_hf = j * 4 + i;
+
+            if(i == 0 || j == 0){
+                //first row or first coulumn of HessiansFinal, set it to 0
+                optimal_control_data.mpc_boatTack_params_s.HessiansFinal[index_hf] = 0.0f;
+            }
+            else{
+                //remember that HessianFinal is 4x4 (column major format) but h_final is 3x3
+                optimal_control_data.mpc_boatTack_params_s.HessiansFinal[index_hf] = h_final[i-1][j-1];
+            }
+        }
+    }
+}
+
+/**
+ * Compute optimal rudder command based on the MPC controller.
+ *
+ * Based on the extended state model (@see compute_state_extended_model), the rudder command
+ * at step k is given by rudder_k = rudder_{k-1} + uStar, where uStar is the output
+ * of the MPC controller.
+*/
+void mpc_control_rudder(float *p_rudder_cmd,
+                        const struct reference_actions_s *ref_act_p,
+                        struct structs_topics_s *strs_p){
+
+    int solver_ret;
+
+    //compute the new state of the extended model based on the latest measurements
+    compute_state_extended_model(ref_act_p);
+
+    //call the solver
+    solver_ret = mpc_boatTack_solve(&(optimal_control_data.mpc_boatTack_params_s),
+                                    &(optimal_control_data.mpc_boatTack_output_s),
+                                    &(optimal_control_data.mpc_boatTack_info_s));
+
+    //TODO CHECK solver_ret before using result as rudder command!!!
+    if(solver_ret == 0){//CHE VALORE CI METTO?
+        //compute rudder command at step k to give to the real system: optimalU + rudder_{k-1}
+        *p_rudder_cmd = optimal_control_data.mpc_boatTack_output_s.u0[0] +
+                        optimal_control_data.state_extended_model[2];
+    }
+    else{
+        //something went wrong in the solver! Give the last command that has been given
+        *p_rudder_cmd = optimal_control_data.state_extended_model[2];
+    }
+
+    //save optimal control data
+    strs_p->boat_opt_control.timestamp = hrt_absolute_time();
+    strs_p->boat_opt_control.x1 = optimal_control_data.state_extended_model[0];
+    strs_p->boat_opt_control.x2 = optimal_control_data.state_extended_model[1];
+    strs_p->boat_opt_control.x3 = optimal_control_data.state_extended_model[2];
+    strs_p->boat_opt_control.opt_rud = *p_rudder_cmd;
+    strs_p->boat_opt_control.type_controller = 1; //I am the MPC controller
+    strs_p->boat_opt_control.it = optimal_control_data.mpc_boatTack_info_s.it;
+    strs_p->boat_opt_control.solvetime = optimal_control_data.mpc_boatTack_info_s.solvetime;
+    strs_p->boat_opt_control.res_eq = optimal_control_data.mpc_boatTack_info_s.res_eq;
+    strs_p->boat_opt_control.pobj = optimal_control_data.mpc_boatTack_info_s.pobj;
+    strs_p->boat_opt_control.dobj = optimal_control_data.mpc_boatTack_info_s.dobj;
+    strs_p->boat_opt_control.dgap = optimal_control_data.mpc_boatTack_info_s.dgap;
+    strs_p->boat_opt_control.rdgap = optimal_control_data.mpc_boatTack_info_s.rdgap;
 
     //signal that boat_opt_control has been updated
     strs_p->boat_opt_control_updated = true;

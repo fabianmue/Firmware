@@ -82,4 +82,7 @@ void set_sail_data(float sail_closed_cmd, float alpha_sail_closed_r, float alpha
 /** @brief set lqr gain for lqr tack maneuver*/
 void set_lqr_gain(float lqr_k1, float lqr_k2, float lqr_k3);
 
+/** @brief set MPC cost function, lower and upper bound */
+void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3]);
+
 #endif //GUIDANCE_MODULE_H
