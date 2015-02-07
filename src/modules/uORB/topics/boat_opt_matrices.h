@@ -32,43 +32,31 @@
  ****************************************************************************/
 
 /**
- * @file boat_qgc_param.h
+ * @file boat_opt_matrices.h
  *
- * Useful parameters set by the user during sailing.
+ * Useful matrices set by the user during sailing.
+ * These matrices are used by either MPC or LQR controllers.
  *
  */
 
-#ifndef BOAT_QGC_PARAM_H
-#define BOAT_QGC_PARAM_H
+#ifndef BOAT_OPT_MATRICES_H
+#define BOAT_OPT_MATRICES_H
 
-#include <stdint.h>
-
-struct boat_qgc_param1_s {
+struct boat_opt_matrices_s{
     uint64_t timestamp;
-    float rud_p;            /// P constant of the PI controller of the rudder
-    float rud_i;            /// I constant of the PI controller of the rudder
-    float rud_kaw;          /// Kaw constant of the PI controller of the rudder
-    float rud_cp;           /// CP constant of the PI controller of the rudder
-    float rud_ci;           /// Ci constant of the PI controller of the rudder
-    uint8_t rud_contr_type; /// Type of controller for the rudder
-    int32_t lat0;           /// Latitude in 1E-7 degrees of the NED system origin
-    int32_t lon0;           /// Longitude in 1E-7 degrees of the NED system origin
-    int32_t alt0;           /// Altitude in 1E-3 meters (millimeters) above MSL of the NED system origin
-    int32_t latT;           /// Latitude in 1E-7 degrees of the top mark buoy
-    int32_t lonT;           /// Longitude in 1E-7 degrees of the top mark buoy
-    int32_t altT;           /// Altitude in 1E-3 meters (millimeters) above MSL of the top mark buoy
-    float mean_wind_direction_r;    /// Mean wind direction used to set X-axis direction of the race frame
+    float lqr_k1;   /// first value LQR gain matrix
+    float lqr_k2;   /// second value LQR gain matrix
+    float lqr_k3;   /// third value LQR gain matrix
+    float mpc_h1;   /// first diagonal matrix of hessian amtrix H used in the MPC
+    float mpc_h2;   /// second diagonal matrix of hessian amtrix H used in the MPC
+    float mpc_h3;   /// third diagonal matrix of hessian amtrix H used in the MPC
+    float mpc_h4;   /// fourth diagonal matrix of hessian amtrix H used in the MPC
+    float mpc_lb1;  /// first lower bound value in the MPC
+    float mpc_lb2;  /// second lower bound value in the MPC
+    float mpc_ub1;  /// first upper bound value in the MPC
+    float mpc_ub2;  /// second upper bound value in the MPC
 };
 
-struct boat_qgc_param2_s {
-    uint64_t timestamp;
-    uint16_t window_alpha;      /// Window size of moving average filter of alpha
-    uint16_t window_apparent;   /// Window size of moving average filter of apparent wind
-    uint16_t window_twd;        /// Window size of moving average filter of twd
-    uint16_t type_of_tack;      ///type of tack set by AS_TY_TCK parameter
-};
+ORB_DECLARE(boat_opt_matrices);
 
-ORB_DECLARE(boat_qgc_param1);
-ORB_DECLARE(boat_qgc_param2);
-
-#endif // BOAT_QGC_PARAM_H
+#endif // BOAT_OPT_MATRICES_H

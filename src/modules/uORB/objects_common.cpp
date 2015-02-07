@@ -248,3 +248,11 @@ ORB_DEFINE(boat_guidance_debug, struct boat_guidance_debug_s);
 #include "topics/boat_qgc_param.h"
 ORB_DEFINE(boat_qgc_param1, struct boat_qgc_param1_s);
 ORB_DEFINE(boat_qgc_param2, struct boat_qgc_param2_s);
+
+//Added by Marco Tranzatto
+#include "topics/boat_opt_control.h"
+ORB_DEFINE(boat_opt_control, struct boat_opt_control_s);
+
+//Added by Marco Tranzatto
+#include "topics/boat_opt_matrices.h"
+ORB_DEFINE(boat_opt_matrices, struct boat_opt_matrices_s);

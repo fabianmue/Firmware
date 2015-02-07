@@ -101,6 +101,10 @@
 #include <uORB/topics/boat_guidance_debug.h>
 //Added by Marco Tranzatto
 #include <uORB/topics/boat_qgc_param.h>
+//Added by Marco Tranzatto
+#include <uORB/topics/boat_opt_matrices.h>
+//Added by Marco Tranzatto
+#include <uORB/topics/boat_opt_control.h>
 
 #include <systemlib/systemlib.h>
 #include <systemlib/param/param.h>
@@ -971,6 +975,8 @@ int sdlog2_thread_main(int argc, char *argv[])
         struct boat_guidance_debug_s boat_guidance_debug; //Added by Marco Tranzatto
         struct boat_qgc_param1_s boat_qgc_param1; //Added by Marco Tranzatto
         struct boat_qgc_param2_s boat_qgc_param2; //Added by Marco Tranzatto
+        struct boat_opt_matrices_s boat_opt_matrices; //Added by Marco Tranzatto
+        struct boat_opt_control_s boat_opt_control; //Added by Marco Tranzatto
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1019,6 +1025,8 @@ int sdlog2_thread_main(int argc, char *argv[])
             struct log_BGUD_s log_BOAT_GUIDANCE; //Added by Marco Tranzatto
             struct log_QGC1_s log_BOAT_QGC_PARAM1; //Added by Marco Tranzatto
             struct log_QGC2_s log_BOAT_QGC_PARAM2; //Added by Marco Tranzatto
+            struct log_OPTM_s log_BOAT_OPT_MATRICES; //Added by Marco Tranzatto
+            struct log_OPTC_s log_BOAT_OPT_CONTROL; //Added by Marco Tranzatto
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1062,6 +1070,8 @@ int sdlog2_thread_main(int argc, char *argv[])
         int boat_guidance_sub; //Added by Marco Tranzatto
         int boat_qgc_param1_sub; //Added by Marco Tranzatto
         int boat_qgc_param2_sub; //Added by Marco Tranzatto
+        int boat_opt_matrices_sub; //Added by Marco Tranzatto
+        int boat_opt_control_sub; //Added by Marco Tranzatto
 	} subs;
 
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
@@ -1111,6 +1121,9 @@ int sdlog2_thread_main(int argc, char *argv[])
 
     subs.boat_qgc_param1_sub = orb_subscribe(ORB_ID(boat_qgc_param1));
     subs.boat_qgc_param2_sub = orb_subscribe(ORB_ID(boat_qgc_param2));
+
+    subs.boat_opt_matrices_sub = orb_subscribe(ORB_ID(boat_opt_matrices));
+    subs.boat_opt_control_sub = orb_subscribe(ORB_ID(boat_opt_control));
 /*
     // we need to rate-limit wind, as we do not need the full update rate
     orb_set_interval(subs.wind_apparent_sub, 90);
@@ -1797,6 +1810,41 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_QGC_PARAM2.window_twd = buf.boat_qgc_param2.window_twd;
             log_msg.body.log_BOAT_QGC_PARAM2.type_of_tack = buf.boat_qgc_param2.type_of_tack;
             LOGBUFFER_WRITE_AND_COUNT(QGC2);
+        }
+
+        /* --- BOAT OPT MATRICES */
+        if (copy_if_updated(ORB_ID(boat_opt_matrices), subs.boat_opt_matrices_sub, &buf.boat_opt_matrices)) {
+            log_msg.msg_type = LOG_OPTM_MSG;
+            log_msg.body.log_BOAT_OPT_MATRICES.lqr_k1 = buf.boat_opt_matrices.lqr_k1;
+            log_msg.body.log_BOAT_OPT_MATRICES.lqr_k2 = buf.boat_opt_matrices.lqr_k2;
+            log_msg.body.log_BOAT_OPT_MATRICES.lqr_k3 = buf.boat_opt_matrices.lqr_k3;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_h1 = buf.boat_opt_matrices.mpc_h1;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_h2 = buf.boat_opt_matrices.mpc_h2;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_h3 = buf.boat_opt_matrices.mpc_h3;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_h4 = buf.boat_opt_matrices.mpc_h4;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_lb1 = buf.boat_opt_matrices.mpc_lb1;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_lb2 = buf.boat_opt_matrices.mpc_lb2;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_ub1 = buf.boat_opt_matrices.mpc_ub1;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_ub2 = buf.boat_opt_matrices.mpc_ub2;
+            LOGBUFFER_WRITE_AND_COUNT(OPTM);
+        }
+
+        /* --- BOAT OPT CONTROL */
+        if (copy_if_updated(ORB_ID(boat_opt_control), subs.boat_opt_control_sub, &buf.boat_opt_control)) {
+            log_msg.msg_type = LOG_OPTC_MSG;
+            log_msg.body.log_BOAT_OPT_CONTROL.x1 = buf.boat_opt_control.x1;
+            log_msg.body.log_BOAT_OPT_CONTROL.x2 = buf.boat_opt_control.x2;
+            log_msg.body.log_BOAT_OPT_CONTROL.x3 = buf.boat_opt_control.x3;
+            log_msg.body.log_BOAT_OPT_CONTROL.opt_rud = buf.boat_opt_control.opt_rud;
+            log_msg.body.log_BOAT_OPT_CONTROL.type_controller = buf.boat_opt_control.type_controller;
+            log_msg.body.log_BOAT_OPT_CONTROL.it = buf.boat_opt_control.it;
+            log_msg.body.log_BOAT_OPT_CONTROL.solvetime = buf.boat_opt_control.solvetime;
+            log_msg.body.log_BOAT_OPT_CONTROL.res_eq = buf.boat_opt_control.res_eq;
+            log_msg.body.log_BOAT_OPT_CONTROL.pobj = buf.boat_opt_control.pobj;
+            log_msg.body.log_BOAT_OPT_CONTROL.dobj = buf.boat_opt_control.dobj;
+            log_msg.body.log_BOAT_OPT_CONTROL.dgap = buf.boat_opt_control.dgap;
+            log_msg.body.log_BOAT_OPT_CONTROL.rdgap = buf.boat_opt_control.rdgap;
+            LOGBUFFER_WRITE_AND_COUNT(OPTC);
         }
 
         //********************** End add *******************************

@@ -482,6 +482,39 @@ struct log_QGC2_s{
     uint16_t type_of_tack;
 };
 
+/* --- BOAT OPTIMAL CONTROL MATRICES ----------------------------------------*/
+#define LOG_OPTM_MSG 61
+struct log_OPTM_s{
+    float lqr_k1;
+    float lqr_k2;
+    float lqr_k3;
+    float mpc_h1;
+    float mpc_h2;
+    float mpc_h3;
+    float mpc_h4;
+    float mpc_lb1;
+    float mpc_lb2;
+    float mpc_ub1;
+    float mpc_ub2;
+};
+
+/* --- BOAT OPTIMAL CONTROL DATA ----------------------------------------------*/
+#define LOG_OPTC_MSG 62
+struct log_OPTC_s{
+    float x1;
+    float x2;
+    float x3;
+    float opt_rud;
+    uint8_t type_controller;
+    int32_t it;
+    float solvetime;
+    float res_eq;
+    float pobj;
+    float dobj;
+    float dgap;
+    float rdgap;
+};
+
 //********************** End add *******************************
 
 /********** SYSTEM MESSAGES, ID > 0x80 **********/
@@ -554,6 +587,8 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(BGUD, "fffffffBff", "AlphaStar,Alpha,Rudder,Sail,NextGrid,XRace,YRace,ShldTck,TwdAvg,AppAvg"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC1, "fffffBLLfLLff", "P,I,Kaw,Cp,Ci,RudType,Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC2, "HHHH", "WinAlp,WinApp,WinTWD,TypTck"), //Added by Marco Tranzatto
+    LOG_FORMAT(OPTM, "fffffffffff", "K1,K2,K3,H1,H2,H3,H4,Lb1,Lb2,Ub1,Ub2"), //Added by Marco Tranzatto
+    LOG_FORMAT(OPTC, "ffffBiffffff", "X1,X2,X3,RudStar,Type,It,SolT,Res,Pob,Dob,Dga,Rdga"), //Added by Marco Tranzatto
 	/* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),

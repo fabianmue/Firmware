@@ -32,43 +32,33 @@
  ****************************************************************************/
 
 /**
- * @file boat_qgc_param.h
+ * @file boat_opt_control.h
  *
- * Useful parameters set by the user during sailing.
+ * Input/output from both LQR and MPC controller
  *
  */
 
-#ifndef BOAT_QGC_PARAM_H
-#define BOAT_QGC_PARAM_H
+#ifndef BOAT_OPT_CONTROL_H
+#define BOAT_OPT_CONTROL_H
 
 #include <stdint.h>
 
-struct boat_qgc_param1_s {
+struct boat_opt_control_s{
     uint64_t timestamp;
-    float rud_p;            /// P constant of the PI controller of the rudder
-    float rud_i;            /// I constant of the PI controller of the rudder
-    float rud_kaw;          /// Kaw constant of the PI controller of the rudder
-    float rud_cp;           /// CP constant of the PI controller of the rudder
-    float rud_ci;           /// Ci constant of the PI controller of the rudder
-    uint8_t rud_contr_type; /// Type of controller for the rudder
-    int32_t lat0;           /// Latitude in 1E-7 degrees of the NED system origin
-    int32_t lon0;           /// Longitude in 1E-7 degrees of the NED system origin
-    int32_t alt0;           /// Altitude in 1E-3 meters (millimeters) above MSL of the NED system origin
-    int32_t latT;           /// Latitude in 1E-7 degrees of the top mark buoy
-    int32_t lonT;           /// Longitude in 1E-7 degrees of the top mark buoy
-    int32_t altT;           /// Altitude in 1E-3 meters (millimeters) above MSL of the top mark buoy
-    float mean_wind_direction_r;    /// Mean wind direction used to set X-axis direction of the race frame
+    float x1;                   /// extended state[0]
+    float x2;                   /// extended state[1]
+    float x3;                   /// extended state[2]
+    float opt_rud;              /// optimal rudder command computed
+    uint8_t type_controller;    /// who set the values: 0 = lqr, 1 = MPC
+    int32_t it;                 /// MPC solver: iteration number
+    float solvetime;            /// MPC solver: solvertime
+    float res_eq;               /// MPC solver: inf-norm of equality constraint residuals
+    float pobj;                 /// MPC solver: primal objective
+    float dobj;                 /// MPC solver: dual objective *
+    float dgap;                 /// MPC solver: duality gap := pobj - dobj
+    float rdgap;                /// MPC solver: relative duality gap := |dgap / pobj |
 };
 
-struct boat_qgc_param2_s {
-    uint64_t timestamp;
-    uint16_t window_alpha;      /// Window size of moving average filter of alpha
-    uint16_t window_apparent;   /// Window size of moving average filter of apparent wind
-    uint16_t window_twd;        /// Window size of moving average filter of twd
-    uint16_t type_of_tack;      ///type of tack set by AS_TY_TCK parameter
-};
+ORB_DECLARE(boat_opt_control);
 
-ORB_DECLARE(boat_qgc_param1);
-ORB_DECLARE(boat_qgc_param2);
-
-#endif // BOAT_QGC_PARAM_H
+#endif // BOAT_OPT_CONTROL_H
