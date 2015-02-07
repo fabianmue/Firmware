@@ -48,7 +48,7 @@ struct boat_qgc_param1_s {
     float rud_kaw;          /// Kaw constant of the PI controller of the rudder
     float rud_cp;           /// CP constant of the PI controller of the rudder
     float rud_ci;           /// Ci constant of the PI controller of the rudder
-    uint8_t rud_condpi;     /// CondPI constant of the PI controller of the rudder
+    uint8_t rud_contr_type; /// Type of controller for the rudder
     int32_t lat0;           /// Latitude in 1E-7 degrees of the NED system origin
     int32_t lon0;           /// Longitude in 1E-7 degrees of the NED system origin
     int32_t alt0;           /// Altitude in 1E-3 meters (millimeters) above MSL of the NED system origin

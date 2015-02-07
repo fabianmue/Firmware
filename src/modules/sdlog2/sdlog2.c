@@ -1778,7 +1778,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_QGC_PARAM1.rud_kaw = buf.boat_qgc_param1.rud_kaw;
             log_msg.body.log_BOAT_QGC_PARAM1.rud_cp = buf.boat_qgc_param1.rud_cp;
             log_msg.body.log_BOAT_QGC_PARAM1.rud_ci = buf.boat_qgc_param1.rud_ci;
-            log_msg.body.log_BOAT_QGC_PARAM1.rud_condpi = buf.boat_qgc_param1.rud_condpi;
+            log_msg.body.log_BOAT_QGC_PARAM1.rud_contr_type = buf.boat_qgc_param1.rud_contr_type;
             log_msg.body.log_BOAT_QGC_PARAM1.lat0 = buf.boat_qgc_param1.lat0;
             log_msg.body.log_BOAT_QGC_PARAM1.lon0 = buf.boat_qgc_param1.lon0;
             log_msg.body.log_BOAT_QGC_PARAM1.alt0 = buf.boat_qgc_param1.alt0;

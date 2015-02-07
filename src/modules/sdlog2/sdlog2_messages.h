@@ -463,7 +463,7 @@ struct log_QGC1_s{
     float rud_kaw;
     float rud_cp;
     float rud_ci;
-    uint8_t rud_condpi;
+    uint8_t rud_contr_type;
     int32_t lat0;
     int32_t lon0;
     int32_t alt0;
@@ -552,7 +552,7 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(BWES, "fffffffff", "AccX,AccY,AccZ,Roll,Pitch,Heading,RollRate,PitchRate,YawRate"), //Added by Marco Tranzatto
     LOG_FORMAT(DEVA, "fff", "Float1, Float2, Float3"), //Added by Marco Tranzatto
     LOG_FORMAT(BGUD, "fffffffBff", "AlphaStar,Alpha,Rudder,Sail,NextGrid,XRace,YRace,ShldTck,TwdAvg,AppAvg"), //Added by Marco Tranzatto
-    LOG_FORMAT(QGC1, "fffffBLLfLLff", "P,I,Kaw,Cp,Ci,CondPI,Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
+    LOG_FORMAT(QGC1, "fffffBLLfLLff", "P,I,Kaw,Cp,Ci,RudType,Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC2, "HHHH", "WinAlp,WinApp,WinTWD,TypTck"), //Added by Marco Tranzatto
 	/* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */

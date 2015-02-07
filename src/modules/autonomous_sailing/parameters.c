@@ -767,6 +767,7 @@ void param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param1.rud_kaw = rud_kaw;
     strs_p->boat_qgc_param1.rud_cp = rud_cp;
     strs_p->boat_qgc_param1.rud_ci = rud_ci;
+    strs_p->boat_qgc_param1.rud_contr_type = rudder_controller_type;
     strs_p->boat_qgc_param1.lat0 = lat0;
     strs_p->boat_qgc_param1.lon0 = lon0;
     strs_p->boat_qgc_param1.alt0 = alt0;
