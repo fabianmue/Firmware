@@ -700,9 +700,12 @@ void lqr_control_rudder(float *p_rudder_cmd,
     /*apply LQR gain matrix to the actual state of the extended model,
      * this will give you the u_k of the extended state model
     */
-    u_k = optimal_control_data.lqr_gain[0] * optimal_control_data.state_extended_model[0] +
-          optimal_control_data.lqr_gain[1] * optimal_control_data.state_extended_model[1] +
-          optimal_control_data.lqr_gain[2] * optimal_control_data.state_extended_model[2];
+    u_k = 0.0f;
+    //u_k = K_LQR * extendedState
+    for(uint8_t i = 0; i < 3; i++){
+        u_k = u_k +
+              optimal_control_data.lqr_gain[i] * optimal_control_data.state_extended_model[i];
+    }
 
     //compute rudder command at step k to give to the real system: u_k + rudder_{k-1}
     *p_rudder_cmd = u_k + optimal_control_data.state_extended_model[2];
@@ -731,7 +734,7 @@ void lqr_control_rudder(float *p_rudder_cmd,
  * @param h        diagonal element of H matrix
  * @param lb       lower bounds
  * @param ub       upper bounds
- * @param h_final  final cost, only for the state
+ * @param h_final  final cost, only for the extended state
 */
 void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3]){
 
@@ -758,7 +761,7 @@ void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3]){
     for(uint8_t j = 0; j < 4; j++){
         for(uint8_t i = 0; i < 4; i++){
             /*remember that HessianFinal is 4x4 (column major format), so from i and j we must
-             * have a new index to acced into the vector HessiansFinal
+             * have a new index to access into the vector HessiansFinal
             */
             index_hf = j * 4 + i;
 
