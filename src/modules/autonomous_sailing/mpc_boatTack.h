@@ -45,10 +45,10 @@ typedef float INTERFACE_FLOAT;
 #define mpc_boatTack_SET_MAXIT         (30)
 
 /* desired relative duality gap */
-#define mpc_boatTack_SET_ACC_DGAP     (0.001)
+#define mpc_boatTack_SET_ACC_DGAP     (0.001f)
 
 /* desired maximum residual on consensus constraint */
-#define mpc_boatTack_SET_ACC_CONSENSUS     (0.001)
+#define mpc_boatTack_SET_ACC_CONSENSUS     (0.001f)
 
 
 /* RETURN CODES----------------------------------------------------------*/

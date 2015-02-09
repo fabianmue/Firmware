@@ -108,14 +108,18 @@ static struct{
 static struct {
     float state_extended_model[3];///state of the model used by LQR and MPC
     float rudder_latest; ///latest rudder command gave by either LQR or MPC
-    //static data for MPC tack
+    //static data for MPC
     mpc_boatTack_params mpc_boatTack_params_s; ///params to fill before calling the solver
     mpc_boatTack_output mpc_boatTack_output_s; ///optimal rudder control
     mpc_boatTack_info mpc_boatTack_info_s; ///solver output
-    //matrix gain for LQR tack
+    uint64_t time_last_mpc; ///time when last MPC was computed
+    //static data for LQR
     float lqr_gain[3];
+    uint64_t time_last_lqr; ///time when last LQR was computed
 } optimal_control_data =    {
-                                .rudder_latest = 0.0f
+                                .rudder_latest = 0.0f,
+                                .time_last_mpc = 0,
+                                .time_last_lqr = 0
                             };
 
 /** @brief PI controller with conditional integration*/
@@ -688,38 +692,51 @@ void helmsman1_tack_s2p(float alpha, float *p_rud, float *p_sails){
  *
  * Based on the extended state model (@see compute_state_extended_model), the rudder command
  * at step k is given by rudder_k = rudder_{k-1} + K_LQR * state_extended_model.
+ * Compute a new command only if the time elapsed since time_last_lqr is greater or equal to LQR_MODEL_TS.
 */
 void lqr_control_rudder(float *p_rudder_cmd,
                         const struct reference_actions_s *ref_act_p,
                         struct structs_topics_s *strs_p){
     float u_k; //optimal input of the extended state model
+    uint64_t now_us = hrt_absolute_time(); //absolute time in micro seconds
 
-    //compute the new state of the extended model based on the latest measurements
-    compute_state_extended_model(ref_act_p);
+    //compute a new command only if the time elapsed since time_last_lqr is greater or equal to LQR_MODEL_TS.
+    if((now_us - optimal_control_data.time_last_lqr) >= LQR_MODEL_TS){
 
-    /*apply LQR gain matrix to the actual state of the extended model,
-     * this will give you the u_k of the extended state model
-    */
-    u_k = 0.0f;
-    //u_k = K_LQR * extendedState
-    for(uint8_t i = 0; i < 3; i++){
-        u_k = u_k +
-              optimal_control_data.lqr_gain[i] * optimal_control_data.state_extended_model[i];
+        //compute the new state of the extended model based on the latest measurements
+        compute_state_extended_model(ref_act_p);
+
+        /*apply LQR gain matrix to the actual state of the extended model,
+         * this will give you the u_k of the extended state model
+        */
+        u_k = 0.0f;
+        //u_k = K_LQR * extendedState
+        for(uint8_t i = 0; i < 3; i++){
+            u_k = u_k +
+                  optimal_control_data.lqr_gain[i] * optimal_control_data.state_extended_model[i];
+        }
+
+        //compute rudder command at step k to give to the real system: u_k + rudder_{k-1}
+        *p_rudder_cmd = u_k + optimal_control_data.state_extended_model[2];
+
+        //update time_last_lqr
+        optimal_control_data.time_last_lqr = now_us;
+
+        //save optimal control data
+        strs_p->boat_opt_control.timestamp = hrt_absolute_time();
+        strs_p->boat_opt_control.x1 = optimal_control_data.state_extended_model[0];
+        strs_p->boat_opt_control.x2 = optimal_control_data.state_extended_model[1];
+        strs_p->boat_opt_control.x3 = optimal_control_data.state_extended_model[2];
+        strs_p->boat_opt_control.opt_rud = *p_rudder_cmd; // optimal rudder command computed
+        strs_p->boat_opt_control.type_controller = 0;     // I am the LQR control, set 0 on type
+
+        //signal that boat_opt_control has been updated
+        strs_p->boat_opt_control_updated = true;
     }
-
-    //compute rudder command at step k to give to the real system: u_k + rudder_{k-1}
-    *p_rudder_cmd = u_k + optimal_control_data.state_extended_model[2];
-
-    //save optimal control data
-    strs_p->boat_opt_control.timestamp = hrt_absolute_time();
-    strs_p->boat_opt_control.x1 = optimal_control_data.state_extended_model[0];
-    strs_p->boat_opt_control.x2 = optimal_control_data.state_extended_model[1];
-    strs_p->boat_opt_control.x3 = optimal_control_data.state_extended_model[2];
-    strs_p->boat_opt_control.opt_rud = *p_rudder_cmd; // optimal rudder command computed
-    strs_p->boat_opt_control.type_controller = 0;     // I am the LQR control, set 0 on type
-
-    //signal that boat_opt_control has been updated
-    strs_p->boat_opt_control_updated = true;
+    else{
+        //provide last LQR command computed
+        *p_rudder_cmd = optimal_control_data.state_extended_model[2];
+    }
 }
 
 /**
@@ -783,49 +800,62 @@ void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3]){
  * Based on the extended state model (@see compute_state_extended_model), the rudder command
  * at step k is given by rudder_k = rudder_{k-1} + uStar, where uStar is the output
  * of the MPC controller.
+ * Compute a new command only if the time elapsed since time_last_lqr is greater or equal to MPC_MODEL_TS.
 */
 void mpc_control_rudder(float *p_rudder_cmd,
                         const struct reference_actions_s *ref_act_p,
                         struct structs_topics_s *strs_p){
 
     int solver_ret;
+    uint64_t now_us = hrt_absolute_time(); //absolute time in micro seconds
 
-    //compute the new state of the extended model based on the latest measurements
-    compute_state_extended_model(ref_act_p);
+    //compute a new command only if the time elapsed since time_last_lqr is greater or equal to LQR_MODEL_TS.
+    if((now_us - optimal_control_data.time_last_mpc) >= MPC_MODEL_TS){
 
-    //call the solver
-    solver_ret = mpc_boatTack_solve(&(optimal_control_data.mpc_boatTack_params_s),
-                                    &(optimal_control_data.mpc_boatTack_output_s),
-                                    &(optimal_control_data.mpc_boatTack_info_s));
+        //compute the new state of the extended model based on the latest measurements
+        compute_state_extended_model(ref_act_p);
 
-    //TODO CHECK solver_ret before using result as rudder command!!!
-    if(solver_ret == 0){//CHE VALORE CI METTO?
-        //compute rudder command at step k to give to the real system: optimalU + rudder_{k-1}
-        *p_rudder_cmd = optimal_control_data.mpc_boatTack_output_s.u0[0] +
-                        optimal_control_data.state_extended_model[2];
+        //call the solver
+        solver_ret = mpc_boatTack_solve(&(optimal_control_data.mpc_boatTack_params_s),
+                                        &(optimal_control_data.mpc_boatTack_output_s),
+                                        &(optimal_control_data.mpc_boatTack_info_s));
+
+        //TODO CHECK solver_ret before using result as rudder command!!!
+        if(solver_ret == 1){//CHE VALORE CI METTO?
+            //compute rudder command at step k to give to the real system: optimalU + rudder_{k-1}
+            *p_rudder_cmd = optimal_control_data.mpc_boatTack_output_s.u0[0] +
+                            optimal_control_data.state_extended_model[2];
+        }
+        else{
+            //something went wrong in the solver! Give the last command that has been given
+            *p_rudder_cmd = optimal_control_data.state_extended_model[2];
+        }
+
+        //update time_last_lqr
+        optimal_control_data.time_last_mpc = now_us;
+
+        //save optimal control data
+        strs_p->boat_opt_control.timestamp = hrt_absolute_time();
+        strs_p->boat_opt_control.x1 = optimal_control_data.state_extended_model[0];
+        strs_p->boat_opt_control.x2 = optimal_control_data.state_extended_model[1];
+        strs_p->boat_opt_control.x3 = optimal_control_data.state_extended_model[2];
+        strs_p->boat_opt_control.opt_rud = *p_rudder_cmd;
+        strs_p->boat_opt_control.type_controller = 1; //I am the MPC controller
+        strs_p->boat_opt_control.it = optimal_control_data.mpc_boatTack_info_s.it;
+        strs_p->boat_opt_control.solvetime = optimal_control_data.mpc_boatTack_info_s.solvetime;
+        strs_p->boat_opt_control.res_eq = optimal_control_data.mpc_boatTack_info_s.res_eq;
+        strs_p->boat_opt_control.pobj = optimal_control_data.mpc_boatTack_info_s.pobj;
+        strs_p->boat_opt_control.dobj = optimal_control_data.mpc_boatTack_info_s.dobj;
+        strs_p->boat_opt_control.dgap = optimal_control_data.mpc_boatTack_info_s.dgap;
+        strs_p->boat_opt_control.rdgap = optimal_control_data.mpc_boatTack_info_s.rdgap;
+
+        //signal that boat_opt_control has been updated
+        strs_p->boat_opt_control_updated = true;
     }
     else{
-        //something went wrong in the solver! Give the last command that has been given
+        //provide last LQR command computed
         *p_rudder_cmd = optimal_control_data.state_extended_model[2];
     }
-
-    //save optimal control data
-    strs_p->boat_opt_control.timestamp = hrt_absolute_time();
-    strs_p->boat_opt_control.x1 = optimal_control_data.state_extended_model[0];
-    strs_p->boat_opt_control.x2 = optimal_control_data.state_extended_model[1];
-    strs_p->boat_opt_control.x3 = optimal_control_data.state_extended_model[2];
-    strs_p->boat_opt_control.opt_rud = *p_rudder_cmd;
-    strs_p->boat_opt_control.type_controller = 1; //I am the MPC controller
-    strs_p->boat_opt_control.it = optimal_control_data.mpc_boatTack_info_s.it;
-    strs_p->boat_opt_control.solvetime = optimal_control_data.mpc_boatTack_info_s.solvetime;
-    strs_p->boat_opt_control.res_eq = optimal_control_data.mpc_boatTack_info_s.res_eq;
-    strs_p->boat_opt_control.pobj = optimal_control_data.mpc_boatTack_info_s.pobj;
-    strs_p->boat_opt_control.dobj = optimal_control_data.mpc_boatTack_info_s.dobj;
-    strs_p->boat_opt_control.dgap = optimal_control_data.mpc_boatTack_info_s.dgap;
-    strs_p->boat_opt_control.rdgap = optimal_control_data.mpc_boatTack_info_s.rdgap;
-
-    //signal that boat_opt_control has been updated
-    strs_p->boat_opt_control_updated = true;
 }
 
 /**

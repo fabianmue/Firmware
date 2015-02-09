@@ -62,6 +62,10 @@
 #define SAIL_FULLY_OPENED 0.0f
 #define SAIL_20 0.56f   ///sails are opened at 20 deg
 
+#define LQR_MODEL_TS  9918 ///LQR model sampling time, in microseconds
+#define MPC_MODEL_TS  99175 ///MPC model sampling time, in microseconds
+
+
 /** @brief Implement next control action*/
 void guidance_module(struct reference_actions_s *ref_act_p,
                      const struct parameters_qgc *param_qgc_p,

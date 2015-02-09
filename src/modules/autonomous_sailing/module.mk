@@ -8,6 +8,6 @@ SRCS				= autonomous_sailing.c \
                                         hil_simulation.c \
                                         simulation_utility.c \
                                         reference_actions.c \
-                                        send_msg_qgc.c
+                                        send_msg_qgc.c \
+                                        mpc_boatTack.c
 					
-MODULE_OBJ += mpc_boatTack.o
