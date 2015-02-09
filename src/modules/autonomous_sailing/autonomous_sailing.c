@@ -265,14 +265,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     path_planning(&ref_act, &strs);
 
                     //update NED velocities in navigation module
-                    update_ned_vel(strs.gps_filtered.vel_n, strs.gps_filtered.vel_e, strs.gps_filtered.vel_d);
+                    //update_ned_vel(strs.gps_filtered.vel_n, strs.gps_filtered.vel_e, strs.gps_filtered.vel_d);
 
-                    #if SAVE_DEBUG_VALUES == 1
-                    //save u velocity
-                    strs.debug_values.timestamp = hrt_absolute_time();
-                    strs.debug_values.float_val_1 = get_u_vel();
-                    strs.debug_updated = true;
-                    #endif
                 }
                 if(fds[2].revents & POLLIN){
                     // new WSAI values, copy new data
@@ -300,10 +294,10 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                     #if SIMULATION_FLAG == 0
                     //update yaw and yawRate in controller_data module
-                    update_raw_yaw_yaw_rate(strs.att.yaw, strs.att.yaw_rate);
+                    update_raw_yaw_yaw_rate(strs.att.yaw, strs.att.yawspeed);
 
                     //update rotation matrix from body to ned in navigation module
-                    update_r_ned_body(strs.att.R, strs.att.R_valid);
+                    //update_r_ned_body(strs.att.R, strs.att.R_valid);
                     #endif
                 }
                 /*if(fds[5].revents & POLLIN){
@@ -340,10 +334,11 @@ int as_daemon_thread_main(int argc, char *argv[]){
         orb_publish(ORB_ID(boat_guidance_debug), pubs.boat_guidance_debug_pub, &(strs.boat_guidance_debug));
 
         //publish boat_opt_control if updated
-        if(strs.boat_opt_control_updated){
-            orb_publish(ORB_ID(boat_opt_control), pubs.boat_opt_control, &(strs.boat_opt_control));
-            strs.boat_opt_control_updated = false;
-        }
+        //if(strs.boat_opt_control_updated){
+            //strs.boat_opt_ctr.x1 = -2.0f; //cancella
+            //orb_publish(ORB_ID(boat_opt_ctr), pubs.boat_opt_ctr, &(strs.boat_opt_ctr));
+            //strs.boat_opt_control_updated = false;
+        //}
 
         #if SAVE_DEBUG_VALUES == 1
         //publish debug data if updated
@@ -432,12 +427,12 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     pubs_p->boat_qgc_param2 = orb_advertise(ORB_ID(boat_qgc_param2), &(strs_p->boat_qgc_param2));
 
     //adertise topic boat_opt_matrices
-    memset(&(strs_p->boat_opt_matrices), 0, sizeof(strs_p->boat_opt_matrices));
-    pubs_p->boat_opt_matrices = orb_advertise(ORB_ID(boat_opt_matrices), &(strs_p->boat_opt_matrices));
+    memset(&(strs_p->boat_opt_mat), 0, sizeof(strs_p->boat_opt_mat));
+    pubs_p->boat_opt_mat = orb_advertise(ORB_ID(boat_opt_mat), &(strs_p->boat_opt_mat));
 
     //adertise topic boat_opt_control
-    memset(&(strs_p->boat_opt_control), 0, sizeof(strs_p->boat_opt_control));
-    pubs_p->boat_opt_control = orb_advertise(ORB_ID(boat_opt_control), &(strs_p->boat_opt_control));
+    memset(&(strs_p->boat_opt_ctr), 0, sizeof(strs_p->boat_opt_ctr));
+    pubs_p->boat_opt_ctr = orb_advertise(ORB_ID(boat_opt_ctr), &(strs_p->boat_opt_ctr));
     strs_p->boat_opt_control_updated = false;
 
     #if SAVE_DEBUG_VALUES == 1

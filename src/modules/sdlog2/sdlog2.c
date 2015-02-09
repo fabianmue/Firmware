@@ -102,9 +102,7 @@
 //Added by Marco Tranzatto
 #include <uORB/topics/boat_qgc_param.h>
 //Added by Marco Tranzatto
-#include <uORB/topics/boat_opt_matrices.h>
-//Added by Marco Tranzatto
-#include <uORB/topics/boat_opt_control.h>
+#include <uORB/topics/boat_optimal_control.h>
 
 #include <systemlib/systemlib.h>
 #include <systemlib/param/param.h>
@@ -975,8 +973,8 @@ int sdlog2_thread_main(int argc, char *argv[])
         struct boat_guidance_debug_s boat_guidance_debug; //Added by Marco Tranzatto
         struct boat_qgc_param1_s boat_qgc_param1; //Added by Marco Tranzatto
         struct boat_qgc_param2_s boat_qgc_param2; //Added by Marco Tranzatto
-        struct boat_opt_matrices_s boat_opt_matrices; //Added by Marco Tranzatto
-        struct boat_opt_control_s boat_opt_control; //Added by Marco Tranzatto
+        struct boat_opt_mat_s boat_opt_mat; //Added by Marco Tranzatto
+        struct boat_opt_ctr_s boat_opt_ctr; //Added by Marco Tranzatto
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1070,8 +1068,8 @@ int sdlog2_thread_main(int argc, char *argv[])
         int boat_guidance_sub; //Added by Marco Tranzatto
         int boat_qgc_param1_sub; //Added by Marco Tranzatto
         int boat_qgc_param2_sub; //Added by Marco Tranzatto
-        int boat_opt_matrices_sub; //Added by Marco Tranzatto
-        int boat_opt_control_sub; //Added by Marco Tranzatto
+        int boat_opt_mat_sub; //Added by Marco Tranzatto
+        int boat_opt_ctr_sub; //Added by Marco Tranzatto
 	} subs;
 
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
@@ -1122,8 +1120,8 @@ int sdlog2_thread_main(int argc, char *argv[])
     subs.boat_qgc_param1_sub = orb_subscribe(ORB_ID(boat_qgc_param1));
     subs.boat_qgc_param2_sub = orb_subscribe(ORB_ID(boat_qgc_param2));
 
-    subs.boat_opt_matrices_sub = orb_subscribe(ORB_ID(boat_opt_matrices));
-    subs.boat_opt_control_sub = orb_subscribe(ORB_ID(boat_opt_control));
+    subs.boat_opt_mat_sub = orb_subscribe(ORB_ID(boat_opt_mat));
+    subs.boat_opt_ctr_sub = orb_subscribe(ORB_ID(boat_opt_ctr));
 /*
     // we need to rate-limit wind, as we do not need the full update rate
     orb_set_interval(subs.wind_apparent_sub, 90);
@@ -1813,29 +1811,29 @@ int sdlog2_thread_main(int argc, char *argv[])
         }
 
         /* --- BOAT OPT MATRICES */
-        if (copy_if_updated(ORB_ID(boat_opt_matrices), subs.boat_opt_matrices_sub, &buf.boat_opt_matrices)) {
+        if (copy_if_updated(ORB_ID(boat_opt_mat), subs.boat_opt_mat_sub, &buf.boat_opt_mat)) {
             log_msg.msg_type = LOG_OPTM_MSG;
-            log_msg.body.log_BOAT_OPT_MATRICES.lqr_k1 = buf.boat_opt_matrices.lqr_k1;
-            log_msg.body.log_BOAT_OPT_MATRICES.lqr_k2 = buf.boat_opt_matrices.lqr_k2;
-            log_msg.body.log_BOAT_OPT_MATRICES.lqr_k3 = buf.boat_opt_matrices.lqr_k3;
-            log_msg.body.log_BOAT_OPT_MATRICES.mpc_h1 = buf.boat_opt_matrices.mpc_h1;
-            log_msg.body.log_BOAT_OPT_MATRICES.mpc_h2 = buf.boat_opt_matrices.mpc_h2;
-            log_msg.body.log_BOAT_OPT_MATRICES.mpc_h3 = buf.boat_opt_matrices.mpc_h3;
-            log_msg.body.log_BOAT_OPT_MATRICES.mpc_h4 = buf.boat_opt_matrices.mpc_h4;
-            log_msg.body.log_BOAT_OPT_MATRICES.mpc_lb1 = buf.boat_opt_matrices.mpc_lb1;
-            log_msg.body.log_BOAT_OPT_MATRICES.mpc_lb2 = buf.boat_opt_matrices.mpc_lb2;
-            log_msg.body.log_BOAT_OPT_MATRICES.mpc_ub1 = buf.boat_opt_matrices.mpc_ub1;
-            log_msg.body.log_BOAT_OPT_MATRICES.mpc_ub2 = buf.boat_opt_matrices.mpc_ub2;
+            log_msg.body.log_BOAT_OPT_MATRICES.lqr_k1 = buf.boat_opt_mat.lqr_k1;
+            log_msg.body.log_BOAT_OPT_MATRICES.lqr_k2 = buf.boat_opt_mat.lqr_k2;
+            log_msg.body.log_BOAT_OPT_MATRICES.lqr_k3 = buf.boat_opt_mat.lqr_k3;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_h1 = buf.boat_opt_mat.mpc_h1;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_h2 = buf.boat_opt_mat.mpc_h2;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_h3 = buf.boat_opt_mat.mpc_h3;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_h4 = buf.boat_opt_mat.mpc_h4;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_lb1 = buf.boat_opt_mat.mpc_lb1;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_lb2 = buf.boat_opt_mat.mpc_lb2;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_ub1 = buf.boat_opt_mat.mpc_ub1;
+            log_msg.body.log_BOAT_OPT_MATRICES.mpc_ub2 = buf.boat_opt_mat.mpc_ub2;
             LOGBUFFER_WRITE_AND_COUNT(OPTM);
         }
 
         /* --- BOAT OPT CONTROL */
-        if (copy_if_updated(ORB_ID(boat_opt_control), subs.boat_opt_control_sub, &buf.boat_opt_control)) {
+        if (copy_if_updated(ORB_ID(boat_opt_ctr), subs.boat_opt_ctr_sub, &buf.boat_opt_ctr)) {
             log_msg.msg_type = LOG_OPTC_MSG;
-            log_msg.body.log_BOAT_OPT_CONTROL.x1 = buf.boat_opt_control.x1;
-            log_msg.body.log_BOAT_OPT_CONTROL.x2 = buf.boat_opt_control.x2;
-            log_msg.body.log_BOAT_OPT_CONTROL.x3 = buf.boat_opt_control.x3;
-            log_msg.body.log_BOAT_OPT_CONTROL.opt_rud = buf.boat_opt_control.opt_rud;
+            log_msg.body.log_BOAT_OPT_CONTROL.x1 = buf.boat_opt_ctr.x1;
+            log_msg.body.log_BOAT_OPT_CONTROL.x2 = buf.boat_opt_ctr.x2;
+            log_msg.body.log_BOAT_OPT_CONTROL.x3 = buf.boat_opt_ctr.x3;
+            /*log_msg.body.log_BOAT_OPT_CONTROL.opt_rud = buf.boat_opt_control.opt_rud;
             log_msg.body.log_BOAT_OPT_CONTROL.type_controller = buf.boat_opt_control.type_controller;
             log_msg.body.log_BOAT_OPT_CONTROL.it = buf.boat_opt_control.it;
             log_msg.body.log_BOAT_OPT_CONTROL.solvetime = buf.boat_opt_control.solvetime;
@@ -1843,7 +1841,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_OPT_CONTROL.pobj = buf.boat_opt_control.pobj;
             log_msg.body.log_BOAT_OPT_CONTROL.dobj = buf.boat_opt_control.dobj;
             log_msg.body.log_BOAT_OPT_CONTROL.dgap = buf.boat_opt_control.dgap;
-            log_msg.body.log_BOAT_OPT_CONTROL.rdgap = buf.boat_opt_control.rdgap;
+            log_msg.body.log_BOAT_OPT_CONTROL.rdgap = buf.boat_opt_control.rdgap;*/
             LOGBUFFER_WRITE_AND_COUNT(OPTC);
         }
 

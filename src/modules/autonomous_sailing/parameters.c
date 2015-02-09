@@ -84,7 +84,7 @@ PARAM_DEFINE_FLOAT(AS_SAIL, -1.0f);
  * @min 0
  * @max 0.9
  */
-PARAM_DEFINE_FLOAT(AS_RD_45_CMD, 0.85f);
+PARAM_DEFINE_FLOAT(AS_RD_45_CMD, 0.8f);
 
 /**
  * Alpha angle [deg].
@@ -894,6 +894,26 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.cog_max_delay_pointer, &cog_max_delay_sec);
     set_max_time_cog_not_up(cog_max_delay_sec);
 
+    //save boat_opt_matrices
+    strs_p->boat_opt_mat.timestamp = hrt_absolute_time();
+
+    strs_p->boat_opt_mat.lqr_k1 = lqr_k1;
+    strs_p->boat_opt_mat.lqr_k2 = lqr_k2;
+    strs_p->boat_opt_mat.lqr_k3 = lqr_k3;
+
+    strs_p->boat_opt_mat.mpc_h1 = mpc_h[0];
+    strs_p->boat_opt_mat.mpc_h2 = mpc_h[1];
+    strs_p->boat_opt_mat.mpc_h3 = mpc_h[2];
+    strs_p->boat_opt_mat.mpc_h4 = mpc_h[3];
+
+    strs_p->boat_opt_mat.mpc_lb1 = mpc_lb[0];
+    strs_p->boat_opt_mat.mpc_lb2 = mpc_lb[1];
+
+    strs_p->boat_opt_mat.mpc_ub1 = mpc_ub[0];
+    strs_p->boat_opt_mat.mpc_ub2 = mpc_ub[1];
+
+    orb_publish(ORB_ID(boat_opt_mat), pubs_p->boat_opt_mat, &(strs_p->boat_opt_mat));
+
     //save interested param in boat_qgc_param and publish this topic
     strs_p->boat_qgc_param1.timestamp = hrt_absolute_time();
     strs_p->boat_qgc_param1.rud_p = rud_p;
@@ -917,26 +937,6 @@ void param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param2.window_twd = window_twd;
     strs_p->boat_qgc_param2.type_of_tack = (uint16_t)tack_type;
     orb_publish(ORB_ID(boat_qgc_param2), pubs_p->boat_qgc_param2, &(strs_p->boat_qgc_param2));
-
-    //save boat_opt_matrices
-    strs_p->boat_opt_matrices.timestamp = hrt_absolute_time();
-
-    strs_p->boat_opt_matrices.lqr_k1 = lqr_k1;
-    strs_p->boat_opt_matrices.lqr_k2 = lqr_k2;
-    strs_p->boat_opt_matrices.lqr_k3 = lqr_k3;
-
-    strs_p->boat_opt_matrices.mpc_h1 = mpc_h[0];
-    strs_p->boat_opt_matrices.mpc_h2 = mpc_h[1];
-    strs_p->boat_opt_matrices.mpc_h3 = mpc_h[2];
-    strs_p->boat_opt_matrices.mpc_h4 = mpc_h[3];
-
-    strs_p->boat_opt_matrices.mpc_lb1 = mpc_lb[0];
-    strs_p->boat_opt_matrices.mpc_lb2 = mpc_lb[1];
-
-    strs_p->boat_opt_matrices.mpc_ub1 = mpc_ub[0];
-    strs_p->boat_opt_matrices.mpc_ub2 = mpc_ub[1];
-
-    orb_publish(ORB_ID(boat_opt_matrices), pubs_p->boat_opt_matrices, &(strs_p->boat_opt_matrices));
 
     #if SIMULATION_FLAG == 1
 

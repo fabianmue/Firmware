@@ -499,20 +499,20 @@ struct log_OPTM_s{
 };
 
 /* --- BOAT OPTIMAL CONTROL DATA ----------------------------------------------*/
-#define LOG_OPTC_MSG 62
+#define LOG_OPTC_MSG 65
 struct log_OPTC_s{
     float x1;
     float x2;
     float x3;
-    float opt_rud;
-    uint8_t type_controller;
+    /*float opt_rud;
+    int32_t type_controller;
     int32_t it;
     float solvetime;
     float res_eq;
     float pobj;
     float dobj;
     float dgap;
-    float rdgap;
+    float rdgap;*/
 };
 
 //********************** End add *******************************
@@ -583,12 +583,13 @@ static const struct log_format_s log_formats[] = {
 	LOG_FORMAT(WIND, "ffff",	"X,Y,CovX,CovY"),
     LOG_FORMAT(WSAI, "ffff", "AngleApparent,SpeedApparent,AngleTrue,SpeedTrue"), //Added by Marco Tranzatto
     LOG_FORMAT(BWES, "fffffffff", "AccX,AccY,AccZ,Roll,Pitch,Heading,RollRate,PitchRate,YawRate"), //Added by Marco Tranzatto
-    LOG_FORMAT(DEVA, "fff", "Float1, Float2, Float3"), //Added by Marco Tranzatto
+    LOG_FORMAT(DEVA, "fff", "Float1,Float2,Float3"), //Added by Marco Tranzatto
     LOG_FORMAT(BGUD, "fffffffBff", "AlphaStar,Alpha,Rudder,Sail,NextGrid,XRace,YRace,ShldTck,TwdAvg,AppAvg"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC1, "fffffBLLfLLff", "P,I,Kaw,Cp,Ci,RudType,Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC2, "HHHH", "WinAlp,WinApp,WinTWD,TypTck"), //Added by Marco Tranzatto
     LOG_FORMAT(OPTM, "fffffffffff", "K1,K2,K3,H1,H2,H3,H4,Lb1,Lb2,Ub1,Ub2"), //Added by Marco Tranzatto
-    LOG_FORMAT(OPTC, "ffffBiffffff", "X1,X2,X3,RudStar,Type,It,SolT,Res,Pob,Dob,Dga,Rdga"), //Added by Marco Tranzatto
+    LOG_FORMAT(OPTC, "fff", "X1,X2,X3"), //Added by Marco Tranzatto
+    //LOG_FORMAT(OPTC, "ffffiiffffff", "X1,X2,X3,RudStar,Type,It,SolT,Res,Pob,Dob,Dga,Rdga"), //Added by Marco Tranzatto
 	/* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),

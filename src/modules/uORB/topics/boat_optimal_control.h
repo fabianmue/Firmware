@@ -32,33 +32,50 @@
  ****************************************************************************/
 
 /**
- * @file boat_opt_matrices.h
+ * @file boat_optimal_control.h
  *
- * Useful matrices set by the user during sailing.
- * These matrices are used by either MPC or LQR controllers.
  *
  */
 
-#ifndef BOAT_OPT_MATRICES_H
-#define BOAT_OPT_MATRICES_H
+#ifndef BOAT_OPTIMAL_CONTROL_H
+#define BOAT_OPTIMAL_CONTROL_H
 
 #include <stdint.h>
+#include "../uORB.h"
 
-struct boat_opt_matrices_s{
+struct boat_opt_mat_s{
     uint64_t timestamp;
     float lqr_k1;   /// first value LQR gain matrix
     float lqr_k2;   /// second value LQR gain matrix
     float lqr_k3;   /// third value LQR gain matrix
-    float mpc_h1;   /// first diagonal matrix of hessian amtrix H used in the MPC
-    float mpc_h2;   /// second diagonal matrix of hessian amtrix H used in the MPC
-    float mpc_h3;   /// third diagonal matrix of hessian amtrix H used in the MPC
-    float mpc_h4;   /// fourth diagonal matrix of hessian amtrix H used in the MPC
+    float mpc_h1;   /// first diagonal matrix of hessian matrix H used in the MPC
+    float mpc_h2;   /// second diagonal matrix of hessian matrix H used in the MPC
+    float mpc_h3;   /// third diagonal matrix of hessian matrix H used in the MPC
+    float mpc_h4;   /// fourth diagonal matrix of hessian matrix H used in the MPC
     float mpc_lb1;  /// first lower bound value in the MPC
     float mpc_lb2;  /// second lower bound value in the MPC
     float mpc_ub1;  /// first upper bound value in the MPC
     float mpc_ub2;  /// second upper bound value in the MPC
 };
 
-ORB_DECLARE(boat_opt_matrices);
+struct boat_opt_ctr_s{
+    uint64_t timestamp;
+    float x1;                   /// extended state[0]
+    float x2;                   /// extended state[1]
+    float x3;                   /// extended state[2]
+    float opt_rud;              /// optimal rudder command computed
+    int32_t type_controller;    /// who set the values: 0 = lqr, 1 = MPC
+    int32_t it;                 /// MPC solver: iteration number
+    float solvetime;            /// MPC solver: solvertime
+    float res_eq;               /// MPC solver: inf-norm of equality constraint residuals
+    float pobj;                 /// MPC solver: primal objective
+    float dobj;                 /// MPC solver: dual objective *
+    float dgap;                 /// MPC solver: duality gap := pobj - dobj
+    float rdgap;                /// MPC solver: relative duality gap := |dgap / pobj |
+};
 
-#endif // BOAT_OPT_MATRICES_H
+
+ORB_DECLARE(boat_opt_mat);
+ORB_DECLARE(boat_opt_ctr);
+
+#endif // BOAT_OPTIMAL_CONTROL_H

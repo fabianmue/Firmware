@@ -42,6 +42,7 @@
 #define BOAT_QGC_PARAM_H
 
 #include <stdint.h>
+#include "../uORB.h"
 
 struct boat_qgc_param1_s {
     uint64_t timestamp;

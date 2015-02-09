@@ -14,8 +14,7 @@
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/debug_values.h>
 #include <uORB/topics/boat_qgc_param.h>
-#include <uORB/topics/boat_opt_matrices.h>
-#include <uORB/topics/boat_opt_control.h>
+#include <uORB/topics/boat_optimal_control.h>
 
 //only for debug on qcg
 #include <uORB/topics/airspeed.h>
@@ -35,8 +34,8 @@ struct published_fd_s{
     orb_advert_t debug_values;
     orb_advert_t boat_qgc_param1;
     orb_advert_t boat_qgc_param2;
-    orb_advert_t boat_opt_matrices;
-    orb_advert_t boat_opt_control;
+    orb_advert_t boat_opt_mat;
+    orb_advert_t boat_opt_ctr;
     //only for debug on qGC
     orb_advert_t airspeed;
 };
@@ -53,8 +52,8 @@ struct structs_topics_s{
    struct debug_values_s debug_values;
    struct boat_qgc_param1_s boat_qgc_param1;
    struct boat_qgc_param2_s boat_qgc_param2;
-   struct boat_opt_matrices_s boat_opt_matrices;
-   struct boat_opt_control_s boat_opt_control;
+   struct boat_opt_mat_s boat_opt_mat;
+   struct boat_opt_ctr_s boat_opt_ctr;
 
    bool boat_opt_control_updated;
    bool debug_updated;

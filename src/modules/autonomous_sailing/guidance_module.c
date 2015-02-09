@@ -118,8 +118,8 @@ static struct {
     uint64_t time_last_lqr; ///time when last LQR was computed
 } optimal_control_data =    {
                                 .rudder_latest = 0.0f,
-                                .time_last_mpc = 0,
-                                .time_last_lqr = 0
+                                .time_last_mpc = (uint64_t) 0,
+                                .time_last_lqr = (uint64_t) 0
                             };
 
 /** @brief PI controller with conditional integration*/
@@ -716,25 +716,56 @@ void lqr_control_rudder(float *p_rudder_cmd,
          * this will give you the u_k of the extended state model
         */
         u_k = 0.0f;
-        //u_k = K_LQR * extendedState
+        // u_k = K_LQR * extendedState
         for(uint8_t i = 0; i < 3; i++){
             u_k = u_k +
                   optimal_control_data.lqr_gain[i] * optimal_control_data.state_extended_model[i];
         }
+        /** Pay attention: the gain matrix for the LQR controller computed by Matlab requires
+         * a negative feedback control law! So the right command is
+         * u_k = -K_LQR * extendedState
+        */
+        u_k = -u_k;
 
         //compute rudder command at step k to give to the real system: u_k + rudder_{k-1}
         *p_rudder_cmd = u_k + optimal_control_data.state_extended_model[2];
 
+        //todo chech this or at least write some comments!
+        if(*p_rudder_cmd > rudder_controller_data.rud_cmd_45_left)
+            *p_rudder_cmd = rudder_controller_data.rud_cmd_45_left;
+        else if(*p_rudder_cmd < -rudder_controller_data.rud_cmd_45_left)
+            *p_rudder_cmd = -rudder_controller_data.rud_cmd_45_left;
+
         //update time_last_lqr
         optimal_control_data.time_last_lqr = now_us;
 
+        #if SIMULATION_FLAG == 1
+        strs_p->airspeed.true_airspeed_m_s = strs_p->airspeed.true_airspeed_m_s + 1.0f;//cancella
+        #endif
+        #if SAVE_DEBUG_VALUES == 1
+        strs_p->debug_values.timestamp = hrt_absolute_time();
+        strs_p->debug_values.float_val_1 = optimal_control_data.state_extended_model[0];//cancella
+        strs_p->debug_values.float_val_2 = optimal_control_data.state_extended_model[1];//cancella
+        strs_p->debug_values.float_val_3 = optimal_control_data.state_extended_model[2];//cancella
+        strs_p->debug_updated = true;
+        #endif
+
         //save optimal control data
-        strs_p->boat_opt_control.timestamp = hrt_absolute_time();
-        strs_p->boat_opt_control.x1 = optimal_control_data.state_extended_model[0];
-        strs_p->boat_opt_control.x2 = optimal_control_data.state_extended_model[1];
-        strs_p->boat_opt_control.x3 = optimal_control_data.state_extended_model[2];
-        strs_p->boat_opt_control.opt_rud = *p_rudder_cmd; // optimal rudder command computed
-        strs_p->boat_opt_control.type_controller = 0;     // I am the LQR control, set 0 on type
+        //strs_p->boat_opt_ctr.timestamp = hrt_absolute_time();
+        //strs_p->boat_opt_ctr.x1 = 1.0f;//optimal_control_data.state_extended_model[0];
+        //strs_p->boat_opt_ctr.x2 = 2.0f;//optimal_control_data.state_extended_model[1];
+        //strs_p->boat_opt_ctr.x3 = 3.0f;//optimal_control_data.state_extended_model[2];
+        //strs_p->boat_opt_control.opt_rud = *p_rudder_cmd; // optimal rudder command computed
+        //strs_p->boat_opt_control.type_controller = 0;     // I am the LQR control, set 0 on type
+
+        //set MPC solver data to -1, cause they have not meaning
+        /*strs_p->boat_opt_control.it = -1;
+        strs_p->boat_opt_control.solvetime = -1.0f;
+        strs_p->boat_opt_control.res_eq = -1.0f;
+        strs_p->boat_opt_control.pobj = -1.0f;
+        strs_p->boat_opt_control.dobj = -1.0f;
+        strs_p->boat_opt_control.dgap = -1.0f;
+        strs_p->boat_opt_control.rdgap = -1.0f;*/
 
         //signal that boat_opt_control has been updated
         strs_p->boat_opt_control_updated = true;
@@ -812,6 +843,8 @@ void mpc_control_rudder(float *p_rudder_cmd,
                         const struct reference_actions_s *ref_act_p,
                         struct structs_topics_s *strs_p){
 
+    *p_rudder_cmd = 0.0f;
+    /*
     int solver_ret;
     uint64_t now_us = hrt_absolute_time(); //absolute time in micro seconds
 
@@ -864,6 +897,7 @@ void mpc_control_rudder(float *p_rudder_cmd,
         //provide last LQR command computed
         *p_rudder_cmd = optimal_control_data.state_extended_model[2];
     }
+    */
 }
 
 /**
@@ -971,7 +1005,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     }
     if(!(ref_act_p->should_tack)){
         //if the boat should not tack, compute rudder and sails actions to follow reference alpha
-        if(rudder_controller_data.rudder_controller_type != 2){
+        if(rudder_controller_data.rudder_controller_type < 2){
             //PI controller for rudder
             rudder_command = pi_controller(&(ref_act_p->alpha_star), &alpha);
         }
@@ -1013,7 +1047,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     strs_p->boat_guidance_debug.app_mean = get_app_wind_sns();
 
     #if SIMULATION_FLAG == 1
-    strs_p->airspeed.true_airspeed_m_s = ref_act_p->alpha_star - get_alpha_dumas();
+    //strs_p->airspeed.true_airspeed_m_s = ref_act_p->alpha_star - get_alpha_dumas();
     #endif
 }
 
