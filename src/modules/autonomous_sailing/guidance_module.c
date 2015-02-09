@@ -1005,7 +1005,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     strs_p->boat_guidance_debug.app_mean = get_app_wind_sns();
 
     #if SIMULATION_FLAG == 1
-    //strs_p->airspeed.true_airspeed_m_s = ref_act_p->alpha_star;
+    strs_p->airspeed.true_airspeed_m_s = ref_act_p->alpha_star - get_alpha_dumas();
     #endif
 }
 

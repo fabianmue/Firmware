@@ -433,9 +433,11 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
 
     //adertise topic boat_opt_matrices
     memset(&(strs_p->boat_opt_matrices), 0, sizeof(strs_p->boat_opt_matrices));
+    pubs_p->boat_opt_matrices = orb_advertise(ORB_ID(boat_opt_matrices), &(strs_p->boat_opt_matrices));
 
     //adertise topic boat_opt_control
     memset(&(strs_p->boat_opt_control), 0, sizeof(strs_p->boat_opt_control));
+    pubs_p->boat_opt_control = orb_advertise(ORB_ID(boat_opt_control), &(strs_p->boat_opt_control));
     strs_p->boat_opt_control_updated = false;
 
     #if SAVE_DEBUG_VALUES == 1

@@ -42,6 +42,8 @@
 #ifndef BOAT_OPT_MATRICES_H
 #define BOAT_OPT_MATRICES_H
 
+#include <stdint.h>
+
 struct boat_opt_matrices_s{
     uint64_t timestamp;
     float lqr_k1;   /// first value LQR gain matrix
