@@ -84,7 +84,7 @@ static struct{
     float kaw;              ///constant fo anti-wind up in normal digital PI
     float cp;                ///constant for condition integral, in proportional action
     float ci;                ///constant for condition integral, in integral action
-    bool rudder_controller_type; /// 0 = standard PI 1 = conditional PI 2 = LQR
+    uint8_t rudder_controller_type; /// 0 = standard PI 1 = conditional PI 2 = LQR
     float last_command;     ///last command provided by the PI
     float sum_error_pi;     ///error sum from iterations of guidance_module, used in PI
     float rud_cmd_45_left;  ///rudder command to set the rudder at 45 deg and make boat steer left
@@ -348,6 +348,10 @@ void set_rudder_data(float p, float i, float cp,
                      float ci, int32_t rudder_controller_type, float kaw,
                      float alpha_rudder_x1_r, float alpha_rudder_x2_r, float rud_cmd_45_left){
 
+    //convert rudder_controller_type from int32_t to uint8_t
+    uint8_t rudder_type = (uint8_t)rudder_controller_type;
+
+    //save PI data
     rudder_controller_data.p = p;
     rudder_controller_data.i = i;
     rudder_controller_data.kaw = kaw;
@@ -355,18 +359,18 @@ void set_rudder_data(float p, float i, float cp,
     rudder_controller_data.ci = ci;
 
     //check if we have changed the type of rudder controller
-    if(rudder_controller_data.rudder_controller_type != rudder_controller_type){
+    if(rudder_controller_data.rudder_controller_type != rudder_type){
         //save new type of controller
-        rudder_controller_data.rudder_controller_type = rudder_controller_type;
+        rudder_controller_data.rudder_controller_type = rudder_type;
 
         //reset PI internal data
         rudder_controller_data.last_command = 0.0f;
         rudder_controller_data.sum_error_pi = 0.0f;
 
         //send message to QGC
-        if(rudder_controller_type == 0)
+        if(rudder_type == 0)
             sprintf(txt_msg, "Switched to normal PI with anti wind-up gain.");
-        else if(rudder_controller_type == 1)
+        else if(rudder_type == 1)
             sprintf(txt_msg, "Switched to conditional PI.");
         else
             sprintf(txt_msg, "Switched to LQR controller.");
@@ -814,6 +818,8 @@ void mpc_control_rudder(float *p_rudder_cmd,
 
         //compute the new state of the extended model based on the latest measurements
         compute_state_extended_model(ref_act_p);
+
+        //TODO initialize optimal_control_data.mpc_boatTack_params_s!!!
 
         //call the solver
         solver_ret = mpc_boatTack_solve(&(optimal_control_data.mpc_boatTack_params_s),
