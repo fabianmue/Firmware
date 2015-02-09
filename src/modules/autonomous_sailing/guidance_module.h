@@ -44,6 +44,7 @@
 #define GUIDANCE_MODULE_H
 
 #include <math.h>
+#include <stdint.h>
 
 #include "path_planning.h"
 #include "parameters.h"
@@ -62,8 +63,8 @@
 #define SAIL_FULLY_OPENED 0.0f
 #define SAIL_20 0.56f   ///sails are opened at 20 deg
 
-#define LQR_MODEL_TS  9918 ///LQR model sampling time, in microseconds
-#define MPC_MODEL_TS  99175 ///MPC model sampling time, in microseconds
+#define LQR_MODEL_TS  (uint64_t) 9918 ///LQR model sampling time, in microseconds
+#define MPC_MODEL_TS  (uint64_t) 99175 ///MPC model sampling time, in microseconds
 
 
 /** @brief Implement next control action*/

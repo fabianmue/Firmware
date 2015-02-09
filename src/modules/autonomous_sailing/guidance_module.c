@@ -131,7 +131,7 @@ void tack_action(struct reference_actions_s *ref_act_p,
                  struct structs_topics_s *strs_p);
 
 /** @brief determine if the tack maneuver is finished*/
-bool is_tack_completed(float alpha);
+bool is_tack_completed(void);
 
 /** @brief rule based control system for sails during upwind sailing*/
 float sail_controller(float alpha);
@@ -406,6 +406,32 @@ void tack_action(struct reference_actions_s *ref_act_p,
                  float *p_rudder_cmd, float *p_sails_cmd,
                  struct structs_topics_s *strs_p){
 
+    //check if we've already started tacking, or if this is the first time
+    if(tack_data.boat_is_tacking){
+        //we have already started the tack maneuver, check if it's completed
+        if(is_tack_completed()){
+
+            //we have just completed the tack maneuver
+            tack_completed(ref_act_p);
+            /* return to guidance guidance_module function so the controller for keeping
+             * the new haul can start working
+            */
+            return;
+        }
+    }
+    else{
+        //we must start tack maneuver now
+        tack_data.boat_is_tacking = true;
+        /*
+         * Pay attention: when path_planning module set should_tack = true, it even
+         * changed the alpha_star, so to see at which haul we were sailing at before tacking,
+         * we must change the sign of alpha_star!
+         * If we are starting tacking now, sailing_at_port_haul variable must be updated.
+         * If we were sailing on port (starboard) haul, alpha_star, before path planning
+         * changed it, was < (>) 0.
+         */
+         tack_data.sailing_at_port_haul = (-ref_act_p->alpha_star < 0) ? true : false;
+    }
 
     /*we are here beacuse ref_act_p->should_tack is true, so boat should tack.
      * Check which type of tack maneuver we should perform by checking
@@ -459,36 +485,11 @@ void helmsman_tack(struct reference_actions_s *ref_act_p,
 
 
     /* Helmsman tack maneuver uses the alpha angle value as input in the rule
-      * based control system.
+     * based control system.
     */
     float alpha = get_alpha_dumas();
 
-    //check if we've already started tacking, or if this is the first time
-    if(tack_data.boat_is_tacking){
-        //we have already started the tack maneuver, check if it's completed
-        if(is_tack_completed(alpha)){
-
-            //we have just completed the tack maneuver
-            tack_completed(ref_act_p);
-        }
-    }
-    else{
-        //we must start tack maneuver now
-        tack_data.boat_is_tacking = true;
-
-        /*
-         * Pay attention: when path_planning module set should_tack = true, it even
-         * changed the alpha_star, so to see at which haul we were sailing at before tacking,
-         * we must change the sign of alpha_star!
-         * If we are starting tacking now, sailing_at_port_haul variable must be updated.
-         * If we were sailing on port (starboard) haul, alpha_star, before path planning
-         * changed it, was < (>) 0.
-         */
-         tack_data.sailing_at_port_haul = (-ref_act_p->alpha_star < 0) ? true : false;
-    }
-
-    /* compute rudder and sails commad in any case. If the tack is completed, the guidance module
-     * will compute new values for these two commands.*/
+    // compute rudder and sails commad in any case. If the tack is completed, the guidance module
 
     /* use variable sailing_at_port_haul to see which tack maneuver has to be used.
      * Use tack_data.tack_type to select between helmsman0 and helmsman1 maneuver
@@ -535,9 +536,10 @@ void tack_completed(struct reference_actions_s *ref_act_p){
  * If the boat was sailing on starboard haul before tacking, the tack maneuver is considered
  * cmpleted if the alpha is less or equals to -alpha_min_stop_tack_r, @see set_tack_data() .
  *
- * @param alpha     actual alpha angle.
  */
-bool is_tack_completed(float alpha){
+bool is_tack_completed(void){
+
+    float alpha = get_alpha_dumas();
 
     bool completed = false;
 
