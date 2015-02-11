@@ -55,7 +55,7 @@ struct structs_topics_s{
    struct boat_opt_mat_s boat_opt_mat;
    //struct boat_opt_ctr_s boat_opt_ctr;
 
-   bool boat_opt_control_updated;
+   //bool boat_opt_control_updated;
    bool boat_opt_status_updated;
 
    //only for debug on qGC

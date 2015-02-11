@@ -64,7 +64,7 @@
 #define SAIL_20 0.56f   ///sails are opened at 20 deg
 
 #define LQR_MODEL_TS  (uint64_t) 9918 ///LQR model sampling time, in microseconds
-#define MPC_MODEL_TS  (uint64_t) 99175 ///MPC model sampling time, in microseconds
+#define MPC_MODEL_TS  (uint64_t) 1000000//(uint64_t) 99175 ///MPC model sampling time, in microseconds
 
 
 /** @brief Implement next control action*/

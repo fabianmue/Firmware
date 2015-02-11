@@ -42,6 +42,12 @@
 
 #include "guidance_module.h"
 
+//MPC extended A matrix
+const float mpc_AExt[3][3] = {    {0.89609732829328f,    0.0f,      -0.0933508120214662f},
+                                {0.00991753846153846,  1.0f,       0.0f},
+                                {0.0f,                 0.0f,       1.0f}
+                             };
+
 #define M_PI_F 3.14159265358979323846f
 #define TWO_M_PI_F 6.28318530717959f
 
@@ -173,6 +179,9 @@ void mpc_control_rudder(float *p_rudder_cmd,
 
 /** @brief compute actual state of the extended model used by both LQR and MPC*/
 void compute_state_extended_model(const struct reference_actions_s *ref_act_p);
+
+/** @brief compute -A * x_0, used by Forces as initil parameter*/
+void compute_minusAExt_times_x0(float* minusAExt_times_x0);
 
 /** @brief dummy abs function for float value*/
 float my_fabs(float x){
@@ -754,6 +763,7 @@ void lqr_control_rudder(float *p_rudder_cmd,
         strs_p->boat_opt_status.dobj = -1.0f;
         strs_p->boat_opt_status.dgap = -1.0f;
         strs_p->boat_opt_status.rdgap = -1.0f;
+        //boat_opt_status just updated
         strs_p->boat_opt_status_updated = true;
     }
     else{
@@ -833,7 +843,7 @@ void mpc_control_rudder(float *p_rudder_cmd,
                         struct structs_topics_s *strs_p){
 
     *p_rudder_cmd = 0.0f;
-    /*
+
     int solver_ret;
     uint64_t now_us = hrt_absolute_time(); //absolute time in micro seconds
 
@@ -843,15 +853,16 @@ void mpc_control_rudder(float *p_rudder_cmd,
         //compute the new state of the extended model based on the latest measurements
         compute_state_extended_model(ref_act_p);
 
-        //TODO initialize optimal_control_data.mpc_boatTack_params_s!!!
+        //init parameters before calling the solver
+        compute_minusAExt_times_x0(&(optimal_control_data.mpc_boatTack_params_s.minusAExt_times_x0));
 
         //call the solver
         solver_ret = mpc_boatTack_solve(&(optimal_control_data.mpc_boatTack_params_s),
                                         &(optimal_control_data.mpc_boatTack_output_s),
                                         &(optimal_control_data.mpc_boatTack_info_s));
 
-        //TODO CHECK solver_ret before using result as rudder command!!!
-        if(solver_ret == 1){//CHE VALORE CI METTO?
+        //check solver_ret before using result as rudder command!
+        if(solver_ret == 1){
             //compute rudder command at step k to give to the real system: optimalU + rudder_{k-1}
             *p_rudder_cmd = optimal_control_data.mpc_boatTack_output_s.u0[0] +
                             optimal_control_data.state_extended_model[2];
@@ -865,28 +876,35 @@ void mpc_control_rudder(float *p_rudder_cmd,
         optimal_control_data.time_last_mpc = now_us;
 
         //save optimal control data
-        strs_p->boat_opt_control.timestamp = hrt_absolute_time();
-        strs_p->boat_opt_control.x1 = optimal_control_data.state_extended_model[0];
-        strs_p->boat_opt_control.x2 = optimal_control_data.state_extended_model[1];
-        strs_p->boat_opt_control.x3 = optimal_control_data.state_extended_model[2];
-        strs_p->boat_opt_control.opt_rud = *p_rudder_cmd;
-        strs_p->boat_opt_control.type_controller = 1; //I am the MPC controller
-        strs_p->boat_opt_control.it = optimal_control_data.mpc_boatTack_info_s.it;
-        strs_p->boat_opt_control.solvetime = optimal_control_data.mpc_boatTack_info_s.solvetime;
-        strs_p->boat_opt_control.res_eq = optimal_control_data.mpc_boatTack_info_s.res_eq;
-        strs_p->boat_opt_control.pobj = optimal_control_data.mpc_boatTack_info_s.pobj;
-        strs_p->boat_opt_control.dobj = optimal_control_data.mpc_boatTack_info_s.dobj;
-        strs_p->boat_opt_control.dgap = optimal_control_data.mpc_boatTack_info_s.dgap;
-        strs_p->boat_opt_control.rdgap = optimal_control_data.mpc_boatTack_info_s.rdgap;
+        strs_p->boat_opt_status.timestamp = hrt_absolute_time();
+        strs_p->boat_opt_status.x1 = optimal_control_data.state_extended_model[0];
+        strs_p->boat_opt_status.x2 = optimal_control_data.state_extended_model[1];
+        strs_p->boat_opt_status.x3 = optimal_control_data.state_extended_model[2];
+        strs_p->boat_opt_status.opt_rud = *p_rudder_cmd;
+        strs_p->boat_opt_status.type_controller = 1; //I am the MPC controller
+        strs_p->boat_opt_status.it = optimal_control_data.mpc_boatTack_info_s.it;
+        strs_p->boat_opt_status.solvetime = optimal_control_data.mpc_boatTack_info_s.solvetime;
+        strs_p->boat_opt_status.res_eq = optimal_control_data.mpc_boatTack_info_s.res_eq;
+        strs_p->boat_opt_status.pobj = optimal_control_data.mpc_boatTack_info_s.pobj;
+        strs_p->boat_opt_status.dobj = optimal_control_data.mpc_boatTack_info_s.dobj;
+        strs_p->boat_opt_status.dgap = optimal_control_data.mpc_boatTack_info_s.dgap;
+        strs_p->boat_opt_status.rdgap = optimal_control_data.mpc_boatTack_info_s.rdgap;
 
-        //signal that boat_opt_control has been updated
-        strs_p->boat_opt_control_updated = true;
+        //boat_opt_status just updated
+        strs_p->boat_opt_status_updated = true;
+
+        #if SIMULATION_FLAG == 1
+        strs_p->airspeed.true_airspeed_m_s = strs_p->airspeed.true_airspeed_m_s + 1.0f;//cancella
+        #endif
     }
     else{
-        //provide last LQR command computed
-        *p_rudder_cmd = optimal_control_data.state_extended_model[2];
+        /* the time elapsed since the last time the MPC was computed is less than
+         * MPC_MODEL_TS. Use the last command provided to the rudder that has been
+         * saved by the function guidance_module into optimal_control_data.rudder_latest
+        */
+        *p_rudder_cmd = optimal_control_data.rudder_latest;
     }
-    */
+
 }
 
 /**
@@ -912,6 +930,21 @@ void compute_state_extended_model(const struct reference_actions_s *ref_act_p){
 
     //latest command given to the rudder
     optimal_control_data.state_extended_model[2] = optimal_control_data.rudder_latest;
+}
+
+/**
+ * Compute minusAExt_times_x0 needed by Forces to start the MPC optimization.
+*/
+void compute_minusAExt_times_x0(float *minusAExt_times_x0){
+
+    for(uint8_t i = 0; i < 3; i++){
+        minusAExt_times_x0[i] = 0.0f;
+
+        for(uint8_t j = 0; j < 3; j++){
+            minusAExt_times_x0[i] = minusAExt_times_x0[i] -
+                                    mpc_AExt[i][j] * optimal_control_data.state_extended_model[j];
+        }
+    }
 }
 
 /**
