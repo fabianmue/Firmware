@@ -771,8 +771,11 @@ void lqr_control_rudder(float *p_rudder_cmd,
         strs_p->boat_opt_control_updated = true;
     }
     else{
-        //provide last LQR command computed
-        *p_rudder_cmd = optimal_control_data.state_extended_model[2];
+        /* the time elapsed since the last time the LQR was computed is less than
+         * LQR_MODEL_TS. Use the last command provided to the rudder that has been
+         * saved by the function guidance_module into optimal_control_data.rudder_latest
+        */
+        *p_rudder_cmd = optimal_control_data.rudder_latest;
     }
 }
 
