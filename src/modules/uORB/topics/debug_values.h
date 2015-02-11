@@ -52,8 +52,8 @@ struct debug_values_s {
     float float_val_2;               /**< Second float value */
     float float_val_3;               /**< Third float value */
     float float_val_4;               /**< Fourth float value */
-    float float_val_5;               /**< Fifth float value */
-    float float_val_6;               /**< Sixth float value */
+    int32_t float_val_5;               /**< Fifth float value */
+    int32_t float_val_6;               /**< Sixth float value */
     float float_val_7;               /**< Seventh float value */
     float float_val_8;               /**< 8th float value */
     float float_val_9;               /**< 9th float value */

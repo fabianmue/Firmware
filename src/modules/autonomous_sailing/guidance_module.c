@@ -746,8 +746,8 @@ void lqr_control_rudder(float *p_rudder_cmd,
         strs_p->debug_values.float_val_2 = optimal_control_data.state_extended_model[1];//cancella
         strs_p->debug_values.float_val_3 = optimal_control_data.state_extended_model[2];//cancella
         strs_p->debug_values.float_val_4 = -4.0f;//cancella
-        strs_p->debug_values.float_val_5 = -5.0f;//cancella
-        strs_p->debug_values.float_val_6 = -6.0f;//cancella
+        strs_p->debug_values.float_val_5 = -5;//cancella
+        strs_p->debug_values.float_val_6 = -6;//cancella
         strs_p->debug_values.float_val_7 = -7.0f;//cancella
         strs_p->debug_values.float_val_8 = -8.0f;//cancella
         strs_p->debug_values.float_val_9 = -9.0f;//cancella

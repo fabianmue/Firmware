@@ -439,8 +439,8 @@ struct log_DEVA_s{
     float float_val_2;
     float float_val_3;
     float float_val_4;
-    float float_val_5;
-    float float_val_6;
+    int32_t float_val_5;
+    int32_t float_val_6;
     float float_val_7;
     float float_val_8;
     float float_val_9;
@@ -592,7 +592,7 @@ static const struct log_format_s log_formats[] = {
 	LOG_FORMAT(WIND, "ffff",	"X,Y,CovX,CovY"),
     LOG_FORMAT(WSAI, "ffff", "AngleApparent,SpeedApparent,AngleTrue,SpeedTrue"), //Added by Marco Tranzatto
     LOG_FORMAT(BWES, "fffffffff", "AccX,AccY,AccZ,Roll,Pitch,Heading,RollRate,PitchRate,YawRate"), //Added by Marco Tranzatto
-    LOG_FORMAT(DEVA, "ffffffffffff", "F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12"), //Added by Marco Tranzatto
+    LOG_FORMAT(DEVA, "ffffiiffffff", "F1,F2,F3,F4,I5,I6,F7,F8,F9,F10,F11,F12"), //Added by Marco Tranzatto
     LOG_FORMAT(BGUD, "fffffffBff", "AlphaStar,Alpha,Rudder,Sail,NextGrid,XRace,YRace,ShldTck,TwdAvg,AppAvg"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC1, "fffffBLLfLLff", "P,I,Kaw,Cp,Ci,RudType,Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC2, "HHHH", "WinAlp,WinApp,WinTWD,TypTck"), //Added by Marco Tranzatto
