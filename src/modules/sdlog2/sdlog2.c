@@ -96,7 +96,7 @@
 //Added by Marco Tranzatto
 #include <uORB/topics/boat_weather_station.h>
 //Added by Marco Tranzatto
-#include <uORB/topics/debug_values.h>
+#include <uORB/topics/boat_opt_status.h>
 //Added by Marco Tranzatto
 #include <uORB/topics/boat_guidance_debug.h>
 //Added by Marco Tranzatto
@@ -969,12 +969,11 @@ int sdlog2_thread_main(int argc, char *argv[])
 		struct wind_estimate_s wind_estimate;
         struct wind_sailing_s wind_sailing; //Added by Marco Tranzatto
         struct boat_weather_station_s boat_weather_station; //Added by Marco Tranzatto
-        struct debug_values_s debug_values; //Added by Marco Tranzatto
+        struct boat_opt_status_s boat_opt_status; //Added by Marco Tranzatto
         struct boat_guidance_debug_s boat_guidance_debug; //Added by Marco Tranzatto
         struct boat_qgc_param1_s boat_qgc_param1; //Added by Marco Tranzatto
         struct boat_qgc_param2_s boat_qgc_param2; //Added by Marco Tranzatto
         struct boat_opt_mat_s boat_opt_mat; //Added by Marco Tranzatto
-        struct boat_opt_ctr_s boat_opt_ctr; //Added by Marco Tranzatto
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1019,12 +1018,11 @@ int sdlog2_thread_main(int argc, char *argv[])
 			struct log_WIND_s log_WIND;
             struct log_WSAI_s log_WIND_SAILING; //Added by Marco Tranzatto
             struct log_BWES_s log_BOAT_WEATHER_STATION; //Added by Marco Tranzatto
-            struct log_DEVA_s log_DEBUG_VALUES; //Added by Marco Tranzatto
+            struct log_OPTS_s log_OPT_STATUS; //Added by Marco Tranzatto
             struct log_BGUD_s log_BOAT_GUIDANCE; //Added by Marco Tranzatto
             struct log_QGC1_s log_BOAT_QGC_PARAM1; //Added by Marco Tranzatto
             struct log_QGC2_s log_BOAT_QGC_PARAM2; //Added by Marco Tranzatto
             struct log_OPTM_s log_BOAT_OPT_MATRICES; //Added by Marco Tranzatto
-            struct log_OPTC_s log_BOAT_OPT_CONTROL; //Added by Marco Tranzatto
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1064,12 +1062,11 @@ int sdlog2_thread_main(int argc, char *argv[])
 		int wind_sub;
         int wind_sailing_sub; //Added by Marco Tranzatto
         int boat_weather_station_sub; //Added by Marco Tranzatto
-        int debug_values_sub; //Added by Marco Tranzatto
+        int boat_opt_status_sub; //Added by Marco Tranzatto
         int boat_guidance_sub; //Added by Marco Tranzatto
         int boat_qgc_param1_sub; //Added by Marco Tranzatto
         int boat_qgc_param2_sub; //Added by Marco Tranzatto
         int boat_opt_mat_sub; //Added by Marco Tranzatto
-        int boat_opt_ctr_sub; //Added by Marco Tranzatto
 	} subs;
 
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
@@ -1113,7 +1110,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 
     subs.boat_weather_station_sub = orb_subscribe(ORB_ID(boat_weather_station));
 
-    subs.debug_values_sub = orb_subscribe(ORB_ID(debug_values));
+    subs.boat_opt_status_sub = orb_subscribe(ORB_ID(boat_opt_status));
 
     subs.boat_guidance_sub = orb_subscribe(ORB_ID(boat_guidance_debug));
 
@@ -1121,11 +1118,6 @@ int sdlog2_thread_main(int argc, char *argv[])
     subs.boat_qgc_param2_sub = orb_subscribe(ORB_ID(boat_qgc_param2));
 
     subs.boat_opt_mat_sub = orb_subscribe(ORB_ID(boat_opt_mat));
-    subs.boat_opt_ctr_sub = orb_subscribe(ORB_ID(boat_opt_ctr));
-/*
-    // we need to rate-limit wind, as we do not need the full update rate
-    orb_set_interval(subs.wind_apparent_sub, 90);
-*/
     //****************** End Add by Marco Tranzatto ************
 
 
@@ -1757,21 +1749,21 @@ int sdlog2_thread_main(int argc, char *argv[])
         }
 
         /* --- DEBUG VALUES  */
-        if (copy_if_updated(ORB_ID(debug_values), subs.debug_values_sub, &buf.debug_values)) {
-            log_msg.msg_type = LOG_DEVA_MSG;
-            log_msg.body.log_DEBUG_VALUES.float_val_1 = buf.debug_values.float_val_1;
-            log_msg.body.log_DEBUG_VALUES.float_val_2 = buf.debug_values.float_val_2;
-            log_msg.body.log_DEBUG_VALUES.float_val_3 = buf.debug_values.float_val_3;
-            log_msg.body.log_DEBUG_VALUES.float_val_4 = buf.debug_values.float_val_4;
-            log_msg.body.log_DEBUG_VALUES.float_val_5 = buf.debug_values.float_val_5;
-            log_msg.body.log_DEBUG_VALUES.float_val_6 = buf.debug_values.float_val_6;
-            log_msg.body.log_DEBUG_VALUES.float_val_7 = buf.debug_values.float_val_7;
-            log_msg.body.log_DEBUG_VALUES.float_val_8 = buf.debug_values.float_val_8;
-            log_msg.body.log_DEBUG_VALUES.float_val_9 = buf.debug_values.float_val_9;
-            log_msg.body.log_DEBUG_VALUES.float_val_10 = buf.debug_values.float_val_10;
-            log_msg.body.log_DEBUG_VALUES.float_val_11 = buf.debug_values.float_val_11;
-            log_msg.body.log_DEBUG_VALUES.float_val_12 = buf.debug_values.float_val_12;
-            LOGBUFFER_WRITE_AND_COUNT(DEVA);
+        if (copy_if_updated(ORB_ID(boat_opt_status), subs.boat_opt_status_sub, &buf.boat_opt_status)) {
+            log_msg.msg_type = LOG_OPTS_MSG;
+            log_msg.body.log_OPT_STATUS.x1 = buf.boat_opt_status.x1;
+            log_msg.body.log_OPT_STATUS.x2 = buf.boat_opt_status.x2;
+            log_msg.body.log_OPT_STATUS.x3 = buf.boat_opt_status.x3;
+            log_msg.body.log_OPT_STATUS.opt_rud = buf.boat_opt_status.opt_rud;
+            log_msg.body.log_OPT_STATUS.type_controller = buf.boat_opt_status.type_controller;
+            log_msg.body.log_OPT_STATUS.it = buf.boat_opt_status.it;
+            log_msg.body.log_OPT_STATUS.solvetime = buf.boat_opt_status.solvetime;
+            log_msg.body.log_OPT_STATUS.res_eq = buf.boat_opt_status.res_eq;
+            log_msg.body.log_OPT_STATUS.pobj = buf.boat_opt_status.pobj;
+            log_msg.body.log_OPT_STATUS.dobj = buf.boat_opt_status.dobj;
+            log_msg.body.log_OPT_STATUS.dgap = buf.boat_opt_status.dgap;
+            log_msg.body.log_OPT_STATUS.rdgap = buf.boat_opt_status.rdgap;
+            LOGBUFFER_WRITE_AND_COUNT(OPTS);
         }
 
         /* --- BOAT GUIDANCE MODULE DEBUG  */
@@ -1834,24 +1826,6 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_OPT_MATRICES.mpc_ub1 = buf.boat_opt_mat.mpc_ub1;
             log_msg.body.log_BOAT_OPT_MATRICES.mpc_ub2 = buf.boat_opt_mat.mpc_ub2;
             LOGBUFFER_WRITE_AND_COUNT(OPTM);
-        }
-
-        /* --- BOAT OPT CONTROL */
-        if (copy_if_updated(ORB_ID(boat_opt_ctr), subs.boat_opt_ctr_sub, &buf.boat_opt_ctr)) {
-            log_msg.msg_type = LOG_OPTC_MSG;
-            log_msg.body.log_BOAT_OPT_CONTROL.x1 = buf.boat_opt_ctr.x1;
-            log_msg.body.log_BOAT_OPT_CONTROL.x2 = buf.boat_opt_ctr.x2;
-            log_msg.body.log_BOAT_OPT_CONTROL.x3 = buf.boat_opt_ctr.x3;
-            /*log_msg.body.log_BOAT_OPT_CONTROL.opt_rud = buf.boat_opt_control.opt_rud;
-            log_msg.body.log_BOAT_OPT_CONTROL.type_controller = buf.boat_opt_control.type_controller;
-            log_msg.body.log_BOAT_OPT_CONTROL.it = buf.boat_opt_control.it;
-            log_msg.body.log_BOAT_OPT_CONTROL.solvetime = buf.boat_opt_control.solvetime;
-            log_msg.body.log_BOAT_OPT_CONTROL.res_eq = buf.boat_opt_control.res_eq;
-            log_msg.body.log_BOAT_OPT_CONTROL.pobj = buf.boat_opt_control.pobj;
-            log_msg.body.log_BOAT_OPT_CONTROL.dobj = buf.boat_opt_control.dobj;
-            log_msg.body.log_BOAT_OPT_CONTROL.dgap = buf.boat_opt_control.dgap;
-            log_msg.body.log_BOAT_OPT_CONTROL.rdgap = buf.boat_opt_control.rdgap;*/
-            LOGBUFFER_WRITE_AND_COUNT(OPTC);
         }
 
         //********************** End add *******************************

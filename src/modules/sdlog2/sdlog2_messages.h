@@ -432,21 +432,21 @@ struct log_BWES_s{
     float yaw_rate_r_s;
 };
 
-/* --- DEBUG VALUES ------------------------------------------------------ */
-#define LOG_DEVA_MSG 57
-struct log_DEVA_s{
-    float float_val_1;
-    float float_val_2;
-    float float_val_3;
-    float float_val_4;
-    int32_t float_val_5;
-    int32_t float_val_6;
-    float float_val_7;
-    float float_val_8;
-    float float_val_9;
-    float float_val_10;
-    float float_val_11;
-    float float_val_12;
+/* --- BoOAT OPTIMAL CONTROL STATUS ------------------------------------------------*/
+#define LOG_OPTS_MSG 57
+struct log_OPTS_s{
+    float x1;
+    float x2;
+    float x3;
+    float opt_rud;
+    int32_t type_controller;
+    int32_t it;
+    float solvetime;
+    float res_eq;
+    float pobj;
+    float dobj;
+    float dgap;
+    float rdgap;
 };
 
 /* --- BOAT GUIDANCE MODULE DEBUG -------------------------------------------------*/
@@ -507,22 +507,7 @@ struct log_OPTM_s{
     float mpc_ub2;
 };
 
-/* --- BOAT OPTIMAL CONTROL DATA ----------------------------------------------*/
-#define LOG_OPTC_MSG 65
-struct log_OPTC_s{
-    float x1;
-    float x2;
-    float x3;
-    /*float opt_rud;
-    int32_t type_controller;
-    int32_t it;
-    float solvetime;
-    float res_eq;
-    float pobj;
-    float dobj;
-    float dgap;
-    float rdgap;*/
-};
+
 
 //********************** End add *******************************
 
@@ -592,14 +577,12 @@ static const struct log_format_s log_formats[] = {
 	LOG_FORMAT(WIND, "ffff",	"X,Y,CovX,CovY"),
     LOG_FORMAT(WSAI, "ffff", "AngleApparent,SpeedApparent,AngleTrue,SpeedTrue"), //Added by Marco Tranzatto
     LOG_FORMAT(BWES, "fffffffff", "AccX,AccY,AccZ,Roll,Pitch,Heading,RollRate,PitchRate,YawRate"), //Added by Marco Tranzatto
-    LOG_FORMAT(DEVA, "ffffiiffffff", "F1,F2,F3,F4,I5,I6,F7,F8,F9,F10,F11,F12"), //Added by Marco Tranzatto
+    LOG_FORMAT(OPTS, "ffffiiffffff", "X1,X2,X3,RudStr,TypeCtr,It,SolT,ResEq,Pob,Dob,Dga,Rdga"), //Added by Marco Tranzatto
     LOG_FORMAT(BGUD, "fffffffBff", "AlphaStar,Alpha,Rudder,Sail,NextGrid,XRace,YRace,ShldTck,TwdAvg,AppAvg"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC1, "fffffBLLfLLff", "P,I,Kaw,Cp,Ci,RudType,Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC2, "HHHH", "WinAlp,WinApp,WinTWD,TypTck"), //Added by Marco Tranzatto
     LOG_FORMAT(OPTM, "fffffffffff", "K1,K2,K3,H1,H2,H3,H4,Lb1,Lb2,Ub1,Ub2"), //Added by Marco Tranzatto
-    LOG_FORMAT(OPTC, "fff", "X1,X2,X3"), //Added by Marco Tranzatto
-    //LOG_FORMAT(OPTC, "ffffiiffffff", "X1,X2,X3,RudStar,Type,It,SolT,Res,Pob,Dob,Dga,Rdga"), //Added by Marco Tranzatto
-	/* system-level messages, ID >= 0x80 */
+    /* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),
 	LOG_FORMAT(VER, "NZ", "Arch,FwGit"),

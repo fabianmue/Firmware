@@ -33,36 +33,36 @@
  ****************************************************************************/
 
 /**
- * @file debug_values.h
+ * @file boat_opt_status.h
  *
- *
+ *  Optimal control status
  */
-#ifndef DEBUG_VALUES_H
-#define DEBUG_VALUES_H
+#ifndef BOAT_OPT_STATUS_H
+#define BOAT_OPT_STATUS_H
 
 #include <stdint.h>
 #include "../uORB.h"
 
 
-/** Wind estimate */
-struct debug_values_s {
+
+struct boat_opt_status_s {
 
     uint64_t	timestamp;		/**< Microseconds since system boot */
-    float float_val_1;               /**< First float value */
-    float float_val_2;               /**< Second float value */
-    float float_val_3;               /**< Third float value */
-    float float_val_4;               /**< Fourth float value */
-    int32_t float_val_5;               /**< Fifth float value */
-    int32_t float_val_6;               /**< Sixth float value */
-    float float_val_7;               /**< Seventh float value */
-    float float_val_8;               /**< 8th float value */
-    float float_val_9;               /**< 9th float value */
-    float float_val_10;               /**< 10th float value */
-    float float_val_11;               /**< 11th float value */
-    float float_val_12;               /**< 12th float value */
+    float x1;                   /// extended state[0]
+    float x2;                   /// extended state[1]
+    float x3;                   /// extended state[2]
+    float opt_rud;              /// optimal rudder command computed
+    int32_t type_controller;    /// who set the values: 0 = lqr, 1 = MPC
+    int32_t it;                 /// MPC solver: iteration number
+    float solvetime;            /// MPC solver: solvertime
+    float res_eq;               /// MPC solver: inf-norm of equality constraint residuals
+    float pobj;                 /// MPC solver: primal objective
+    float dobj;                 /// MPC solver: dual objective *
+    float dgap;                 /// MPC solver: duality gap := pobj - dobj
+    float rdgap;                /// MPC solver: relative duality gap := |dgap / pobj |
 };
 
-ORB_DECLARE(debug_values);
+ORB_DECLARE(boat_opt_status);
 
 
-#endif // DEBUG_VALUES_H
+#endif // BOAT_OPT_STATUS_H

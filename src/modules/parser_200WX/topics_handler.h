@@ -50,7 +50,7 @@
 #include <uORB/topics/wind_sailing.h>
 #include <uORB/topics/vehicle_gps_position.h>
 #include <uORB/topics/boat_weather_station.h>
-#include <uORB/topics/debug_values.h>
+//#include <uORB/topics/debug_values.h>
 
 #include <stdio.h>//bool type
 

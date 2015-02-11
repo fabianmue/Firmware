@@ -739,43 +739,22 @@ void lqr_control_rudder(float *p_rudder_cmd,
         //update time_last_lqr
         optimal_control_data.time_last_lqr = now_us;
 
-
-        #if SAVE_DEBUG_VALUES == 1
-        strs_p->debug_values.timestamp = hrt_absolute_time();
-        strs_p->debug_values.float_val_1 = optimal_control_data.state_extended_model[0];//cancella
-        strs_p->debug_values.float_val_2 = optimal_control_data.state_extended_model[1];//cancella
-        strs_p->debug_values.float_val_3 = optimal_control_data.state_extended_model[2];//cancella
-        strs_p->debug_values.float_val_4 = -4.0f;//cancella
-        strs_p->debug_values.float_val_5 = -5;//cancella
-        strs_p->debug_values.float_val_6 = -6;//cancella
-        strs_p->debug_values.float_val_7 = -7.0f;//cancella
-        strs_p->debug_values.float_val_8 = -8.0f;//cancella
-        strs_p->debug_values.float_val_9 = -9.0f;//cancella
-        strs_p->debug_values.float_val_10 = -10.0f;//cancella
-        strs_p->debug_values.float_val_11 = -11.0f;//cancella
-        strs_p->debug_values.float_val_12 = -12.0f;//cancella
-        strs_p->debug_updated = true;
-        #endif
-
-        //save optimal control data
-        strs_p->boat_opt_ctr.timestamp = hrt_absolute_time();
-        strs_p->boat_opt_ctr.x1 = optimal_control_data.state_extended_model[0];
-        strs_p->boat_opt_ctr.x2 = optimal_control_data.state_extended_model[1];
-        strs_p->boat_opt_ctr.x3 = optimal_control_data.state_extended_model[2];
-        strs_p->boat_opt_ctr.opt_rud = *p_rudder_cmd; // optimal rudder command computed
-        //strs_p->boat_opt_control.type_controller = 0;     // I am the LQR control, set 0 on type
-
-        //set MPC solver data to -1, cause they have not meaning
-        /*strs_p->boat_opt_control.it = -1;
-        strs_p->boat_opt_control.solvetime = -1.0f;
-        strs_p->boat_opt_control.res_eq = -1.0f;
-        strs_p->boat_opt_control.pobj = -1.0f;
-        strs_p->boat_opt_control.dobj = -1.0f;
-        strs_p->boat_opt_control.dgap = -1.0f;
-        strs_p->boat_opt_control.rdgap = -1.0f;*/
-
-        //signal that boat_opt_control has been updated
-        strs_p->boat_opt_control_updated = true;
+        //save the new status of the optimal control
+        strs_p->boat_opt_status.timestamp = hrt_absolute_time();
+        strs_p->boat_opt_status.x1 = optimal_control_data.state_extended_model[0];
+        strs_p->boat_opt_status.x2 = optimal_control_data.state_extended_model[1];
+        strs_p->boat_opt_status.x3 = optimal_control_data.state_extended_model[2];
+        strs_p->boat_opt_status.opt_rud = *p_rudder_cmd;
+        strs_p->boat_opt_status.type_controller = 0;//I am the LQR controller
+        //set to -1 the MPC status 'cause I am the LQR
+        strs_p->boat_opt_status.it = -1;//cancella
+        strs_p->boat_opt_status.solvetime = -1.0f;
+        strs_p->boat_opt_status.res_eq = -1.0f;
+        strs_p->boat_opt_status.pobj = -1.0f;
+        strs_p->boat_opt_status.dobj = -1.0f;
+        strs_p->boat_opt_status.dgap = -1.0f;
+        strs_p->boat_opt_status.rdgap = -1.0f;
+        strs_p->boat_opt_status_updated = true;
     }
     else{
         /* the time elapsed since the last time the LQR was computed is less than

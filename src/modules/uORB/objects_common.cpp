@@ -237,8 +237,8 @@ ORB_DEFINE(wind_sailing, struct wind_sailing_s);
 ORB_DEFINE(boat_weather_station, struct boat_weather_station_s);
 
 //Added by Marco Tranzatto
-#include "topics/debug_values.h"
-ORB_DEFINE(debug_values, struct debug_values_s);
+#include "topics/boat_opt_status.h"
+ORB_DEFINE(boat_opt_status, struct boat_opt_status_s);
 
 //Added by Marco Tranzatto
 #include "topics/boat_guidance_debug.h"
@@ -252,4 +252,4 @@ ORB_DEFINE(boat_qgc_param2, struct boat_qgc_param2_s);
 //Added by Marco Tranzatto
 #include "topics/boat_optimal_control.h"
 ORB_DEFINE(boat_opt_mat, struct boat_opt_mat_s);
-ORB_DEFINE(boat_opt_ctr, struct boat_opt_ctr_s);
+//ORB_DEFINE(boat_opt_ctr, struct boat_opt_ctr_s);

@@ -333,23 +333,11 @@ int as_daemon_thread_main(int argc, char *argv[]){
         //publish debug value for post-processing
         orb_publish(ORB_ID(boat_guidance_debug), pubs.boat_guidance_debug_pub, &(strs.boat_guidance_debug));
 
-        //publish boat_opt_control if updated
-        if(strs.boat_opt_control_updated){
-            orb_publish(ORB_ID(boat_opt_ctr), pubs.boat_opt_ctr, &(strs.boat_opt_ctr));
-            strs.boat_opt_control_updated = false;
-
-            #if SIMULATION_FLAG == 1
-            strs.airspeed.true_airspeed_m_s = strs.boat_opt_ctr.x2;//cancella
-            #endif
+        //publish optimal control status if updated
+        if(strs.boat_opt_status_updated){
+            orb_publish(ORB_ID(boat_opt_status), pubs.boat_opt_status, &(strs.boat_opt_status));
+            strs.boat_opt_status_updated = false;
         }
-
-        #if SAVE_DEBUG_VALUES == 1
-        //publish debug data if updated
-        if(strs.debug_updated){
-            orb_publish(ORB_ID(debug_values), pubs.debug_values, &(strs.debug_values));
-            strs.debug_updated = false;
-        }
-        #endif
 
         #if SIMULATION_FLAG == 1
         //strs.airspeed.true_airspeed_m_s
@@ -433,17 +421,12 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     memset(&(strs_p->boat_opt_mat), 0, sizeof(strs_p->boat_opt_mat));
     pubs_p->boat_opt_mat = orb_advertise(ORB_ID(boat_opt_mat), &(strs_p->boat_opt_mat));
 
-    //adertise topic boat_opt_control
-    memset(&(strs_p->boat_opt_ctr), 0, sizeof(strs_p->boat_opt_ctr));
-    pubs_p->boat_opt_ctr = orb_advertise(ORB_ID(boat_opt_ctr), &(strs_p->boat_opt_ctr));
-    strs_p->boat_opt_control_updated = false;
-
     #if SAVE_DEBUG_VALUES == 1
     //advertise debug_values topic
-    memset(&(strs_p->debug_values), 0, sizeof(strs_p->debug_values));
-    strs_p->debug_values.timestamp = hrt_absolute_time();
-    pubs_p->debug_values = orb_advertise(ORB_ID(debug_values), &(strs_p->debug_values));
-    strs_p->debug_updated = false;
+    memset(&(strs_p->boat_opt_status), 0, sizeof(strs_p->boat_opt_status));
+    strs_p->boat_opt_status.timestamp = hrt_absolute_time();
+    pubs_p->boat_opt_status = orb_advertise(ORB_ID(boat_opt_status), &(strs_p->boat_opt_status));
+    strs_p->boat_opt_status_updated = false;
     #endif
 
     #if SIMULATION_FLAG == 1

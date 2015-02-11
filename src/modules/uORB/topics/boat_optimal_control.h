@@ -58,7 +58,7 @@ struct boat_opt_mat_s{
     float mpc_ub2;  /// second upper bound value in the MPC
 };
 
-struct boat_opt_ctr_s{
+/*struct boat_opt_ctr_s{
     uint64_t timestamp;
     float x1;                   /// extended state[0]
     float x2;                   /// extended state[1]
@@ -72,10 +72,10 @@ struct boat_opt_ctr_s{
     float dobj;                 /// MPC solver: dual objective *
     float dgap;                 /// MPC solver: duality gap := pobj - dobj
     float rdgap;                /// MPC solver: relative duality gap := |dgap / pobj |
-};
+};*/
 
 
 ORB_DECLARE(boat_opt_mat);
-ORB_DECLARE(boat_opt_ctr);
+//ORB_DECLARE(boat_opt_ctr);
 
 #endif // BOAT_OPTIMAL_CONTROL_H
