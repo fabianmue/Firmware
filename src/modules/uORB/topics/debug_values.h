@@ -35,7 +35,6 @@
 /**
  * @file debug_values.h
  *
- * Apparent wind measurement and True wind estimate
  *
  */
 #ifndef DEBUG_VALUES_H
@@ -52,6 +51,15 @@ struct debug_values_s {
     float float_val_1;               /**< First float value */
     float float_val_2;               /**< Second float value */
     float float_val_3;               /**< Third float value */
+    float float_val_4;               /**< Fourth float value */
+    float float_val_5;               /**< Fifth float value */
+    float float_val_6;               /**< Sixth float value */
+    float float_val_7;               /**< Seventh float value */
+    float float_val_8;               /**< 8th float value */
+    float float_val_9;               /**< 9th float value */
+    float float_val_10;               /**< 10th float value */
+    float float_val_11;               /**< 11th float value */
+    float float_val_12;               /**< 12th float value */
 };
 
 ORB_DECLARE(debug_values);

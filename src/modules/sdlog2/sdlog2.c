@@ -1762,6 +1762,15 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_DEBUG_VALUES.float_val_1 = buf.debug_values.float_val_1;
             log_msg.body.log_DEBUG_VALUES.float_val_2 = buf.debug_values.float_val_2;
             log_msg.body.log_DEBUG_VALUES.float_val_3 = buf.debug_values.float_val_3;
+            log_msg.body.log_DEBUG_VALUES.float_val_4 = buf.debug_values.float_val_4;
+            log_msg.body.log_DEBUG_VALUES.float_val_5 = buf.debug_values.float_val_5;
+            log_msg.body.log_DEBUG_VALUES.float_val_6 = buf.debug_values.float_val_6;
+            log_msg.body.log_DEBUG_VALUES.float_val_7 = buf.debug_values.float_val_7;
+            log_msg.body.log_DEBUG_VALUES.float_val_8 = buf.debug_values.float_val_8;
+            log_msg.body.log_DEBUG_VALUES.float_val_9 = buf.debug_values.float_val_9;
+            log_msg.body.log_DEBUG_VALUES.float_val_10 = buf.debug_values.float_val_10;
+            log_msg.body.log_DEBUG_VALUES.float_val_11 = buf.debug_values.float_val_11;
+            log_msg.body.log_DEBUG_VALUES.float_val_12 = buf.debug_values.float_val_12;
             LOGBUFFER_WRITE_AND_COUNT(DEVA);
         }
 

@@ -739,23 +739,30 @@ void lqr_control_rudder(float *p_rudder_cmd,
         //update time_last_lqr
         optimal_control_data.time_last_lqr = now_us;
 
-        #if SIMULATION_FLAG == 1
-        strs_p->airspeed.true_airspeed_m_s = strs_p->airspeed.true_airspeed_m_s + 1.0f;//cancella
-        #endif
+
         #if SAVE_DEBUG_VALUES == 1
         strs_p->debug_values.timestamp = hrt_absolute_time();
         strs_p->debug_values.float_val_1 = optimal_control_data.state_extended_model[0];//cancella
         strs_p->debug_values.float_val_2 = optimal_control_data.state_extended_model[1];//cancella
         strs_p->debug_values.float_val_3 = optimal_control_data.state_extended_model[2];//cancella
+        strs_p->debug_values.float_val_4 = -4.0f;//cancella
+        strs_p->debug_values.float_val_5 = -5.0f;//cancella
+        strs_p->debug_values.float_val_6 = -6.0f;//cancella
+        strs_p->debug_values.float_val_7 = -7.0f;//cancella
+        strs_p->debug_values.float_val_8 = -8.0f;//cancella
+        strs_p->debug_values.float_val_9 = -9.0f;//cancella
+        strs_p->debug_values.float_val_10 = -10.0f;//cancella
+        strs_p->debug_values.float_val_11 = -11.0f;//cancella
+        strs_p->debug_values.float_val_12 = -12.0f;//cancella
         strs_p->debug_updated = true;
         #endif
 
         //save optimal control data
-        //strs_p->boat_opt_ctr.timestamp = hrt_absolute_time();
-        //strs_p->boat_opt_ctr.x1 = 1.0f;//optimal_control_data.state_extended_model[0];
-        //strs_p->boat_opt_ctr.x2 = 2.0f;//optimal_control_data.state_extended_model[1];
-        //strs_p->boat_opt_ctr.x3 = 3.0f;//optimal_control_data.state_extended_model[2];
-        //strs_p->boat_opt_control.opt_rud = *p_rudder_cmd; // optimal rudder command computed
+        strs_p->boat_opt_ctr.timestamp = hrt_absolute_time();
+        strs_p->boat_opt_ctr.x1 = optimal_control_data.state_extended_model[0];
+        strs_p->boat_opt_ctr.x2 = optimal_control_data.state_extended_model[1];
+        strs_p->boat_opt_ctr.x3 = optimal_control_data.state_extended_model[2];
+        strs_p->boat_opt_ctr.opt_rud = *p_rudder_cmd; // optimal rudder command computed
         //strs_p->boat_opt_control.type_controller = 0;     // I am the LQR control, set 0 on type
 
         //set MPC solver data to -1, cause they have not meaning

@@ -334,11 +334,14 @@ int as_daemon_thread_main(int argc, char *argv[]){
         orb_publish(ORB_ID(boat_guidance_debug), pubs.boat_guidance_debug_pub, &(strs.boat_guidance_debug));
 
         //publish boat_opt_control if updated
-        //if(strs.boat_opt_control_updated){
-            //strs.boat_opt_ctr.x1 = -2.0f; //cancella
-            //orb_publish(ORB_ID(boat_opt_ctr), pubs.boat_opt_ctr, &(strs.boat_opt_ctr));
-            //strs.boat_opt_control_updated = false;
-        //}
+        if(strs.boat_opt_control_updated){
+            orb_publish(ORB_ID(boat_opt_ctr), pubs.boat_opt_ctr, &(strs.boat_opt_ctr));
+            strs.boat_opt_control_updated = false;
+
+            #if SIMULATION_FLAG == 1
+            strs.airspeed.true_airspeed_m_s = strs.boat_opt_ctr.x2;//cancella
+            #endif
+        }
 
         #if SAVE_DEBUG_VALUES == 1
         //publish debug data if updated
@@ -349,7 +352,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
         #endif
 
         #if SIMULATION_FLAG == 1
-        //strs.airspeed.true_airspeed_m_s = ref_act.alpha_star;
+        //strs.airspeed.true_airspeed_m_s
         orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
         //fine cancella
         #endif
