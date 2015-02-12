@@ -906,10 +906,12 @@ void mpc_control_rudder(float *p_rudder_cmd,
         }
         uint64_t beforeSol = hrt_absolute_time();
         #endif
-        //call the solver
+        //call the solver and take computation time
+        uint64_t time_before_sol = hrt_absolute_time();
         solver_ret = mpc_boatTack_solve(&(optimal_control_data.mpc_boatTack_params_s),
                                         &(optimal_control_data.mpc_boatTack_output_s),
                                         &(optimal_control_data.mpc_boatTack_info_s));
+        uint64_t time_after_sol = hrt_absolute_time();
         #if TEST_MPC == 1
         printf("\n++++ solvetime:  %4.4f  [mSec]\n", (double)(hrt_absolute_time() - beforeSol) / 1e3);
         #endif
@@ -942,7 +944,8 @@ void mpc_control_rudder(float *p_rudder_cmd,
         strs_p->boat_opt_status.opt_rud = *p_rudder_cmd;
         strs_p->boat_opt_status.type_controller = 1; //I am the MPC controller
         strs_p->boat_opt_status.it = optimal_control_data.mpc_boatTack_info_s.it;
-        strs_p->boat_opt_status.solvetime = optimal_control_data.mpc_boatTack_info_s.solvetime;
+        //solvetime in milliseconds
+        strs_p->boat_opt_status.solvetime = ((float) time_after_sol - time_before_sol) / 1000.0f;
         strs_p->boat_opt_status.res_eq = optimal_control_data.mpc_boatTack_info_s.res_eq;
         strs_p->boat_opt_status.pobj = optimal_control_data.mpc_boatTack_info_s.pobj;
         strs_p->boat_opt_status.dobj = optimal_control_data.mpc_boatTack_info_s.dobj;
