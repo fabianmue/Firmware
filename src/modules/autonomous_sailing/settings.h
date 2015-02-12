@@ -47,4 +47,6 @@
 
 #define SAVE_DEBUG_VALUES 1 //1 to use debug_values topic for debug purpose
 
+#define TEST_MPC 1
+
 #endif // SETTINGS_H

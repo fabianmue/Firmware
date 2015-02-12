@@ -858,7 +858,7 @@ void mpc_control_rudder(float *p_rudder_cmd,
     int solver_ret;
     uint64_t now_us = hrt_absolute_time(); //absolute time in micro seconds
 
-    #if SIMULATION_FLAG == 1
+    #if TEST_MPC == 1
     optimal_control_data.mpc_boatTack_params_s.Hessians[0] = 5.0f;
     optimal_control_data.mpc_boatTack_params_s.Hessians[1] = 0.001f;
     optimal_control_data.mpc_boatTack_params_s.Hessians[2] = 10.0f;
@@ -891,7 +891,7 @@ void mpc_control_rudder(float *p_rudder_cmd,
         //compute the new state of the extended model based on the latest measurements
         compute_state_extended_model(ref_act_p);
 
-        #if SIMULATION_FLAG == 1
+        #if TEST_MPC == 1
         optimal_control_data.state_extended_model[1] = yawSimMPC[indexYaw];
         indexYaw++;
         #endif
@@ -899,7 +899,7 @@ void mpc_control_rudder(float *p_rudder_cmd,
         //init parameters before calling the solver
         compute_minusAExt_times_x0(&(optimal_control_data.mpc_boatTack_params_s.minusAExt_times_x0));
 
-        #if SIMULATION_FLAG == 1
+        #if TEST_MPC == 1
         for(uint8_t i = 0; i < 3; i++){
             printf("-A*x0[%d]: %2.4f \t", i,
                    (double) optimal_control_data.mpc_boatTack_params_s.minusAExt_times_x0[i]);
@@ -910,7 +910,7 @@ void mpc_control_rudder(float *p_rudder_cmd,
         solver_ret = mpc_boatTack_solve(&(optimal_control_data.mpc_boatTack_params_s),
                                         &(optimal_control_data.mpc_boatTack_output_s),
                                         &(optimal_control_data.mpc_boatTack_info_s));
-        #if SIMULATION_FLAG == 1
+        #if TEST_MPC == 1
         printf("\n++++ solvetime:  %4.4f  [mSec]\n", (double)(hrt_absolute_time() - beforeSol) / 1e3);
         #endif
 
@@ -919,14 +919,14 @@ void mpc_control_rudder(float *p_rudder_cmd,
             //compute rudder command at step k to give to the real system: optimalU + rudder_{k-1}
             *p_rudder_cmd = optimal_control_data.mpc_boatTack_output_s.u0[0] +
                             optimal_control_data.state_extended_model[2];
-            #if SIMULATION_FLAG == 1
+            #if TEST_MPC == 1
             printf("------* rudStar: %1.3f \n", (double) *p_rudder_cmd);
             #endif
         }
         else{
             //something went wrong in the solver! Give the last command that has been given
             *p_rudder_cmd = optimal_control_data.state_extended_model[2];
-            #if SIMULATION_FLAG == 1
+            #if TEST_MPC == 1
             printf("------< recovery Rud: %1.3f \n", (double) *p_rudder_cmd);
             #endif
         }
@@ -1103,7 +1103,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     }
 
 
-    #if SIMULATION_FLAG == 1
+    #if TEST_MPC == 1
     mpc_control_rudder(&rudder_command, ref_act_p, strs_p);
     #endif
 
