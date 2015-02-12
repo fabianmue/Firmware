@@ -34,7 +34,7 @@ typedef float INTERFACE_FLOAT;
 /* SOLVER SETTINGS ------------------------------------------------------*/
 /* print level */
 #ifndef mpc_boatTack_SET_PRINTLEVEL
-#define mpc_boatTack_SET_PRINTLEVEL    (2)
+#define mpc_boatTack_SET_PRINTLEVEL    (0)
 #endif
 
 /* timing */
