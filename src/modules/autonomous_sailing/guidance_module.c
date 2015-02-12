@@ -79,6 +79,13 @@ static struct{
                     .alpha_min_stop_tack_r = 0.610865238f //35.0f * deg2rad
                 };
 
+//constant for tack_type
+#define TACK_HELM0  0
+#define TACK_HELM1  1
+#define TACK_PI     2
+#define TACK_LQR    3
+#define TACK_MPC    4
+
  //static data for sails controller
 static struct{
     float sail_closed_cmd;      ///sail command when sails should be considered closed
@@ -130,12 +137,18 @@ static struct {
     mpc_boatTack_info mpc_boatTack_info_s; ///solver output
     uint64_t time_last_mpc; ///time when last MPC was computed
     //static data for LQR
-    float lqr_gain[3];
+    float lqr_gain[3]; ///lqr gain vector
     uint64_t time_last_lqr; ///time when last LQR was computed
+    float delta_values[3]; ///delta values to specify the band around the origin
+    uint64_t min_time_in_band_us; ///min microseconds the system should be in the band to complete tacking
+    uint64_t first_time_in_band_us;///first time (in this tack) the systm was into the band
+    bool first_time_valid; ///true if first_time_in_band_us is valid
 } optimal_control_data =    {
                                 .rudder_latest = 0.0f,
                                 .time_last_mpc = (uint64_t) 0,
-                                .time_last_lqr = (uint64_t) 0
+                                .time_last_lqr = (uint64_t) 0,
+                                .min_time_in_band_us = (uint64_t) 500000,//0.5 sec
+                                .first_time_valid = false //first_time_in_band_us not valid now
                             };
 
 /** @brief PI controller with conditional integration*/
@@ -147,7 +160,7 @@ void tack_action(struct reference_actions_s *ref_act_p,
                  struct structs_topics_s *strs_p);
 
 /** @brief determine if the tack maneuver is finished*/
-bool is_tack_completed(void);
+bool is_tack_completed(struct reference_actions_s *ref_act_p);
 
 /** @brief rule based control system for sails during upwind sailing*/
 float sail_controller(float alpha);
@@ -277,15 +290,15 @@ void set_tack_data(uint16_t tack_type, float alpha_min_stop_tack_r){
 
     //notify the changing to QGroundControl what kind of tack the boat will do
     if(old_tack_type != tack_type){
-        if(tack_type == 0)
+        if(tack_type == TACK_HELM0)
             sprintf(txt_msg, "Tack as helmsman0.");
-        else if(tack_type == 1)
+        else if(tack_type == TACK_HELM1)
             sprintf(txt_msg, "Tack as helmsman1.");
-        else if(tack_type == 2)
+        else if(tack_type == TACK_PI)
             sprintf(txt_msg, "Implicit (PI) Tack.");
-        else if(tack_type == 3)
+        else if(tack_type == TACK_LQR)
             sprintf(txt_msg, "LQR Tack.");
-        else if(tack_type == 4)
+        else if(tack_type == TACK_MPC)
             sprintf(txt_msg, "MPC Tack.");
 
         send_log_info(txt_msg);
@@ -428,7 +441,7 @@ void tack_action(struct reference_actions_s *ref_act_p,
     //check if we've already started tacking, or if this is the first time
     if(tack_data.boat_is_tacking){
         //we have already started the tack maneuver, check if it's completed
-        if(is_tack_completed()){
+        if(is_tack_completed(ref_act_p)){
 
             //we have just completed the tack maneuver
             tack_completed(ref_act_p);
@@ -456,11 +469,11 @@ void tack_action(struct reference_actions_s *ref_act_p,
      * Check which type of tack maneuver we should perform by checking
      * tack_data.tack_type
     */
-    if(tack_data.tack_type == 0 || tack_data.tack_type == 1){
+    if(tack_data.tack_type == TACK_HELM0 || tack_data.tack_type == TACK_HELM1){
         //perform tack maneuver as helmsman would do
         helmsman_tack(ref_act_p, p_rudder_cmd, p_sails_cmd);
     }
-    else if(tack_data.tack_type == 2){
+    else if(tack_data.tack_type == TACK_PI){
         /*perform tack maneuver by simply returning the control of rudder
          * and sails to normal controller.
          *
@@ -477,7 +490,7 @@ void tack_action(struct reference_actions_s *ref_act_p,
 
         tack_completed(ref_act_p);
     }
-    else if(tack_data.tack_type == 3){
+    else if(tack_data.tack_type == TACK_LQR){
         //LQR controller
         lqr_control_rudder(p_rudder_cmd, ref_act_p, strs_p);
         //use standard sail controller
@@ -514,13 +527,13 @@ void helmsman_tack(struct reference_actions_s *ref_act_p,
      * Use tack_data.tack_type to select between helmsman0 and helmsman1 maneuver
     */
     if(tack_data.sailing_at_port_haul){
-        if(tack_data.tack_type == 0)
+        if(tack_data.tack_type == TACK_HELM0)
             helmsman0_tack_p2s(alpha, p_rudder_cmd, p_sails_cmd);
         else
             helmsman1_tack_p2s(alpha, p_rudder_cmd, p_sails_cmd);
     }
     else{
-        if(tack_data.tack_type == 0)
+        if(tack_data.tack_type == TACK_HELM0)
             helmsman0_tack_s2p(alpha, p_rudder_cmd, p_sails_cmd);
         else
             helmsman1_tack_s2p(alpha, p_rudder_cmd, p_sails_cmd);
@@ -550,29 +563,80 @@ void tack_completed(struct reference_actions_s *ref_act_p){
 /**
  * Determine when a tack maneuver is completed
  *
+ * If we are using either helmsman0 or helmsman1 tack:
  * If the boat was sailing on port haul before tacking, the tack maneuver is considered
  * completed if alpha is greater or equals to alpha_min_stop_tack_r, @see set_tack_data() .
  * If the boat was sailing on starboard haul before tacking, the tack maneuver is considered
- * cmpleted if the alpha is less or equals to -alpha_min_stop_tack_r, @see set_tack_data() .
+ * completed if the alpha is less or equals to -alpha_min_stop_tack_r, @see set_tack_data() .
  *
+ * If we are using either LQR or MPC tack:
+ * the tack maneuver is completed if and only if every state of the extended system
+ * x[i], i = 0,1,2, computed by @see compute_state_extended_model(), is in the range
+ * [ -optimal_control_data.delta_values[i], optimal_control_data.delta_values[i] ]
+ * for at least optimal_control_data.min_time_in_band_us micro seconds.
+ *
+ * @return true if the tack maneuver can be considered completed, false otherwise.
  */
-bool is_tack_completed(void){
-
-    float alpha = get_alpha_dumas();
+bool is_tack_completed(struct reference_actions_s *ref_act_p){
 
     bool completed = false;
 
-    //check if we were sailing on port haul before starting the tack maneuver
-    if(tack_data.sailing_at_port_haul){
-        //we were sailing on port haul before tacking
-        if(alpha >= tack_data.alpha_min_stop_tack_r)
-            completed = true;
+    //if we are using either helmsman0 or helmsman1, use alpha_min_stop_tack_r parameter
+    if(tack_data.tack_type == TACK_HELM0 || tack_data.tack_type == TACK_HELM1){
+
+        float alpha = get_alpha_dumas();
+        //check if we were sailing on port haul before starting the tack maneuver
+        if(tack_data.sailing_at_port_haul){
+            //we were sailing on port haul before tacking
+            if(alpha >= tack_data.alpha_min_stop_tack_r)
+                completed = true;
+        }
+        else{
+            //we were sailing on starboard haul before tacking
+            if(alpha <= -tack_data.alpha_min_stop_tack_r)
+                completed = true;
+        }
     }
-    else{
-        //we were sailing on starboard haul before tacking
-        if(alpha <= -tack_data.alpha_min_stop_tack_r)
-            completed = true;
+    else if(tack_data.tack_type == TACK_PI){
+        //implicit tack, return false
+        completed = false;
     }
+    else if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC){
+
+        //LQR or MPC tack, check if the extended state is in the band near the origin
+        compute_state_extended_model(ref_act_p);
+        bool state_in_band = true;//initial guess
+
+        for(uint8_t i = 0; i < 3; i++){
+            if(my_fabs(optimal_control_data.state_extended_model[i]) >
+                       optimal_control_data.delta_values[i])
+                state_in_band = false;
+        }
+
+        if(state_in_band == true){
+            //the extended state is in the band near the origin
+
+            if(optimal_control_data.first_time_valid == false){
+                //This is the first time the state (re)entered in the band near the origin
+                optimal_control_data.first_time_in_band_us = hrt_absolute_time();
+                optimal_control_data.first_time_valid = true;
+            }
+            else{
+                //the system was already in the band near the origin
+                uint64_t now_us = hrt_absolute_time();
+                //check if the state has been in the band for at least min_time_in_band_us
+                if((now_us - optimal_control_data.first_time_in_band_us) >=
+                    optimal_control_data.min_time_in_band_us){
+
+                    //the tack can be considered completed
+                    completed = true;
+                    //set first_time_valid to false
+                    optimal_control_data.first_time_valid = false;
+                }
+            }
+        }
+    }
+
     return completed;
 }
 
@@ -1003,6 +1067,34 @@ void compute_minusAExt_times_x0(float *minusAExt_times_x0){
                                     mpc_AExt[i][j] * optimal_control_data.state_extended_model[j];
         }
     }
+}
+
+/**
+ * Set data to specify the band around the origin in which the system,
+ * controlled by either the LQR or the MPC, should go at the end of the tack maneuver.
+ *
+ * @param delta      vetor with three values, delta for yawRate, yaw and rudder, positive values.
+ * @param min_time_s minimum time the system should be in the band to consider the tack completed.
+*/
+void set_band_data(float *delta, float min_time_s){
+
+    float tmp;
+
+    //save delta and make sure every value is positive
+    for(uint8_t i = 0; i < 3; i++){
+        if(delta[i] > 0)
+            tmp = delta[i];
+        else if(delta[i] == 0)
+            tmp = SAFETY_DELTA;
+        else
+            tmp = -delta[i];
+
+        optimal_control_data.delta_values[i] = tmp;
+    }
+
+    min_time_s = (min_time_s > 0.0f) ? min_time_s : -min_time_s;
+    //convert min_time_s in microsecond and save it
+    optimal_control_data.min_time_in_band_us = (uint64_t)((double)min_time_s * 1e6);
 }
 
 /**

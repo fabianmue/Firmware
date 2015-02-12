@@ -66,6 +66,8 @@
 #define LQR_MODEL_TS  (uint64_t) 9918 ///LQR model sampling time, in microseconds
 #define MPC_MODEL_TS  (uint64_t) 99175 ///MPC model sampling time, in microseconds
 
+#define SAFETY_DELTA 0.08f ///value for delta in emergency case
+
 
 /** @brief Implement next control action*/
 void guidance_module(struct reference_actions_s *ref_act_p,
@@ -89,5 +91,8 @@ void set_lqr_gain(float lqr_k1, float lqr_k2, float lqr_k3);
 
 /** @brief set MPC cost function, lower and upper bound */
 void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3]);
+
+/** @brief set data to specify the band around the origin in which the system should go */
+void set_band_data(float* delta, float min_time_s);
 
 #endif //GUIDANCE_MODULE_H
