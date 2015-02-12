@@ -951,10 +951,6 @@ void mpc_control_rudder(float *p_rudder_cmd,
 
         //boat_opt_status just updated
         strs_p->boat_opt_status_updated = true;
-
-        #if SIMULATION_FLAG == 1
-        strs_p->airspeed.true_airspeed_m_s = strs_p->airspeed.true_airspeed_m_s + 1.0f;//cancella
-        #endif
     }
     else{
         /* the time elapsed since the last time the MPC was computed is less than

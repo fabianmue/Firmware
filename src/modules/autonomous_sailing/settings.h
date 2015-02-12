@@ -45,8 +45,8 @@
 
 #define SIMULATION_FLAG 1 ///1 if you're testing autonomous sailing app indoor, PLEASE SET INDOOR PARSER_200WX
 
-#define SAVE_DEBUG_VALUES 1 //1 to use debug_values topic for debug purpose
+#define SAVE_DEBUG_VALUES 1 ///1 to use debug_values topic for debug purpose
 
-#define TEST_MPC 1
+#define TEST_MPC 0 ///1 if you want to test the MPC performance without setting up tack maneuver data
 
 #endif // SETTINGS_H

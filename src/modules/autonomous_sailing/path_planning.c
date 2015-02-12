@@ -74,6 +74,8 @@ static struct reference_actions_s ref_act = {.alpha_star = 0.5f, .should_tack = 
 static float current_grid_goal_x_m = 0.0f;//current x coordinate of grid line to reach [m]
 static bool current_grid_valid = false;
 
+static bool make_boat_tack = false; //true if the boat should tack now
+
 // /** @brief distance function from an x-coordinate and a grid line x-coordinate*/
 //float distance(float x1, float x2);
 
@@ -466,6 +468,7 @@ void path_planning(struct reference_actions_s *ref_act_p,
     //convert geodedical coordinate into Race frame coordinate
     navigation_module(strs_p, &local_pos);
 
+    //check if we are using grid lines to tell the boat where to tack
     //if the next grid line to reach is valid
     if(current_grid_valid){
         //see if we have reached or exceeded our goal
@@ -493,6 +496,21 @@ void path_planning(struct reference_actions_s *ref_act_p,
                 //no new grid line to reach
                 current_grid_valid = false;
             }
+        }
+    }
+    else{
+        /* if we are not using grind lines, check if the function
+         * boat_should_tack told us to tack as soon as possibile.*/
+        if(make_boat_tack){
+            //tack now!
+            ref_act.should_tack = true;
+            //change alpha to change haul
+            ref_act.alpha_star = -ref_act.alpha_star;
+            //set make_boat_tack to flase
+            make_boat_tack = false;
+            //send a message to QGC
+            sprintf(txt_msg, "Tacking now.");
+            send_log_info(txt_msg);
         }
     }
 
@@ -580,4 +598,20 @@ void reuse_last_grids(bool use){
         sprintf(txt_msg, "Reinserted previous grid lines.");
         send_log_info(txt_msg);
     }
+}
+
+/**
+ * Specify if the boat should tack as soon as possibile.
+ *
+ * This function can be used to make the boat tack if you wish not to use
+ * grid lines.
+ * If the boat should tack now, the value of alpha star will be changed
+ * auotnomously by the path_planning module.
+ *
+ * @param tack_now: true if the boat should tack now, false otherwise.
+*/
+void boat_should_tack(int32_t tack_now){
+    //update make_boat_tack only if we are not taking
+    if(ref_act.should_tack == false)
+        make_boat_tack = (tack_now == 0) ? false : true;
 }

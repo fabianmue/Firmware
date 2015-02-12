@@ -92,4 +92,7 @@ void start_following_optimal_path(int32_t start, float abs_alpha_star);
 /** @brief re-insert the grid lines used before*/
 void reuse_last_grids(bool use);
 
+/** @brief tell to the boat if it should tack or not*/
+void boat_should_tack(int32_t tack_now);
+
 #endif /* PATH_PLANNING_DATA_H_ */

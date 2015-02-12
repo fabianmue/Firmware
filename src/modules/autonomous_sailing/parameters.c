@@ -54,7 +54,7 @@ static const float deg2rad = 0.0174532925199433f; // pi / 180
  * @min -180
  * @max 180
  */
-PARAM_DEFINE_FLOAT(AS_ALST_ANG_D, 35.0f);
+PARAM_DEFINE_FLOAT(AS_ALST_ANG_D, 45.0f);
 
 /**
  * 1 if you wish to use the alpha star specified by AS_ALSTR, 0 otherwise
@@ -63,6 +63,14 @@ PARAM_DEFINE_FLOAT(AS_ALST_ANG_D, 35.0f);
  * @max 1
  */
 PARAM_DEFINE_INT32(AS_ALST_SET, 1);
+
+/**
+ * Swtich this value from 0 to 1 if you want to tack.
+ * Then rememeber to switch it to 0 after the tack is completed.
+ * Attention: if AS_TCK_NOW switches from 0 to 1, the parameter
+ * AS_ALST_ANG_D will NOT be considered!
+*/
+PARAM_DEFINE_INT32(AS_TCK_NOW, 0);
 
 /**
  * Sails position
@@ -501,7 +509,7 @@ static struct pointers_param_qgc_s{
 
     param_t alpha_star_pointer;         /**< pointer to param AS_ALST_ANG_D*/
     param_t use_alpha_star_pointer;         /**< pointer to param AS_ALST_SET*/
-
+    param_t tack_now;                   /**< pointer to param TEST_MPC */
 
     param_t sail_pointer;         /**< pointer to param AS_SAIL*/
 
@@ -571,6 +579,8 @@ static struct pointers_param_qgc_s{
     param_t mpc_hf_43_pointer; /**< pointer to ASO_MPC_HF43*/
     param_t mpc_hf_44_pointer; /**< pointer to ASO_MPC_HF44*/
 
+
+
     //---cog delay
     param_t cog_max_delay_pointer;/**< pointer to param AS_COG_DELAY_S*/
 
@@ -602,6 +612,7 @@ void param_init(struct parameters_qgc *params_p,
     //initialize pointer to parameters
     pointers_param_qgc.alpha_star_pointer    = param_find("AS_ALST_ANG_D");
     pointers_param_qgc.use_alpha_star_pointer    = param_find("AS_ALST_SET");
+    pointers_param_qgc.tack_now = param_find("AS_TCK_NOW");
 
     pointers_param_qgc.sail_pointer    = param_find("AS_SAIL");
 
@@ -703,12 +714,25 @@ void param_update(struct parameters_qgc *params_p,
     //----- alpha star
     float alpha_tmp;
     int32_t set_alpha;
+    int32_t tack_now;
+
     param_get(pointers_param_qgc.alpha_star_pointer, &alpha_tmp);
     //convert alpha in rad
     alpha_tmp = alpha_tmp * deg2rad;
+
+    //take set_alpha to see if alpha_tmp has to be set as the new alpha star value
     param_get(pointers_param_qgc.use_alpha_star_pointer, &set_alpha);
-    if(set_alpha)
+
+    //tack tack_now to see if the boat should tack now, if so, DO NOT set alpha_tmp as new alpha star
+    param_get(pointers_param_qgc.tack_now, &tack_now);
+
+    //set alpha_tmp as the new alpha star ONLY if set_alpha is not 0 AND tack_now is 0
+    if(set_alpha != 0 && tack_now == 0)
         set_alpha_star(alpha_tmp);
+
+    //pass tack_now to path_planning module, only if update_path_param is true
+    if(update_path_param)
+        boat_should_tack(tack_now);
 
     //----- sail_servo
     param_get(pointers_param_qgc.sail_pointer, &(params_p->sail_servo));
