@@ -25,6 +25,7 @@ jurisdiction in case of any dispute.
 #ifndef __mpc_boatTack_H__
 #define __mpc_boatTack_H__
 
+
 /* DATA TYPE ------------------------------------------------------------*/
 typedef float mpc_boatTack_FLOAT;
 
@@ -41,14 +42,35 @@ typedef float INTERFACE_FLOAT;
 #define mpc_boatTack_SET_TIMING    (0)
 #endif
 
+/* Numeric Warnings */
+/* #define PRINTNUMERICALWARNINGS */
+
 /* maximum number of iterations  */
-#define mpc_boatTack_SET_MAXIT         (30)
+#define mpc_boatTack_SET_MAXIT         (30)	
+
+/* scaling factor of line search (affine direction) */
+#define mpc_boatTack_SET_LS_SCALE_AFF  (0.9f)
+
+/* scaling factor of line search (combined direction) */
+#define mpc_boatTack_SET_LS_SCALE      (0.95f)
+
+/* minimum required step size in each iteration */
+#define mpc_boatTack_SET_LS_MINSTEP    ((float)1E-08)
+
+/* maximum step size (combined direction) */
+#define mpc_boatTack_SET_LS_MAXSTEP    (0.995f)
 
 /* desired relative duality gap */
-#define mpc_boatTack_SET_ACC_DGAP     (0.001f)
+#define mpc_boatTack_SET_ACC_RDGAP     (0.0001f)
 
-/* desired maximum residual on consensus constraint */
-#define mpc_boatTack_SET_ACC_CONSENSUS     (0.001f)
+/* desired maximum residual on equality constraints */
+#define mpc_boatTack_SET_ACC_RESEQ     ((float)1E-06)
+
+/* desired maximum residual on inequality constraints */
+#define mpc_boatTack_SET_ACC_RESINEQ   ((float)1E-06)
+
+/* desired maximum violation of complementarity */
+#define mpc_boatTack_SET_ACC_KKTCOMPL  ((float)1E-06)
 
 
 /* RETURN CODES----------------------------------------------------------*/
@@ -58,6 +80,10 @@ typedef float INTERFACE_FLOAT;
 /* maximum number of iterations has been reached */
 #define mpc_boatTack_MAXITREACHED (0)
 
+/* no progress in line search possible */
+#define mpc_boatTack_NOPROGRESS   (-7)
+
+
 
 
 /* PARAMETERS -----------------------------------------------------------*/
@@ -65,19 +91,19 @@ typedef float INTERFACE_FLOAT;
 typedef struct mpc_boatTack_params
 {
     /* vector of size 3 */
-    float minusAExt_times_x0[3];
+    mpc_boatTack_FLOAT minusAExt_times_x0[3];
 
     /* diagonal matrix of size [4 x 4] (only the diagonal is stored) */
-    float Hessians[4];
+    mpc_boatTack_FLOAT Hessians[4];
 
     /* matrix of size [4 x 4] (column major format) */
-    float HessiansFinal[16];
+    mpc_boatTack_FLOAT HessiansFinal[16];
 
     /* vector of size 2 */
-    float lowerBound[2];
+    mpc_boatTack_FLOAT lowerBound[2];
 
     /* vector of size 2 */
-    float upperBound[2];
+    mpc_boatTack_FLOAT upperBound[2];
 
 } mpc_boatTack_params;
 
@@ -87,60 +113,67 @@ typedef struct mpc_boatTack_params
 typedef struct mpc_boatTack_output
 {
     /* vector of size 1 */
-    float u0[1];
+    mpc_boatTack_FLOAT u0[1];
 
 } mpc_boatTack_output;
 
 
 /* SOLVER INFO ----------------------------------------------------------*/
-/* diagnostic data from last step */
+/* diagnostic data from last interior point step */
 typedef struct mpc_boatTack_info
-{ 
-	/* iteration number */
+{
+    /* iteration number */
     int it;
-
-	/* solvertime */
-	float solvetime; 
-
-	/* inf-norm of equality constraint residuals */
-    float res_eq;
+	
+    /* inf-norm of equality constraint residuals */
+    mpc_boatTack_FLOAT res_eq;
+	
+    /* inf-norm of inequality constraint residuals */
+    mpc_boatTack_FLOAT res_ineq;
 
     /* primal objective */
-    float pobj;	
+    mpc_boatTack_FLOAT pobj;	
 	
     /* dual objective */
-    float dobj;	
+    mpc_boatTack_FLOAT dobj;	
 
     /* duality gap := pobj - dobj */
-    float dgap;		
+    mpc_boatTack_FLOAT dgap;		
 	
     /* relative duality gap := |dgap / pobj | */
-    float rdgap;	
+    mpc_boatTack_FLOAT rdgap;		
+
+    /* duality measure */
+    mpc_boatTack_FLOAT mu;
+
+	/* duality measure (after affine step) */
+    mpc_boatTack_FLOAT mu_aff;
+	
+    /* centering parameter */
+    mpc_boatTack_FLOAT sigma;
+	
+    /* number of backtracking line search steps (affine direction) */
+    int lsit_aff;
+    
+    /* number of backtracking line search steps (combined direction) */
+    int lsit_cc;
+    
+    /* step size (affine direction) */
+    mpc_boatTack_FLOAT step_aff;
+    
+    /* step size (combined direction) */
+    mpc_boatTack_FLOAT step_cc;    
+
+	/* solvertime */
+	mpc_boatTack_FLOAT solvetime;   
 
 } mpc_boatTack_info;
 
 
 
-
-
 /* SOLVER FUNCTION DEFINITION -------------------------------------------*/
+/* examine exitflag before using the result! */
 int mpc_boatTack_solve(mpc_boatTack_params* params, mpc_boatTack_output* output, mpc_boatTack_info* info);
-
-/*int mpc_boatTack_control_interface(mpc_boatTack_controlparams* params, mpc_boatTack_output* output, mpc_boatTack_info* info); */
-
-
-
-/* DATA SIZES */
-#define TOTAL_SIZE 44
-#define EQU_SIZE 33
-#define INEQU_SIZE 44
-#define Z_SIZE 44
-
-/* FIXED NUMBER OF ITERATIONS */
-//#define I_MAX 30
-
-/* FIXED NUMBER OF PRIMAL STEPS PER ITERATION */
-#define PRIMAL_STEPS 1
 
 
 

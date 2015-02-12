@@ -42,9 +42,19 @@
 
 #include "guidance_module.h"
 
+//cancellare
+float yawSimMPC[] = {1.5708f,1.5594f,1.5230f,1.4625f,1.3889f,1.3109f,1.2314f,1.1515f,1.0713f,0.9912f,0.9110f,0.8308f,0.7506f,0.6704f,0.5902f,0.5100f,0.4298f,0.3496f,0.2711f,0.1980f,0.1343f,0.0822f,0.0421f,0.0132f,-0.0059f,-0.0172f,-0.0226f,-0.0238f,-0.0222f,-0.0191f,-0.0154f,-0.0116f,-0.0082f,-0.0053f,-0.0029f,-0.0012f,-0.0001f,0.0007f,0.0011f,0.0012f,0.0012f,0.0011f,0.0009f,0.0007f,0.0005f,0.0003f,0.0002f,0.0001f,0.0000f,-0.0000f};
+static int indexYaw = 0;
+const int yawLength = 50;
+float H_final[4][4] = {{0.0000f,0.0000f,0.0000f,0.0000f},
+{0.0000f,0.2828f,3.2783f,-0.5113f},
+{0.0000f,3.2783f,48.9025f,-5.5246f},
+{0.0000f,-0.5113f,-5.5246f,1.9489f}};
+
+
 //MPC extended A matrix
-const float mpc_AExt[3][3] = {    {0.89609732829328f,    0.0f,      -0.0933508120214662f},
-                                {0.00991753846153846,  1.0f,       0.0f},
+const float mpc_AExt[3][3] = {    {0.333850341490791f,    0.0f,      -0.598498676965545f},
+                                {0.06358416728738f,  1.0f,       -0.0319767430791371f},
                                 {0.0f,                 0.0f,       1.0f}
                              };
 
@@ -828,6 +838,7 @@ void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3]){
             }
         }
     }
+
 }
 
 /**
@@ -847,29 +858,77 @@ void mpc_control_rudder(float *p_rudder_cmd,
     int solver_ret;
     uint64_t now_us = hrt_absolute_time(); //absolute time in micro seconds
 
-    //compute a new command only if the time elapsed since time_last_lqr is greater or equal to LQR_MODEL_TS.
-    if((now_us - optimal_control_data.time_last_mpc) >= MPC_MODEL_TS){
+    #if SIMULATION_FLAG == 1
+    optimal_control_data.mpc_boatTack_params_s.Hessians[0] = 5.0f;
+    optimal_control_data.mpc_boatTack_params_s.Hessians[1] = 0.001f;
+    optimal_control_data.mpc_boatTack_params_s.Hessians[2] = 10.0f;
+    optimal_control_data.mpc_boatTack_params_s.Hessians[3] = 0.001f;
 
+    optimal_control_data.mpc_boatTack_params_s.lowerBound[0] = -0.357031384615385f;
+    optimal_control_data.mpc_boatTack_params_s.lowerBound[1] = -0.9f;
+
+    optimal_control_data.mpc_boatTack_params_s.upperBound[0] = 0.357031384615385f;
+    optimal_control_data.mpc_boatTack_params_s.upperBound[1] = 0.9f;
+
+    uint8_t index_hf;
+
+    //first go by the whole row i, and then increment column j
+    for(uint8_t j = 0; j < 4; j++){
+        for(uint8_t i = 0; i < 4; i++){
+            /*remember that HessianFinal is 4x4 (column major format), so from i and j we must
+             * have a new index to access into the vector HessiansFinal
+            */
+            index_hf = j * 4 + i;
+            optimal_control_data.mpc_boatTack_params_s.HessiansFinal[index_hf] = H_final[i][j];
+
+        }
+    }
+    #endif
+
+    //compute a new command only if the time elapsed since time_last_lqr is greater or equal to LQR_MODEL_TS.
+    //if((now_us - optimal_control_data.time_last_mpc) >= MPC_MODEL_TS){ripristinare
+    if((now_us - optimal_control_data.time_last_mpc) >= MPC_MODEL_TS && indexYaw < yawLength){//cancellare
         //compute the new state of the extended model based on the latest measurements
         compute_state_extended_model(ref_act_p);
+
+        #if SIMULATION_FLAG == 1
+        optimal_control_data.state_extended_model[1] = yawSimMPC[indexYaw];
+        indexYaw++;
+        #endif
 
         //init parameters before calling the solver
         compute_minusAExt_times_x0(&(optimal_control_data.mpc_boatTack_params_s.minusAExt_times_x0));
 
+        #if SIMULATION_FLAG == 1
+        for(uint8_t i = 0; i < 3; i++){
+            printf("-A*x0[%d]: %2.4f \t", i,
+                   (double) optimal_control_data.mpc_boatTack_params_s.minusAExt_times_x0[i]);
+        }
+        uint64_t beforeSol = hrt_absolute_time();
+        #endif
         //call the solver
         solver_ret = mpc_boatTack_solve(&(optimal_control_data.mpc_boatTack_params_s),
                                         &(optimal_control_data.mpc_boatTack_output_s),
                                         &(optimal_control_data.mpc_boatTack_info_s));
+        #if SIMULATION_FLAG == 1
+        printf("\n++++ solvetime:  %4.4f  [mSec]\n", (double)(hrt_absolute_time() - beforeSol) / 1e3);
+        #endif
 
         //check solver_ret before using result as rudder command!
         if(solver_ret == 1){
             //compute rudder command at step k to give to the real system: optimalU + rudder_{k-1}
             *p_rudder_cmd = optimal_control_data.mpc_boatTack_output_s.u0[0] +
                             optimal_control_data.state_extended_model[2];
+            #if SIMULATION_FLAG == 1
+            printf("------* rudStar: %1.3f \n", (double) *p_rudder_cmd);
+            #endif
         }
         else{
             //something went wrong in the solver! Give the last command that has been given
             *p_rudder_cmd = optimal_control_data.state_extended_model[2];
+            #if SIMULATION_FLAG == 1
+            printf("------< recovery Rud: %1.3f \n", (double) *p_rudder_cmd);
+            #endif
         }
 
         //update time_last_lqr
@@ -1043,9 +1102,9 @@ void guidance_module(struct reference_actions_s *ref_act_p,
             sail_command = param_qgc_p->sail_servo;
     }
 
+
     #if SIMULATION_FLAG == 1
-    //debug
-    //rudder_command = param_qgc_p->deva1;
+    mpc_control_rudder(&rudder_command, ref_act_p, strs_p);
     #endif
 
 
