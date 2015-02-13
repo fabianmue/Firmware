@@ -7,7 +7,6 @@ SRCS				= autonomous_sailing.c \
                                         path_planning.c \
                                         hil_simulation.c \
                                         simulation_utility.c \
-                                        reference_actions.c \
                                         send_msg_qgc.c \
                                         mpc_boatTack.c
 

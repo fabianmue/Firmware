@@ -40,7 +40,6 @@
  */
 
 #include "path_planning.h"
-#include "reference_actions.h"
 
 #ifndef NULL
     #define NULL 0
@@ -59,15 +58,6 @@ static struct{
     int16_t grids_inserted; /// number of grid lines inserted
 }grid_lines;
 
-//optimal path following data
-static struct{
-    bool following_traj; ///true if we're already following the optimal trajector
-    float abs_alpha_star;///absolute value of Velocity Made Good
-}following_path_planning = {
-                            .following_traj = false,
-                            .abs_alpha_star = 0.5f
-                            };
-
 
 static struct reference_actions_s ref_act = {.alpha_star = 0.5f, .should_tack = false};
 
@@ -76,32 +66,17 @@ static bool current_grid_valid = false;
 
 static bool make_boat_tack = false; //true if the boat should tack now
 
-// /** @brief distance function from an x-coordinate and a grid line x-coordinate*/
-//float distance(float x1, float x2);
-
 /** @brief read next grid line to reach*/
 bool read_nex_grid(float *next_grid_p);
 
 /** @brief advise that current goal grid line has been reached*/
 void reached_current_grid(void);
 
-/** @brief compute the y_index to acces to refernce action matrixes*/
-int16_t compute_y_index(const struct local_position_race_s *local_pos_p);
-
-/** @brief acces to optimal reference actions computed offline and take the next action to perform. */
-void read_new_ref_action(struct structs_topics_s *strs_p,
-                         const struct local_position_race_s *local_pos_p);
-
-/** @boref based on actual local position, see which y discrete coordinate is closest.*/
-int16_t compute_y_index(const struct local_position_race_s *local_pos_p);
-
 /** @brief set number of grid lines*/
 void set_grids_number(int16_t size);
 
 /** @brief set the x coordinate of a grid line*/
 void set_grid(float x_m);
-
-
 
 /**
  * Initialize the grid lines struct. Delete all the old grid lines (if any).
@@ -154,13 +129,11 @@ void set_grids_number(int16_t size){
 /**
  * Set the new number of total grid lines. Calling this function you will delete
  * all the previous grid lines. Next grid line to be reach is that one with index = 0
- * Grid line number can be set by QGroundControl ONLY IF the boat is not
- * following the optimal path pre_computed offline
+ * Grid line number can be set by QGroundControl.
  *
  * @param size  total number of new grid lines
 */
 void set_grids_number_qgc(int16_t size){
-    if(following_path_planning.following_traj == false)
         set_grids_number(size);
 }
 
@@ -202,13 +175,10 @@ void set_grid(float x_m){
 /**
  * Set the x coordinate in Race frame of a grid line.
  * Grid lines are inserted with a FIFO policy.
- * A Grid line can be set by QGroundControl ONLY IF the boat is not
- * following the optimal path pre_computed offline
  *
  * @param x_m       x coordinate [m] in Race frame of the new grid line
 */
 void set_grid_qgc(float x_m){
-    if(following_path_planning.following_traj == false)
         set_grid(x_m);
 }
 
@@ -246,23 +216,18 @@ void reached_current_grid(void){
         grid_lines.last_goal = -1;
     }
 
-    /*send a message to QGC to tell that a new grid line has been reached,
-     * only if we are not following an optimal path
+    /*send a message to QGC to tell that a new grid line has been reached
     */
-    if(following_path_planning.following_traj == false){
-        sprintf(txt_msg, "Grid line reached.");
-        send_log_info(txt_msg);
-    }
+    sprintf(txt_msg, "Grid line reached.");
+    send_log_info(txt_msg);
 }
 
 /**
- * Set new value for reference alpha, only possibile if the boat is not following optimal path
+ * Set new value for reference alpha.
 */
 void set_alpha_star(float val){
 
-    if(following_path_planning.following_traj == false){
-        ref_act.alpha_star = val;
-    }
+    ref_act.alpha_star = val;
 }
 
 /**
@@ -273,304 +238,6 @@ void notify_tack_completed(void){
     ref_act.should_tack = false;
 }
 
-
-/**
- * Acces to optimal reference actions computed offline and take the next action to perform.
- *
- * See which is the closest discrete position (used in optimal path planning) to our actual position.
- * Read wind and haul data, and combined these data to the current grid line index
- * to acces to an appropriate matrix of optimal actions.
- * Based on the closest y-coordinate on the actual grid line, read the next action to perform.
- *
- * @param strs_p        struct with sensors information
- * @param local_pos_p   local position coordinate in Race fram
-*/
-void read_new_ref_action(struct structs_topics_s *strs_p,
-                         const struct local_position_race_s *local_pos_p){
-
-    float mean_wind_angle;  // mean wind angle set in QGC
-    float twd;              //moving average of true wind measurements
-    int8_t wind_index;
-    int8_t haul_index;
-    int8_t (*matrix_actions)[actions_row_number][actions_col_number]; //pointer to next action matrix
-    int16_t number_current_line;
-    int16_t y_index;
-    int8_t next_action;
-
-    //get mean wind angle set by QGC in navigation.h
-    mean_wind_angle = get_mean_wind_angle();
-
-    //get mean value of true wind direction read by weather station
-    twd = get_twd_sns();
-
-    //for now, only simple model (A) where only 2 wind directions are allowed
-    /*
-     * consider mean_wind_angle as a new "true" North, so we can
-     * check if the mean true angle (twd) is NNW or NNE w.r.t. the mean_wind_angle,
-     * that is, our new North.
-    */
-
-    //rotate twd considering mean_wind_angle as the direction of the new true North
-    twd -= mean_wind_angle;
-
-    //check if twd needs to be constrained between [-pi, pi]
-    if(get_twd_sns() < 0 && twd < -M_PI_F)
-        twd = 2 * M_PI_F + twd;
-    else if(get_twd_sns() > 0 && twd > M_PI_F)
-        twd = twd - 2 * M_PI_F;
-
-    wind_index = (twd > 0) ? 2 : //wind from NNE w.r.t. our new "true" North
-                             1;  //wind from NNW w.r.t. our new "true" North
-
-    //TODO check if haul is ok as function of roll angle
-//    haul_index = (strs_p->att.roll > 0) ? 1 : //port haul
-//                                          2;  //starboard haul
-
-    /*if ref_act.alpha_star is < 0, we were sailing on port haul, otherwise
-     * we were sailing on starboard haul.
-    */
-    haul_index = (ref_act.alpha_star < 0) ? 1 : //port haul
-                                            2;  //satrboard haul
-
-    //take the appropriate matrix with optimal action for our current wind and haul states
-    if(wind_index == 1 && haul_index == 1)
-        matrix_actions = &actions_w1_h1;
-    else if(wind_index == 1 && haul_index == 2)
-        matrix_actions = &actions_w1_h2;
-    else if(wind_index == 2 && haul_index == 1)
-        matrix_actions = &actions_w2_h1;
-    else if(wind_index == 2 && haul_index == 2)
-        matrix_actions = &actions_w2_h2;
-
-    //take the number of the current grid line we've just reached
-    number_current_line = grid_lines.current_goal;
-    //sanity check
-    if(number_current_line < 0 || number_current_line >= total_grids_number)
-        return;
-
-    //compute y index (index of the closest discrete point in our grid line
-    y_index = compute_y_index(local_pos_p);
-
-    #if SIMULATION_FLAG == 1
-    //cancella
-    //strs_p->airspeed.true_airspeed_m_s = y_index;
-    #endif
-
-    //read next action to perform
-    next_action = matrix_actions[0][number_current_line][y_index];
-
-    /*
-     * reference actions computed offline.
-     * 3 = sail on starboard haul
-     * 2 = sail on port haul
-     * 1 = tack on the inner line
-     * -1 = error in accessing matrix
-    */
-
-    //for now just use one alpha for model A, set by QCG
-    switch(next_action){
-    case 1:
-        //tack against inner layline
-        ref_act.should_tack = true;
-        //change haul
-        ref_act.alpha_star = -ref_act.alpha_star;
-
-        //send a message to QGC
-        sprintf(txt_msg, "Ref act: tack on inner layline.");
-        send_log_info(txt_msg);
-        break;
-
-    case 2:
-        //sail on port haul, check if a tack has to be performed
-        //if we were sailing on starboard haul, before sailing on port haul we have to tack
-        if(ref_act.alpha_star > 0){
-            ref_act.should_tack = true;
-        }
-        //after tacking, sail on port haul
-        ref_act.alpha_star = -following_path_planning.abs_alpha_star;
-
-        //send a message to QGC
-        sprintf(txt_msg, "Ref act: sail on port haul.");
-        send_log_info(txt_msg);
-        break;
-
-    case 3:
-        //sail on starboard haul, check if a tack has to be performed
-        //if we were sailing on port haul, before sailing on starboard haul we have to tack
-        if(ref_act.alpha_star < 0){
-            ref_act.should_tack = true;
-        }
-        //after tacking, sail on starboard haul
-        ref_act.alpha_star = following_path_planning.abs_alpha_star;
-
-        //send a message to QGC
-        sprintf(txt_msg, "Ref act: sail on starboard haul.");
-        send_log_info(txt_msg);
-        break;
-    }
-}
-
-/**
- * Based on actual local position, see which y discrete coordinate is closest.
-*/
-int16_t compute_y_index(const struct local_position_race_s *local_pos_p){
-
-    float division;
-    int16_t y_index;
-    int16_t y_max_val =  y_max[grid_lines.current_goal];
-
-    //see how many times d_y (defined in reference_actions.c) is in local_pos_p->y_race_m
-    division = local_pos_p->y_race_m / d_y;
-
-    //test which discrete y-position on our grid line is closer
-
-    //if y_race is greater (smaller) than our farthest y-discrete point on the right (left), take it as y-point
-    if(division > y_max_val || division < - y_max_val){
-        y_index = (division > 0) ?   2 * y_max_val :
-                                     0;
-    }
-    else{
-        //see which y-discrete-point is closer
-        if(division > 0){
-            if(division - (int32_t)division > 0.5f)
-                y_index = y_max_val + (int32_t)division + 1;    //closer to the right point
-            else
-               y_index = y_max_val + (int32_t)division;         //closer to the left point
-        }
-
-        else{
-            if(division - (int32_t)division < -0.5f)
-                y_index = y_max_val + (int32_t)division - 1;    //closer to the left point
-            else
-               y_index = y_max_val + (int32_t)division;         //closer to the right point
-        }
-    }
-
-    return y_index;
-}
-
-/**
- * Based on a new global position estimate, see if there is a new reference action to perform.
- *
- * Convert the global position coordinate in a coordinate in Race frame.
- * Check if we've passed a grid line, if so, see which is the next reference action
- * to pass to guidance_module.
- *
- * @param ref_act_p     pointer to struct which will contain next reference action to perform
- * @param strs_p        pointer to struct with data
-*/
-void path_planning(struct reference_actions_s *ref_act_p,
-                   struct structs_topics_s *strs_p){
-
-    struct local_position_race_s local_pos;
-    float tmp;
-
-    //convert geodedical coordinate into Race frame coordinate
-    navigation_module(strs_p, &local_pos);
-
-    //check if we are using grid lines to tell the boat where to tack
-    //if the next grid line to reach is valid
-    if(current_grid_valid){
-        //see if we have reached or exceeded our goal
-        if(local_pos.x_race_m <= current_grid_goal_x_m){
-
-            //read optimal action computed offline, if QCG told us to use it
-            if(following_path_planning.following_traj == true)
-                read_new_ref_action(strs_p, &local_pos);
-            else{
-                ref_act.should_tack = true;
-                //change alpha to change haul
-                ref_act.alpha_star = -ref_act.alpha_star;
-            }
-
-            //Advise we have reached the current target grid line
-            reached_current_grid();
-
-            //take the new grid line, if any
-            if(read_nex_grid(&tmp)){
-                //there is at least another grid line to reach
-                current_grid_goal_x_m = tmp;
-                current_grid_valid = true;
-            }
-            else{
-                //no new grid line to reach
-                current_grid_valid = false;
-            }
-        }
-    }
-    else{
-        /* if we are not using grind lines, check if the function
-         * boat_should_tack told us to tack as soon as possibile.*/
-        if(make_boat_tack){
-            //tack now!
-            ref_act.should_tack = true;
-            //change alpha to change haul
-            ref_act.alpha_star = -ref_act.alpha_star;
-            //set make_boat_tack to flase
-            make_boat_tack = false;
-            //send a message to QGC
-            sprintf(txt_msg, "Tacking now.");
-            send_log_info(txt_msg);
-        }
-    }
-
-    //copy local reference action to the output struct
-    memcpy(ref_act_p, &ref_act, sizeof(ref_act));
-
-    //save second debug values for post-processing, other values set in guidance_module()
-    strs_p->boat_guidance_debug.next_grid_line = current_grid_goal_x_m;
-    strs_p->boat_guidance_debug.x_race = local_pos.x_race_m;
-    strs_p->boat_guidance_debug.y_race = local_pos.y_race_m;
-    strs_p->boat_guidance_debug.alpha_star = ref_act_p->alpha_star;
-    strs_p->boat_guidance_debug.should_tack = (ref_act_p->should_tack == true) ? 1 : 0;
-
-}
-
-/**
- * Start/stop following a pre-computed optimal path.
- *
- * @param start             1 if you wish to start following the pre-computed optimal path, 0 otherwise
- * @param abs_alpha_star    absolute value of true wind angle (alpha angle, in Dumas' thesis)
-*/
-void start_following_optimal_path(int32_t start, float abs_alpha_star){
-
-    if(start > 0){
-        //check if we're starting now
-        if(following_path_planning.following_traj == false){
-            //set up the total number of grid lines
-            set_grids_number(total_grids_number);
-            //we'are starting, add grid lines for optimal path computed offline
-            for(int16_t i = total_grids_number; i > 0; i--){
-                //the first grid line is the farthest from the top mark, etc..
-                set_grid(i * d_x);
-            }
-            //remember that we've just started
-            following_path_planning.following_traj = true;
-            //set the absolute value of alpha star
-            following_path_planning.abs_alpha_star = abs_alpha_star;
-
-            //send a message to QGC
-            sprintf(txt_msg, "Starting following optimal path.");
-            send_log_info(txt_msg);
-        }
-        //else: nothing to do, we're already following optimal trajectory
-    }
-    else{
-        //stop following optimal path
-        if(following_path_planning.following_traj == true){
-            //stop following optimal trajectory, delete all the grid lines inserted
-            set_grids_number(1);
-
-            //remember that we stopped following optimal trajecotry
-            following_path_planning.following_traj = false;
-
-            //send a message to QGC
-            sprintf(txt_msg, "Stopping following optimal path.");
-            send_log_info(txt_msg);
-        }
-        //else: nothing to do, we're not following any trajectory
-    }
-}
 
 void reuse_last_grids(bool use){
     if(use){
@@ -615,3 +282,78 @@ void boat_should_tack(int32_t tack_now){
     if(ref_act.should_tack == false)
         make_boat_tack = (tack_now == 0) ? false : true;
 }
+
+
+/**
+ * Based on a new global position estimate, see if there is a new reference action to perform.
+ *
+ * Convert the global position coordinate in a coordinate in Race frame.
+ * Check if we've passed a grid line, if so, see which is the next reference action
+ * to pass to guidance_module.
+ *
+ * @param ref_act_p     pointer to struct which will contain next reference action to perform
+ * @param strs_p        pointer to struct with data
+*/
+void path_planning(struct reference_actions_s *ref_act_p,
+                   struct structs_topics_s *strs_p){
+
+    struct local_position_race_s local_pos;
+    float tmp;
+
+    //convert geodedical coordinate into Race frame coordinate
+    navigation_module(strs_p, &local_pos);
+
+    //check if we are using grid lines to tell the boat where to tack
+    //if the next grid line to reach is valid
+    if(current_grid_valid){
+        //see if we have reached or exceeded our goal
+        if(local_pos.x_race_m <= current_grid_goal_x_m){
+
+            //reached grid line, tack now!
+            ref_act.should_tack = true;
+            //change alpha to change haul
+            ref_act.alpha_star = -ref_act.alpha_star;
+
+            //Advise we have reached the current target grid line
+            reached_current_grid();
+
+            //take the new grid line, if any
+            if(read_nex_grid(&tmp)){
+                //there is at least another grid line to reach
+                current_grid_goal_x_m = tmp;
+                current_grid_valid = true;
+            }
+            else{
+                //no new grid line to reach
+                current_grid_valid = false;
+            }
+        }
+    }
+    else{
+        /* if we are not using grind lines, check if the function
+         * boat_should_tack told us to tack as soon as possibile.*/
+        if(make_boat_tack){
+            //tack now!
+            ref_act.should_tack = true;
+            //change alpha to change haul
+            ref_act.alpha_star = -ref_act.alpha_star;
+            //set make_boat_tack to flase
+            make_boat_tack = false;
+            //send a message to QGC
+            sprintf(txt_msg, "Tacking now.");
+            send_log_info(txt_msg);
+        }
+    }
+
+    //copy local reference action to the output struct
+    memcpy(ref_act_p, &ref_act, sizeof(ref_act));
+
+    //save second debug values for post-processing, other values set in guidance_module()
+    strs_p->boat_guidance_debug.next_grid_line = current_grid_goal_x_m;
+    strs_p->boat_guidance_debug.x_race = local_pos.x_race_m;
+    strs_p->boat_guidance_debug.y_race = local_pos.y_race_m;
+    strs_p->boat_guidance_debug.alpha_star = ref_act_p->alpha_star;
+    strs_p->boat_guidance_debug.should_tack = (ref_act_p->should_tack == true) ? 1 : 0;
+
+}
+

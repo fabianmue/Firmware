@@ -86,9 +86,6 @@ void set_alpha_star(float val);
 /** @brief notify that the tack maneuver is completed*/
 void notify_tack_completed(void);
 
-/** @brief start following optimal trajectory computed offline*/
-void start_following_optimal_path(int32_t start, float abs_alpha_star);
-
 /** @brief re-insert the grid lines used before*/
 void reuse_last_grids(bool use);
 
