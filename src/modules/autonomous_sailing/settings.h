@@ -47,6 +47,6 @@
 
 #define SAVE_DEBUG_VALUES 1 ///1 to use debug_values topic for debug purpose
 
-#define TEST_MPC 0 ///1 if you want to test the MPC performance without setting up tack maneuver data
+#define TEST_MPC 1 ///1 if you want to test the MPC performance without setting up tack maneuver data
 
 #endif // SETTINGS_H

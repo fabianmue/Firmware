@@ -1,7 +1,7 @@
 /*
 mpc_boatTack : A fast customized optimization solver.
 
-Copyright (C) 2014 EMBOTECH GMBH [info@embotech.com]
+Copyright (C) 2013-2015 EMBOTECH GMBH [info@embotech.com]. All rights reserved.
 
 
 This software is intended for simulation and testing purposes only. 
@@ -64,13 +64,13 @@ typedef float INTERFACE_FLOAT;
 #define mpc_boatTack_SET_ACC_RDGAP     (0.0001f)
 
 /* desired maximum residual on equality constraints */
-#define mpc_boatTack_SET_ACC_RESEQ     ((float)1E-06)
+#define mpc_boatTack_SET_ACC_RESEQ     ((float)1E-04)
 
 /* desired maximum residual on inequality constraints */
-#define mpc_boatTack_SET_ACC_RESINEQ   ((float)1E-06)
+#define mpc_boatTack_SET_ACC_RESINEQ   ((float)1E-04)
 
 /* desired maximum violation of complementarity */
-#define mpc_boatTack_SET_ACC_KKTCOMPL  ((float)1E-06)
+#define mpc_boatTack_SET_ACC_KKTCOMPL  ((float)1E-04)
 
 
 /* RETURN CODES----------------------------------------------------------*/
