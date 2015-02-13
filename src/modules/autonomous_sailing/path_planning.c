@@ -298,7 +298,6 @@ void path_planning(struct reference_actions_s *ref_act_p,
                    struct structs_topics_s *strs_p){
 
     struct local_position_race_s local_pos;
-    float tmp;
 
     //convert geodedical coordinate into Race frame coordinate
     navigation_module(strs_p, &local_pos);
@@ -318,9 +317,10 @@ void path_planning(struct reference_actions_s *ref_act_p,
             reached_current_grid();
 
             //take the new grid line, if any
-            if(read_nex_grid(&tmp)){
+            float tmp_grid;
+            if(read_nex_grid(&tmp_grid)){
                 //there is at least another grid line to reach
-                current_grid_goal_x_m = tmp;
+                current_grid_goal_x_m = tmp_grid;
                 current_grid_valid = true;
             }
             else{

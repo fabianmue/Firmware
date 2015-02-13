@@ -42,6 +42,7 @@
 
 #include "guidance_module.h"
 
+#if TEST_MPC == 1
 //cancellare
 float yawSimMPC[] = {1.5708f,1.5594f,1.5230f,1.4625f,1.3889f,1.3109f,1.2314f,1.1515f,1.0713f,0.9912f,0.9110f,0.8308f,0.7506f,0.6704f,0.5902f,0.5100f,0.4298f,0.3496f,0.2711f,0.1980f,0.1343f,0.0822f,0.0421f,0.0132f,-0.0059f,-0.0172f,-0.0226f,-0.0238f,-0.0222f,-0.0191f,-0.0154f,-0.0116f,-0.0082f,-0.0053f,-0.0029f,-0.0012f,-0.0001f,0.0007f,0.0011f,0.0012f,0.0012f,0.0011f,0.0009f,0.0007f,0.0005f,0.0003f,0.0002f,0.0001f,0.0000f,-0.0000f};
 static int indexYaw = 0;
@@ -50,7 +51,7 @@ float H_final[4][4] = {{0.0000f,0.0000f,0.0000f,0.0000f},
 {0.0000f,0.2828f,3.2783f,-0.5113f},
 {0.0000f,3.2783f,48.9025f,-5.5246f},
 {0.0000f,-0.5113f,-5.5246f,1.9489f}};
-
+#endif
 
 //MPC extended A matrix
 const float mpc_AExt[3][3] = {    {0.333850341490791f,    0.0f,      -0.598498676965545f},
@@ -950,8 +951,11 @@ void mpc_control_rudder(float *p_rudder_cmd,
     #endif
 
     //compute a new command only if the time elapsed since time_last_lqr is greater or equal to LQR_MODEL_TS.
-    //if((now_us - optimal_control_data.time_last_mpc) >= MPC_MODEL_TS){ripristinare
+    #if TEST_MPC == 0
+    if((now_us - optimal_control_data.time_last_mpc) >= MPC_MODEL_TS){
+    #else
     if((now_us - optimal_control_data.time_last_mpc) >= MPC_MODEL_TS && indexYaw < yawLength){//cancellare
+    #endif
         //compute the new state of the extended model based on the latest measurements
         compute_state_extended_model(ref_act_p);
 
@@ -968,16 +972,20 @@ void mpc_control_rudder(float *p_rudder_cmd,
             printf("-A*x0[%d]: %2.4f \t", i,
                    (double) optimal_control_data.mpc_boatTack_params_s.minusAExt_times_x0[i]);
         }
-        uint64_t beforeSol = hrt_absolute_time();
         #endif
+
         //call the solver and take computation time
         uint64_t time_before_sol = hrt_absolute_time();
+
         solver_ret = mpc_boatTack_solve(&(optimal_control_data.mpc_boatTack_params_s),
                                         &(optimal_control_data.mpc_boatTack_output_s),
                                         &(optimal_control_data.mpc_boatTack_info_s));
-        uint64_t time_after_sol = hrt_absolute_time();
+
+        //compute how much time was required by the MPC problem resolution
+        float solve_time_ms = ((float) (hrt_absolute_time() - time_before_sol)) / 1000.0f;
+
         #if TEST_MPC == 1
-        printf("\n++++ solvetime:  %4.4f  [mSec]\n", (double)(hrt_absolute_time() - beforeSol) / 1e3);
+        printf("\n++++ solvetime:  %4.4f  [mSec]\n", (double)solve_time_ms);
         #endif
 
         //check solver_ret before using result as rudder command!
@@ -1009,7 +1017,7 @@ void mpc_control_rudder(float *p_rudder_cmd,
         strs_p->boat_opt_status.type_controller = 1; //I am the MPC controller
         strs_p->boat_opt_status.it = optimal_control_data.mpc_boatTack_info_s.it;
         //solvetime in milliseconds
-        strs_p->boat_opt_status.solvetime = ((float) time_after_sol - time_before_sol) / 1000.0f;
+        strs_p->boat_opt_status.solvetime = solve_time_ms;
         strs_p->boat_opt_status.res_eq = optimal_control_data.mpc_boatTack_info_s.res_eq;
         strs_p->boat_opt_status.pobj = optimal_control_data.mpc_boatTack_info_s.pobj;
         strs_p->boat_opt_status.dobj = optimal_control_data.mpc_boatTack_info_s.dobj;
