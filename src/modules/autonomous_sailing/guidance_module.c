@@ -1073,7 +1073,7 @@ void compute_minusAExt_times_x0(float *minusAExt_times_x0){
  * Set data to specify the band around the origin in which the system,
  * controlled by either the LQR or the MPC, should go at the end of the tack maneuver.
  *
- * @param delta      vetor with three values, delta for yawRate, yaw and rudder, positive values.
+ * @param delta      vetor with three values, delta for yawRate, yaw and rudder, positive values in rads.
  * @param min_time_s minimum time the system should be in the band to consider the tack completed.
 */
 void set_band_data(float *delta, float min_time_s){

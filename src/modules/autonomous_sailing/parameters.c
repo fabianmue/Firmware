@@ -438,6 +438,39 @@ PARAM_DEFINE_FLOAT(ASO_MPC_HF42, -0.51133f);
 PARAM_DEFINE_FLOAT(ASO_MPC_HF43, -5.52460f);
 PARAM_DEFINE_FLOAT(ASO_MPC_HF44, 1.94888f);
 
+/**
+ * Create a band around the origin for the yaw rate value.
+ * Value in degrees.
+ *
+ * @min 0
+*/
+PARAM_DEFINE_FLOAT(ASO_DLT_YR_D, 5.0f);
+
+/**
+ * Create a band around the origin for the yaw value.
+ * Value in degrees.
+ *
+ * @min 0
+*/
+PARAM_DEFINE_FLOAT(ASO_DLT_Y_D, 8.0f);
+
+/**
+ * Create a band around the origin for the rudder command.
+ *
+ * @min 0
+ * @max 0.9
+*/
+PARAM_DEFINE_FLOAT(ASO_DLT_RD_CM, 0.15f);
+
+/**
+ * Min time (in seconds) the state of the system should stay in
+ * the band near the origin (defined by @see ASO_DLT_YR_D, @see ASO_DLT_Y_D
+ * and @see ASO_DLT_RD_CM) in order to consider the tack maneuver completed.
+ *
+ * @min 0
+*/
+PARAM_DEFINE_FLOAT(ASO_STP_TCK_S, 0.8f);
+
 #if SIMULATION_FLAG == 1
 
 //---------------------------------------- Simulation variables --------------------
@@ -579,6 +612,12 @@ static struct pointers_param_qgc_s{
     param_t mpc_hf_43_pointer; /**< pointer to ASO_MPC_HF43*/
     param_t mpc_hf_44_pointer; /**< pointer to ASO_MPC_HF44*/
 
+    //--- params to define the band near the origin
+    param_t delta_yaw_rate_pointer; /**< pointer to ASO_DLT_YR_D*/
+    param_t delta_yaw_pointer; /**< pointer to ASO_DLT_Y_D*/
+    param_t delta_rudder_pointer; /**< pointer to ASO_DLT_RD_CM*/
+
+    param_t min_time_in_band_poniter; /**< pointer to ASO_STP_TCK_S*/
 
 
     //---cog delay
@@ -681,6 +720,13 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.mpc_hf_42_pointer = param_find("ASO_MPC_HF42");
     pointers_param_qgc.mpc_hf_43_pointer = param_find("ASO_MPC_HF43");
     pointers_param_qgc.mpc_hf_44_pointer = param_find("ASO_MPC_HF44");
+
+    //--- band params
+    pointers_param_qgc.delta_yaw_rate_pointer = param_find("ASO_DLT_YR_D");
+    pointers_param_qgc.delta_yaw_pointer = param_find("ASO_DLT_Y_D");
+    pointers_param_qgc.delta_rudder_pointer = param_find("ASO_DLT_RD_CM");
+
+    pointers_param_qgc.min_time_in_band_poniter = param_find("ASO_STP_TCK_S");
 
     //----cog delay
     pointers_param_qgc.cog_max_delay_pointer = param_find("AS_COG_DELAY_S");
@@ -912,6 +958,22 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.mpc_hf_44_pointer, &mpc_hf[2][2]);
 
     set_mpc_data(mpc_h, mpc_lb, mpc_ub, mpc_hf);
+
+    //--- define band around origin
+    float delta_vect[3];
+    float min_time_in_band;
+
+    param_get(pointers_param_qgc.delta_yaw_rate_pointer, &delta_vect[0]);
+    param_get(pointers_param_qgc.delta_yaw_pointer, &delta_vect[1]);
+    param_get(pointers_param_qgc.delta_rudder_pointer, &delta_vect[2]);
+
+    //convert delta values from deg to rad
+    for(uint8_t i = 0; i < 3; i++)
+        delta_vect[i] = delta_vect[i] * deg2rad;
+
+    param_get(pointers_param_qgc.min_time_in_band_poniter, &min_time_in_band);
+
+    set_band_data(delta_vect, min_time_in_band);
 
     //--- cog delay
     float cog_max_delay_sec;
