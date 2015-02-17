@@ -53,11 +53,18 @@ float H_final[4][4] = {{0.0000f,0.0000f,0.0000f,0.0000f},
 {0.0000f,-0.5113f,-5.5246f,1.9489f}};
 #endif
 
-//MPC extended A matrix
-const float mpc_AExt[3][3] = {    {0.333850341490791f,    0.0f,      -0.598498676965545f},
-                                {0.06358416728738f,  1.0f,       -0.0319767430791371f},
-                                {0.0f,                 0.0f,       1.0f}
-                             };
+//MPC extended A matrix, grey box model
+//const float mpc_AExt[3][3] = {    {0.333850341490791f,    0.0f,      -0.598498676965545f},
+//                                {0.06358416728738f,  1.0f,       -0.0319767430791371f},
+//                                {0.0f,                 0.0f,       1.0f}
+//                             };
+
+//MPC extended A matrix, black box model
+const float mpc_AExt[3][3] =    {   {0.7169540221f, -0.0146906390f, -0.2786106298f},
+                                    {0.0810955847f, 0.9999114340f, -0.0136244402f},
+                                    {0.0000000000f, 0.0000000000f, 1.0000000000f}
+                                };
+
 
 #define M_PI_F 3.14159265358979323846f
 #define TWO_M_PI_F 6.28318530717959f
@@ -142,14 +149,17 @@ static struct {
     uint64_t time_last_lqr; ///time when last LQR was computed
     float delta_values[3]; ///delta values to specify the band around the origin
     uint64_t min_time_in_band_us; ///min microseconds the system should be in the band to complete tacking
-    uint64_t first_time_in_band_us;///first time (in this tack) the systm was into the band
+    uint64_t last_time_in_band_us;///last time (in this tack) the systm was detected into the band
+    uint64_t first_time_in_band_us;///first time (in this tack) the systm was detected into the band
     bool first_time_valid; ///true if first_time_in_band_us is valid
+    bool last_time_valid; ///true if last_time_in_band_us is valid
 } optimal_control_data =    {
                                 .rudder_latest = 0.0f,
                                 .time_last_mpc = (uint64_t) 0,
                                 .time_last_lqr = (uint64_t) 0,
                                 .min_time_in_band_us = (uint64_t) 500000,//0.5 sec
-                                .first_time_valid = false //first_time_in_band_us not valid now
+                                .first_time_valid = false,//first_time_in_band_us not valid now
+                                .last_time_valid = false //last_time_in_band_us not valid now
                             };
 
 /** @brief PI controller with conditional integration*/
@@ -617,23 +627,45 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p){
         if(state_in_band == true){
             //the extended state is in the band near the origin
 
-            if(optimal_control_data.first_time_valid == false){
+            if(optimal_control_data.last_time_valid == false){
                 //This is the first time the state (re)entered in the band near the origin
-                optimal_control_data.first_time_in_band_us = hrt_absolute_time();
-                optimal_control_data.first_time_valid = true;
+                optimal_control_data.last_time_in_band_us = hrt_absolute_time();
+                optimal_control_data.last_time_valid = true;
+                //if this is the very first time we are in the band, update first_time
+                if(optimal_control_data.first_time_valid == false){
+                    optimal_control_data.first_time_in_band_us = hrt_absolute_time();
+                    optimal_control_data.first_time_valid = true;
+                }
             }
             else{
                 //the system was already in the band near the origin
                 uint64_t now_us = hrt_absolute_time();
                 //check if the state has been in the band for at least min_time_in_band_us
-                if((now_us - optimal_control_data.first_time_in_band_us) >=
+                if((now_us - optimal_control_data.last_time_in_band_us) >=
                     optimal_control_data.min_time_in_band_us){
 
                     //the tack can be considered completed
                     completed = true;
-                    //set first_time_valid to false
+                    //set last_time_valid and first_time_valid to false
+                    optimal_control_data.last_time_valid = false;
                     optimal_control_data.first_time_valid = false;
                 }
+            }
+        }
+        /*perfrom anyway (if we've entered the band at leastonce) safety check
+         * if we have to force stopping tack
+         */
+        if(optimal_control_data.first_time_valid == true){
+            //we have already entered the band for at least one time.
+            //use first_time_in_band_us to check if we have to force stopping the tack for safety reason
+            uint64_t now_us = hrt_absolute_time();
+            if((now_us - optimal_control_data.first_time_in_band_us) >= SAFETY_TIME_STOP_TCK){
+
+                //the tack MUST be considered completed
+                completed = true;
+                //set last_time_valid and first_time_valid to false
+                optimal_control_data.last_time_valid = false;
+                optimal_control_data.first_time_valid = false;
             }
         }
     }
@@ -814,7 +846,7 @@ void lqr_control_rudder(float *p_rudder_cmd,
         //compute rudder command at step k to give to the real system: u_k + rudder_{k-1}
         *p_rudder_cmd = u_k + optimal_control_data.state_extended_model[2];
 
-        //todo chech this or at least write some comments!
+        //TODO check this or at least write some comments!
         if(*p_rudder_cmd > rudder_controller_data.rud_cmd_45_left)
             *p_rudder_cmd = rudder_controller_data.rud_cmd_45_left;
         else if(*p_rudder_cmd < -rudder_controller_data.rud_cmd_45_left)
@@ -993,6 +1025,12 @@ void mpc_control_rudder(float *p_rudder_cmd,
             //compute rudder command at step k to give to the real system: optimalU + rudder_{k-1}
             *p_rudder_cmd = optimal_control_data.mpc_boatTack_output_s.u0[0] +
                             optimal_control_data.state_extended_model[2];
+            //TODO check this or at least write some comments!
+            if(*p_rudder_cmd > rudder_controller_data.rud_cmd_45_left)
+                *p_rudder_cmd = rudder_controller_data.rud_cmd_45_left;
+            else if(*p_rudder_cmd < -rudder_controller_data.rud_cmd_45_left)
+                *p_rudder_cmd = -rudder_controller_data.rud_cmd_45_left;
+
             #if TEST_MPC == 1
             printf("------* rudStar: %1.3f \n", (double) *p_rudder_cmd);
             #endif

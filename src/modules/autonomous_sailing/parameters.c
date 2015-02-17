@@ -369,19 +369,19 @@ PARAM_DEFINE_FLOAT(AS_COG_DELAY_S, 1.5f);
  * First value of the optimal gain matrix K, for the LQR controller
  *
  */
-PARAM_DEFINE_FLOAT(ASO_LQR_K1, -0.10669f);
+PARAM_DEFINE_FLOAT(ASO_LQR_K1, -0.2256399447f);
 
 /**
  * Second value of the optimal gain matrix K, for the LQR controller
  *
  */
-PARAM_DEFINE_FLOAT(ASO_LQR_K2, -1.3144f);
+PARAM_DEFINE_FLOAT(ASO_LQR_K2, -1.3190228742f);
 
 /**
  * Third value of the optimal gain matrix K, for the LQR controller
  *
  */
-PARAM_DEFINE_FLOAT(ASO_LQR_K3, 0.13613f);
+PARAM_DEFINE_FLOAT(ASO_LQR_K3, 0.1245043534f);
 
 /**
  * First value of the Hessina cost matrix, for the MPC
@@ -391,7 +391,7 @@ PARAM_DEFINE_FLOAT(ASO_MPC_H1, 5.0f);
 /**
  * Second value of the Hessina cost matrix, for the MPC
  */
-PARAM_DEFINE_FLOAT(ASO_MPC_H2, 0.00001f);
+PARAM_DEFINE_FLOAT(ASO_MPC_H2, 0.01f);
 
 /**
  * Third value of the Hessina cost matrix, for the MPC
@@ -401,12 +401,12 @@ PARAM_DEFINE_FLOAT(ASO_MPC_H3, 10.0f);
 /**
  * Fourth value of the Hessina cost matrix, for the MPC
  */
-PARAM_DEFINE_FLOAT(ASO_MPC_H4, 0.001f);
+PARAM_DEFINE_FLOAT(ASO_MPC_H4, 0.01f);
 
 /**
  * First lower bound value, for the MPC
  */
-PARAM_DEFINE_FLOAT(ASO_MPC_LB1, -0.357f);
+PARAM_DEFINE_FLOAT(ASO_MPC_LB1, -0.3820419310f);
 
 /**
  * Second lower bound value, for the MPC
@@ -416,7 +416,7 @@ PARAM_DEFINE_FLOAT(ASO_MPC_LB2, -0.9f);
 /**
  * First upper bound value, for the MPC
  */
-PARAM_DEFINE_FLOAT(ASO_MPC_UB1, 0.357f);
+PARAM_DEFINE_FLOAT(ASO_MPC_UB1, 0.3820419310f);
 
 /**
  * Second upper bound value, for the MPC
@@ -426,17 +426,17 @@ PARAM_DEFINE_FLOAT(ASO_MPC_UB2, 0.9f);
 /**
  * Hessian matrix for final cost, only for state, not for input. For the MPC.
  */
-PARAM_DEFINE_FLOAT(ASO_MPC_HF22, 0.28275f);
-PARAM_DEFINE_FLOAT(ASO_MPC_HF23, 3.27835f);
-PARAM_DEFINE_FLOAT(ASO_MPC_HF24, -0.51133f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF22, 1.8334714813f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF23, 8.9970253273f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF24, -1.3281703473f);
 
-PARAM_DEFINE_FLOAT(ASO_MPC_HF32, 3.27835f);
-PARAM_DEFINE_FLOAT(ASO_MPC_HF33, 48.90251f);
-PARAM_DEFINE_FLOAT(ASO_MPC_HF34, -5.52460f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF32, 8.9970253273f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF33, 60.6690232034f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF34, -5.5144280101f);
 
-PARAM_DEFINE_FLOAT(ASO_MPC_HF42, -0.51133f);
-PARAM_DEFINE_FLOAT(ASO_MPC_HF43, -5.52460f);
-PARAM_DEFINE_FLOAT(ASO_MPC_HF44, 1.94888f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF42, -1.3281703473f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF43, -5.5144280101f);
+PARAM_DEFINE_FLOAT(ASO_MPC_HF44, 1.8832249457f);
 
 /**
  * Create a band around the origin for the yaw rate value.

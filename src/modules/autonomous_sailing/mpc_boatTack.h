@@ -64,13 +64,13 @@ typedef float INTERFACE_FLOAT;
 #define mpc_boatTack_SET_ACC_RDGAP     (0.0001f)
 
 /* desired maximum residual on equality constraints */
-#define mpc_boatTack_SET_ACC_RESEQ     ((float)1E-04)
+#define mpc_boatTack_SET_ACC_RESEQ     (0.0001f)
 
 /* desired maximum residual on inequality constraints */
-#define mpc_boatTack_SET_ACC_RESINEQ   ((float)1E-04)
+#define mpc_boatTack_SET_ACC_RESINEQ   (0.0001f)
 
 /* desired maximum violation of complementarity */
-#define mpc_boatTack_SET_ACC_KKTCOMPL  ((float)1E-04)
+#define mpc_boatTack_SET_ACC_KKTCOMPL  (0.0001f)
 
 
 /* RETURN CODES----------------------------------------------------------*/

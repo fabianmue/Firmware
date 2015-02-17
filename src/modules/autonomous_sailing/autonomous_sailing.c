@@ -421,13 +421,11 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     memset(&(strs_p->boat_opt_mat), 0, sizeof(strs_p->boat_opt_mat));
     pubs_p->boat_opt_mat = orb_advertise(ORB_ID(boat_opt_mat), &(strs_p->boat_opt_mat));
 
-    #if SAVE_DEBUG_VALUES == 1
     //advertise debug_values topic
     memset(&(strs_p->boat_opt_status), 0, sizeof(strs_p->boat_opt_status));
     strs_p->boat_opt_status.timestamp = hrt_absolute_time();
     pubs_p->boat_opt_status = orb_advertise(ORB_ID(boat_opt_status), &(strs_p->boat_opt_status));
     strs_p->boat_opt_status_updated = false;
-    #endif
 
     #if SIMULATION_FLAG == 1
     memset(&(strs_p->airspeed), 0, sizeof(strs_p->airspeed));
