@@ -56,7 +56,7 @@
 //log messages to QGroundControl
 #include "send_msg_qgc.h"
 
-#define RUDDER_SATURATION 0.9f /// 0.9f = most left rudder position, -0.9f, most right rudder position
+#define RUDDER_SATURATION 1.0f /// 1.0f = most left rudder position, -1.0f, most right rudder position
 #define RUDDER_45_LEFT 0.85f /// rudder at 45 deg and the boat steers on the left
 
 #define SAIL_SATURATION 0.56f  /// 0.56f = sails fully closed; 0.0f = sails fully opened

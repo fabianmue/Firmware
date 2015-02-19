@@ -1274,7 +1274,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     sail_command = sail_saturation(sail_command);
 
     #if SIMULATION_FLAG == 1
-    rudder_command = param_qgc_p->deva1;
+    //rudder_command = param_qgc_p->deva1;
     #endif
 
     //update actuator value
