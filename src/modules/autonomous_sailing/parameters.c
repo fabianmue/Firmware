@@ -226,6 +226,41 @@ PARAM_DEFINE_FLOAT(AS_RUD_CP, 1.0f);
  */
 PARAM_DEFINE_INT32(AS_RUD_TYPE, 0);
 
+/**
+ * Set how much time should passed without any new cog value.
+ * @see set_max_time_cog_not_up
+ */
+PARAM_DEFINE_FLOAT(AS_COG_DELAY_S, 1.5f);
+
+/**
+ * AS_WIN_AL, specifies the number of samples for the moving average of true wind angle (alpha).
+ *
+ *
+ * @min 1
+ * @max ?
+ */
+PARAM_DEFINE_INT32(AS_WIN_AL, 10);
+
+/**
+ * AS_WIN_APP, specifies the number of samples for the moving average of apparent wind direction.
+ *
+ *
+ * @min 1
+ * @max ?
+ */
+PARAM_DEFINE_INT32(AS_WIN_APP, 10);
+
+/**
+ * AS_WIN_TWD, specifies the number of samples for the moving average of true wind direction.
+ *
+ *
+ * @min 1
+ * @max ?
+ */
+PARAM_DEFINE_INT32(AS_WIN_TWD, 10);
+
+//------------------------- grid lines parameters
+#if USE_GRID_LINES == 1
 
 /**
  * Latitude of origin of NED system, in degrees * E7.
@@ -254,32 +289,6 @@ PARAM_DEFINE_INT32(AS_R_LON0_E7, 85605120);
  */
 PARAM_DEFINE_INT32(AS_R_ALT0_E3, 406000);
 
-/**
- * AS_WIN_AL, specifies the number of samples for the moving average of true wind angle (alpha).
- *
- *
- * @min 1
- * @max ?
- */
-PARAM_DEFINE_INT32(AS_WIN_AL, 10);
-
-/**
- * AS_WIN_APP, specifies the number of samples for the moving average of apparent wind direction.
- *
- *
- * @min 1
- * @max ?
- */
-PARAM_DEFINE_INT32(AS_WIN_APP, 10);
-
-/**
- * AS_WIN_TWD, specifies the number of samples for the moving average of true wind direction.
- *
- *
- * @min 1
- * @max ?
- */
-PARAM_DEFINE_INT32(AS_WIN_TWD, 10);
 
 /**
  * AS_MEAN_WIND_D, specifies the mean wind direction [deg], in [-180, 180].
@@ -354,13 +363,7 @@ PARAM_DEFINE_INT32(AS_P_ADD, 0);
  */
 PARAM_DEFINE_INT32(AS_REIN_GRS, 0);
 
-/**
- * Set how much time should passed without any new cog value.
- * @see set_max_time_cog_not_up
- */
-PARAM_DEFINE_FLOAT(AS_COG_DELAY_S, 1.5f);
-
-
+#endif
 
 //------------------------------------- Parameters for optimal control ----
 
@@ -475,6 +478,7 @@ PARAM_DEFINE_FLOAT(ASO_STP_TCK_S, 0.8f);
 
 //---------------------------------------- Simulation variables --------------------
 
+#if USE_GRID_LINES == 1
 /**
  * Simulated Latitude, in degrees * E7.
  *
@@ -501,6 +505,8 @@ PARAM_DEFINE_INT32(ASIM_LON_E7, 85605120);
  * @max ?
  */
 PARAM_DEFINE_INT32(ASIM_ALT_E3, 406000);
+
+#endif
 
 /**
  * Simulated Course over ground, in deg, sign opposite to Dumas convention.
@@ -563,14 +569,15 @@ static struct pointers_param_qgc_s{
     param_t sails_opened_alpha;     /**< pointer to param AS_SAI_X2_AL*/
     param_t tack_stop_alpha;        /**< pointer to param AS_TK_ST_AL*/
 
-    param_t lat0_pointer;         /**< pointer to param AS_R_LAT0_E7*/
-    param_t lon0_pointer;         /**< pointer to param AS_R_LON0_E7*/
-    param_t alt0_pointer;         /**< pointer to param AS_R_ALT0_E3*/
-
-
     param_t moving_alpha_window_pointer;/**< pointer to param AS_WIN_AL*/
     param_t moving_apparent_window_pointer;/**< pointer to param AS_WIN_APP*/
     param_t moving_twd_window_pointer;/**< pointer to param AS_WIN_TWD*/
+
+    // --- grid lines system parameters
+    #if USE_GRID_LINES == 1
+    param_t lat0_pointer;         /**< pointer to param AS_R_LAT0_E7*/
+    param_t lon0_pointer;         /**< pointer to param AS_R_LON0_E7*/
+    param_t alt0_pointer;         /**< pointer to param AS_R_ALT0_E3*/
 
     param_t mean_wind_pointer;/**< pointer to param AS_MEAN_WIND_D*/
 
@@ -582,7 +589,7 @@ static struct pointers_param_qgc_s{
     param_t grid_x_pointer;         /**< pointer to param AS_P_X_M*/
     param_t grid_add_pointer;         /**< pointer to param AS_P_ADD*/
     param_t repeat_past_grids_pointer;    /**< pointer to param AS_REIN_GRS */
-
+    #endif
     //-- params for LQR controller
     param_t lqr_k1_poniter; /**< pointer to  ASO_LQR_K1*/
     param_t lqr_k2_poniter; /**< pointer to  ASO_LQR_K2*/
@@ -626,9 +633,12 @@ static struct pointers_param_qgc_s{
     //-- simulation params
 
     #if SIMULATION_FLAG == 1
+
+    #if USE_GRID_LINES == 1
     param_t lat_sim_pointer; /**< pointer to param ASIM_LAT_E7*/
     param_t lon_sim_pointer; /**< pointer to param ASIM_LON_E7*/
     param_t alt_sim_pointer; /**< pointer to param ASIM_ALt_E3*/
+    #endif
 
     param_t twd_sim_pointer; /**< pointer to param ASIM_TWD_D*/
     param_t cog_sim_pointer; /**< pointer to param ASIM_COG_D*/
@@ -672,13 +682,14 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.sails_opened_alpha = param_find("AS_SAI_X2_AL");
     pointers_param_qgc.tack_stop_alpha = param_find("AS_TK_ST_AL");
 
-    pointers_param_qgc.lat0_pointer    = param_find("AS_R_LAT0_E7");
-    pointers_param_qgc.lon0_pointer    = param_find("AS_R_LON0_E7");
-    pointers_param_qgc.alt0_pointer    = param_find("AS_R_ALT0_E3");
-
     pointers_param_qgc.moving_alpha_window_pointer = param_find("AS_WIN_AL");
     pointers_param_qgc.moving_apparent_window_pointer = param_find("AS_WIN_APP");
     pointers_param_qgc.moving_twd_window_pointer = param_find("AS_WIN_TWD");
+
+    #if USE_GRID_LINES == 1
+    pointers_param_qgc.lat0_pointer    = param_find("AS_R_LAT0_E7");
+    pointers_param_qgc.lon0_pointer    = param_find("AS_R_LON0_E7");
+    pointers_param_qgc.alt0_pointer    = param_find("AS_R_ALT0_E3");
 
     pointers_param_qgc.mean_wind_pointer = param_find("AS_MEAN_WIND_D");
 
@@ -691,6 +702,8 @@ void param_init(struct parameters_qgc *params_p,
 
     pointers_param_qgc.grid_add_pointer = param_find("AS_P_ADD");
     pointers_param_qgc.repeat_past_grids_pointer = param_find("AS_REIN_GRS");
+
+    #endif
 
     //--- params for lqr controller
     pointers_param_qgc.lqr_k1_poniter = param_find("ASO_LQR_K1");
@@ -733,9 +746,11 @@ void param_init(struct parameters_qgc *params_p,
 
     #if SIMULATION_FLAG == 1
 
+    #if USE_GRID_LINES == 1
     pointers_param_qgc.lat_sim_pointer = param_find("ASIM_LAT_E7");
     pointers_param_qgc.lon_sim_pointer = param_find("ASIM_LON_E7");
     pointers_param_qgc.alt_sim_pointer = param_find("ASIM_ALT_E3");
+    #endif
 
     pointers_param_qgc.cog_sim_pointer = param_find("ASIM_COG_D");
     pointers_param_qgc.twd_sim_pointer = param_find("ASIM_TWD_D");
@@ -834,6 +849,7 @@ void param_update(struct parameters_qgc *params_p,
 
     set_sail_data(sail_closed_cmd, alpha_sail_closed_r, alpha_sail_opened_r);
 
+    #if USE_GRID_LINES == 1
     //----- reference geo coordinate
     int32_t lat0;
     int32_t lon0;
@@ -849,24 +865,6 @@ void param_update(struct parameters_qgc *params_p,
 
     //update NED origin using API in navigation.h
     set_ref0(&lat0, &lon0, &alt0);
-
-
-    //----- moving windows
-    uint16_t window_alpha;
-    uint16_t window_apparent;
-    uint16_t window_twd;
-
-    param_get(pointers_param_qgc.moving_alpha_window_pointer, &window_alpha);
-    //update window size using API in controller_data.h
-    update_k(window_alpha);
-
-    param_get(pointers_param_qgc.moving_apparent_window_pointer, &window_apparent);
-    //update window size using API in controller_data.h
-    update_k_app(window_apparent);
-
-    param_get(pointers_param_qgc.moving_twd_window_pointer, &window_twd);
-    //update window size using API in controller_data.h
-    update_k_twd(window_twd);
 
     //----- mean wind
     float mean_wind;
@@ -915,7 +913,24 @@ void param_update(struct parameters_qgc *params_p,
     bool use_last_grids = (temp > 0) ? true : false;
     reuse_last_grids(use_last_grids);
 
+    #endif
 
+    //----- moving windows
+    uint16_t window_alpha;
+    uint16_t window_apparent;
+    uint16_t window_twd;
+
+    param_get(pointers_param_qgc.moving_alpha_window_pointer, &window_alpha);
+    //update window size using API in controller_data.h
+    update_k(window_alpha);
+
+    param_get(pointers_param_qgc.moving_apparent_window_pointer, &window_apparent);
+    //update window size using API in controller_data.h
+    update_k_app(window_apparent);
+
+    param_get(pointers_param_qgc.moving_twd_window_pointer, &window_twd);
+    //update window size using API in controller_data.h
+    update_k_twd(window_twd);
 
     //-- param for LQR controller
     float lqr_k1;
@@ -1008,6 +1023,8 @@ void param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param1.rud_cp = rud_cp;
     strs_p->boat_qgc_param1.rud_ci = rud_ci;
     strs_p->boat_qgc_param1.rud_contr_type = rudder_controller_type;
+
+    #if USE_GRID_LINES == 1
     strs_p->boat_qgc_param1.lat0 = lat0;
     strs_p->boat_qgc_param1.lon0 = lon0;
     strs_p->boat_qgc_param1.alt0 = alt0;
@@ -1015,6 +1032,8 @@ void param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param1.lonT = lon_tmark;
     strs_p->boat_qgc_param1.altT = alt_tmark;
     strs_p->boat_qgc_param1.mean_wind_direction_r = mean_wind;
+    #endif
+
     orb_publish(ORB_ID(boat_qgc_param1), pubs_p->boat_qgc_param1, &(strs_p->boat_qgc_param1));
 
     strs_p->boat_qgc_param2.timestamp = hrt_absolute_time();
@@ -1026,6 +1045,7 @@ void param_update(struct parameters_qgc *params_p,
 
     #if SIMULATION_FLAG == 1
 
+    #if USE_GRID_LINES == 1
     //----- simulation coordinates
     int32_t lat_sim;
     int32_t lon_sim;
@@ -1043,6 +1063,7 @@ void param_update(struct parameters_qgc *params_p,
     strs_p->gps_filtered.lat = ((double)lat_sim) / 1e7;
     strs_p->gps_filtered.lon = ((double)lon_sim) / 1e7;
     strs_p->gps_filtered.alt = alt_sim / 1e3;
+    #endif
 
     //cog_sim
     param_get(pointers_param_qgc.cog_sim_pointer, &(params_p->cog_sim));

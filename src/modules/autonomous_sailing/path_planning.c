@@ -287,9 +287,12 @@ void boat_should_tack(int32_t tack_now){
 /**
  * Based on a new global position estimate, see if there is a new reference action to perform.
  *
- * Convert the global position coordinate in a coordinate in Race frame.
+ * If we are using the grid lines to specify where a boat should tack:
+ * convert the global position coordinate in a coordinate in Race frame.
  * Check if we've passed a grid line, if so, see which is the next reference action
  * to pass to guidance_module.
+ *
+ * In any case, look if the user told us to tack from QGC.
  *
  * @param ref_act_p     pointer to struct which will contain next reference action to perform
  * @param strs_p        pointer to struct with data
@@ -298,9 +301,11 @@ void path_planning(struct reference_actions_s *ref_act_p,
                    struct structs_topics_s *strs_p){
 
     struct local_position_race_s local_pos;
-
+    #if USE_GRID_LINES == 1
     //convert geodedical coordinate into Race frame coordinate
     navigation_module(strs_p, &local_pos);
+
+    #endif
 
     //check if we are using grid lines to tell the boat where to tack
     //if the next grid line to reach is valid
@@ -349,9 +354,11 @@ void path_planning(struct reference_actions_s *ref_act_p,
     memcpy(ref_act_p, &ref_act, sizeof(ref_act));
 
     //save second debug values for post-processing, other values set in guidance_module()
+    #if USE_GRID_LINES == 1
     strs_p->boat_guidance_debug.next_grid_line = current_grid_goal_x_m;
     strs_p->boat_guidance_debug.x_race = local_pos.x_race_m;
     strs_p->boat_guidance_debug.y_race = local_pos.y_race_m;
+    #endif
     strs_p->boat_guidance_debug.alpha_star = ref_act_p->alpha_star;
     strs_p->boat_guidance_debug.should_tack = (ref_act_p->should_tack == true) ? 1 : 0;
 
