@@ -65,7 +65,7 @@
 
 #define LQR_MODEL_TS  (uint64_t) 10612 ///LQR model sampling time, in microseconds
 #define MPC_MODEL_TS  (uint64_t) 106123 ///MPC model sampling time, in microseconds
-#define SAFETY_TIME_STOP_TCK (uint64_t) 5000000 ///safety time to stop a tack after first entrance in the band
+#define SAFETY_TIME_STOP_TCK (uint64_t) 15000000 ///Max time for completing a tack
 
 #define SAFETY_DELTA 0.08f ///value for delta in emergency case
 

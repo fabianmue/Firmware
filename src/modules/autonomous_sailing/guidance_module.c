@@ -150,17 +150,21 @@ static struct {
     float delta_values[3]; ///delta values to specify the band around the origin
     uint64_t min_time_in_band_us; ///min microseconds the system should be in the band to complete tacking
     uint64_t last_time_in_band_us;///last time (in this tack) the systm was detected into the band
-    uint64_t first_time_in_band_us;///first time (in this tack) the systm was detected into the band
-    bool first_time_valid; ///true if first_time_in_band_us is valid
+    uint64_t time_started_tack_us;///first time (in this tack) the systm was detected into the band
+    bool time_started_valid; ///true if time_started_tack_us is valid
     bool last_time_valid; ///true if last_time_in_band_us is valid
 } optimal_control_data =    {
                                 .rudder_latest = 0.0f,
                                 .time_last_mpc = (uint64_t) 0,
                                 .time_last_lqr = (uint64_t) 0,
                                 .min_time_in_band_us = (uint64_t) 500000,//0.5 sec
-                                .first_time_valid = false,//first_time_in_band_us not valid now
+                                .time_started_valid = false,//time_started_tack_us not valid now
                                 .last_time_valid = false //last_time_in_band_us not valid now
                             };
+
+// errors legend in is_tack_completed()
+#define EVERYTHING_OK 0
+#define FORCED_TACK_STOP 1 //tack had to be stopped for safety reason
 
 /** @brief PI controller with conditional integration*/
 float pi_controller(const float *ref_p, const float *meas_p);
@@ -170,8 +174,8 @@ void tack_action(struct reference_actions_s *ref_act_p,
                  float *p_rudder_cmd, float *p_sails_cmd,
                  struct structs_topics_s *strs_p);
 
-/** @brief determine if the tack maneuver is finished*/
-bool is_tack_completed(struct reference_actions_s *ref_act_p);
+/** @brief determine if the tack maneuver is completed*/
+bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p);
 
 /** @brief rule based control system for sails during upwind sailing*/
 float sail_controller(float alpha);
@@ -199,7 +203,7 @@ void helmsman_tack(struct reference_actions_s *ref_act_p,
                    float *p_rudder_cmd, float *p_sails_cmd);
 
 /** @brief action to perform when tack maneuver is completed*/
-void tack_completed(struct reference_actions_s *ref_act_p);
+void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code);
 
 /** @brief control rudder using LQR controller*/
 void lqr_control_rudder(float *p_rudder_cmd,
@@ -452,10 +456,11 @@ void tack_action(struct reference_actions_s *ref_act_p,
     //check if we've already started tacking, or if this is the first time
     if(tack_data.boat_is_tacking){
         //we have already started the tack maneuver, check if it's completed
-        if(is_tack_completed(ref_act_p)){
+        int8_t error_code;
+        if(is_tack_completed(ref_act_p, &error_code)){
 
             //we have just completed the tack maneuver
-            tack_completed(ref_act_p);
+            tack_completed(ref_act_p, error_code);
             /* return to guidance guidance_module function so the controller for keeping
              * the new haul can start working
             */
@@ -474,6 +479,12 @@ void tack_action(struct reference_actions_s *ref_act_p,
          * changed it, was < (>) 0.
          */
          tack_data.sailing_at_port_haul = (-ref_act_p->alpha_star < 0) ? true : false;
+
+         //if we are using either LQR or MPC, save the time when we start tacking
+         if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC){
+             optimal_control_data.time_started_tack_us = hrt_absolute_time();
+             optimal_control_data.time_started_valid = true;
+         }
     }
 
     /*we are here beacuse ref_act_p->should_tack is true, so boat should tack.
@@ -498,8 +509,8 @@ void tack_action(struct reference_actions_s *ref_act_p,
          * completed the tack maneuver and we want the rudder controller and the
          * sails controller to take care of tracking the new alpha_star set by path_planning.
         */
-
-        tack_completed(ref_act_p);
+        //no error can be happened, use erro_code = EVERYTHING_OK
+        tack_completed(ref_act_p, EVERYTHING_OK);
     }
     else if(tack_data.tack_type == TACK_LQR){
         //LQR controller
@@ -553,8 +564,11 @@ void helmsman_tack(struct reference_actions_s *ref_act_p,
 
 /**
  * Common action to perform when tack maneuver is completed.
+ *
+ * @param pointer to struct containing reference actions
+ * @param error_code error code if something went wrong
 */
-void tack_completed(struct reference_actions_s *ref_act_p){
+void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code){
     //we have just completed the tack maneuver
 
     /* Set should_tack to false so normal controllers
@@ -566,8 +580,19 @@ void tack_completed(struct reference_actions_s *ref_act_p){
     //notify to path_planning that we've completed the tack action
     notify_tack_completed();
 
-    //notify to QGroundControl that we've completed the tack action
-    sprintf(txt_msg, "Tack completed.");
+    //check error_code to give a feedback to QGroundControl
+    if(error_code == EVERYTHING_OK){
+        //notify to QGC that we've completed the tack action
+        sprintf(txt_msg, "Tack completed.");
+    }
+    else if(error_code == FORCED_TACK_STOP){
+        //notify to QGC that we had to force stopping the tack
+        sprintf(txt_msg, "Tack forced to be completed.");
+    }
+    else
+        sprintf(txt_msg, "Error: check error_code in guidance_module");
+
+    //send message
     send_log_info(txt_msg);
 }
 
@@ -585,12 +610,18 @@ void tack_completed(struct reference_actions_s *ref_act_p){
  * x[i], i = 0,1,2, computed by @see compute_state_extended_model(), is in the range
  * [ -optimal_control_data.delta_values[i], optimal_control_data.delta_values[i] ]
  * for at least optimal_control_data.min_time_in_band_us micro seconds.
+ * For safety reason, the tack will be considered completed if the time elapsead since the
+ * starting of the maneuver is greater or equal to SAFETY_TIME_STOP_TCK constant; even
+ * if the system is not in the band.
+ *
+ * @param error_p <-- 0 if everything is fine, error code otherwise
  *
  * @return true if the tack maneuver can be considered completed, false otherwise.
  */
-bool is_tack_completed(struct reference_actions_s *ref_act_p){
+bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
 
-    bool completed = false;
+    bool completed = false;//initial guess
+    *error_p = EVERYTHING_OK; // let's hope we will not have any error
 
     //if we are using either helmsman0 or helmsman1, use alpha_min_stop_tack_r parameter
     if(tack_data.tack_type == TACK_HELM0 || tack_data.tack_type == TACK_HELM1){
@@ -631,11 +662,6 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p){
                 //This is the first time the state (re)entered in the band near the origin
                 optimal_control_data.last_time_in_band_us = hrt_absolute_time();
                 optimal_control_data.last_time_valid = true;
-                //if this is the very first time we are in the band, update first_time
-                if(optimal_control_data.first_time_valid == false){
-                    optimal_control_data.first_time_in_band_us = hrt_absolute_time();
-                    optimal_control_data.first_time_valid = true;
-                }
             }
             else{
                 //the system was already in the band near the origin
@@ -646,26 +672,25 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p){
 
                     //the tack can be considered completed
                     completed = true;
-                    //set last_time_valid and first_time_valid to false
+                    //set last_time_valid and time_started_valid to false
                     optimal_control_data.last_time_valid = false;
-                    optimal_control_data.first_time_valid = false;
+                    optimal_control_data.time_started_valid = false;
                 }
             }
         }
-        /*perfrom anyway (if we've entered the band at leastonce) safety check
-         * if we have to force stopping tack
-         */
-        if(optimal_control_data.first_time_valid == true){
-            //we have already entered the band for at least one time.
-            //use first_time_in_band_us to check if we have to force stopping the tack for safety reason
+        //perfrom anyway safety check to see if we have to force stopping tack
+        if(optimal_control_data.time_started_valid == true){
+            //we have already started the tack in the past
+            //use time_started_tack_us to check if we have to force stopping the tack for safety reason
             uint64_t now_us = hrt_absolute_time();
-            if((now_us - optimal_control_data.first_time_in_band_us) >= SAFETY_TIME_STOP_TCK){
-
-                //the tack MUST be considered completed
+            if((now_us - optimal_control_data.time_started_tack_us) >= SAFETY_TIME_STOP_TCK){
+                //the tack MUST be forced to be finished
                 completed = true;
-                //set last_time_valid and first_time_valid to false
+                //signal this updating error_p
+                *error_p = FORCED_TACK_STOP;
+                //set last_time_valid and time_started_valid to false
                 optimal_control_data.last_time_valid = false;
-                optimal_control_data.first_time_valid = false;
+                optimal_control_data.time_started_valid = false;
             }
         }
     }
@@ -1244,10 +1269,13 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     mpc_control_rudder(&rudder_command, ref_act_p, strs_p);
     #endif
 
-
     //saturation for safety reason
     rudder_command = rudder_saturation(rudder_command);
     sail_command = sail_saturation(sail_command);
+
+    #if SIMULATION_FLAG == 1
+    rudder_command = param_qgc_p->deva1;
+    #endif
 
     //update actuator value
     strs_p->actuators.control[0] = rudder_command;
