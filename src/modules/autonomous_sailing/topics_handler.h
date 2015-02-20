@@ -15,6 +15,7 @@
 #include <uORB/topics/boat_opt_status.h>
 #include <uORB/topics/boat_qgc_param.h>
 #include <uORB/topics/boat_optimal_control.h>
+#include <uORB/topics/rc_channels.h>
 
 //only for debug on qcg
 #include <uORB/topics/airspeed.h>
@@ -26,6 +27,7 @@ struct subscribtion_fd_s{
     int parameter_update;
     int att;
     int boat_weather_station;
+    int rc_channels;
 };
 
 struct published_fd_s{
@@ -48,7 +50,7 @@ struct structs_topics_s{
    struct boat_guidance_debug_s boat_guidance_debug;
    struct parameter_update_s update;
    struct vehicle_attitude_s att;
-   //struct boat_weather_station_s boat_weather_station;
+   struct rc_channels_s rc_channels;
    struct boat_opt_status_s boat_opt_status;
    struct boat_qgc_param1_s boat_qgc_param1;
    struct boat_qgc_param2_s boat_qgc_param2;

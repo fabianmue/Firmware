@@ -222,8 +222,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
             { .fd = subs.gps_filtered,              .events = POLLIN },
             { .fd = subs.wind_sailing,              .events = POLLIN },
             { .fd = subs.parameter_update,          .events = POLLIN },
-            { .fd = subs.att,                       .events = POLLIN }//,
-            //{ .fd = subs.boat_weather_station,      .events = POLLIN }
+            { .fd = subs.att,                       .events = POLLIN },
+            { .fd = subs.rc_channels,               .events = POLLIN }
     };
 
     thread_running = true;
@@ -300,10 +300,10 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     //update_r_ned_body(strs.att.R, strs.att.R_valid);
                     #endif
                 }
-                /*if(fds[5].revents & POLLIN){
-                    // boat_weather_station updated
-                    orb_copy(ORB_ID(boat_weather_station), subs.boat_weather_station, &(strs.boat_weather_station));
-                }*/
+                if(fds[5].revents & POLLIN){
+                    // commands from remote control
+                    orb_copy(ORB_ID(rc_channels), subs.rc_channels, &(strs.rc_channels));
+                }
             }
         }
 
@@ -330,7 +330,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
         //publish out commands
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
 
-        //publish debug value for post-processing
+        //publish usefull data for post processisng
         orb_publish(ORB_ID(boat_guidance_debug), pubs.boat_guidance_debug_pub, &(strs.boat_guidance_debug));
 
         //publish optimal control status if updated
@@ -373,7 +373,7 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     subs_p->wind_sailing = orb_subscribe(ORB_ID(wind_sailing));
     subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
     subs_p->att = orb_subscribe(ORB_ID(vehicle_attitude));
-    //subs_p->boat_weather_station = orb_subscribe(ORB_ID(boat_weather_station));
+    subs_p->rc_channels = orb_subscribe(ORB_ID(rc_channels));
 
     if(subs_p->gps_raw == -1){
         warnx(" error on subscribing on vehicle_gps_position Topic \n");
@@ -400,10 +400,10 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
         return false;
     }
 
-    /*if(subs_p->boat_weather_station == -1){
-        warnx(" error on subscribing on boat_weather_station Topic \n");
+    if(subs_p->rc_channels == -1){
+        warnx(" error on subscribing on rc_channels Topic \n");
         return false;
-    }*/
+    }
 
     warnx(" subscribed to all topics \n");
 

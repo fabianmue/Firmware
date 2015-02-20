@@ -1232,53 +1232,74 @@ float sail_saturation(float command){
     return command;
 }
 
-/** Implement reference actions provided by optimal path planning*/
+/**
+ * Main function to control the boat while sailing.
+ *
+ * If the remote control is in the manual mode, just copy the rudder and
+ * sail commands. In this way they will be shown in QGC and logged in the sdCard.
+ * If the autonomous mode is selected, call autonomous sailing controllers.
+*/
 void guidance_module(struct reference_actions_s *ref_act_p,
                      const struct parameters_qgc *param_qgc_p,
                      struct structs_topics_s *strs_p){
 
-    float alpha;//angle with respect to the wind
     float rudder_command = 0.0f;
     float sail_command = 0.0f;
 
-    //get alpha from the moving average value of the last k values of instant alpha
-    alpha = get_alpha_dumas();
-
-    //check if path_planning() told us to tack
-    if(ref_act_p->should_tack){
-        //perform tack maneuver
-        tack_action(ref_act_p, &rudder_command, &sail_command, strs_p);
+    //check if we are in the manual mode
+    if(strs_p->rc_channels.channels[RC_MODE_INDEX] == RC_MANUAL_MODE){
+        //read rudder and sails command from RC and save them
+        rudder_command = strs_p->rc_channels.channels[RC_RUD_INDEX];
+        sail_command = strs_p->rc_channels.channels[RC_SAIL_INDEX];
     }
-    if(!(ref_act_p->should_tack)){
-        //if the boat should not tack, compute rudder and sails actions to follow reference alpha
-        if(rudder_controller_data.rudder_controller_type < 2){
-            //PI controller for rudder
-            rudder_command = pi_controller(&(ref_act_p->alpha_star), &alpha);
+    else{
+        //Autonomous mode
+
+        float alpha;//angle with respect to the wind
+        //get alpha from the moving average value of the last k values of instant alpha
+        alpha = get_alpha_dumas();
+
+        //check if path_planning() told us to tack
+        if(ref_act_p->should_tack){
+            //perform tack maneuver
+            tack_action(ref_act_p, &rudder_command, &sail_command, strs_p);
         }
-        else{
-            //LQR controller
-            lqr_control_rudder(&rudder_command, ref_act_p, strs_p);
+        if(!(ref_act_p->should_tack)){
+            //if the boat should not tack, compute rudder and sails actions to follow reference alpha
+            if(rudder_controller_data.rudder_controller_type < 2){
+                //PI controller for rudder
+                rudder_command = pi_controller(&(ref_act_p->alpha_star), &alpha);
+            }
+            else{
+                //LQR controller
+                lqr_control_rudder(&rudder_command, ref_act_p, strs_p);
+            }
+
+            //sails control only if AS_SAIL param from QGC is negative
+            if(param_qgc_p->sail_servo < 0.0f)
+                sail_command = sail_controller(alpha);
+            else
+                sail_command = param_qgc_p->sail_servo;
         }
 
-        //sails control only if AS_SAIL param from QGC is negative
-        if(param_qgc_p->sail_servo < 0.0f)
-            sail_command = sail_controller(alpha);
-        else
-            sail_command = param_qgc_p->sail_servo;
+
+        #if TEST_MPC == 1
+        mpc_control_rudder(&rudder_command, ref_act_p, strs_p);
+        #endif
+
+        //saturation for safety reason
+        rudder_command = rudder_saturation(rudder_command);
+        sail_command = sail_saturation(sail_command);
+
+        #if SIMULATION_FLAG == 1
+        //rudder_command = param_qgc_p->deva1;
+        #endif
+
+        //save value for post processing
+        strs_p->boat_guidance_debug.alpha = alpha;
+        strs_p->boat_guidance_debug.twd_mean = get_twd_sns();
+        strs_p->boat_guidance_debug.app_mean = get_app_wind_sns();
     }
-
-
-    #if TEST_MPC == 1
-    mpc_control_rudder(&rudder_command, ref_act_p, strs_p);
-    #endif
-
-    //saturation for safety reason
-    rudder_command = rudder_saturation(rudder_command);
-    sail_command = sail_saturation(sail_command);
-
-    #if SIMULATION_FLAG == 1
-    //rudder_command = param_qgc_p->deva1;
-    #endif
 
     //update actuator value
     strs_p->actuators.control[0] = rudder_command;
@@ -1289,11 +1310,8 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 
     //save first debug values for post-processing, other values set in path_planning()
     strs_p->boat_guidance_debug.timestamp = hrt_absolute_time();
-    strs_p->boat_guidance_debug.alpha = alpha;
     strs_p->boat_guidance_debug.rudder_action = rudder_command;
     strs_p->boat_guidance_debug.sail_action = sail_command;
-    strs_p->boat_guidance_debug.twd_mean = get_twd_sns();
-    strs_p->boat_guidance_debug.app_mean = get_app_wind_sns();
 
     #if SIMULATION_FLAG == 1
     //strs_p->airspeed.true_airspeed_m_s = ref_act_p->alpha_star - get_alpha_dumas();

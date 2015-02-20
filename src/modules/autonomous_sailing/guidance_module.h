@@ -67,6 +67,11 @@
 #define MPC_MODEL_TS  (uint64_t) 106123 ///MPC model sampling time, in microseconds
 #define MIN_SAFETY_TIME_STOP_TCK (uint64_t) 4000000 ///Min value for safety_time_stop_tack
 
+#define RC_RUD_INDEX 0              ///index of the rudder command in rc_channels struct
+#define RC_SAIL_INDEX 2             ///index of the sails command in rc_channels struct
+#define RC_MODE_INDEX 4             ///index of the type of mode in rc_channels struct
+#define RC_MANUAL_MODE -1.0f        ///Rc_Ch4 == RC_MANUAL_MODE if manual mode selected
+#define RC_AUTONOMOUS_MODE 1.0f     ///Rc_Ch4 == RC_AUTONOMOUS_MODE if autonomous mode selected
 
 /** @brief Implement next control action*/
 void guidance_module(struct reference_actions_s *ref_act_p,
