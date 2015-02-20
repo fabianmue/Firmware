@@ -65,7 +65,7 @@
 
 #define LQR_MODEL_TS  (uint64_t) 10612 ///LQR model sampling time, in microseconds
 #define MPC_MODEL_TS  (uint64_t) 106123 ///MPC model sampling time, in microseconds
-#define SAFETY_TIME_STOP_TCK (uint64_t) 15000000 ///Max time for completing a tack
+#define MIN_SAFETY_TIME_STOP_TCK (uint64_t) 4000000 ///Min value for safety_time_stop_tack
 
 #define SAFETY_DELTA 0.08f ///value for delta in emergency case
 
@@ -93,7 +93,7 @@ void set_lqr_gain(float lqr_k1, float lqr_k2, float lqr_k3);
 /** @brief set MPC cost function, lower and upper bound */
 void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3]);
 
-/** @brief set data to specify the band around the origin in which the system should go */
-void set_band_data(float* delta, float min_time_s);
+/** @brief set data to specify when 'optimal' tack is completed*/
+void set_band_data(float* delta, float min_time_s, float safety_time_stop_tack_s);
 
 #endif //GUIDANCE_MODULE_H

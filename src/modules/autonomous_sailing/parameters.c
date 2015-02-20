@@ -474,6 +474,15 @@ PARAM_DEFINE_FLOAT(ASO_DLT_RD_CM, 0.15f);
 */
 PARAM_DEFINE_FLOAT(ASO_STP_TCK_S, 0.8f);
 
+/**
+ * If the time elapsed since the starting of a tack is greater
+ * or equal than ASO_SFT_STP_S, the tack is forced to be considered
+ * completed.
+ *
+ * @min 0
+*/
+PARAM_DEFINE_FLOAT(ASO_SFT_STP_S, 8.0f);
+
 #if SIMULATION_FLAG == 1
 
 //---------------------------------------- Simulation variables --------------------
@@ -626,7 +635,7 @@ static struct pointers_param_qgc_s{
 
     param_t min_time_in_band_poniter; /**< pointer to ASO_STP_TCK_S*/
 
-
+    param_t safety_stop_tack_pointer ; /**< pointer to ASO_SFT_STP_S */
     //---cog delay
     param_t cog_max_delay_pointer;/**< pointer to param AS_COG_DELAY_S*/
 
@@ -740,6 +749,7 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.delta_rudder_pointer = param_find("ASO_DLT_RD_CM");
 
     pointers_param_qgc.min_time_in_band_poniter = param_find("ASO_STP_TCK_S");
+    pointers_param_qgc.safety_stop_tack_pointer = param_find("ASO_SFT_STP_S");
 
     //----cog delay
     pointers_param_qgc.cog_max_delay_pointer = param_find("AS_COG_DELAY_S");
@@ -977,6 +987,7 @@ void param_update(struct parameters_qgc *params_p,
     //--- define band around origin
     float delta_vect[3];
     float min_time_in_band;
+    float safety_time_stop_s;
 
     param_get(pointers_param_qgc.delta_yaw_rate_pointer, &delta_vect[0]);
     param_get(pointers_param_qgc.delta_yaw_pointer, &delta_vect[1]);
@@ -987,8 +998,9 @@ void param_update(struct parameters_qgc *params_p,
         delta_vect[i] = delta_vect[i] * deg2rad;
 
     param_get(pointers_param_qgc.min_time_in_band_poniter, &min_time_in_band);
+    param_get(pointers_param_qgc.safety_stop_tack_pointer, &safety_time_stop_s);
 
-    set_band_data(delta_vect, min_time_in_band);
+    set_band_data(delta_vect, min_time_in_band, safety_time_stop_s);
 
     //--- cog delay
     float cog_max_delay_sec;

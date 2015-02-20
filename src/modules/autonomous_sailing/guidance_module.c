@@ -153,13 +153,15 @@ static struct {
     uint64_t time_started_tack_us;///first time (in this tack) the systm was detected into the band
     bool time_started_valid; ///true if time_started_tack_us is valid
     bool last_time_valid; ///true if last_time_in_band_us is valid
+    uint64_t safety_time_stop_tack; ///Max time for completing a tack
 } optimal_control_data =    {
                                 .rudder_latest = 0.0f,
                                 .time_last_mpc = (uint64_t) 0,
                                 .time_last_lqr = (uint64_t) 0,
                                 .min_time_in_band_us = (uint64_t) 500000,//0.5 sec
                                 .time_started_valid = false,//time_started_tack_us not valid now
-                                .last_time_valid = false //last_time_in_band_us not valid now
+                                .last_time_valid = false, //last_time_in_band_us not valid now
+                                .safety_time_stop_tack = MIN_SAFETY_TIME_STOP_TCK
                             };
 
 // errors legend in is_tack_completed()
@@ -683,7 +685,7 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
             //we have already started the tack in the past
             //use time_started_tack_us to check if we have to force stopping the tack for safety reason
             uint64_t now_us = hrt_absolute_time();
-            if((now_us - optimal_control_data.time_started_tack_us) >= SAFETY_TIME_STOP_TCK){
+            if((now_us - optimal_control_data.time_started_tack_us) >= optimal_control_data.safety_time_stop_tack){
                 //the tack MUST be forced to be finished
                 completed = true;
                 //signal this updating error_p
@@ -1146,8 +1148,9 @@ void compute_minusAExt_times_x0(float *minusAExt_times_x0){
  *
  * @param delta      vetor with three values, delta for yawRate, yaw and rudder, positive values in rads.
  * @param min_time_s minimum time the system should be in the band to consider the tack completed.
+ * @param safety_time_stop_tack_s  max time after that a tack mst be forced to be considered completed
 */
-void set_band_data(float *delta, float min_time_s){
+void set_band_data(float *delta, float min_time_s, float safety_time_stop_tack_s){
 
     float tmp;
 
@@ -1162,10 +1165,19 @@ void set_band_data(float *delta, float min_time_s){
 
         optimal_control_data.delta_values[i] = tmp;
     }
-
+    //save mint_time
     min_time_s = (min_time_s > 0.0f) ? min_time_s : -min_time_s;
     //convert min_time_s in microsecond and save it
     optimal_control_data.min_time_in_band_us = (uint64_t)((double)min_time_s * 1e6);
+
+    //save max_time
+    safety_time_stop_tack_s = (safety_time_stop_tack_s > 0.0f) ? safety_time_stop_tack_s : -safety_time_stop_tack_s;
+    //convert max_time in microsecond and save it
+    optimal_control_data.safety_time_stop_tack = (uint64_t)((double)safety_time_stop_tack_s * 1e6);
+    //safety_time_stop_tack must be >= MIN_SAFETY_TIME_STOP_TCK
+    if(optimal_control_data.safety_time_stop_tack < MIN_SAFETY_TIME_STOP_TCK)
+        optimal_control_data.safety_time_stop_tack = MIN_SAFETY_TIME_STOP_TCK;
+
 }
 
 /**
