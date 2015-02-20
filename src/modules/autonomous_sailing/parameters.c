@@ -259,8 +259,7 @@ PARAM_DEFINE_INT32(AS_WIN_APP, 10);
  */
 PARAM_DEFINE_INT32(AS_WIN_TWD, 10);
 
-//------------------------- grid lines parameters
-#if USE_GRID_LINES == 1
+
 
 /**
  * Latitude of origin of NED system, in degrees * E7.
@@ -326,6 +325,9 @@ PARAM_DEFINE_INT32(AS_T_LON_E7, 85547940);
  * @max ?
  */
 PARAM_DEFINE_INT32(AS_T_ALT_E3, 406000);
+
+//------------------------- grid lines parameters
+#if USE_GRID_LINES == 1
 
 /**
  * Total numbers of grid lines
@@ -582,8 +584,6 @@ static struct pointers_param_qgc_s{
     param_t moving_apparent_window_pointer;/**< pointer to param AS_WIN_APP*/
     param_t moving_twd_window_pointer;/**< pointer to param AS_WIN_TWD*/
 
-    // --- grid lines system parameters
-    #if USE_GRID_LINES == 1
     param_t lat0_pointer;         /**< pointer to param AS_R_LAT0_E7*/
     param_t lon0_pointer;         /**< pointer to param AS_R_LON0_E7*/
     param_t alt0_pointer;         /**< pointer to param AS_R_ALT0_E3*/
@@ -594,6 +594,8 @@ static struct pointers_param_qgc_s{
     param_t lon_tmark_pointer;         /**< pointer to param AS_T_LON_E7*/
     param_t alt_tmark_pointer;         /**< pointer to param AS_T_ALT_E3*/
 
+    // --- grid lines system parameters
+    #if USE_GRID_LINES == 1
     param_t grids_number_pointer;         /**< pointer to param AS_P_TOT_G*/
     param_t grid_x_pointer;         /**< pointer to param AS_P_X_M*/
     param_t grid_add_pointer;         /**< pointer to param AS_P_ADD*/
@@ -695,7 +697,6 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.moving_apparent_window_pointer = param_find("AS_WIN_APP");
     pointers_param_qgc.moving_twd_window_pointer = param_find("AS_WIN_TWD");
 
-    #if USE_GRID_LINES == 1
     pointers_param_qgc.lat0_pointer    = param_find("AS_R_LAT0_E7");
     pointers_param_qgc.lon0_pointer    = param_find("AS_R_LON0_E7");
     pointers_param_qgc.alt0_pointer    = param_find("AS_R_ALT0_E3");
@@ -706,6 +707,8 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.lon_tmark_pointer    = param_find("AS_T_LON_E7");
     pointers_param_qgc.alt_tmark_pointer    = param_find("AS_T_ALT_E3");
 
+    // --- grid lines system parameters
+    #if USE_GRID_LINES == 1
     pointers_param_qgc.grids_number_pointer    = param_find("AS_P_TOT_G");
     pointers_param_qgc.grid_x_pointer    = param_find("AS_P_X_M");
 
@@ -859,7 +862,6 @@ void param_update(struct parameters_qgc *params_p,
 
     set_sail_data(sail_closed_cmd, alpha_sail_closed_r, alpha_sail_opened_r);
 
-    #if USE_GRID_LINES == 1
     //----- reference geo coordinate
     int32_t lat0;
     int32_t lon0;
@@ -900,6 +902,8 @@ void param_update(struct parameters_qgc *params_p,
     //set top mark position
     set_pos_top_mark(&lat_tmark, &lon_tmark, &alt_tmark);
 
+    // --- grid lines system parameters
+    #if USE_GRID_LINES == 1
     //----- number of grids
     int32_t grids_number;
     float grids_x_m;
@@ -1036,7 +1040,6 @@ void param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param1.rud_ci = rud_ci;
     strs_p->boat_qgc_param1.rud_contr_type = rudder_controller_type;
 
-    #if USE_GRID_LINES == 1
     strs_p->boat_qgc_param1.lat0 = lat0;
     strs_p->boat_qgc_param1.lon0 = lon0;
     strs_p->boat_qgc_param1.alt0 = alt0;
@@ -1044,7 +1047,6 @@ void param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param1.lonT = lon_tmark;
     strs_p->boat_qgc_param1.altT = alt_tmark;
     strs_p->boat_qgc_param1.mean_wind_direction_r = mean_wind;
-    #endif
 
     orb_publish(ORB_ID(boat_qgc_param1), pubs_p->boat_qgc_param1, &(strs_p->boat_qgc_param1));
 
