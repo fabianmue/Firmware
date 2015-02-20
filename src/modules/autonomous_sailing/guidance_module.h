@@ -67,8 +67,6 @@
 #define MPC_MODEL_TS  (uint64_t) 106123 ///MPC model sampling time, in microseconds
 #define MIN_SAFETY_TIME_STOP_TCK (uint64_t) 4000000 ///Min value for safety_time_stop_tack
 
-#define SAFETY_DELTA 0.08f ///value for delta in emergency case
-
 
 /** @brief Implement next control action*/
 void guidance_module(struct reference_actions_s *ref_act_p,

@@ -1152,18 +1152,9 @@ void compute_minusAExt_times_x0(float *minusAExt_times_x0){
 */
 void set_band_data(float *delta, float min_time_s, float safety_time_stop_tack_s){
 
-    float tmp;
-
     //save delta and make sure every value is positive
     for(uint8_t i = 0; i < 3; i++){
-        if(delta[i] > 0)
-            tmp = delta[i];
-        else if(delta[i] == 0)
-            tmp = SAFETY_DELTA;
-        else
-            tmp = -delta[i];
-
-        optimal_control_data.delta_values[i] = tmp;
+        optimal_control_data.delta_values[i] = (delta[i] > 0.0f) ? delta[i] : -delta[i];
     }
     //save mint_time
     min_time_s = (min_time_s > 0.0f) ? min_time_s : -min_time_s;

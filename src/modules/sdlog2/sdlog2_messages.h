@@ -489,6 +489,9 @@ struct log_QGC2_s{
     uint16_t window_apparent;
     uint16_t window_twd;
     uint16_t type_of_tack;
+    float delta1;
+    float delta2;
+    float delta3;
 };
 
 /* --- BOAT OPTIMAL CONTROL MATRICES ----------------------------------------*/
@@ -580,7 +583,7 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(OPTS, "ffffiiffffff", "X1,X2,X3,RudStr,TypeCtr,It,SolT,ResEq,Pob,Dob,Dga,Rdga"), //Added by Marco Tranzatto
     LOG_FORMAT(BGUD, "fffffffBff", "AlphaStar,Alpha,Rudder,Sail,NextGrid,XRace,YRace,ShldTck,TwdAvg,AppAvg"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC1, "fffffBLLfLLff", "P,I,Kaw,Cp,Ci,RudType,Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
-    LOG_FORMAT(QGC2, "HHHH", "WinAlp,WinApp,WinTWD,TypTck"), //Added by Marco Tranzatto
+    LOG_FORMAT(QGC2, "HHHHfff", "WinAlp,WinApp,WinTWD,TypTck,D1,D2,D3"), //Added by Marco Tranzatto
     LOG_FORMAT(OPTM, "fffffffffff", "K1,K2,K3,H1,H2,H3,H4,Lb1,Lb2,Ub1,Ub2"), //Added by Marco Tranzatto
     /* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */

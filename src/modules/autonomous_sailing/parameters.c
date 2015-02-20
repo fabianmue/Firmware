@@ -997,8 +997,8 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.delta_yaw_pointer, &delta_vect[1]);
     param_get(pointers_param_qgc.delta_rudder_pointer, &delta_vect[2]);
 
-    //convert delta values from deg to rad
-    for(uint8_t i = 0; i < 3; i++)
+    //convert delta0 and delta1 values from deg to rad
+    for(uint8_t i = 0; i < 2; i++)
         delta_vect[i] = delta_vect[i] * deg2rad;
 
     param_get(pointers_param_qgc.min_time_in_band_poniter, &min_time_in_band);
@@ -1055,6 +1055,9 @@ void param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param2.window_apparent = window_apparent;
     strs_p->boat_qgc_param2.window_twd = window_twd;
     strs_p->boat_qgc_param2.type_of_tack = (uint16_t)tack_type;
+    strs_p->boat_qgc_param2.delta1 = delta_vect[0];
+    strs_p->boat_qgc_param2.delta2 = delta_vect[1];
+    strs_p->boat_qgc_param2.delta3 = delta_vect[2];
     orb_publish(ORB_ID(boat_qgc_param2), pubs_p->boat_qgc_param2, &(strs_p->boat_qgc_param2));
 
     #if SIMULATION_FLAG == 1
