@@ -37,7 +37,8 @@ struct published_fd_s{
     orb_advert_t boat_qgc_param1;
     orb_advert_t boat_qgc_param2;
     orb_advert_t boat_opt_mat;
-    //orb_advert_t boat_opt_ctr;
+
+    orb_advert_t boat_qgc_param3;
     //only for debug on qGC
     orb_advert_t airspeed;
 };
@@ -59,6 +60,8 @@ struct structs_topics_s{
 
    //bool boat_opt_control_updated;
    bool boat_opt_status_updated;
+
+   struct boat_qgc_param3_s boat_qgc_param3;
 
    //only for debug on qGC
    struct airspeed_s airspeed;

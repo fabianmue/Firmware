@@ -419,7 +419,7 @@ struct log_WSAI_s{
 };
 
 /* --- BOAT WEATHER STATION MEASUREMNTS ------------------------------------------- */
-#define LOG_BWES_MSG 56
+/*#define LOG_BWES_MSG 56
 struct log_BWES_s{
     float acc_x_g;
     float acc_y_g;
@@ -430,7 +430,7 @@ struct log_BWES_s{
     float roll_rate_r_s;
     float pitch_rate_r_s;
     float yaw_rate_r_s;
-};
+};*/
 
 /* --- BoOAT OPTIMAL CONTROL STATUS ------------------------------------------------*/
 #define LOG_OPTS_MSG 57
@@ -510,7 +510,21 @@ struct log_OPTM_s{
     float mpc_ub2;
 };
 
-
+/* --- BOAT PARAM3 FROM QGC -------------------------------------------------*/
+#define LOG_QGC3_MSG 62
+struct log_QGC3_s{
+    int32_t lqr_sampl_time_us;
+    int32_t mpc_sampl_time_us;
+    float mpc_a11;
+    float mpc_a12;
+    float mpc_a21;
+    float mpc_a22;
+    float mpc_b1;
+    float mpc_b2;
+    uint16_t window_alpha_tack;
+    uint16_t window_twd_tack;
+    uint16_t pred_horizon_steps;
+};
 
 //********************** End add *******************************
 
@@ -579,12 +593,13 @@ static const struct log_format_s log_formats[] = {
 	LOG_FORMAT(TECS, "fffffffffffffB",	"ASP,AF,FSP,F,FF,AsSP,AsF,AsDSP,AsD,TERSP,TER,EDRSP,EDR,M"),
 	LOG_FORMAT(WIND, "ffff",	"X,Y,CovX,CovY"),
     LOG_FORMAT(WSAI, "ffff", "AngleApparent,SpeedApparent,AngleTrue,SpeedTrue"), //Added by Marco Tranzatto
-    LOG_FORMAT(BWES, "fffffffff", "AccX,AccY,AccZ,Roll,Pitch,Heading,RollRate,PitchRate,YawRate"), //Added by Marco Tranzatto
+    //LOG_FORMAT(BWES, "fffffffff", "AccX,AccY,AccZ,Roll,Pitch,Heading,RollRate,PitchRate,YawRate"), //Added by Marco Tranzatto
     LOG_FORMAT(OPTS, "ffffiiffffff", "X1,X2,X3,RudStr,TypeCtr,It,SolT,ResEq,Pob,Dob,Dga,Rdga"), //Added by Marco Tranzatto
     LOG_FORMAT(BGUD, "fffffffBff", "AlphaStar,Alpha,Rudder,Sail,NextGrid,XRace,YRace,ShldTck,TwdAvg,AppAvg"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC1, "fffffBLLfLLff", "P,I,Kaw,Cp,Ci,RudType,Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC2, "HHHHfff", "WinAlp,WinApp,WinTWD,TypTck,D1,D2,D3"), //Added by Marco Tranzatto
     LOG_FORMAT(OPTM, "fffffffffff", "K1,K2,K3,H1,H2,H3,H4,Lb1,Lb2,Ub1,Ub2"), //Added by Marco Tranzatto
+    LOG_FORMAT(QGC3, "iiffffffHHH", "LqrTs,MpcTs,A11,A12,A21,A22,B1,B2,WinAlpTck,WinTwdTck, PredHor"), //Added by Marco Tranzatto
     /* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),

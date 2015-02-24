@@ -427,6 +427,10 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     pubs_p->boat_opt_status = orb_advertise(ORB_ID(boat_opt_status), &(strs_p->boat_opt_status));
     strs_p->boat_opt_status_updated = false;
 
+    //qgc3
+    memset(&(strs_p->boat_qgc_param3), 0, sizeof(strs_p->boat_qgc_param3));
+    pubs_p->boat_qgc_param3 = orb_advertise(ORB_ID(boat_qgc_param3), &(strs_p->boat_qgc_param3));
+
     #if SIMULATION_FLAG == 1
     memset(&(strs_p->airspeed), 0, sizeof(strs_p->airspeed));
     pubs_p->airspeed = orb_advertise(ORB_ID(airspeed), &(strs_p->airspeed));

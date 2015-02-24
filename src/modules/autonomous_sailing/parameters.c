@@ -1164,6 +1164,8 @@ void param_update(struct parameters_qgc *params_p,
     orb_publish(ORB_ID(boat_opt_mat), pubs_p->boat_opt_mat, &(strs_p->boat_opt_mat));
 
     //save interested param in boat_qgc_param and publish this topic
+
+    //qgc1
     strs_p->boat_qgc_param1.timestamp = hrt_absolute_time();
     strs_p->boat_qgc_param1.rud_p = rud_p;
     strs_p->boat_qgc_param1.rud_i = rud_i;
@@ -1182,6 +1184,7 @@ void param_update(struct parameters_qgc *params_p,
 
     orb_publish(ORB_ID(boat_qgc_param1), pubs_p->boat_qgc_param1, &(strs_p->boat_qgc_param1));
 
+    //qgc2
     strs_p->boat_qgc_param2.timestamp = hrt_absolute_time();
     strs_p->boat_qgc_param2.window_alpha = window_alpha;
     strs_p->boat_qgc_param2.window_apparent = window_apparent;
@@ -1192,6 +1195,24 @@ void param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param2.delta3 = delta_vect[2];
     orb_publish(ORB_ID(boat_qgc_param2), pubs_p->boat_qgc_param2, &(strs_p->boat_qgc_param2));
 
+    //qgc3
+    strs_p->boat_qgc_param3.timestamp = hrt_absolute_time();
+    strs_p->boat_qgc_param3.lqr_sampl_time_us = lqr_sampling_time_us;
+    strs_p->boat_qgc_param3.mpc_sampl_time_us = mpc_sampling_time_us;
+
+    strs_p->boat_qgc_param3.mpc_a11 = mpc_A[0][0];
+    strs_p->boat_qgc_param3.mpc_a12 = mpc_A[0][1];
+    strs_p->boat_qgc_param3.mpc_a21 = mpc_A[1][0];
+    strs_p->boat_qgc_param3.mpc_a22 = mpc_A[1][1];
+
+    strs_p->boat_qgc_param3.mpc_b1 = mpc_B[0];
+    strs_p->boat_qgc_param3.mpc_b2 = mpc_B[1];
+
+    strs_p->boat_qgc_param3.window_alpha_tack = alpha_window_during_tack;
+    strs_p->boat_qgc_param3.window_twd_tack = twd_window_during_tack;
+    strs_p->boat_qgc_param3.pred_horizon_steps = mpc_pred_horiz_steps;
+
+    orb_publish(ORB_ID(boat_qgc_param3), pubs_p->boat_qgc_param3, &(strs_p->boat_qgc_param3));
     #if SIMULATION_FLAG == 1
 
     #if USE_GRID_LINES == 1

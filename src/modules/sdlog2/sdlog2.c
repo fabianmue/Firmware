@@ -968,12 +968,13 @@ int sdlog2_thread_main(int argc, char *argv[])
 		struct satellite_info_s sat_info;
 		struct wind_estimate_s wind_estimate;
         struct wind_sailing_s wind_sailing; //Added by Marco Tranzatto
-        struct boat_weather_station_s boat_weather_station; //Added by Marco Tranzatto
+        //struct boat_weather_station_s boat_weather_station; //Added by Marco Tranzatto
         struct boat_opt_status_s boat_opt_status; //Added by Marco Tranzatto
         struct boat_guidance_debug_s boat_guidance_debug; //Added by Marco Tranzatto
         struct boat_qgc_param1_s boat_qgc_param1; //Added by Marco Tranzatto
         struct boat_qgc_param2_s boat_qgc_param2; //Added by Marco Tranzatto
         struct boat_opt_mat_s boat_opt_mat; //Added by Marco Tranzatto
+        struct boat_qgc_param3_s boat_qgc_param3; //Added by Marco Tranzatto
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1017,12 +1018,13 @@ int sdlog2_thread_main(int argc, char *argv[])
 			struct log_TECS_s log_TECS;
 			struct log_WIND_s log_WIND;
             struct log_WSAI_s log_WIND_SAILING; //Added by Marco Tranzatto
-            struct log_BWES_s log_BOAT_WEATHER_STATION; //Added by Marco Tranzatto
+            //struct log_BWES_s log_BOAT_WEATHER_STATION; //Added by Marco Tranzatto
             struct log_OPTS_s log_OPT_STATUS; //Added by Marco Tranzatto
             struct log_BGUD_s log_BOAT_GUIDANCE; //Added by Marco Tranzatto
             struct log_QGC1_s log_BOAT_QGC_PARAM1; //Added by Marco Tranzatto
             struct log_QGC2_s log_BOAT_QGC_PARAM2; //Added by Marco Tranzatto
             struct log_OPTM_s log_BOAT_OPT_MATRICES; //Added by Marco Tranzatto
+            struct log_QGC3_s log_BOAT_QGC_PARAM3; //Added by Marco Tranzatto
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1061,12 +1063,13 @@ int sdlog2_thread_main(int argc, char *argv[])
 		int servorail_status_sub;
 		int wind_sub;
         int wind_sailing_sub; //Added by Marco Tranzatto
-        int boat_weather_station_sub; //Added by Marco Tranzatto
+        //int boat_weather_station_sub; //Added by Marco Tranzatto
         int boat_opt_status_sub; //Added by Marco Tranzatto
         int boat_guidance_sub; //Added by Marco Tranzatto
         int boat_qgc_param1_sub; //Added by Marco Tranzatto
         int boat_qgc_param2_sub; //Added by Marco Tranzatto
         int boat_opt_mat_sub; //Added by Marco Tranzatto
+        int boat_qgc_param3_sub; //Added by Marco Tranzatto
 	} subs;
 
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
@@ -1108,7 +1111,7 @@ int sdlog2_thread_main(int argc, char *argv[])
     //****************** Added by Marco Tranzatto **************
     subs.wind_sailing_sub = orb_subscribe(ORB_ID(wind_sailing));
 
-    subs.boat_weather_station_sub = orb_subscribe(ORB_ID(boat_weather_station));
+    //subs.boat_weather_station_sub = orb_subscribe(ORB_ID(boat_weather_station));
 
     subs.boat_opt_status_sub = orb_subscribe(ORB_ID(boat_opt_status));
 
@@ -1118,6 +1121,8 @@ int sdlog2_thread_main(int argc, char *argv[])
     subs.boat_qgc_param2_sub = orb_subscribe(ORB_ID(boat_qgc_param2));
 
     subs.boat_opt_mat_sub = orb_subscribe(ORB_ID(boat_opt_mat));
+
+    subs.boat_qgc_param3_sub = orb_subscribe(ORB_ID(boat_qgc_param3));
     //****************** End Add by Marco Tranzatto ************
 
 
@@ -1732,7 +1737,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         }
 
         /* --- BOAT WEATHER STATION  */
-        if (copy_if_updated(ORB_ID(boat_weather_station), subs.boat_weather_station_sub, &buf.boat_weather_station)) {
+        /*if (copy_if_updated(ORB_ID(boat_weather_station), subs.boat_weather_station_sub, &buf.boat_weather_station)) {
             log_msg.msg_type = LOG_BWES_MSG;
             log_msg.body.log_BOAT_WEATHER_STATION.acc_x_g = buf.boat_weather_station.acc_x_g;
             log_msg.body.log_BOAT_WEATHER_STATION.acc_y_g = buf.boat_weather_station.acc_y_g;
@@ -1746,9 +1751,9 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_WEATHER_STATION.pitch_rate_r_s = buf.boat_weather_station.pitch_rate_r_s;
             log_msg.body.log_BOAT_WEATHER_STATION.yaw_rate_r_s = buf.boat_weather_station.yaw_rate_r_s;
             LOGBUFFER_WRITE_AND_COUNT(BWES);
-        }
+        }*/
 
-        /* --- DEBUG VALUES  */
+        /* --- OPTIMAL CONTROLLER STATUS  */
         if (copy_if_updated(ORB_ID(boat_opt_status), subs.boat_opt_status_sub, &buf.boat_opt_status)) {
             log_msg.msg_type = LOG_OPTS_MSG;
             log_msg.body.log_OPT_STATUS.x1 = buf.boat_opt_status.x1;
@@ -1831,6 +1836,22 @@ int sdlog2_thread_main(int argc, char *argv[])
             LOGBUFFER_WRITE_AND_COUNT(OPTM);
         }
 
+        /* --- BOAT QGC PARAM 3 */
+        if (copy_if_updated(ORB_ID(boat_qgc_param3), subs.boat_qgc_param3_sub, &buf.boat_qgc_param3)) {
+            log_msg.msg_type = LOG_QGC3_MSG;
+            log_msg.body.log_BOAT_QGC_PARAM3.lqr_sampl_time_us = buf.boat_qgc_param3.lqr_sampl_time_us;
+            log_msg.body.log_BOAT_QGC_PARAM3.mpc_sampl_time_us = buf.boat_qgc_param3.mpc_sampl_time_us;
+            log_msg.body.log_BOAT_QGC_PARAM3.mpc_a11 = buf.boat_qgc_param3.mpc_a11;
+            log_msg.body.log_BOAT_QGC_PARAM3.mpc_a12 = buf.boat_qgc_param3.mpc_a12;
+            log_msg.body.log_BOAT_QGC_PARAM3.mpc_a21 = buf.boat_qgc_param3.mpc_a21;
+            log_msg.body.log_BOAT_QGC_PARAM3.mpc_a22 = buf.boat_qgc_param3.mpc_a22;
+            log_msg.body.log_BOAT_QGC_PARAM3.mpc_b1 = buf.boat_qgc_param3.mpc_b1;
+            log_msg.body.log_BOAT_QGC_PARAM3.mpc_b2 = buf.boat_qgc_param3.mpc_b2;
+            log_msg.body.log_BOAT_QGC_PARAM3.window_alpha_tack = buf.boat_qgc_param3.window_alpha_tack;
+            log_msg.body.log_BOAT_QGC_PARAM3.window_twd_tack = buf.boat_qgc_param3.window_twd_tack;
+            log_msg.body.log_BOAT_QGC_PARAM3.pred_horizon_steps = buf.boat_qgc_param3.pred_horizon_steps;
+            LOGBUFFER_WRITE_AND_COUNT(QGC3);
+        }
         //********************** End add *******************************
 
 		/* signal the other thread new data, but not yet unlock */

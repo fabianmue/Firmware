@@ -72,7 +72,23 @@ struct boat_qgc_param2_s {
     float delta3;               /// Delta3 used to define the band in optimal tack maneuver
 };
 
+struct boat_qgc_param3_s{
+    uint64_t timestamp;
+    int32_t lqr_sampl_time_us; ///sampling time of the LQR controller, in uSec
+    int32_t mpc_sampl_time_us; ///sampling time of the MPC controller, in uSec
+    float mpc_a11;              ////A(1,1) value (model NOT extended), MPC model
+    float mpc_a12;              ////A(1,2) value (model NOT extended), MPC model
+    float mpc_a21;              ////A(2,1) value (model NOT extended), MPC model
+    float mpc_a22;              ////A(2,2) value (model NOT extended), MPC model
+    float mpc_b1;              ////B(1) value (model NOT extended), MPC model
+    float mpc_b2;              ////B(2) value (model NOT extended), MPC model
+    uint16_t window_alpha_tack;      /// Window size of moving average filter of alpha during tack
+    uint16_t window_twd_tack;      /// Window size of moving average filter of the TWD during tack
+    uint16_t pred_horizon_steps;      /// Steps of the prediction horizon
+};
+
 ORB_DECLARE(boat_qgc_param1);
 ORB_DECLARE(boat_qgc_param2);
+ORB_DECLARE(boat_qgc_param3);
 
 #endif // BOAT_QGC_PARAM_H
