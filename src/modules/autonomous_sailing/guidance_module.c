@@ -1157,10 +1157,14 @@ void mpc_control_rudder(float *p_rudder_cmd,
                                             (mpc_boatTack_h10_output*) &(optimal_control_data.forces_output),
                                             (mpc_boatTack_h10_info*) &(optimal_control_data.forces_info));
         }
+        else if(optimal_control_data.pred_horz_steps == 15){
+            solver_ret = mpc_boatTack_h15_solve((mpc_boatTack_h15_params*) &(optimal_control_data.forces_params),
+                                            (mpc_boatTack_h15_output*) &(optimal_control_data.forces_output),
+                                            (mpc_boatTack_h15_info*) &(optimal_control_data.forces_info));
+        }
         else{
             //error, no solve function available, see what we should do
         }
-
 
         //compute how much time was required by the MPC problem resolution
         float solve_time_ms = ((float) (hrt_absolute_time() - time_before_sol)) / 1000.0f;
