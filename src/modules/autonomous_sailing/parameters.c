@@ -175,7 +175,7 @@ PARAM_DEFINE_INT32(AS_TY_TCK, 0);
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_FLOAT(AS_RUD_P, 0.03f);
+PARAM_DEFINE_FLOAT(AS_RUD_P, 0.35f);
 
 /**
  * Integral gain for rudder PI.
@@ -211,7 +211,7 @@ PARAM_DEFINE_FLOAT(AS_RUD_CI, 1.0f);
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_FLOAT(AS_RUD_CP, 1.0f);
+PARAM_DEFINE_FLOAT(AS_RUD_CP, 0.35f);
 
 /**
  * Select which type of rudder control you want to have to track a desired
@@ -485,6 +485,73 @@ PARAM_DEFINE_FLOAT(ASO_STP_TCK_S, 0.8f);
 */
 PARAM_DEFINE_FLOAT(ASO_SFT_STP_S, 8.0f);
 
+//------------------------------------------------------- under work -------------------------------------------
+/**
+ * Sampling time of the MPC, in microseconds.
+ */
+PARAM_DEFINE_INT32(ASO_SPL_MPC_US, 99400);
+
+/**
+ * Sampling time of the LQR, in microseconds.
+ */
+PARAM_DEFINE_INT32(ASO_SPL_LQR_US, 99400);
+
+/**
+ * Element A(1,1) of the A matrix identified with the Matlab GUI
+ */
+PARAM_DEFINE_FLOAT(ASO_MPC_A11, 0.7079196792f);
+
+/**
+ * Element A(1,2) of the A matrix identified with the Matlab GUI
+ */
+PARAM_DEFINE_FLOAT(ASO_MPC_A12, -0.0120515496f);
+
+/**
+ * Element A(2,1) of the A matrix identified with the Matlab GUI
+ */
+PARAM_DEFINE_FLOAT(ASO_MPC_A21, 0.0750509795f);
+
+/**
+ * Element A(2,2) of the A matrix identified with the Matlab GUI
+ */
+PARAM_DEFINE_FLOAT(ASO_MPC_A22, 0.9988271092f);
+
+/**
+ * Element B(1) of the B matrix identified with the Matlab GUI
+ */
+PARAM_DEFINE_FLOAT(ASO_MPC_B1, -0.3093770863f);
+
+/**
+ * Element B(2) of the B matrix identified with the Matlab GUI
+ */
+PARAM_DEFINE_FLOAT(ASO_MPC_B2, -0.0229457259f);
+
+/**
+ * ASO_WIN_AL, specifies the number of samples for the moving average of true wind angle (alpha) DURING tack.
+ *
+ *
+ * @min 1
+ * @max ?
+ */
+PARAM_DEFINE_INT32(ASO_WIN_AL, 1);
+
+
+/**
+ * ASO_WIN_TWD, specifies the number of samples for the moving average of true wind direction DURING tack.
+ *
+ *
+ * @min 1
+ * @max ?
+ */
+PARAM_DEFINE_INT32(ASO_WIN_TWD, 1);
+
+/**
+ * Predicion horizon (in number of steps) to be used in the MPC
+ */
+PARAM_DEFINE_INT32(ASO_PRED_HOR, 10);
+
+//------------------------------------------------------- under work -------------------------------------------
+
 #if SIMULATION_FLAG == 1
 
 //---------------------------------------- Simulation variables --------------------
@@ -638,6 +705,27 @@ static struct pointers_param_qgc_s{
     param_t min_time_in_band_poniter; /**< pointer to ASO_STP_TCK_S*/
 
     param_t safety_stop_tack_pointer ; /**< pointer to ASO_SFT_STP_S */
+
+    //--- sampling time MPC and LQR
+    param_t mpc_sampling_time_pointer; /**< pointer to ASO_SPL_MPC_US */
+    param_t lqr_sampling_time_pointer; /**< pointer to ASO_SPL_LQR_US */
+
+    //--- A and B matrices for the MPC
+    param_t mpc_a11_pointer; /**< pointer to ASO_MPC_A11 */
+    param_t mpc_a12_pointer; /**< pointer to ASO_MPC_A12 */
+    param_t mpc_a21_pointer; /**< pointer to ASO_MPC_A21 */
+    param_t mpc_a22_pointer; /**< pointer to ASO_MPC_A22 */
+
+    param_t mpc_b1_pointer; /**< pointer to ASO_MPC_B1 */
+    param_t mpc_b2_pointer; /**< pointer to ASO_MPC_B2 */
+
+    // --- predHoriz
+    param_t mpc_pred_horiz_pointer; /**< pointet to ASO_PRED_HOR*/
+
+    //--- moving average window during tack maneuver
+    param_t alpha_window_tack_pointer; /**< pointer to ASO_WIN_AL */
+    param_t twd_window_tack_pointer; /**< pointer to ASO_WIN_TWD */
+
     //---cog delay
     param_t cog_max_delay_pointer;/**< pointer to param AS_COG_DELAY_S*/
 
@@ -753,6 +841,26 @@ void param_init(struct parameters_qgc *params_p,
 
     pointers_param_qgc.min_time_in_band_poniter = param_find("ASO_STP_TCK_S");
     pointers_param_qgc.safety_stop_tack_pointer = param_find("ASO_SFT_STP_S");
+
+    //--- sampling time MPC and LQR
+    pointers_param_qgc.mpc_sampling_time_pointer = param_find("ASO_SPL_MPC_US");
+    pointers_param_qgc.lqr_sampling_time_pointer = param_find("ASO_SPL_LQR_US");
+
+    //--- A and B matrices for the MPC
+    pointers_param_qgc.mpc_a11_pointer = param_find("ASO_MPC_A11");
+    pointers_param_qgc.mpc_a12_pointer = param_find("ASO_MPC_A12");
+    pointers_param_qgc.mpc_a21_pointer = param_find("ASO_MPC_A21");
+    pointers_param_qgc.mpc_a22_pointer = param_find("ASO_MPC_A22");
+
+    pointers_param_qgc.mpc_b1_pointer = param_find("ASO_MPC_B1");
+    pointers_param_qgc.mpc_b2_pointer = param_find("ASO_MPC_B2");
+
+    //--- moving average window during tack maneuver
+    pointers_param_qgc.alpha_window_tack_pointer = param_find("ASO_WIN_AL");
+    pointers_param_qgc.twd_window_tack_pointer = param_find("ASO_WIN_TWD");
+
+    // --- prediction horizon
+    pointers_param_qgc.mpc_pred_horiz_pointer = param_find("ASO_PRED_HOR");
 
     //----cog delay
     pointers_param_qgc.cog_max_delay_pointer = param_find("AS_COG_DELAY_S");
@@ -934,34 +1042,49 @@ void param_update(struct parameters_qgc *params_p,
     uint16_t window_apparent;
     uint16_t window_twd;
 
+    int32_t alpha_window_during_tack;
+    int32_t twd_window_during_tack;
+
     param_get(pointers_param_qgc.moving_alpha_window_pointer, &window_alpha);
+    param_get(pointers_param_qgc.alpha_window_tack_pointer, &alpha_window_during_tack);
     //update window size using API in controller_data.h
-    update_k(window_alpha);
+    //update_k(window_alpha, alpha_window_during_tack); ripristina!
 
     param_get(pointers_param_qgc.moving_apparent_window_pointer, &window_apparent);
     //update window size using API in controller_data.h
     update_k_app(window_apparent);
 
     param_get(pointers_param_qgc.moving_twd_window_pointer, &window_twd);
+    param_get(pointers_param_qgc.twd_window_tack_pointer, &twd_window_during_tack);
     //update window size using API in controller_data.h
-    update_k_twd(window_twd);
+    //update_k_twd(window_twd, twd_window_during_tack); ripristina!
 
     //-- param for LQR controller
     float lqr_k1;
     float lqr_k2;
     float lqr_k3;
+    int32_t lqr_sampling_time_us;
 
     param_get(pointers_param_qgc.lqr_k1_poniter, &lqr_k1);
     param_get(pointers_param_qgc.lqr_k2_poniter, &lqr_k2);
     param_get(pointers_param_qgc.lqr_k3_poniter, &lqr_k3);
+    param_get(pointers_param_qgc.lqr_sampling_time_pointer, &lqr_sampling_time_us);
 
-    set_lqr_gain(lqr_k1, lqr_k2, lqr_k3);
+    set_lqr_gain(lqr_k1, lqr_k2, lqr_k3, lqr_sampling_time_us);
 
     //-- param for MPC controller
     float mpc_h[4];
     float mpc_lb[2];
     float mpc_ub[2];
     float mpc_hf[3][3];
+    float mpc_A[2][2];
+    float mpc_B[2];
+    int32_t mpc_sampling_time_us;
+    int32_t mpc_pred_horiz_steps;
+
+    param_get(pointers_param_qgc.mpc_sampling_time_pointer, &mpc_sampling_time_us);
+
+    param_get(pointers_param_qgc.mpc_pred_horiz_pointer, &mpc_pred_horiz_steps);
 
     param_get(pointers_param_qgc.mpc_h1_pointer, &mpc_h[0]);
     param_get(pointers_param_qgc.mpc_h2_pointer, &mpc_h[1]);
@@ -986,7 +1109,16 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.mpc_hf_43_pointer, &mpc_hf[2][1]);
     param_get(pointers_param_qgc.mpc_hf_44_pointer, &mpc_hf[2][2]);
 
-    set_mpc_data(mpc_h, mpc_lb, mpc_ub, mpc_hf);
+    param_get(pointers_param_qgc.mpc_a11_pointer, &mpc_A[0][0]);
+    param_get(pointers_param_qgc.mpc_a12_pointer, &mpc_A[0][1]);
+    param_get(pointers_param_qgc.mpc_a21_pointer, &mpc_A[1][0]);
+    param_get(pointers_param_qgc.mpc_a22_pointer, &mpc_A[1][1]);
+
+    param_get(pointers_param_qgc.mpc_b1_pointer, &mpc_B[0]);
+    param_get(pointers_param_qgc.mpc_b2_pointer, &mpc_B[1]);
+
+    set_mpc_data(mpc_h, mpc_lb, mpc_ub, mpc_hf, mpc_sampling_time_us,
+                 mpc_A, mpc_B, mpc_pred_horiz_steps);
 
     //--- define band around origin
     float delta_vect[3];
