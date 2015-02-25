@@ -240,6 +240,7 @@ static struct {
 // errors legend in is_tack_completed()
 #define EVERYTHING_OK 0
 #define FORCED_TACK_STOP 1 //tack had to be stopped for safety reason
+#define NO_MPC_SOLVE_FNC 2 //no available solve function for the set prediction horizon
 
 /** @brief PI controller with conditional integration*/
 float pi_controller(const float *ref_p, const float *meas_p);
@@ -672,6 +673,10 @@ void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code){
     else if(error_code == FORCED_TACK_STOP){
         //notify to QGC that we had to force stopping the tack
         sprintf(txt_msg, "Tack forced to be completed.");
+    }
+    else if(error_code == NO_MPC_SOLVE_FNC){
+        //notify to QGC the error
+        sprintf(txt_msg, "No MPC solve for this horizon!");
     }
     else
         sprintf(txt_msg, "Error: check error_code in guidance_module");
@@ -1173,8 +1178,24 @@ void mpc_control_rudder(float *p_rudder_cmd,
                                             (mpc_boatTack_h15_output*) &(optimal_control_data.forces_output),
                                             (mpc_boatTack_h15_info*) &(optimal_control_data.forces_info));
         }
+        else if(optimal_control_data.pred_horz_steps == 20){
+            solver_ret = mpc_boatTack_h20_solve((mpc_boatTack_h20_params*) &(optimal_control_data.forces_params),
+                                            (mpc_boatTack_h20_output*) &(optimal_control_data.forces_output),
+                                            (mpc_boatTack_h20_info*) &(optimal_control_data.forces_info));
+        }
+        else if(optimal_control_data.pred_horz_steps == 25){
+            solver_ret = mpc_boatTack_h25_solve((mpc_boatTack_h25_params*) &(optimal_control_data.forces_params),
+                                            (mpc_boatTack_h25_output*) &(optimal_control_data.forces_output),
+                                            (mpc_boatTack_h25_info*) &(optimal_control_data.forces_info));
+        }
+        else if(optimal_control_data.pred_horz_steps == 30){
+            solver_ret = mpc_boatTack_h30_solve((mpc_boatTack_h30_params*) &(optimal_control_data.forces_params),
+                                            (mpc_boatTack_h30_output*) &(optimal_control_data.forces_output),
+                                            (mpc_boatTack_h30_info*) &(optimal_control_data.forces_info));
+        }
         else{
-            //error, no solve function available, see what we should do
+            //error, no solve function available!
+            tack_completed(ref_act_p, NO_MPC_SOLVE_FNC);
         }
 
         //compute how much time was required by the MPC problem resolution
