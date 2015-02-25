@@ -12,5 +12,6 @@ SRCS				= autonomous_sailing.c \
                                         mpcForces/mpc_boatTack_h15.c \
                                         mpcForces/mpc_boatTack_h20.c \
                                         mpcForces/mpc_boatTack_h25.c \
-                                        mpcForces/mpc_boatTack_h30.c
+                                        mpcForces/mpc_boatTack_h30.c \
+                                        mpc_test_data.c
 

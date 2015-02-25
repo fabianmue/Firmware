@@ -74,6 +74,10 @@
 #include <systemlib/param/param.h>
 #include <systemlib/systemlib.h>
 
+#if TEST_MPC == 1
+#include "mpc_test_data.h"
+#endif
+
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
 
 #if SIMULATION_FLAG == 1 //defined in parameter.h
@@ -203,8 +207,10 @@ int as_daemon_thread_main(int argc, char *argv[]){
     //subscribe/advertise interested topics
     as_topics(&subs, &pubs, &strs);
 
+    #if TEST_MPC != 1
     //initialize local copy of parameters from QGroundControl
     param_init(&params, &strs, &pubs);
+    #endif
 
     //limit update rate of attitude every 50 milliseconds --> f = 20 Hz
      orb_set_interval(subs.att, 50);
@@ -227,6 +233,10 @@ int as_daemon_thread_main(int argc, char *argv[]){
     };
 
     thread_running = true;
+
+    #if TEST_MPC == 1
+    mt_init_mpc_data();
+    #endif
 
     while(!thread_should_exit){
 

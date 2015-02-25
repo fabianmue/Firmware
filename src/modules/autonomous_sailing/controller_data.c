@@ -623,6 +623,7 @@ void cd_optimal_tack_started(void){
         measurements_filtered.oldestValue = 0;
         measurements_filtered.oldestValueTwd = 0;
     }
+
 }
 
 /**
@@ -653,6 +654,7 @@ void cd_optimal_tack_completed(void){
         measurements_filtered.alpha_window_length = measurements_filtered.k;
         measurements_filtered.twd_window_length = measurements_filtered.k_twd;
     }
+
 }
 
 /**

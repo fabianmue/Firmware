@@ -42,19 +42,6 @@
 
 #include "guidance_module.h"
 
-//#include "mpcForces/mpc_boatTack_h10.h"
-//#include "mpcForces/mpc_boatTack_h15.h"
-
-#if TEST_MPC == 1
-//cancellare
-float yawSimMPC[] = {1.5708f,1.5594f,1.5230f,1.4625f,1.3889f,1.3109f,1.2314f,1.1515f,1.0713f,0.9912f,0.9110f,0.8308f,0.7506f,0.6704f,0.5902f,0.5100f,0.4298f,0.3496f,0.2711f,0.1980f,0.1343f,0.0822f,0.0421f,0.0132f,-0.0059f,-0.0172f,-0.0226f,-0.0238f,-0.0222f,-0.0191f,-0.0154f,-0.0116f,-0.0082f,-0.0053f,-0.0029f,-0.0012f,-0.0001f,0.0007f,0.0011f,0.0012f,0.0012f,0.0011f,0.0009f,0.0007f,0.0005f,0.0003f,0.0002f,0.0001f,0.0000f,-0.0000f};
-static int indexYaw = 0;
-const int yawLength = 50;
-float H_final[4][4] = {{0.0000f,0.0000f,0.0000f,0.0000f},
-{0.0000f,0.2828f,3.2783f,-0.5113f},
-{0.0000f,3.2783f,48.9025f,-5.5246f},
-{0.0000f,-0.5113f,-5.5246f,1.9489f}};
-#endif
 
 /// Forces parameters
 struct forces_params_s{
@@ -1115,54 +1102,32 @@ void mpc_control_rudder(float *p_rudder_cmd,
     uint64_t now_us = hrt_absolute_time(); //absolute time in micro seconds
 
     #if TEST_MPC == 1
-    optimal_control_data.mpc_boatTack_params_s.Hessians[0] = 5.0f;
-    optimal_control_data.mpc_boatTack_params_s.Hessians[1] = 0.001f;
-    optimal_control_data.mpc_boatTack_params_s.Hessians[2] = 10.0f;
-    optimal_control_data.mpc_boatTack_params_s.Hessians[3] = 0.001f;
 
-    optimal_control_data.mpc_boatTack_params_s.lowerBound[0] = -0.357031384615385f;
-    optimal_control_data.mpc_boatTack_params_s.lowerBound[1] = -0.9f;
-
-    optimal_control_data.mpc_boatTack_params_s.upperBound[0] = 0.357031384615385f;
-    optimal_control_data.mpc_boatTack_params_s.upperBound[1] = 0.9f;
-
-    uint8_t index_hf;
-
-    //first go by the whole row i, and then increment column j
-    for(uint8_t j = 0; j < 4; j++){
-        for(uint8_t i = 0; i < 4; i++){
-            /*remember that HessianFinal is 4x4 (column major format), so from i and j we must
-             * have a new index to access into the vector HessiansFinal
-            */
-            index_hf = j * 4 + i;
-            optimal_control_data.mpc_boatTack_params_s.HessiansFinal[index_hf] = H_final[i][j];
-
-        }
-    }
     #endif
 
     //compute a new command only if the time elapsed since time_last_lqr is greater or equal to LQR_MODEL_TS.
     #if TEST_MPC == 0
     if((now_us - optimal_control_data.time_last_mpc) >= optimal_control_data.mpc_sampling_time_us){
     #else
-    if((now_us - optimal_control_data.time_last_mpc) >= optimal_control_data.mpc_sampling_time_us && indexYaw < yawLength){//cancellare
+    if((now_us - optimal_control_data.time_last_mpc) >= optimal_control_data.mpc_sampling_time_us && mt_still_data()){//cancellare
     #endif
         //compute the new state of the extended model based on the latest measurements
         compute_state_extended_model(ref_act_p);
 
         #if TEST_MPC == 1
-        optimal_control_data.state_extended_model[1] = yawSimMPC[indexYaw];
-        indexYaw++;
+        mt_get_next_yr_y(&optimal_control_data.state_extended_model);
+        optimal_control_data.state_extended_model[2] = optimal_control_data.rudder_latest;
+        printf("\n ---------------------- \n");
         #endif
 
         //init parameters before calling the solver
         compute_minusAExt_times_x0(&(optimal_control_data.forces_params.minusAExt_times_x0));
 
         #if TEST_MPC == 1
-        for(uint8_t i = 0; i < 3; i++){
-            printf("-A*x0[%d]: %2.4f \t", i,
-                   (double) optimal_control_data.mpc_boatTack_params_s.minusAExt_times_x0[i]);
-        }
+//        for(uint8_t i = 0; i < 3; i++){
+//            printf("x0[%d]: %2.4f \t", i,
+//                   (double)  optimal_control_data.state_extended_model[i]);
+//        }
         #endif
 
         //call the solver and take computation time
@@ -1197,13 +1162,17 @@ void mpc_control_rudder(float *p_rudder_cmd,
         else{
             //error, no solve function available!
             tack_completed(ref_act_p, NO_MPC_SOLVE_FNC);
+            #if TEST_MPC == 1
+            printf("\n ------ No solve function available! ------ \n");
+            #endif
+            return;
         }
 
         //compute how much time was required by the MPC problem resolution
         float solve_time_ms = ((float) (hrt_absolute_time() - time_before_sol)) / 1000.0f;
 
         #if TEST_MPC == 1
-        printf("\n++++ solvetime:  %4.4f  [mSec]\n", (double)solve_time_ms);
+        printf("solvetime:  %4.4f  [mSec]\n", (double)solve_time_ms);
         #endif
 
         //check solver_ret before using result as rudder command!
@@ -1211,23 +1180,28 @@ void mpc_control_rudder(float *p_rudder_cmd,
             //compute rudder command at step k to give to the real system: optimalU + rudder_{k-1}
             *p_rudder_cmd = optimal_control_data.forces_output.u0[0] +
                             optimal_control_data.state_extended_model[2];
-            //TODO check this or at least write some comments!
-            if(*p_rudder_cmd > rudder_controller_data.rud_cmd_45_left)
-                *p_rudder_cmd = rudder_controller_data.rud_cmd_45_left;
-            else if(*p_rudder_cmd < -rudder_controller_data.rud_cmd_45_left)
-                *p_rudder_cmd = -rudder_controller_data.rud_cmd_45_left;
+//            //TODO check this or at least write some comments!
+//            if(*p_rudder_cmd > rudder_controller_data.rud_cmd_45_left)
+//                *p_rudder_cmd = rudder_controller_data.rud_cmd_45_left;
+//            else if(*p_rudder_cmd < -rudder_controller_data.rud_cmd_45_left)
+//                *p_rudder_cmd = -rudder_controller_data.rud_cmd_45_left;
 
             #if TEST_MPC == 1
-            printf("------* rudStar: %1.3f \n", (double) *p_rudder_cmd);
+            printf("rudStar: %1.3f \n", (double) *p_rudder_cmd);
             #endif
         }
         else{
             //something went wrong in the solver! Give the last command that has been given
             *p_rudder_cmd = optimal_control_data.state_extended_model[2];
             #if TEST_MPC == 1
-            printf("------< recovery Rud: %1.3f \n", (double) *p_rudder_cmd);
+            printf("--- recovery Rud: %1.3f \n", (double) *p_rudder_cmd);
             #endif
         }
+
+        #if TEST_MPC == 1
+        printf("rudMatl: %1.3f\n", (double) mt_get_correct_rud());
+        printf("\n ---------------------- \n \n");
+        #endif
 
         //update time_last_lqr
         optimal_control_data.time_last_mpc = now_us;
@@ -1462,10 +1436,6 @@ void guidance_module(struct reference_actions_s *ref_act_p,
         }
 
 
-        #if TEST_MPC == 1
-        mpc_control_rudder(&rudder_command, ref_act_p, strs_p);
-        #endif
-
         //saturation for safety reason
         rudder_command = rudder_saturation(rudder_command);
         sail_command = sail_saturation(sail_command);
@@ -1479,6 +1449,10 @@ void guidance_module(struct reference_actions_s *ref_act_p,
         strs_p->boat_guidance_debug.twd_mean = get_twd_sns();
         strs_p->boat_guidance_debug.app_mean = get_app_wind_sns();
     }
+
+    #if TEST_MPC == 1
+    mpc_control_rudder(&rudder_command, ref_act_p, strs_p);
+    #endif
 
     //update actuator value
     strs_p->actuators.control[0] = rudder_command;

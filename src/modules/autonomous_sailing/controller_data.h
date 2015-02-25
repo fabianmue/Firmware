@@ -46,6 +46,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "settings.h"
 
 
 /** @brief initialize controller data before starting*/
