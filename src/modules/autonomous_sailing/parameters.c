@@ -485,7 +485,6 @@ PARAM_DEFINE_FLOAT(ASO_STP_TCK_S, 0.8f);
 */
 PARAM_DEFINE_FLOAT(ASO_SFT_STP_S, 8.0f);
 
-//------------------------------------------------------- under work -------------------------------------------
 /**
  * Sampling time of the MPC, in microseconds.
  */
@@ -549,8 +548,6 @@ PARAM_DEFINE_INT32(ASO_WIN_TWD, 1);
  * Predicion horizon (in number of steps) to be used in the MPC
  */
 PARAM_DEFINE_INT32(ASO_PRED_HOR, 10);
-
-//------------------------------------------------------- under work -------------------------------------------
 
 #if SIMULATION_FLAG == 1
 

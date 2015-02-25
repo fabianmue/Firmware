@@ -67,8 +67,6 @@
 #define SAIL_FULLY_OPENED 0.0f
 #define SAIL_20 0.56f   ///sails are opened at 20 deg
 
-//#define LQR_MODEL_TS  (uint64_t) 10612 ///LQR model sampling time, in microseconds
-//#define MPC_MODEL_TS  (uint64_t) 106123 ///MPC model sampling time, in microseconds
 #define MIN_SAFETY_TIME_STOP_TCK (uint64_t) 4000000 ///Min value for safety_time_stop_tack
 
 #define RC_RUD_INDEX 0              ///index of the rudder command in rc_channels struct

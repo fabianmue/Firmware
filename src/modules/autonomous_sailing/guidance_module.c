@@ -234,7 +234,8 @@ static struct {
                                 .min_time_in_band_us = (uint64_t) 500000,//0.5 sec
                                 .time_started_valid = false,//time_started_tack_us not valid now
                                 .last_time_valid = false, //last_time_in_band_us not valid now
-                                .safety_time_stop_tack = MIN_SAFETY_TIME_STOP_TCK
+                                .safety_time_stop_tack = MIN_SAFETY_TIME_STOP_TCK,
+                                .pred_horz_steps = 10
                             };
 
 // errors legend in is_tack_completed()
