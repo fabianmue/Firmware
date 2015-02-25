@@ -1985,19 +1985,18 @@ protected:
 
             /*snprintf(msg.name, sizeof(msg.name), "app angle");
             msg.value = wind_sail.angle_apparent;
-
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
-
             snprintf(msg.name, sizeof(msg.name), "app speed");
             msg.value = wind_sail.speed_apparent;
-
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);*/
 
+            //snprintf(msg.name, sizeof(msg.name), "true angle");
             snprintf(msg.name, sizeof(msg.name), "as_twd");
             msg.value = wind_sail.angle_true;
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
+            //snprintf(msg.name, sizeof(msg.name), "true speed");
             snprintf(msg.name, sizeof(msg.name), "as_tws");
             msg.value = wind_sail.speed_true;
 
@@ -2067,6 +2066,7 @@ protected:
 
             msg.time_boot_ms = boat_guidance_debug.timestamp / 1000;
 
+            //snprintf(msg.name, sizeof(msg.name), "alpha angl");
             snprintf(msg.name, sizeof(msg.name), "as_alpha");
             msg.value = boat_guidance_debug.alpha;
 
@@ -2079,7 +2079,6 @@ protected:
 
             /*snprintf(msg.name, sizeof(msg.name), "y race coo");
             msg.value = boat_guidance_debug.y_race;
-
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);*/
 
 //            snprintf(msg.name, sizeof(msg.name), "next grid");
@@ -2087,21 +2086,22 @@ protected:
 
 //            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "as_avg_twd");
+            snprintf(msg.name, sizeof(msg.name), "twd mean");
             msg.value = boat_guidance_debug.twd_mean;
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
             /*snprintf(msg.name, sizeof(msg.name), "app mean");
             msg.value = boat_guidance_debug.app_mean;
-
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);*/
 
+            //snprintf(msg.name, sizeof(msg.name), "rudder cmd");
             snprintf(msg.name, sizeof(msg.name), "as_rud");
             msg.value = boat_guidance_debug.rudder_action;
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
+            //snprintf(msg.name, sizeof(msg.name), "sails cmd");
             snprintf(msg.name, sizeof(msg.name), "as_sail");
             msg.value = boat_guidance_debug.sail_action;
 

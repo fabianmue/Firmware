@@ -1407,7 +1407,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     }
     else{
         //Autonomous mode
-
+        //TODO check for a bug somewhere here ...
         float alpha;//angle with respect to the wind
         //get alpha from the moving average value of the last k values of instant alpha
         alpha = get_alpha_dumas();
