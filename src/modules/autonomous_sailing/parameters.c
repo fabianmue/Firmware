@@ -528,7 +528,7 @@ PARAM_DEFINE_FLOAT(ASO_MPC_B2, -0.0229457259f);
 
 /**
  * ASO_WIN_AL, specifies the number of samples for the moving average of true wind angle (alpha) DURING tack.
- *
+ * Must be <= @see AS_WIN_APP.
  *
  * @min 1
  * @max ?
@@ -538,7 +538,7 @@ PARAM_DEFINE_INT32(ASO_WIN_AL, 1);
 
 /**
  * ASO_WIN_TWD, specifies the number of samples for the moving average of true wind direction DURING tack.
- *
+ * Must be <= @see AS_WIN_TWD
  *
  * @min 1
  * @max ?
@@ -1048,7 +1048,7 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.moving_alpha_window_pointer, &window_alpha);
     param_get(pointers_param_qgc.alpha_window_tack_pointer, &alpha_window_during_tack);
     //update window size using API in controller_data.h
-    //update_k(window_alpha, alpha_window_during_tack); ripristina!
+    update_k(window_alpha, alpha_window_during_tack);
 
     param_get(pointers_param_qgc.moving_apparent_window_pointer, &window_apparent);
     //update window size using API in controller_data.h
@@ -1057,7 +1057,7 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.moving_twd_window_pointer, &window_twd);
     param_get(pointers_param_qgc.twd_window_tack_pointer, &twd_window_during_tack);
     //update window size using API in controller_data.h
-    //update_k_twd(window_twd, twd_window_during_tack); ripristina!
+    update_k_twd(window_twd, twd_window_during_tack);
 
     //-- param for LQR controller
     float lqr_k1;

@@ -42,6 +42,9 @@
 
 #include "guidance_module.h"
 
+//#include "mpcForces/mpc_boatTack_h10.h"
+//#include "mpcForces/mpc_boatTack_h15.h"
+
 #if TEST_MPC == 1
 //cancellare
 float yawSimMPC[] = {1.5708f,1.5594f,1.5230f,1.4625f,1.3889f,1.3109f,1.2314f,1.1515f,1.0713f,0.9912f,0.9110f,0.8308f,0.7506f,0.6704f,0.5902f,0.5100f,0.4298f,0.3496f,0.2711f,0.1980f,0.1343f,0.0822f,0.0421f,0.0132f,-0.0059f,-0.0172f,-0.0226f,-0.0238f,-0.0222f,-0.0191f,-0.0154f,-0.0116f,-0.0082f,-0.0053f,-0.0029f,-0.0012f,-0.0001f,0.0007f,0.0011f,0.0012f,0.0012f,0.0011f,0.0009f,0.0007f,0.0005f,0.0003f,0.0002f,0.0001f,0.0000f,-0.0000f};
@@ -89,31 +92,31 @@ struct forces_info_s{
     int it;
 
     /* inf-norm of equality constraint residuals */
-    mpc_boatTack_h10_FLOAT res_eq;
+    float res_eq;
 
     /* inf-norm of inequality constraint residuals */
-    mpc_boatTack_h10_FLOAT res_ineq;
+    float res_ineq;
 
     /* primal objective */
-    mpc_boatTack_h10_FLOAT pobj;
+    float pobj;
 
     /* dual objective */
-    mpc_boatTack_h10_FLOAT dobj;
+    float dobj;
 
     /* duality gap := pobj - dobj */
-    mpc_boatTack_h10_FLOAT dgap;
+    float dgap;
 
     /* relative duality gap := |dgap / pobj | */
-    mpc_boatTack_h10_FLOAT rdgap;
+    float rdgap;
 
     /* duality measure */
-    mpc_boatTack_h10_FLOAT mu;
+    float mu;
 
     /* duality measure (after affine step) */
-    mpc_boatTack_h10_FLOAT mu_aff;
+    float mu_aff;
 
     /* centering parameter */
-    mpc_boatTack_h10_FLOAT sigma;
+    float sigma;
 
     /* number of backtracking line search steps (affine direction) */
     int lsit_aff;
@@ -122,13 +125,13 @@ struct forces_info_s{
     int lsit_cc;
 
     /* step size (affine direction) */
-    mpc_boatTack_h10_FLOAT step_aff;
+    float step_aff;
 
     /* step size (combined direction) */
-    mpc_boatTack_h10_FLOAT step_cc;
+    float step_cc;
 
     /* solvertime */
-    mpc_boatTack_h10_FLOAT solvetime;
+    float solvetime;
 };
 
 #define M_PI_F 3.14159265358979323846f
@@ -553,10 +556,14 @@ void tack_action(struct reference_actions_s *ref_act_p,
          */
          tack_data.sailing_at_port_haul = (-ref_act_p->alpha_star < 0) ? true : false;
 
-         //if we are using either LQR or MPC, save the time when we start tacking
+         /*if we are using either LQR or MPC, save the time when we start tacking and
+          * tell to controller_data module that an optimal tack has just been started
+          */
          if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC){
              optimal_control_data.time_started_tack_us = hrt_absolute_time();
              optimal_control_data.time_started_valid = true;
+
+             cd_optimal_tack_started();
          }
     }
 
@@ -651,7 +658,11 @@ void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code){
     tack_data.boat_is_tacking = false;
 
     //notify to path_planning that we've completed the tack action
-    notify_tack_completed();
+    pp_notify_tack_completed();
+
+    //if we had used either LQR or MPC, notify tack completed to controller_data
+    if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC)
+        cd_optimal_tack_completed();
 
     //check error_code to give a feedback to QGroundControl
     if(error_code == EVERYTHING_OK){

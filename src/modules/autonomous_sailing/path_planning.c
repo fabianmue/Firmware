@@ -234,7 +234,7 @@ void set_alpha_star(float val){
  * Notify the end of the tack maneuver.
  * Only guidance_module should use this function when a tack action has been completed.
 */
-void notify_tack_completed(void){
+void pp_notify_tack_completed(void){
     ref_act.should_tack = false;
 }
 

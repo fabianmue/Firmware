@@ -34,7 +34,7 @@
 /**
  * @file controller_data.c
  *
- * Store information used by controller.
+ * Store information used by controllers.
  *
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
@@ -63,6 +63,9 @@ float compute_lambda(void);
 /** @brief compute instant alpha in sensor frame*/
 float compute_instant_alpha_sns(float angle);
 
+/** @brief fill a float vector with a constant value*/
+void fill_fvector(float* vector, uint16_t vector_size, float value);
+
 //actual raw measurements from parser_200WX
 static struct{
     float cog_sns;///last cog value supplied by the gps
@@ -72,15 +75,23 @@ static struct{
     float yaw_rate_sns; ///last yaw rate [rad/s], according to our sensor convention
 }measurements_raw;
 
-//filtered measurements
+//filtered measurements & other usefull data to filter them
 static struct{
     float *alpha_p; ///poniter to vector of last K values of true wind angle, [rad], according to Dumas angle definition (Chap 1.3)
     float *app_wind_p;///pointer to vector of last k_app values of apparent wind read by weather station
     float *twd_p; ///pointer to vector of last k_twd values of true wind read by weather station
 
-    uint16_t k;     ///number of elements in alpha_p
-    uint16_t k_app;     ///number of elements in app_wind_p
-    uint16_t k_twd;     ///number of elements in twd_p
+    uint16_t k;         ///total number of elements in alpha_p
+    uint16_t k_app;     ///total number of elements in app_wind_p
+    uint16_t k_twd;     ///totla number of elements in twd_p
+
+    uint16_t opt_tack_alpha_win; ///window size of alpha filter when tacking either with LQR or MPC
+    uint16_t opt_tack_twd_win; ///window size of TWD filter when tacking either with LQR or MPC
+
+    uint16_t alpha_window_length; ///effective length of the window for the moving average filter of alpha
+    uint16_t twd_window_length; ///effective length of the window for the moving average filter of alpha
+
+    bool opt_tack_going; ///true if the boat is tacking using either LQR or MPC
 
     int16_t oldestValue; ///index of oldest value in alpha_p
     int16_t oldestValueApp; ///index of oldest value in app_wind_p
@@ -121,6 +132,8 @@ void init_controller_data(void){
     measurements_filtered.k = 0;
     measurements_filtered.oldestValue = -1;
     measurements_filtered.alpha_sns = 0.0f;
+    measurements_filtered.opt_tack_alpha_win = 0;
+    measurements_filtered.alpha_window_length = 0;
 
     measurements_filtered.app_wind_p = NULL;
     measurements_filtered.apparent_wind_sns = 0.0f;
@@ -130,15 +143,20 @@ void init_controller_data(void){
     measurements_filtered.k_twd = 0;
     measurements_filtered.oldestValueTwd = -1;
     measurements_filtered.twd_sns = 0.0f;
+    measurements_filtered.opt_tack_twd_win = 0;
+    measurements_filtered.twd_window_length = 0;
 
-    //set k to 1 since a real value is not provided
-    update_k(1);
+    //we are not taking at the beginning
+    measurements_filtered.opt_tack_going = false;
+
+    //set k to 1 since real values are not provided
+    update_k(1, 1);
 
     //set k_app to 1 since a real value is not provided
     update_k_app(1);
 
-    //set k_twd to 1 since a real value is not provided
-    update_k_twd(1);
+    //set k_twd to 1 since real values are not provided
+    update_k_twd(1, 1);
 }
 
 /** Free memory and allocate new space for new dimension
@@ -171,53 +189,108 @@ void update_k_app(const uint16_t k){
 /** Free memory and allocate new space for new dimension
  *
  * @param k new dimension of the moving window for true wind direction
+ * @param opt_tack_twf_win opt_tack_twd_win size when tacking with either LQR or MPC, must be <= k
 */
-void update_k_twd(const uint16_t k){
+void update_k_twd(const uint16_t k, uint16_t opt_tack_twd_win){
 
-    //some controls before freeing memory
-    if(k == measurements_filtered.k_twd || k == 0)
-        return; //nothing to do
+    //has k a new value?
+    if(k != measurements_filtered.k_twd && k != 0){
+        //free memory
+        if(measurements_filtered.twd_p != NULL)
+            free(measurements_filtered.twd_p);
 
-    if(measurements_filtered.twd_p != NULL)
-        free(measurements_filtered.twd_p); //free memory
+        measurements_filtered.twd_p = malloc(sizeof(float) * k);
 
-    measurements_filtered.twd_p = malloc(sizeof(float) * k);
+        measurements_filtered.k_twd = k;
 
-    measurements_filtered.k_twd = k;
+        //initialize all the elements of twd_p to 0
+        fill_fvector(measurements_filtered.twd_p, k, 0.0f);
+//        for(uint16_t i = 0; i < measurements_filtered.k_twd; i++){
+//            measurements_filtered.twd_p[i] = 0.0f;
+//        }
 
-    //initialize all the elements of alpha_p to 0
-    for(uint16_t i = 0; i < measurements_filtered.k_twd; i++){
-        measurements_filtered.twd_p[i] = 0.0f;
+        measurements_filtered.oldestValueTwd = 0;
+
+        measurements_filtered.twd_sns = 0.0f;
     }
 
-    measurements_filtered.oldestValueTwd = 0;
+    //has opt_tack_twd_win a new value ?
+    if(opt_tack_twd_win != measurements_filtered.opt_tack_twd_win && opt_tack_twd_win != 0){
+        //make sure opt_tack_twd_win <=  measurements_filtered.k_twd
+        if(opt_tack_twd_win >  measurements_filtered.k_twd)
+            opt_tack_twd_win =  measurements_filtered.k_twd;
+        measurements_filtered.opt_tack_twd_win = opt_tack_twd_win;
+    }
 
-    measurements_filtered.twd_sns = 0.0f;
+    //to set the real size of the windowd of the filter, check if we are tacking
+    if(measurements_filtered.opt_tack_going == true)
+        measurements_filtered.twd_window_length = measurements_filtered.opt_tack_twd_win;
+    else
+        measurements_filtered.twd_window_length = measurements_filtered.k_twd;
 }
 
 /** Free memory and allocate new space for new dimension
  *
  * @param k new dimension of the moving window for alpha
+ * @param opt_tack_alpha_win window size when tacking with either LQR or MPC, must be <= k
 */
-void update_k(const uint16_t k){
+void update_k(const uint16_t k, uint16_t opt_tack_alpha_win){
 
-    //some controls before freeing memory
-    if(k == measurements_filtered.k || k == 0)
-        return; //nothing to do
+    //has k a new value?
+    if(k != measurements_filtered.k && k != 0){
+        //free memory
+        if(measurements_filtered.alpha_p != NULL)
+            free(measurements_filtered.alpha_p);
 
-    if(measurements_filtered.alpha_p != NULL)
-        free(measurements_filtered.alpha_p); //free memory
+        measurements_filtered.alpha_p = malloc(sizeof(float) * k);
 
-    measurements_filtered.alpha_p = malloc(sizeof(float) * k);
+        measurements_filtered.k = k;
 
-    measurements_filtered.k = k;
+        //initialize all the elements of alpha_p to 0
+        fill_fvector(measurements_filtered.alpha_p, k, 0.0f);
 
-    //initialize all the elements of alpha_p to 0
-    for(uint16_t i = 0; i < measurements_filtered.k; i++){
-        measurements_filtered.alpha_p[i] = 0.0f;
+        measurements_filtered.oldestValue = 0;
+
+        measurements_filtered.alpha_sns = 0.0f;
     }
 
-    measurements_filtered.oldestValue = 0;
+    //has opt_tack_alpha_win a new value ?
+    if(opt_tack_alpha_win != measurements_filtered.opt_tack_alpha_win && opt_tack_alpha_win != 0){
+        //make sure opt_tack_alpha_win <= measurements_filtered.k
+        if(opt_tack_alpha_win > measurements_filtered.k)
+            opt_tack_alpha_win = measurements_filtered.k;
+        measurements_filtered.opt_tack_alpha_win = opt_tack_alpha_win;
+    }
+
+    //to set the real size of the windowd of the filter, check if we are tacking
+    if(measurements_filtered.opt_tack_going == true)
+        measurements_filtered.alpha_window_length = measurements_filtered.opt_tack_alpha_win;
+    else
+        measurements_filtered.alpha_window_length = measurements_filtered.k;
+
+    //----------------********************************------------
+//    //some controls before freeing memory
+//    if(k == measurements_filtered.k || k == 0)
+//        return; //nothing to do
+
+//    if(measurements_filtered.alpha_p != NULL)
+//        free(measurements_filtered.alpha_p); //free memory
+
+//    measurements_filtered.alpha_p = malloc(sizeof(float) * k);
+
+//    measurements_filtered.k = k;
+
+//    //make sure opt_tack_alpha_win <= k and opt_tack_alpha_win > 0
+//    if(opt_tack_alpha_win > k || opt_tack_alpha_win > 0)
+//        opt_tack_alpha_win = k;
+//    measurements_filtered.opt_tack_alpha_win = opt_tack_alpha_win;
+
+//    //initialize all the elements of alpha_p to 0
+//    for(uint16_t i = 0; i < measurements_filtered.k; i++){
+//        measurements_filtered.alpha_p[i] = 0.0f;
+//    }
+
+//    measurements_filtered.oldestValue = 0;
 }
 
 /**
@@ -302,12 +375,12 @@ void update_raw_twd(const float twd_r){
     //update oldest value index
     measurements_filtered.oldestValueTwd++;
 
-    if(measurements_filtered.oldestValueTwd >= measurements_filtered.k_twd)
+    if(measurements_filtered.oldestValueTwd >= measurements_filtered.twd_window_length)
         measurements_filtered.oldestValueTwd = 0;
 
     //update twd mean using a robust mean
     measurements_filtered.twd_sns = robust_avg_sns(measurements_filtered.twd_p,
-                                                   measurements_filtered.k_twd);
+                                                   measurements_filtered.twd_window_length);
 }
 
 
@@ -334,12 +407,13 @@ void update_alpha_sns(void){
     //update oldest value index
     measurements_filtered.oldestValue++;
 
-    if(measurements_filtered.oldestValue >= measurements_filtered.k)
+
+    if(measurements_filtered.oldestValue >= measurements_filtered.alpha_window_length)
         measurements_filtered.oldestValue = 0;
 
     //use @see robust_avg_sns function to compute a robust mean of alpha angle
     measurements_filtered.alpha_sns = robust_avg_sns(measurements_filtered.alpha_p,
-                                                     measurements_filtered.k);
+                                                     measurements_filtered.alpha_window_length);
 
 }
 
@@ -520,4 +594,71 @@ float compute_lambda(void){
 */
 float get_yaw_rate_sns(void){
     return measurements_raw.yaw_rate_sns;
+}
+
+/**
+ * Notify to controller_data module that a tack performed by either LQR or MPC has
+ * just started.
+ *
+ * This function changes the moving average windows size for alpha angle and twd, using
+ * the window size set through @see update_k (second param) and @see update_k_twd (second param).
+ *
+*/
+void cd_optimal_tack_started(void){
+    //safety check
+    if(measurements_filtered.opt_tack_going == false){
+        measurements_filtered.opt_tack_going = true;
+
+        //copy in the whole alpha_p the last average value of alpha
+        fill_fvector(measurements_filtered.alpha_p, measurements_filtered.k, measurements_filtered.alpha_sns);
+
+        //copy in the whole twd_p the last average value of twd
+        fill_fvector(measurements_filtered.twd_p, measurements_filtered.k_twd, measurements_filtered.twd_sns);
+
+        //use the window size for the optimal tack for alpha and twd
+        measurements_filtered.alpha_window_length = measurements_filtered.opt_tack_alpha_win;
+        measurements_filtered.twd_window_length = measurements_filtered.opt_tack_twd_win;
+
+        //start filling the two sample vectors from the first position
+        measurements_filtered.oldestValue = 0;
+        measurements_filtered.oldestValueTwd = 0;
+    }
+}
+
+/**
+ * Notify to controller_data module that a tack performed by either LQR or MPC has
+ * just been completed.
+ *
+ * This function changes the moving average windows size for alpha angle and twd, using
+ * the original window size set through @see update_k (first param) and @see update_k_twd (first param).
+*/
+void cd_optimal_tack_completed(void){
+    //safety check
+    if(measurements_filtered.opt_tack_going == true){
+        measurements_filtered.opt_tack_going = false;
+
+        //copy in the whole alpha_p the last average value of alpha
+        fill_fvector(measurements_filtered.alpha_p, measurements_filtered.k, measurements_filtered.alpha_sns);
+
+        //start filling app_p with new values from the first position
+        measurements_filtered.oldestValue = 0;
+
+        //copy in the whole twd_p the last average value of twd
+        fill_fvector(measurements_filtered.twd_p, measurements_filtered.k_twd, measurements_filtered.twd_sns);
+
+        //start filling twd_p with new values from the first position
+        measurements_filtered.oldestValueTwd = 0;
+
+        //reset the original window size for alpha and twd
+        measurements_filtered.alpha_window_length = measurements_filtered.k;
+        measurements_filtered.twd_window_length = measurements_filtered.k_twd;
+    }
+}
+
+/**
+ * Fill a float vector with a constant value
+*/
+void fill_fvector(float* vector, uint16_t vector_size, float value){
+    for(uint16_t i = 0; i < vector_size; i++)
+        vector[i] = value;
 }

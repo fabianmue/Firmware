@@ -84,7 +84,7 @@ void path_planning(struct reference_actions_s *ref_act_p,
 void set_alpha_star(float val);
 
 /** @brief notify that the tack maneuver is completed*/
-void notify_tack_completed(void);
+void pp_notify_tack_completed(void);
 
 /** @brief re-insert the grid lines used before*/
 void reuse_last_grids(bool use);

@@ -45,20 +45,20 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 
 
 /** @brief initialize controller data before starting*/
 void init_controller_data(void);
 
 /** @brief modify size of the moving window for alpha angle*/
-void update_k(const uint16_t k);
+void update_k(const uint16_t k, uint16_t opt_tack_alpha_win);
 
 /** @brief modify size of the moving window for apparent angle*/
 void update_k_app(const uint16_t k);
 
 /** @brief modify size of the moving window for true wind angle*/
-void update_k_twd(const uint16_t k);
+void update_k_twd(const uint16_t k, uint16_t opt_tack_twd_win);
 
 /** @brief update course over ground with a new raw value from the GPS*/
 void update_raw_cog(const float cog_r);
@@ -89,5 +89,11 @@ void set_max_time_cog_not_up(float max_time_cog_not_up_sec);
 
 /** @brief get latest yawRate value*/
 float get_yaw_rate_sns(void);
+
+/** @brief notify boat is performing a tack using either LQR or MPC*/
+void cd_optimal_tack_started(void);
+
+/** @brief notify that the "optimal" tack is completed*/
+void cd_optimal_tack_completed(void);
 
 #endif // CONTROLLER_DATA_H
