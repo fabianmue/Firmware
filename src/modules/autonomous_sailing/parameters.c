@@ -92,7 +92,7 @@ PARAM_DEFINE_FLOAT(AS_SAIL, -1.0f);
  * @min 0
  * @max 0.9
  */
-PARAM_DEFINE_FLOAT(AS_RD_45_CMD, 0.8f);
+PARAM_DEFINE_FLOAT(AS_RD_45_CMD, 1.0f);
 
 /**
  * Alpha angle [deg].

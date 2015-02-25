@@ -185,7 +185,7 @@ static struct{
                                 .rudder_controller_type = 0,//start with standard PI
                                 .last_command = 0.0f,
                                 .sum_error_pi = 0.0f,
-                                .rud_cmd_45_left = 0.85f,//RUDDER_45_LEFT,
+                                .rud_cmd_45_left = 1.0f,//RUDDER_45_LEFT,
                                 .alpha_rudder_x2_r =  0.0f,
                                 .alpha_rudder_x2_r =  0.3490658503f//20.0f * deg2rad
                             };
