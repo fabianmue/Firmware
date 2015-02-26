@@ -238,6 +238,10 @@ int as_daemon_thread_main(int argc, char *argv[]){
     mt_init_mpc_data();
     #endif
 
+    #if PRINT_DEBUG_STR
+    printf("entering while loop\n");
+    #endif
+
     while(!thread_should_exit){
 
         poll_ret = poll(fds, (sizeof(fds) / sizeof(fds[0])), TIMEOUT_POLL);
@@ -334,6 +338,9 @@ int as_daemon_thread_main(int argc, char *argv[]){
             //fine cancella
         #endif
 
+        #if PRINT_DEBUG_STR
+        printf("before guidance module\n");
+        #endif
         //always perfrom guidance module to control the boat
         guidance_module(&ref_act, &params, &strs);
 
@@ -350,9 +357,13 @@ int as_daemon_thread_main(int argc, char *argv[]){
         }
 
         #if SIMULATION_FLAG == 1
-        //strs.airspeed.true_airspeed_m_s
+        //strs.airspeed.true_airspeed_m_s = ref_act.should_tack;
         orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
         //fine cancella
+        #endif
+
+        #if PRINT_DEBUG_STR
+        printf("loop completed\n");
         #endif
 	}
 

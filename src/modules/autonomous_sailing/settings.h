@@ -49,4 +49,8 @@
 
 #define TEST_MPC 0 ///1 if you want to test the MPC performance without setting up tack maneuver data
 
+#define PRINT_DEBUG_STR 0 ///1 if you are debugging the code
+
+#define DEBUGGING_CODE 1
+
 #endif // SETTINGS_H

@@ -42,6 +42,9 @@
 
 #include "guidance_module.h"
 
+#if DEBUGGING_CODE == 1
+static float cancella = 0.0f;
+#endif
 
 /// Forces parameters
 struct forces_params_s{
@@ -517,6 +520,12 @@ void set_rudder_data(float p, float i, float cp,
 void tack_action(struct reference_actions_s *ref_act_p,
                  float *p_rudder_cmd, float *p_sails_cmd,
                  struct structs_topics_s *strs_p){
+
+//    #if DEBUGGING_CODE == 1
+    strs_p->airspeed.true_airspeed_m_s = cancella;
+    cancella++;
+//    return;
+//    #endif
 
     //check if we've already started tacking, or if this is the first time
     if(tack_data.boat_is_tacking){
@@ -1404,10 +1413,13 @@ void guidance_module(struct reference_actions_s *ref_act_p,
         //read rudder and sails command from RC and save them
         rudder_command = strs_p->rc_channels.channels[RC_RUD_INDEX];
         sail_command = strs_p->rc_channels.channels[RC_SAIL_INDEX];
+
+        #if PRINT_DEBUG_STR
+        printf("manual mode\n");
+        #endif
     }
     else{
         //Autonomous mode
-        //TODO check for a bug somewhere here ...
         float alpha;//angle with respect to the wind
         //get alpha from the moving average value of the last k values of instant alpha
         alpha = get_alpha_dumas();
@@ -1448,6 +1460,10 @@ void guidance_module(struct reference_actions_s *ref_act_p,
         strs_p->boat_guidance_debug.alpha = alpha;
         strs_p->boat_guidance_debug.twd_mean = get_twd_sns();
         strs_p->boat_guidance_debug.app_mean = get_app_wind_sns();
+
+        #if PRINT_DEBUG_STR
+        printf("autonomous mode\n");
+        #endif
     }
 
     #if TEST_MPC == 1
@@ -1468,6 +1484,10 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 
     #if SIMULATION_FLAG == 1
     //strs_p->airspeed.true_airspeed_m_s = ref_act_p->alpha_star - get_alpha_dumas();
+    #endif
+
+    #if PRINT_DEBUG_STR
+    printf("leaving guidance_module\n");
     #endif
 }
 
