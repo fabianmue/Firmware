@@ -42,9 +42,7 @@
 
 #include "guidance_module.h"
 
-#if DEBUGGING_CODE == 1
-static float cancella = 0.0f;
-#endif
+
 
 /// Forces parameters
 struct forces_params_s{
@@ -520,12 +518,6 @@ void set_rudder_data(float p, float i, float cp,
 void tack_action(struct reference_actions_s *ref_act_p,
                  float *p_rudder_cmd, float *p_sails_cmd,
                  struct structs_topics_s *strs_p){
-
-//    #if DEBUGGING_CODE == 1
-    strs_p->airspeed.true_airspeed_m_s = cancella;
-    cancella++;
-//    return;
-//    #endif
 
     //check if we've already started tacking, or if this is the first time
     if(tack_data.boat_is_tacking){
@@ -1148,26 +1140,26 @@ void mpc_control_rudder(float *p_rudder_cmd,
                                             (mpc_boatTack_h10_output*) &(optimal_control_data.forces_output),
                                             (mpc_boatTack_h10_info*) &(optimal_control_data.forces_info));
         }
-        else if(optimal_control_data.pred_horz_steps == 15){
-            solver_ret = mpc_boatTack_h15_solve((mpc_boatTack_h15_params*) &(optimal_control_data.forces_params),
-                                            (mpc_boatTack_h15_output*) &(optimal_control_data.forces_output),
-                                            (mpc_boatTack_h15_info*) &(optimal_control_data.forces_info));
-        }
-        else if(optimal_control_data.pred_horz_steps == 20){
-            solver_ret = mpc_boatTack_h20_solve((mpc_boatTack_h20_params*) &(optimal_control_data.forces_params),
-                                            (mpc_boatTack_h20_output*) &(optimal_control_data.forces_output),
-                                            (mpc_boatTack_h20_info*) &(optimal_control_data.forces_info));
-        }
-        else if(optimal_control_data.pred_horz_steps == 25){
-            solver_ret = mpc_boatTack_h25_solve((mpc_boatTack_h25_params*) &(optimal_control_data.forces_params),
-                                            (mpc_boatTack_h25_output*) &(optimal_control_data.forces_output),
-                                            (mpc_boatTack_h25_info*) &(optimal_control_data.forces_info));
-        }
-        else if(optimal_control_data.pred_horz_steps == 30){
-            solver_ret = mpc_boatTack_h30_solve((mpc_boatTack_h30_params*) &(optimal_control_data.forces_params),
-                                            (mpc_boatTack_h30_output*) &(optimal_control_data.forces_output),
-                                            (mpc_boatTack_h30_info*) &(optimal_control_data.forces_info));
-        }
+//        else if(optimal_control_data.pred_horz_steps == 15){
+//            solver_ret = mpc_boatTack_h15_solve((mpc_boatTack_h15_params*) &(optimal_control_data.forces_params),
+//                                            (mpc_boatTack_h15_output*) &(optimal_control_data.forces_output),
+//                                            (mpc_boatTack_h15_info*) &(optimal_control_data.forces_info));
+//        }
+//        else if(optimal_control_data.pred_horz_steps == 20){
+//            solver_ret = mpc_boatTack_h20_solve((mpc_boatTack_h20_params*) &(optimal_control_data.forces_params),
+//                                            (mpc_boatTack_h20_output*) &(optimal_control_data.forces_output),
+//                                            (mpc_boatTack_h20_info*) &(optimal_control_data.forces_info));
+//        }
+//        else if(optimal_control_data.pred_horz_steps == 25){
+//            solver_ret = mpc_boatTack_h25_solve((mpc_boatTack_h25_params*) &(optimal_control_data.forces_params),
+//                                            (mpc_boatTack_h25_output*) &(optimal_control_data.forces_output),
+//                                            (mpc_boatTack_h25_info*) &(optimal_control_data.forces_info));
+//        }
+//        else if(optimal_control_data.pred_horz_steps == 30){
+//            solver_ret = mpc_boatTack_h30_solve((mpc_boatTack_h30_params*) &(optimal_control_data.forces_params),
+//                                            (mpc_boatTack_h30_output*) &(optimal_control_data.forces_output),
+//                                            (mpc_boatTack_h30_info*) &(optimal_control_data.forces_info));
+//        }
         else{
             //error, no solve function available!
             tack_completed(ref_act_p, NO_MPC_SOLVE_FNC);
@@ -1407,6 +1399,9 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 
     float rudder_command = 0.0f;
     float sail_command = 0.0f;
+    float alpha;//angle with respect to the wind
+    //get alpha from the moving average filter in controller_data module
+    alpha = get_alpha_dumas();
 
     //check if we are in the manual mode
     if(strs_p->rc_channels.channels[RC_MODE_INDEX] == RC_MANUAL_MODE){
@@ -1420,9 +1415,6 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     }
     else{
         //Autonomous mode
-        float alpha;//angle with respect to the wind
-        //get alpha from the moving average value of the last k values of instant alpha
-        alpha = get_alpha_dumas();
 
         //check if path_planning() told us to tack
         if(ref_act_p->should_tack){
@@ -1456,10 +1448,6 @@ void guidance_module(struct reference_actions_s *ref_act_p,
         //rudder_command = param_qgc_p->deva1;
         #endif
 
-        //save value for post processing
-        strs_p->boat_guidance_debug.alpha = alpha;
-        strs_p->boat_guidance_debug.twd_mean = get_twd_sns();
-        strs_p->boat_guidance_debug.app_mean = get_app_wind_sns();
 
         #if PRINT_DEBUG_STR
         printf("autonomous mode\n");
@@ -1478,6 +1466,9 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     optimal_control_data.rudder_latest = rudder_command;
 
     //save first debug values for post-processing, other values set in path_planning()
+    strs_p->boat_guidance_debug.alpha = alpha;
+    strs_p->boat_guidance_debug.twd_mean = get_twd_sns();
+    strs_p->boat_guidance_debug.app_mean = get_app_wind_sns();
     strs_p->boat_guidance_debug.timestamp = hrt_absolute_time();
     strs_p->boat_guidance_debug.rudder_action = rudder_command;
     strs_p->boat_guidance_debug.sail_action = sail_command;

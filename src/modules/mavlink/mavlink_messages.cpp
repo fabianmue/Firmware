@@ -2086,7 +2086,8 @@ protected:
 
 //            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "twd mean");
+            //snprintf(msg.name, sizeof(msg.name), "twd mean");
+            snprintf(msg.name, sizeof(msg.name), "as_avg_twd");
             msg.value = boat_guidance_debug.twd_mean;
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
