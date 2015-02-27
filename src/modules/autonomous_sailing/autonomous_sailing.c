@@ -49,6 +49,9 @@
 //navigation module
 #include "navigation.h"
 
+//Include Extremum Seeking Sailcontrol (JW)
+#include "extremum_sailcontrol.h"
+
 //parameters from QGroundControl
 #include "parameters.h"
 
@@ -70,6 +73,8 @@
 //settings
 #include "settings.h"
 
+
+
 // To be able to use the "parameter function" from Q ground control:
 #include <systemlib/param/param.h>
 #include <systemlib/systemlib.h>
@@ -78,6 +83,7 @@
 #include "mpc_test_data.h"
 #endif
 
+#define SCHED_PRIORITY_MAX 20					//!!!!!!!!!!!!!!!!!!!JUST A FIX! CHECK THIS!!!! (JW)
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
 
 #if SIMULATION_FLAG == 1 //defined in parameter.h
@@ -278,7 +284,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     //look into optimal path planning maps for reference actions
                     path_planning(&ref_act, &strs);
 
-                    ExtremumSailcontrol(&strs);
+                    ESSC_SpeedUpdate(&strs);
 
                     //update NED velocities in navigation module
                     //update_ned_vel(strs.gps_filtered.vel_n, strs.gps_filtered.vel_e, strs.gps_filtered.vel_d);
