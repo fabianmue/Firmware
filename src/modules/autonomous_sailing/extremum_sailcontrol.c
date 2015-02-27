@@ -9,8 +9,6 @@
  *      Author: Jonas Wirz (wirzjo@student.ethz.ch)
  */
 
-/* TODO: Think about how to update the Sail-Control-Matix State.ds!!! Is not updated by now! */
-
 
 #include "extremum_sailcontrol.h"
 
@@ -19,32 +17,70 @@
 int sign(float value);
 
 /** @brief Build Mean of Speed */
-float meanSpeed(void);
+float mean_speed(void);
 
 /** @brief Add a value to the Buffer */
 bool buffer_add(float value);
 
 /** @brief Delete the oldest value from the Buffer */
-bool buffer_deleteOldest(void);
+bool buffer_delete_oldest(void);
 
 /** @brief Flush the buffer */
 bool buffer_flush(void);
 
 /** @brief Get the value at a given buffer position */
-float buffer_getValue(unsigned int pos);
+float buffer_get_value(uint8_t pos);
+
+/** @brief Convert the opening Angle for the sail in degrees to a PWM signal */
+float deg2pwm(float degSail);
+
+/** @brief Convert the opening Angle for the sail as a PWM signal to degrees */
+float pwm2deg(float pwmSail);
+
+
+/** Struct for a Circluar Buffer */
+typedef struct {
+	float bufferData [BUFFERSIZE];	//Array containing the Buffer-Data
+	uint8_t head;					//Position of the head of the buffer
+	uint8_t tail;              		//Position of the tail of the buffer
+	uint8_t maxBuffersize;     		//Maximum possible Buffersize
+	uint8_t buffersize;        		//Current size of the buffer
+} CircularBuffer;
+
+
+/** Struct holding the state of the Controller */
+struct essc_state{
+	CircularBuffer buffer;          //Buffer containing a limited number of Speed values used to build a mean (window-averaging)
+	float meanSpeeds[2];			//Mean of the speedbuffer at times t-1 and t <=> meanSpeeds = [t-1,t] (in [m/s])
+	float ds[3];					//Last three Sail Control-Values a times t,t-1,t-2 <=> ds = [t-2,t-1,t] (in [°])
+	float ActDs;					//Current Sail Control-Value (as a PWM-Value)
+	uint16_t lastCall; 		    	//Timestamp of the last Functioncall (in [s])
+};
+
+
+/** Struct holding the Configuration Parameters for the Controller */
+struct essc_config{
+	float k;						//Stepsize in Degrees
+	unsigned int windowSize;		//Windowsize for building the mean over the speeds (window-averaging)
+	float frequency;				//Frequency for Changes in the sail control value.
+									//Note: In QGroundControl this value is defined as a frequency, but it is internally
+									//      changed to a Time-Period => 1/frequency (for computational reasons).
+};
+
 
 
 /** Set default Values for the Configuration Parameters */
-static struct ESSC_Config Config = {
+static struct essc_config Config = {
 		.k = 2.0f,
 		.frequency = 1.0f,
 		.windowSize = 8
 };
 
 /** Set initial Values for the State Values */
-static struct ESSC_State State = {
+static struct essc_state State = {
 		.buffer = {{0},0,0,BUFFERSIZE,0},
 		.meanSpeeds = {0},
+		.ds = {0},
 		.ActDs = 0,
 		.lastCall = 0
 };
@@ -63,7 +99,7 @@ static struct ESSC_State State = {
  *
  * @param	strs_p: pointer to the struct for GPS Data
 */
-void ESSC_SpeedUpdate(const struct structs_topics_s *strs_p) {
+void essc_speed_update(const struct structs_topics_s *strs_p) {
 
 	/* Get the boatspeed from the Kalman-Filtered values and calculate the forward
 	 * u-Velocity
@@ -79,7 +115,7 @@ void ESSC_SpeedUpdate(const struct structs_topics_s *strs_p) {
 
     //Update the meanSpeeds-Matrix
 	State.meanSpeeds[0] = State.meanSpeeds[1];
-	State.meanSpeeds[1] = meanSpeed();
+	State.meanSpeeds[1] = mean_speed();
 
 } //End of ESSC_SpeedUpdate
 
@@ -91,7 +127,7 @@ void ESSC_SpeedUpdate(const struct structs_topics_s *strs_p) {
  *
  * @return	Signal for the sail actuator
 */
-float ESSC_SailControlValue() {
+float essc_sail_control_value() {
 
 	/* The Sail Control should not change the value of the sail every time it is called.
 	 * Therefore, the system-time is called to adjust the sail only in intervals specified by the
@@ -104,14 +140,17 @@ float ESSC_SailControlValue() {
 	if(ActTime - State.lastCall >= Config.frequency) {
 		/* A new Sail-Control-Value has to be calculated in this step */
 
+		//Store the current time as the last time a new Sailvalue was calcualted
+		State.lastCall = ActTime;
+
 		//Calculate change in Speed (forward Speed)
 		float du = State.meanSpeeds[1] - State.meanSpeeds[0];
 
 		//Calcualte change in Sailangle (State.ds = [t-2,t-1,t])
-		float ds = State.ds[1] - State.ds[2];
+		float ds = State.ds[1] - State.ds[0];
 
 		//Actual Control Law <=> Calculate new Sail-Control-Value
-		float newDs = State.ds[3] + Config.k * sign(ds) * sign(du);
+		float newDs = State.ds[2] + Config.k * sign(ds) * sign(du);
 
 		//Saturate the Sail-Command
         if(newDs > SAIL_OPEN_DEG) {
@@ -122,7 +161,13 @@ float ESSC_SailControlValue() {
         	newDs = SAIL_CLOSED_DEG;
         }
 
+        //Update the Sailcontrol-History
+        State.ds[0] = State.ds[1];
+        State.ds[1] = State.ds[2];
+        State.ds[2] = newDs;
 
+        //Set the new Control-Value
+        State.ActDs = deg2pwm(newDs);
 		return State.ActDs;
 
 	} else {
@@ -145,11 +190,9 @@ float ESSC_SailControlValue() {
  * @param windowSize: Size of the window for Speed-Averaging
  * @param frequency: Frequency for Sailadjustments [Hz]
 */
-void ESSC_SetQGroundValues(float k, int windowSize, float frequency) {
+void essc_set_qground_values(float k, int windowSize, float frequency) {
 
-	//Assign the Stepsize (make sure the stepsize is bigger than zero)
-	//Note: k represents a Stepsize in Degreees. Internally a PWM-Signal is generated.
-	//      => transform the degree-value to a duty-cycle for the PWM.
+	//Assign the Stepsize (make sure the stepsize is bigger than zero, else set a default value)
 	if(k > 0) {
 		Config.k = k;
 	} else {
@@ -158,14 +201,16 @@ void ESSC_SetQGroundValues(float k, int windowSize, float frequency) {
 
 	//Assign the Frequency
 	//Note: frequency is a quantity in Hz. Internally the period is used. Therefore, the
-	//      value is convertet to the corresponding period and stored.
+	//      value is converted to the corresponding period and stored. If the frequency is
+	//      smaller than zero a default value is set.
 	if(frequency > 0) {
 		Config.frequency = 1/frequency;
 	} else {
 		Config.frequency = 1/1.0f;
 	}
 
-	//Assign the Size of the Window for the speed Averaging (must be bigger than two)
+	//Assign the Size of the Window for the speed Averaging (must be bigger than two, otherwise
+	//a default value is set)
 	if(windowSize >= 2) {
 		Config.windowSize = windowSize;
 	} else {
@@ -208,13 +253,13 @@ int sign(float value) {
  *
  * @return	the mean speed of all values stored in the buffer
 */
-float meanSpeed(void) {
+float mean_speed(void) {
 
 	/* Get the current number of elements currently available for Speed-Calculation. When starting the system or
 	 * flushing the buffer it can happen that the buffer does not contain the full number of elements. Therefore,
 	 * take the minimum of the current buffersize and the windowsize.
 	 */
-	unsigned int minSize = Config.windowSize;
+	uint8_t minSize = Config.windowSize;
 	if(Config.windowSize > State.buffer.buffersize) {
 		minSize = State.buffer.buffersize;
 	}
@@ -222,13 +267,14 @@ float meanSpeed(void) {
 
 	//Calculate the mean
 	float sum = 0;
-	for(unsigned int i = 0; i < minSize; i++) {
-		sum += buffer_getValue(i);
+	for(uint8_t i = 0; i < minSize; i++) {
+		sum += buffer_get_value(i);
 	}
 
 	return sum/minSize;
 
 } //End of meanSpeed
+
 
 
 /**
@@ -238,8 +284,20 @@ float meanSpeed(void) {
  * @return  sailangle as a PWM signal
  */
 float deg2pwm(float degSail) {
+	return (SAIL_OPEN_PWM-SAIL_CLOSED_PWM) / (SAIL_CLOSED_DEG-SAIL_OPEN_DEG) * (SAIL_OPEN_DEG-degSail);
+} //End of deg2pwm
 
-}
+
+
+/**
+ * Convert a sailangle as a PWM signal to degrees.
+ *
+ * @param   pwmSail: Sailangle as a PWM Signal
+ * @return  sailangle in degrees
+ */
+float pwm2deg(float pwmSail) {
+	return (SAIL_CLOSED_DEG-SAIL_OPEN_DEG) / (SAIL_OPEN_PWM-SAIL_CLOSED_PWM) * (SAIL_OPEN_PWM-pwmSail);
+} //End of pwm2deg
 
 
 
@@ -250,7 +308,7 @@ float deg2pwm(float degSail) {
  * @return	true, if the value was successfully added
 */
 bool buffer_add(float value) {
-	unsigned int next = (unsigned int)(State.buffer.head + 1) % State.buffer.maxBuffersize;
+	uint8_t next = (unsigned int)(State.buffer.head + 1) % State.buffer.maxBuffersize;
 
 	if (next != State.buffer.tail) {
 		//The buffer is not full => add value to the buffer
@@ -260,7 +318,7 @@ bool buffer_add(float value) {
 		State.buffer.buffersize = State.buffer.buffersize + 1;
 	} else {
 		//The buffer is full => delete oldest element and add the new value
-		buffer_deleteOldest();
+		buffer_delete_oldest();
 		buffer_add(value);
 	}
 
@@ -275,14 +333,14 @@ bool buffer_add(float value) {
  *
  * @return true, if the value was successfully deleted
  */
-bool buffer_deleteOldest(void) {
+bool buffer_delete_oldest(void) {
 
 	if(State.buffer.head == State.buffer.tail) {
 		//The buffer is empty
 		return false;
 	} else {
 		//There is at least one element in the buffer
-		State.buffer.tail = (unsigned int) (State.buffer.tail + 1) % State.buffer.maxBuffersize;
+		State.buffer.tail = (uint8_t) (State.buffer.tail + 1) % State.buffer.maxBuffersize;
 		State.buffer.buffersize = State.buffer.buffersize - 1;
 		return true;
 	}
@@ -297,9 +355,9 @@ bool buffer_deleteOldest(void) {
  * @param  pos: Position in the buffer
  * @return the value at the given position in the buffer
  */
-float buffer_getValue(unsigned int pos) {
+float buffer_get_value(uint8_t pos) {
 
-	unsigned int index = (unsigned int)(State.buffer.tail + pos) % State.buffer.maxBuffersize;
+	uint8_t index = (uint8_t)(State.buffer.tail + pos) % State.buffer.maxBuffersize;
 
 	return State.buffer.bufferData[index];
 

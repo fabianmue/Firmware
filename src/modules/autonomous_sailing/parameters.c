@@ -1309,7 +1309,7 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.ESSC_k, &ESSC_k);
     param_get(pointers_param_qgc.ESSC_windowSize, &ESSC_windowSize);
     param_get(pointers_param_qgc.ESSC_frequency, &ESSC_frequency);
-    ESSC_SetQGroundValues(ESSC_k,ESSC_windowSize,ESSC_frequency);
+    essc_set_qground_values(ESSC_k,ESSC_windowSize,ESSC_frequency);
 
 }
 

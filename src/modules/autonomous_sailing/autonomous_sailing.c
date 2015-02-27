@@ -284,7 +284,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     //look into optimal path planning maps for reference actions
                     path_planning(&ref_act, &strs);
 
-                    ESSC_SpeedUpdate(&strs);
+                    //Call the extremum Seeking Sail Control and hand over the new GPS-Speed-Values
+                    essc_speed_update(&strs);
 
                     //update NED velocities in navigation module
                     //update_ned_vel(strs.gps_filtered.vel_n, strs.gps_filtered.vel_e, strs.gps_filtered.vel_d);
