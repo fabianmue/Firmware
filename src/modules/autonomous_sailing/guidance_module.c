@@ -178,11 +178,11 @@ static struct{
     float alpha_rudder_x1_r;   ///alpha angle[rad] called x1 in rudder command plots
     float alpha_rudder_x2_r;   ///alpha angle[rad] called x2 in rudder command plots
 } rudder_controller_data =  {
-                                .p = 0.0f,
+                                .p = 0.35f,
                                 .i = 0.0f,
                                 .kaw = 0.5f,
-                                .cp = 1.0f,
-                                .ci = 1.0f,
+                                .cp = 0.35f,
+                                .ci = 0.0f,
                                 .rudder_controller_type = 0,//start with standard PI
                                 .last_command = 0.0f,
                                 .sum_error_pi = 0.0f,
@@ -658,20 +658,27 @@ void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code){
     if(error_code == EVERYTHING_OK){
         //notify to QGC that we've completed the tack action
         sprintf(txt_msg, "Tack completed.");
+        //send message
+        send_log_info(txt_msg);
     }
     else if(error_code == FORCED_TACK_STOP){
         //notify to QGC that we had to force stopping the tack
         sprintf(txt_msg, "Tack forced to be completed.");
+        //send message
+        send_log_critical(txt_msg);
     }
     else if(error_code == NO_MPC_SOLVE_FNC){
         //notify to QGC the error
         sprintf(txt_msg, "No MPC solve for this horizon!");
+        //send message
+        send_log_critical(txt_msg);
     }
-    else
+    else{
         sprintf(txt_msg, "Error: check error_code in guidance_module");
+        //send message
+        send_log_critical(txt_msg);
+    }
 
-    //send message
-    send_log_info(txt_msg);
 }
 
 /**
@@ -1044,8 +1051,19 @@ void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3],
         }
     }
 
-    //save prediction horizon & sampling time
-    optimal_control_data.pred_horz_steps = pred_horz_steps;
+    //check if we have an available mpc solve for the new prediction horizon
+    if(pred_horz_steps == 10 || pred_horz_steps == 15 || pred_horz_steps == 20
+       || pred_horz_steps == 25){
+        //save prediction horizon
+        optimal_control_data.pred_horz_steps = pred_horz_steps;
+    }
+    else{
+        //the horizon inserted is not available
+        send_log_critical("Horizon not available");
+        //use the last one valid
+    }
+
+    //save models sampling time
     optimal_control_data.mpc_sampling_time_us = (uint64_t)mpc_sampling_time_us;
 
     //A_ext = [A, B; 0, I], B_ext = [B; I]
