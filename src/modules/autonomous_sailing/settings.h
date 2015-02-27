@@ -45,7 +45,7 @@
 
 #define USE_GRID_LINES 0 ///1 if you want to use grid line system to tell the boat where to tack
 
-#define SIMULATION_FLAG 0 ///1 if you're testing autonomous sailing app indoor, PLEASE SET INDOOR PARSER_200WX
+#define SIMULATION_FLAG 1 ///1 if you're testing autonomous sailing app indoor, PLEASE SET INDOOR PARSER_200WX
 
 #define TEST_MPC 0 ///1 if you want to test the MPC performance without setting up tack maneuver data
 

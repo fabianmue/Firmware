@@ -52,10 +52,9 @@
 #include "controller_data.h"
 #include "simulation_utility.h"
 #include "mpcForces/mpc_boatTack_h10.h"
-//#include "mpcForces/mpc_boatTack_h15.h"
-//#include "mpcForces/mpc_boatTack_h20.h"
-//#include "mpcForces/mpc_boatTack_h25.h"
-//#include "mpcForces/mpc_boatTack_h30.h"
+#include "mpcForces/mpc_boatTack_h15.h"
+#include "mpcForces/mpc_boatTack_h20.h"
+#include "mpcForces/mpc_boatTack_h25.h"
 
 //log messages to QGroundControl
 #include "send_msg_qgc.h"
