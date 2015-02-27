@@ -9,6 +9,8 @@
  *      Author: Jonas Wirz (wirzjo@student.ethz.ch)
  */
 
+/* TODO: Think about how to update the Sail-Control-Matix State.ds!!! Is not updated by now! */
+
 
 #include "extremum_sailcontrol.h"
 
@@ -42,7 +44,7 @@ static struct ESSC_Config Config = {
 /** Set initial Values for the State Values */
 static struct ESSC_State State = {
 		.buffer = {{0},0,0,BUFFERSIZE,0},
-		.meanSpeed = 0,
+		.meanSpeeds = {0},
 		.ActDs = 0,
 		.lastCall = 0
 };
@@ -63,26 +65,74 @@ static struct ESSC_State State = {
 */
 void ESSC_SpeedUpdate(const struct structs_topics_s *strs_p) {
 
+	/* Get the boatspeed from the Kalman-Filtered values and calculate the forward
+	 * u-Velocity
+	 */
+    float NorthVel = strs_p->gps_filtered.vel_n;
+    float EastVel = strs_p->gps_filtered.vel_e;
+
+    float uVel = sqrt(NorthVel * NorthVel + EastVel * EastVel);
 
 
+    //Add the new Velocity to the buffer
+    buffer_add(uVel);
 
-	State.meanSpeed = 0.0f;
+    //Update the meanSpeeds-Matrix
+	State.meanSpeeds[0] = State.meanSpeeds[1];
+	State.meanSpeeds[1] = meanSpeed();
 
 } //End of ESSC_SpeedUpdate
 
 
 
 /**
- * Return a control signal for the sail actuator.
+ * Return a control signal for the sail actuator. This function is called by the guidance_module in irregular
+ * timeintervals (due to scheduling).
  *
  * @return	Signal for the sail actuator
 */
 float ESSC_SailControlValue() {
 
-	/* TODO: Add a time-measurement here, such that the sail-value is only updated with the specified frequency */
+	/* The Sail Control should not change the value of the sail every time it is called.
+	 * Therefore, the system-time is called to adjust the sail only in intervals specified by the
+	 * QGroundControl Variable ESSC_frequency.
+	 *
+	 * Note: The following statement limits the frequency to a value of 1.5e-5 Hz
+	 */
+	uint16_t ActTime = up_rtc_time();	//Current System-Time
+
+	if(ActTime - State.lastCall >= Config.frequency) {
+		/* A new Sail-Control-Value has to be calculated in this step */
+
+		//Calculate change in Speed (forward Speed)
+		float du = State.meanSpeeds[1] - State.meanSpeeds[0];
+
+		//Calcualte change in Sailangle (State.ds = [t-2,t-1,t])
+		float ds = State.ds[1] - State.ds[2];
+
+		//Actual Control Law <=> Calculate new Sail-Control-Value
+		float newDs = State.ds[3] + Config.k * sign(ds) * sign(du);
+
+		//Saturate the Sail-Command
+        if(newDs > SAIL_OPEN_DEG) {
+        	newDs = SAIL_OPEN_DEG;
+        }
+
+        if(newDs < SAIL_CLOSED_DEG) {
+        	newDs = SAIL_CLOSED_DEG;
+        }
 
 
-	return 0.0f;
+		return State.ActDs;
+
+	} else {
+		/* No new Sail-Control is to be set in this Step.
+		 * Return the last calculated Sail-Control-Value as the new value
+		 */
+
+		return State.ActDs;
+
+	}
 
 } //End of ESSC_SailControlValue
 
@@ -91,11 +141,15 @@ float ESSC_SailControlValue() {
 /**
  * Get the Configuration Parameters from QGroundControl and assign them to the struct ESSC_Config
  *
- * @param k:Stepsize
+ * @param k:Stepsize in Degrees [°]
+ * @param windowSize: Size of the window for Speed-Averaging
+ * @param frequency: Frequency for Sailadjustments [Hz]
 */
-void ESSC_SetQGroundValues(float k, int buffersize, float frequency) {
+void ESSC_SetQGroundValues(float k, int windowSize, float frequency) {
 
 	//Assign the Stepsize (make sure the stepsize is bigger than zero)
+	//Note: k represents a Stepsize in Degreees. Internally a PWM-Signal is generated.
+	//      => transform the degree-value to a duty-cycle for the PWM.
 	if(k > 0) {
 		Config.k = k;
 	} else {
@@ -103,15 +157,17 @@ void ESSC_SetQGroundValues(float k, int buffersize, float frequency) {
 	}
 
 	//Assign the Frequency
+	//Note: frequency is a quantity in Hz. Internally the period is used. Therefore, the
+	//      value is convertet to the corresponding period and stored.
 	if(frequency > 0) {
-		Config.frequency = frequency;
+		Config.frequency = 1/frequency;
 	} else {
-		Config.frequency = 1.0f;
+		Config.frequency = 1/1.0f;
 	}
 
-	//Assign the Size of the Buffer (must be bigger than two)
-	if(buffersize >= 2) {
-		Config.windowSize = buffersize;
+	//Assign the Size of the Window for the speed Averaging (must be bigger than two)
+	if(windowSize >= 2) {
+		Config.windowSize = windowSize;
 	} else {
 		Config.windowSize = 2;
 	}
@@ -166,13 +222,24 @@ float meanSpeed(void) {
 
 	//Calculate the mean
 	float sum = 0;
-	for(int i = 0; i < minSize; i++) {
+	for(unsigned int i = 0; i < minSize; i++) {
 		sum += buffer_getValue(i);
 	}
 
 	return sum/minSize;
 
 } //End of meanSpeed
+
+
+/**
+ * Convert a sailangle in degrees to a PWM signal for the actuator.
+ *
+ * @param   degSail: Sailangle in Degrees
+ * @return  sailangle as a PWM signal
+ */
+float deg2pwm(float degSail) {
+
+}
 
 
 
