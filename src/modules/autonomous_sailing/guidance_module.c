@@ -43,15 +43,18 @@
 #include "guidance_module.h"
 
 //constant for tack_type
-#define TACK_HELM0  0
-#define TACK_HELM1  1
-#define TACK_PI     2
-#define TACK_LQR    3
-#define TACK_MPC    4
+#define TACK_PI     0
+#define TACK_LQR    1
+#define TACK_MPC    2
 
 //const for type of rudder controller during normal sailing
 #define SAILING_RUD_STD_PI 0 ///standard PI with anti-wind up action
 #define SAILING_RUD_COND_PI 1 ///conditional PI
+
+// errors legend in is_tack_completed()
+#define EVERYTHING_OK 0
+#define FORCED_TACK_STOP 1 //tack had to be stopped for safety reason
+#define NO_MPC_SOLVE_FNC 2 //no available solve function for the set prediction horizon
 
 /// Forces parameters
 struct forces_params_s{
@@ -143,13 +146,9 @@ static const float deg2rad = 0.0174532925199433f; // pi / 180
 static struct{
     bool boat_is_tacking;       ///true if boat is performing a tack maneuver
     uint16_t tack_type;         ///type of tack action to perform
-    bool sailing_at_port_haul;///true if the boat was sailing on port haul before tacking
-    float alpha_min_stop_tack_r;///minimum value of alpha in the new haul in order to stop tacking
 }tack_data =    {
                     .boat_is_tacking = false,//true if boat is performing a tack maneuver
-                    .tack_type = 0, //tack as helmsam would do
-                    .sailing_at_port_haul = true,//dummy initial guess
-                    .alpha_min_stop_tack_r = 0.610865238f //35.0f * deg2rad
+                    .tack_type = 0,
                 };
 
  //static data for sails controller
@@ -177,8 +176,6 @@ static struct{
     float last_command;     ///last command provided by the PI
     float sum_error_pi;     ///error sum from iterations of guidance_module, used in PI
     float rud_cmd_45_left;  ///rudder command to set the rudder at 45 deg and make boat steer left
-    float alpha_rudder_x1_r;   ///alpha angle[rad] called x1 in rudder command plots
-    float alpha_rudder_x2_r;   ///alpha angle[rad] called x2 in rudder command plots
 } rudder_controller_data =  {
                                 .p = 0.35f,
                                 .i = 0.0f,
@@ -188,9 +185,7 @@ static struct{
                                 .rudder_controller_type = 0,//start with standard PI
                                 .last_command = 0.0f,
                                 .sum_error_pi = 0.0f,
-                                .rud_cmd_45_left = 1.0f,//RUDDER_45_LEFT,
-                                .alpha_rudder_x2_r =  0.0f,
-                                .alpha_rudder_x2_r =  0.3490658503f//20.0f * deg2rad
+                                .rud_cmd_45_left = 1.0f//RUDDER_45_LEFT,
                             };
 
 //static data for LQR and MPC controllers
@@ -228,10 +223,6 @@ static struct {
                                 .pred_horz_steps = 10
                             };
 
-// errors legend in is_tack_completed()
-#define EVERYTHING_OK 0
-#define FORCED_TACK_STOP 1 //tack had to be stopped for safety reason
-#define NO_MPC_SOLVE_FNC 2 //no available solve function for the set prediction horizon
 
 /** @brief PI controller with conditional integration*/
 float pi_controller(const float *ref_p, const float *meas_p);
@@ -252,22 +243,6 @@ float rudder_saturation(float command);
 
 /** @brief saturation on command to the sails servo motor*/
 float sail_saturation(float command);
-
-/** @brief compute rudder and sails command to perform 'helmsman0' 's tack manuever port to starboard*/
-void helmsman0_tack_p2s(float alpha, float *p_rud, float* p_sails);
-
-/** @brief compute rudder and sails command to perform 'helmsman0' 's tack manuever starobard to por*/
-void helmsman0_tack_s2p(float alpha, float *p_rud, float* p_sails);
-
-/** @brief compute rudder and sails command to perform 'helmsman1' 's tack manuever port to starboard*/
-void helmsman1_tack_p2s(float alpha, float *p_rud, float* p_sails);
-
-/** @brief compute rudder and sails command to perform 'helmsman1' 's tack manuever starobard to por*/
-void helmsman1_tack_s2p(float alpha, float *p_rud, float* p_sails);
-
-/** @brief tack maneuver as helmsman would do*/
-void helmsman_tack(struct reference_actions_s *ref_act_p,
-                   float *p_rudder_cmd, float *p_sails_cmd);
 
 /** @brief action to perform when tack maneuver is completed*/
 void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code);
@@ -342,49 +317,45 @@ void set_sail_data(float sail_closed_cmd, float alpha_sail_closed_r, float alpha
 
 
 /**
- * Tack maneuver can be performed in five different ways.
- * The first one (type is equal to 0) is performed by using a "standard" input sequence
- * as a real helmsman would do. @see helmsman0_tack_p2s and @see helmsman0_tack_s2p.
- *
- * The second one (type is equal to 1) is slightly different from the "standard" helmsman maneuver
- * but it is still reasonable to think of it as a maneuver that helmsman would do.
- * @see helmsman1_tack_p2s and @see helmsman1_tack_s2p.
- *
- * The Third one (type is equal to 2) is performed by changing only the reference
+ * Tack maneuver can be performed in three different ways.
+ * The first one (type is equal to 0) is performed by changing only the reference
  * angle with respect to the wind (alpha) and then "wait" for the PI controller
  * of the rudder to follow this changing.
  *
- * The fourth one (type equal to 3) is performed by a LQR controller.
+ * The second one (type equal to 1) is performed by a LQR controller.
  *
- * The fifth one (type equal to 4) is performed by a MPC controller.
+ * The third one (type equal to 2) is performed by a MPC controller.
  *
  * @param tack_type               type of tack to perform
- * @param alpha_min_stop_tack_r   minimum absolute value of alpha[rad] in the haul to stop tack
 */
-void set_tack_data(uint16_t tack_type, float alpha_min_stop_tack_r){
+void set_tack_data(uint16_t tack_type){
     uint16_t old_tack_type = tack_data.tack_type;
-    //save new value
-    tack_data.tack_type = tack_type;
-    /*make sure that alpha_min is positive! Since alpha_min is the minimum value
-     * at wich the tack from port haul to starboard haul can be considered finished,
-     * it has to be a positive value.
-    */
-    tack_data.alpha_min_stop_tack_r = my_fabs(alpha_min_stop_tack_r);
 
     //notify the changing to QGroundControl what kind of tack the boat will do
     if(old_tack_type != tack_type){
-        if(tack_type == TACK_HELM0)
-            sprintf(txt_msg, "Tack as helmsman0.");
-        else if(tack_type == TACK_HELM1)
-            sprintf(txt_msg, "Tack as helmsman1.");
-        else if(tack_type == TACK_PI)
+        if(tack_type == TACK_PI){
             sprintf(txt_msg, "Implicit (PI) Tack.");
-        else if(tack_type == TACK_LQR)
+            send_log_info(txt_msg);
+            //save new value
+            tack_data.tack_type = tack_type;
+        }
+        else if(tack_type == TACK_LQR){
             sprintf(txt_msg, "LQR Tack.");
-        else if(tack_type == TACK_MPC)
+            send_log_info(txt_msg);
+            //save new value
+            tack_data.tack_type = tack_type;
+        }
+        else if(tack_type == TACK_MPC){
             sprintf(txt_msg, "MPC Tack.");
-
-        send_log_info(txt_msg);
+            send_log_info(txt_msg);
+            //save new value
+            tack_data.tack_type = tack_type;
+        }
+        else{
+            //error: no valid type of tack selected
+            send_log_critical("Error: no valid type of tack selected.");
+            //use the last valid type of tack set
+        }
     }
 }
 
@@ -460,8 +431,7 @@ float pi_controller(const float *ref_p, const float *meas_p){
  * @param kaw                       constant used for anti-wind up in normal PI
 */
 void set_rudder_data(float p, float i, float cp,
-                     float ci, int32_t rudder_controller_type, float kaw,
-                     float alpha_rudder_x1_r, float alpha_rudder_x2_r, float rud_cmd_45_left){
+                     float ci, int32_t rudder_controller_type, float kaw, float rud_cmd_45_left){
 
     //convert rudder_controller_type from int32_t to uint8_t
     uint8_t rudder_type = (uint8_t)rudder_controller_type;
@@ -508,8 +478,6 @@ void set_rudder_data(float p, float i, float cp,
     */
     rud_cmd_45_left = my_fabs(rud_cmd_45_left);
 
-    rudder_controller_data.alpha_rudder_x1_r = alpha_rudder_x1_r;
-    rudder_controller_data.alpha_rudder_x2_r = alpha_rudder_x2_r;
     rudder_controller_data.rud_cmd_45_left = rud_cmd_45_left;
 }
 
@@ -545,15 +513,6 @@ void tack_action(struct reference_actions_s *ref_act_p,
     else{
         //we must start tack maneuver now
         tack_data.boat_is_tacking = true;
-        /*
-         * Pay attention: when path_planning module set should_tack = true, it even
-         * changed the alpha_star, so to see at which haul we were sailing at before tacking,
-         * we must change the sign of alpha_star!
-         * If we are starting tacking now, sailing_at_port_haul variable must be updated.
-         * If we were sailing on port (starboard) haul, alpha_star, before path planning
-         * changed it, was < (>) 0.
-         */
-         tack_data.sailing_at_port_haul = (-ref_act_p->alpha_star < 0) ? true : false;
 
          /*if we are using either LQR or MPC, save the time when we start tacking and
           * tell to controller_data module that an optimal tack has just been started
@@ -570,11 +529,7 @@ void tack_action(struct reference_actions_s *ref_act_p,
      * Check which type of tack maneuver we should perform by checking
      * tack_data.tack_type
     */
-    if(tack_data.tack_type == TACK_HELM0 || tack_data.tack_type == TACK_HELM1){
-        //perform tack maneuver as helmsman would do
-        helmsman_tack(ref_act_p, p_rudder_cmd, p_sails_cmd);
-    }
-    else if(tack_data.tack_type == TACK_PI){
+    if(tack_data.tack_type == TACK_PI){
         /*perform tack maneuver by simply returning the control of rudder
          * and sails to normal controller.
          *
@@ -597,48 +552,17 @@ void tack_action(struct reference_actions_s *ref_act_p,
         //use standard sail controller
         *p_sails_cmd = sail_controller(get_alpha_dumas());
     }
-    else{
+    else if(tack_data.tack_type == TACK_MPC){
         //MPC controller
         mpc_control_rudder(p_rudder_cmd, ref_act_p, strs_p);
         //use standard sail controller
         *p_sails_cmd = sail_controller(get_alpha_dumas());
     }
-
-}
-
-/**
- * Perform tack maneuver as real helmsman would do, type of tack taken into account
- * are 0 and 1.
- *
- * Helmsman tack maneuver uses the alpha angle value as input in the rule
- * based control system.
-*/
-void helmsman_tack(struct reference_actions_s *ref_act_p,
-                   float *p_rudder_cmd, float *p_sails_cmd){
-
-
-    /* Helmsman tack maneuver uses the alpha angle value as input in the rule
-     * based control system.
-    */
-    float alpha = get_alpha_dumas();
-
-    // compute rudder and sails commad in any case. If the tack is completed, the guidance module
-
-    /* use variable sailing_at_port_haul to see which tack maneuver has to be used.
-     * Use tack_data.tack_type to select between helmsman0 and helmsman1 maneuver
-    */
-    if(tack_data.sailing_at_port_haul){
-        if(tack_data.tack_type == TACK_HELM0)
-            helmsman0_tack_p2s(alpha, p_rudder_cmd, p_sails_cmd);
-        else
-            helmsman1_tack_p2s(alpha, p_rudder_cmd, p_sails_cmd);
-    }
     else{
-        if(tack_data.tack_type == TACK_HELM0)
-            helmsman0_tack_s2p(alpha, p_rudder_cmd, p_sails_cmd);
-        else
-            helmsman1_tack_s2p(alpha, p_rudder_cmd, p_sails_cmd);
+        //error, no valid type of tack! End tack for safety reason
+        tack_completed(ref_act_p, FORCED_TACK_STOP);
     }
+
 }
 
 /**
@@ -693,12 +617,6 @@ void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code){
 /**
  * Determine when a tack maneuver is completed
  *
- * If we are using either helmsman0 or helmsman1 tack:
- * If the boat was sailing on port haul before tacking, the tack maneuver is considered
- * completed if alpha is greater or equals to alpha_min_stop_tack_r, @see set_tack_data() .
- * If the boat was sailing on starboard haul before tacking, the tack maneuver is considered
- * completed if the alpha is less or equals to -alpha_min_stop_tack_r, @see set_tack_data() .
- *
  * If we are using either LQR or MPC tack:
  * the tack maneuver is completed if and only if every state of the extended system
  * x[i], i = 0,1,2, computed by @see compute_state_extended_model(), is in the range
@@ -718,22 +636,7 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
     *error_p = EVERYTHING_OK; // let's hope we will not have any error
 
     //if we are using either helmsman0 or helmsman1, use alpha_min_stop_tack_r parameter
-    if(tack_data.tack_type == TACK_HELM0 || tack_data.tack_type == TACK_HELM1){
-
-        float alpha = get_alpha_dumas();
-        //check if we were sailing on port haul before starting the tack maneuver
-        if(tack_data.sailing_at_port_haul){
-            //we were sailing on port haul before tacking
-            if(alpha >= tack_data.alpha_min_stop_tack_r)
-                completed = true;
-        }
-        else{
-            //we were sailing on starboard haul before tacking
-            if(alpha <= -tack_data.alpha_min_stop_tack_r)
-                completed = true;
-        }
-    }
-    else if(tack_data.tack_type == TACK_PI){
+    if(tack_data.tack_type == TACK_PI){
         //implicit tack, return false
         completed = false;
     }
@@ -790,142 +693,6 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
     }
 
     return completed;
-}
-
-/**
- * Compute rudder and sails command to perform a tack maneuver that changes port haul
- * to starboard haul, use this function if tack_data.tack_type is 0.
- *
- * The output values are computed using a rule based system implemented as a real
- * helmsman would do the tack maneuver.
- *
- * @param alpha     angle with respect to the wind. Should be computed using yaw angle
- * @param p_rud     pointer where rudder cmd will be returned
- * @param p_sails   pointer where sails commad will be returned
-*/
-void helmsman0_tack_p2s(float alpha, float *p_rud, float *p_sails){
-
-    float rud_45_left;
-    float rud_x1_alpha;
-    float rud_x2_alpha;
-
-    //take the value of the rudder command to set it at 45deg and make the boat steer on the left
-    rud_45_left = rudder_controller_data.rud_cmd_45_left;
-
-    //take x1 and x2 value
-    rud_x1_alpha = rudder_controller_data.alpha_rudder_x1_r;
-    rud_x2_alpha = rudder_controller_data.alpha_rudder_x2_r;
-
-    //rule based controller for the rudder
-    if(alpha <= -0.523598f)//alpha <= -30deg
-        *p_rud = rud_45_left;
-
-    else if(alpha <= rud_x1_alpha)//-30deg < alpha <= rud_x1_alpha
-        *p_rud =  (-rud_45_left /  (rud_x1_alpha + 0.523598f))
-                  * (alpha - rud_x1_alpha);//linear slope from -rud_45_left to x1 as rud cmd
-
-    else if(alpha <= rud_x2_alpha)//rud_x1_alpha < alpha <= rud_x2_alpha
-        *p_rud =  (rud_45_left /  (rud_x2_alpha - rud_x1_alpha))
-                  * (alpha - rud_x1_alpha);
-
-    else if(alpha <= 0.69813f)//rud_x2_alpha < alpha <= 40deg
-        *p_rud = (-rud_45_left / (0.69813f - rud_x2_alpha)) * (alpha - 0.69813f);
-
-    else//alpha > 40deg
-        *p_rud = 0.0f;
-
-    /* use the same sail controller as in the normal sailig, byt now use the same alpha as
-     * the one passed to helmsman_tack_p2s. (It should be alpha_yaw, that is, the alpha
-     * updated using yaw angle and not cog angle. This alpha_yaw angle has a much faster
-     * dynamic than the alpha computed with cog.
-    */
-    *p_sails = sail_controller(alpha);
-}
-
-/**
- * Compute rudder and sails command to perform a tack maneuver that changes starboard haul
- * to port haul, use this function if tack_data.tack_type is 0.
- *
- * The output values are computed using a rule based system implemented as a real
- * helmsman would do the tack maneuver.
-*/
-void helmsman0_tack_s2p(float alpha, float *p_rud, float *p_sails){
-
-    float alpha_port;
-    float rudder_port;
-
-    //use simmetry in helmsman_tack_p2s and take care of changing only the sign of alpha and rudder
-    alpha_port = -alpha;
-
-    helmsman0_tack_p2s(alpha_port, &rudder_port, p_sails);
-
-    /* convert rudder command computed to tack from port to starboard, into rudder command
-     * to tack from starboard to port */
-    *p_rud = -rudder_port;
-}
-
-
-/**
- * Compute rudder and sails command to perform a tack maneuver that changes port haul
- * to starboard haul, use this function if tack_data.tack_type is 1.
- *
- * The output values are computed using a rule based system implemented as a real
- * helmsman would do the tack maneuver, this is slightly different from @see helmsman0_tack_p2s.
- *
- * @param alpha     angle with respect to the wind. Should be computed using yaw angle
- * @param p_rud     pointer where rudder cmd will be returned
- * @param p_sails   pointer where sails commad will be returned
-*/
-void helmsman1_tack_p2s(float alpha, float *p_rud, float *p_sails){
-
-    float rud_45_left;
-    float rud_x1_alpha;
-    float rud_x2_alpha;
-
-    //take the value of the rudder command to set it at 45deg and make the boat steer on the left
-    rud_45_left = rudder_controller_data.rud_cmd_45_left;
-
-    //take x1 and x2 value
-    rud_x1_alpha = rudder_controller_data.alpha_rudder_x1_r;
-    rud_x2_alpha = rudder_controller_data.alpha_rudder_x2_r;
-
-    //rule based controller for the rudder
-    if(alpha <= rud_x1_alpha)//alpha <= rud_x1_alpha
-        *p_rud = rud_45_left;
-    else if(alpha <= rud_x2_alpha) //use linear slope until x2
-        *p_rud = (- rud_45_left / (rud_x2_alpha - rud_x1_alpha))
-                 * (alpha - rud_x2_alpha);
-    else //alpha > rud_x2_alpha
-        *p_rud = 0.0f;
-
-    /* use the same sail controller as in the normal sailig, byt now use the same alpha as
-     * the one passed to helmsman_tack_p2s. (It should be alpha_yaw, that is, the alpha
-     * updated using yaw angle and not cog angle. This alpha_yaw angle has a much faster
-     * dynamic than the alpha computed with cog.
-    */
-    *p_sails = sail_controller(alpha);
-}
-
-/**
- * Compute rudder and sails command to perform a tack maneuver that changes starboard haul
- * to port haul, use this function if tack_data.tack_type is 1.
- *
- * The output values are computed using a rule based system implemented as a real
- * helmsman would do the tack maneuver.
-*/
-void helmsman1_tack_s2p(float alpha, float *p_rud, float *p_sails){
-
-    float alpha_port;
-    float rudder_port;
-
-    //use simmetry in helmsman_tack_p2s and take care of changing only the sign of alpha and rudder
-    alpha_port = -alpha;
-
-    helmsman1_tack_p2s(alpha_port, &rudder_port, p_sails);
-
-    /* convert rudder command computed to tack from port to starboard, into rudder command
-     * to tack from starboard to port */
-    *p_rud = -rudder_port;
 }
 
 /**
@@ -1294,7 +1061,7 @@ void compute_state_extended_model(const struct reference_actions_s *ref_act_p){
 void compute_minusAExt_times_x0(float *minusAExt_times_x0){
 
     /*
-     * We do not have AExt memorized, but we do have forces.C vector = AExt coulumn major form.
+     * We do not have AExt memorized, but we do have forces.C vector in coulumn major form.
      * forces.C = [ 0       corresponding index:    0
      *              0                               1
      *              0                               2
