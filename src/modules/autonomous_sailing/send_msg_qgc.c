@@ -57,3 +57,11 @@ void send_log_info(const char *txt){
     if(mavlink_fd > -1)
         mavlink_log_info(mavlink_fd, txt);
 }
+
+/**
+ * Send log critical message
+ */
+void send_log_critical(const char *txt){
+    if(mavlink_fd > -1)
+        mavlink_log_critical(mavlink_fd, txt);
+}
