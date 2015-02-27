@@ -41,8 +41,8 @@ float pwm2deg(float pwmSail);
 /** Struct for a Circluar Buffer */
 typedef struct {
 	float bufferData [BUFFERSIZE];	//Array containing the Buffer-Data
-	uint8_t head;					//Position of the head of the buffer
-	uint8_t tail;              		//Position of the tail of the buffer
+	uint8_t head;					//Position of the head of the buffer (index in the array)
+	uint8_t tail;              		//Position of the tail of the buffer (index in the array)
 	uint8_t maxBuffersize;     		//Maximum possible Buffersize
 	uint8_t buffersize;        		//Current size of the buffer
 } CircularBuffer;
@@ -54,7 +54,7 @@ struct essc_state{
 	float meanSpeeds[2];			//Mean of the speedbuffer at times t-1 and t <=> meanSpeeds = [t-1,t] (in [m/s])
 	float ds[3];					//Last three Sail Control-Values a times t,t-1,t-2 <=> ds = [t-2,t-1,t] (in [°])
 	float ActDs;					//Current Sail Control-Value (as a PWM-Value)
-	uint16_t lastCall; 		    	//Timestamp of the last Functioncall (in [s])
+	uint32_t lastCall; 		    	//Timestamp of the last Functioncall (in [s])
 };
 
 
@@ -68,13 +68,13 @@ struct essc_config{
 };
 
 
-
 /** Set default Values for the Configuration Parameters */
 static struct essc_config Config = {
 		.k = 2.0f,
 		.frequency = 1.0f,
 		.windowSize = 8
 };
+
 
 /** Set initial Values for the State Values */
 static struct essc_state State = {
@@ -133,11 +133,11 @@ float essc_sail_control_value() {
 	 * Therefore, the system-time is called to adjust the sail only in intervals specified by the
 	 * QGroundControl Variable ESSC_frequency.
 	 *
-	 * Note: The following statement limits the frequency to a value of 1.5e-5 Hz
+	 * Note: The following statement limits the frequency to a value of 2.3e-7 Hz
 	 */
-	uint16_t ActTime = up_rtc_time();	//Current System-Time
+	uint32_t ActTime = hrt_absolute_time();
 
-	if(ActTime - State.lastCall >= Config.frequency) {
+	if(ActTime - State.lastCall >= Config.frequency*1000000) {
 		/* A new Sail-Control-Value has to be calculated in this step */
 
 		//Store the current time as the last time a new Sailvalue was calcualted
