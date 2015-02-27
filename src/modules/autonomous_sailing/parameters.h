@@ -56,6 +56,8 @@
 
 #include "guidance_module.h"
 
+#include "extremum_sailcontrol.h" //(JW)
+
 //settings
 #include "settings.h"
 

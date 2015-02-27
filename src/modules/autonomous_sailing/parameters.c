@@ -42,6 +42,8 @@
 
 #include "parameters.h"
 
+#include "extremum_sailcontrol.h"
+
 static const float deg2rad = 0.0174532925199433f; // pi / 180
 
 
@@ -618,6 +620,34 @@ PARAM_DEFINE_FLOAT(ASIM_DEVA1, 0.0f);
 #endif
 
 
+/* PARAMETERS for Extremum Seeking Sailcontrol (ESSC) */
+
+/**
+ * Stepsize for ESSC in degrees (JW)
+ *
+ * @min 0
+ * @max 90
+ */
+PARAM_DEFINE_FLOAT(ESSC_K,2.0f);
+
+/**
+ * Size of the Buffer for ESSC (JW)
+ *
+ * @min 2
+ * @max 20
+ */
+PARAM_DEFINE_INT32(ESSC_BUFFERSIZE,8);
+
+/**
+ * Stepsize for ESSC in degrees (JW)
+ *
+ * @min 0
+ * @max 100
+ */
+PARAM_DEFINE_FLOAT(ESSC_FREQUENCY,1.0f);
+
+
+
 
 static struct pointers_param_qgc_s{
 
@@ -743,6 +773,14 @@ static struct pointers_param_qgc_s{
     param_t yaw_sim_pointer; /**< pointer to param ASIM_YAW_D*/
     param_t deva1_sim_pointer; /**< pointer to param ASIM_DEVA1 */
     #endif
+
+
+    //-- Extremum Seeking Sail Control (ESSC) parameters (JW)
+    param_t ESSC_k;				/**< pointer to param ESSC_K */
+    param_t ESSC_buffersize; 	/**< pointer to param ESSC_buffersize */
+    param_t ESSC_frequency;     /**< pointer to param ESSC_frequency */
+
+
 }pointers_param_qgc;
 
 
@@ -877,6 +915,14 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.deva1_sim_pointer = param_find("ASIM_DEVA1");
 
     #endif
+
+
+    //-- Extremum Seeking Sail Control (ESSC) parameters (JW)
+    pointers_param_qgc.ESSC_k = param_find("ESSC_K");
+    pointers_param_qgc.ESSC_buffersize = param_find("ESSC_BUFFERSIZE");
+    pointers_param_qgc.ESSC_frequency = param_find("ESSC_FREQUENCY");
+
+
 
     //get parameters but do not add any grid lines at start up
     param_update(params_p, strs_p, false, pubs_p);
@@ -1254,5 +1300,16 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.deva1_sim_pointer, &(params_p->deva1));
 
     #endif
+
+
+    //Set Parameters for Extremum Seeking Sail Control ESSC (JW)
+    float ESSC_k = 0.0f;
+    int32_t ESSC_buffersize = 0;
+    float ESSC_frequency = 0.0f;
+    param_get(pointers_param_qgc.ESSC_k, &ESSC_k);
+    param_get(pointers_param_qgc.ESSC_buffersize, &ESSC_buffersize);
+    param_get(pointers_param_qgc.ESSC_frequency, &ESSC_frequency);
+    ESSC_SetQGroundValues(ESSC_k,ESSC_buffersize,ESSC_frequency);
+
 }
 
