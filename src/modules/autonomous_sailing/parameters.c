@@ -85,14 +85,13 @@ PARAM_DEFINE_FLOAT(AS_SAIL, -1.0f);
 
 
 /**
- * Rudder maximum command when tacking from port haul to starboard haul.
- * It has to be a positive value!
+ * Set a new value for the maximum rudder command. Must be a positive value and <= 1
  *
  *
  * @min 0
- * @max 0.9
+ * @max 1
  */
-PARAM_DEFINE_FLOAT(AS_RD_45_CMD, 1.0f);
+PARAM_DEFINE_FLOAT(AS_MAX_RUD, 1.0f);
 
 /**
  * Sails command when sails should be considered fully closed.
@@ -601,7 +600,7 @@ static struct pointers_param_qgc_s{
     param_t rud_cp_pointer;       /**< pointer to param AS_RUD_CP*/
     param_t rud_controller_type_pointer;       /**< pointer to param AS_RUD_TYPE*/
 
-    param_t tack_rudder_cmd;        /**< pointer to param AS_RD_45_CMD*/
+    param_t max_rudder_cmd_pointer;        /**< pointer to param AS_MAX_RUD*/
     param_t sails_closed_cmd;       /**< pointer to param AS_SAI_CL_CMD*/
     param_t sails_closed_alpha;     /**< pointer to param AS_SAI_X1_AL*/
     param_t sails_opened_alpha;     /**< pointer to param AS_SAI_X2_AL*/
@@ -732,7 +731,7 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.rud_cp_pointer  = param_find("AS_RUD_CP");
     pointers_param_qgc.rud_controller_type_pointer  = param_find("AS_RUD_TYPE");
 
-    pointers_param_qgc.tack_rudder_cmd = param_find("AS_RD_45_CMD");
+    pointers_param_qgc.max_rudder_cmd_pointer = param_find("AS_MAX_RUD");
     pointers_param_qgc.sails_closed_cmd = param_find("AS_SAI_CL_CMD");
     pointers_param_qgc.sails_closed_alpha = param_find("AS_SAI_X1_AL");
     pointers_param_qgc.sails_opened_alpha = param_find("AS_SAI_X2_AL");
@@ -888,7 +887,7 @@ void param_update(struct parameters_qgc *params_p,
     float rud_cp;
     float rud_kaw;
     int32_t rudder_controller_type;
-    float rud_cmd_45_left;
+    float max_rudder_cmd;
 
     param_get(pointers_param_qgc.rud_p_gain_pointer, &rud_p);
     param_get(pointers_param_qgc.rud_i_gain_pointer, &rud_i);
@@ -896,10 +895,10 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.rud_ci_pointer, &rud_ci);
     param_get(pointers_param_qgc.rud_cp_pointer, &rud_cp);
     param_get(pointers_param_qgc.rud_controller_type_pointer, &rudder_controller_type);
-    param_get(pointers_param_qgc.tack_rudder_cmd, &rud_cmd_45_left);
+    param_get(pointers_param_qgc.max_rudder_cmd_pointer, &max_rudder_cmd);
 
     set_rudder_data(rud_p, rud_i, rud_cp, rud_ci, rudder_controller_type, rud_kaw,
-                    rud_cmd_45_left);
+                    max_rudder_cmd);
 
     //----- sails controller
     float sail_closed_cmd;

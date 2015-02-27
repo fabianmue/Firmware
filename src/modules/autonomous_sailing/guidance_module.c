@@ -175,7 +175,7 @@ static struct{
     uint8_t rudder_controller_type; /// 0 = standard PI 1 = conditional PI 2 = LQR
     float last_command;     ///last command provided by the PI
     float sum_error_pi;     ///error sum from iterations of guidance_module, used in PI
-    float rud_cmd_45_left;  ///rudder command to set the rudder at 45 deg and make boat steer left
+    float abs_rud_saturation;  ///rudder saturation set by QGC
 } rudder_controller_data =  {
                                 .p = 0.35f,
                                 .i = 0.0f,
@@ -185,7 +185,7 @@ static struct{
                                 .rudder_controller_type = 0,//start with standard PI
                                 .last_command = 0.0f,
                                 .sum_error_pi = 0.0f,
-                                .rud_cmd_45_left = 1.0f//RUDDER_45_LEFT,
+                                .abs_rud_saturation = MAX_RUDDER_SATURATION
                             };
 
 //static data for LQR and MPC controllers
@@ -429,9 +429,11 @@ float pi_controller(const float *ref_p, const float *meas_p){
  * @param c                         used in conditional integral
  * @param rudder_controller_type    0 = standard PI, 1 = conditional PI
  * @param kaw                       constant used for anti-wind up in normal PI
+ * @param abs_rudder_saturation     max rudder command, must be <= 1.0
 */
 void set_rudder_data(float p, float i, float cp,
-                     float ci, int32_t rudder_controller_type, float kaw, float rud_cmd_45_left){
+                     float ci, int32_t rudder_controller_type, float kaw,
+                     float abs_rudder_saturation){
 
     //convert rudder_controller_type from int32_t to uint8_t
     uint8_t rudder_type = (uint8_t)rudder_controller_type;
@@ -470,15 +472,15 @@ void set_rudder_data(float p, float i, float cp,
         }
     }
 
+    //make sure abs_rudder_saturation is >= 0 and is < MAX_RUDDER_SATURATION
     //make sure rud_cmd_45_left does not exceed rud limits
-    rud_cmd_45_left = rudder_saturation(rud_cmd_45_left);
-    /* Since rud_cmd_45 is the command to give to the rudder when we want to
-     * tack from port haul to starboard haul, it has to be positive in
-     * order to make the boat steer on the left.
-    */
-    rud_cmd_45_left = my_fabs(rud_cmd_45_left);
+    abs_rudder_saturation = my_fabs(abs_rudder_saturation);
+    if(abs_rudder_saturation > MAX_RUDDER_SATURATION){
+        abs_rudder_saturation = MAX_RUDDER_SATURATION;
+        send_log_info("AS_MAX_RUD must be <= 1.");
+    }
 
-    rudder_controller_data.rud_cmd_45_left = rud_cmd_45_left;
+    rudder_controller_data.abs_rud_saturation = abs_rudder_saturation;
 }
 
 /** Perform tack maneuver.
@@ -731,12 +733,6 @@ void lqr_control_rudder(float *p_rudder_cmd,
 
         //compute rudder command at step k to give to the real system: u_k + rudder_{k-1}
         *p_rudder_cmd = u_k + optimal_control_data.state_extended_model[2];
-
-        //TODO check this or at least write some comments!
-        if(*p_rudder_cmd > rudder_controller_data.rud_cmd_45_left)
-            *p_rudder_cmd = rudder_controller_data.rud_cmd_45_left;
-        else if(*p_rudder_cmd < -rudder_controller_data.rud_cmd_45_left)
-            *p_rudder_cmd = -rudder_controller_data.rud_cmd_45_left;
 
         //update time_last_lqr
         optimal_control_data.time_last_lqr = now_us;
@@ -1159,10 +1155,10 @@ float sail_controller(float alpha){
 */
 float rudder_saturation(float command){
 
-    if(command > RUDDER_SATURATION)
-        command = RUDDER_SATURATION;
-    else if(command < -RUDDER_SATURATION)
-        command = -RUDDER_SATURATION;
+    if(command > rudder_controller_data.abs_rud_saturation)
+        command = rudder_controller_data.abs_rud_saturation;
+    else if(command < -rudder_controller_data.abs_rud_saturation)
+        command = -rudder_controller_data.abs_rud_saturation;
 
     return command;
 }

@@ -63,7 +63,7 @@
 #include "mpc_test_data.h"
 #endif
 
-#define RUDDER_SATURATION 1.0f /// 1.0f = most left rudder position, -1.0f, most right rudder position
+#define MAX_RUDDER_SATURATION 1.0f /// 1.0f = most left rudder position, -1.0f, most right rudder position
 #define RUDDER_45_LEFT 0.85f /// rudder at 45 deg and the boat steers on the left
 
 #define SAIL_SATURATION 0.56f  /// 0.56f = sails fully closed; 0.0f = sails fully opened
@@ -87,7 +87,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 /** @brief Set data of the PI which controls rudder*/
 void set_rudder_data(float p, float i, float cp,
                      float ci, int32_t rudder_controller_type, float kaw,
-                     float rud_cmd_45_left);
+                     float abs_rudder_saturation);
 
 /** @brief set which kind of tack maneuver should be performed */
 void set_tack_data(uint16_t tack_type);
