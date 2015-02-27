@@ -29,11 +29,20 @@ float ESSC_SailControlValue(void);
 void ESSC_SetQGroundValues(float k, int buffersize, float frequency);
 
 
+/** Struct for a Circluar Buffer */
+typedef struct {
+	float bufferData [BUFFERSIZE];	//Array containing the Buffer-Data
+	unsigned int head;				//Position of the head of the buffer
+	unsigned int tail;              //Position of the tail of the buffer
+	unsigned int maxBuffersize;     //Maximum possible Buffersize
+	unsigned int buffersize;        //Current size of the buffer
+} CircularBuffer;
+
+
 /** Struct holding the state of the Controller */
 struct ESSC_State{
-	float speeds [BUFFERSIZE];		//Buffer containing a limited number of Speed values used to build a mean
-	float ActBuffersize; 			//Number of elements currently in the buffer
-	float meanspeed;				//Mean of the speeds in the buffer (updated as soon as the buffer is changed)
+	CircularBuffer buffer;          //Buffer containing a limited number of Speed values used to build a mean
+	float meanSpeed;				//Mean of the speeds in the buffer (updated as soon as the buffer is changed)
 	float ds[3];					//Last three Sail Control-Values
 	float ActDs;					//Current Sail Control-Value
 	float lastCall; 				//Timestamp of the last Functioncall
@@ -43,9 +52,10 @@ struct ESSC_State{
 /** Struct holding the Configuration Parameters for the Controller */
 struct ESSC_Config{
 	float k;						//Stepsize in Degrees
-	int buffersize;					//Buffersize for building the mean over the speeds
+	int windowSize;					//Buffersize for building the mean over the speeds
 	float frequency;				//Frequency for Changes in the sail control value
 };
+
 
 
 

@@ -636,7 +636,7 @@ PARAM_DEFINE_FLOAT(ESSC_K,2.0f);
  * @min 2
  * @max 20
  */
-PARAM_DEFINE_INT32(ESSC_BUFFERSIZE,8);
+PARAM_DEFINE_INT32(ESSC_WINDOWSIZE,8);
 
 /**
  * Stepsize for ESSC in degrees (JW)
@@ -777,7 +777,7 @@ static struct pointers_param_qgc_s{
 
     //-- Extremum Seeking Sail Control (ESSC) parameters (JW)
     param_t ESSC_k;				/**< pointer to param ESSC_K */
-    param_t ESSC_buffersize; 	/**< pointer to param ESSC_buffersize */
+    param_t ESSC_windowSize; 	/**< pointer to param ESSC_buffersize */
     param_t ESSC_frequency;     /**< pointer to param ESSC_frequency */
 
 
@@ -919,7 +919,7 @@ void param_init(struct parameters_qgc *params_p,
 
     //-- Extremum Seeking Sail Control (ESSC) parameters (JW)
     pointers_param_qgc.ESSC_k = param_find("ESSC_K");
-    pointers_param_qgc.ESSC_buffersize = param_find("ESSC_BUFFERSIZE");
+    pointers_param_qgc.ESSC_windowSize = param_find("ESSC_WINDOWSIZE");
     pointers_param_qgc.ESSC_frequency = param_find("ESSC_FREQUENCY");
 
 
@@ -1304,12 +1304,12 @@ void param_update(struct parameters_qgc *params_p,
 
     //Set Parameters for Extremum Seeking Sail Control ESSC (JW)
     float ESSC_k = 0.0f;
-    int32_t ESSC_buffersize = 0;
+    int32_t ESSC_windowSize = 0;
     float ESSC_frequency = 0.0f;
     param_get(pointers_param_qgc.ESSC_k, &ESSC_k);
-    param_get(pointers_param_qgc.ESSC_buffersize, &ESSC_buffersize);
+    param_get(pointers_param_qgc.ESSC_windowSize, &ESSC_windowSize);
     param_get(pointers_param_qgc.ESSC_frequency, &ESSC_frequency);
-    ESSC_SetQGroundValues(ESSC_k,ESSC_buffersize,ESSC_frequency);
+    ESSC_SetQGroundValues(ESSC_k,ESSC_windowSize,ESSC_frequency);
 
 }
 
