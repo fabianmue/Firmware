@@ -210,7 +210,7 @@ static struct {
     bool time_started_valid; ///true if time_started_tack_us is valid
     bool last_time_valid; ///true if last_time_in_band_us is valid
     uint64_t safety_time_stop_tack; ///Max time for completing a tack
-} optimal_control_data =    {
+} opc_data =    {
                                 .rudder_latest = 0.0f,
                                 .time_last_mpc = (uint64_t) 0,
                                 .time_last_lqr = (uint64_t) 0,
@@ -274,10 +274,10 @@ float my_fabs(float x){
  *
 */
 void set_lqr_gain(float lqr_k1, float lqr_k2, float lqr_k3, int32_t lqr_samp_time_us){
-    optimal_control_data.lqr_gain[0] = lqr_k1;
-    optimal_control_data.lqr_gain[1] = lqr_k2;
-    optimal_control_data.lqr_gain[2] = lqr_k3;
-    optimal_control_data.lqr_sampling_time_us = (uint64_t) lqr_samp_time_us;
+    opc_data.lqr_gain[0] = lqr_k1;
+    opc_data.lqr_gain[1] = lqr_k2;
+    opc_data.lqr_gain[2] = lqr_k3;
+    opc_data.lqr_sampling_time_us = (uint64_t) lqr_samp_time_us;
 }
 
 /**
@@ -520,8 +520,8 @@ void tack_action(struct reference_actions_s *ref_act_p,
           * tell to controller_data module that an optimal tack has just been started
           */
          if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC){
-             optimal_control_data.time_started_tack_us = hrt_absolute_time();
-             optimal_control_data.time_started_valid = true;
+             opc_data.time_started_tack_us = hrt_absolute_time();
+             opc_data.time_started_valid = true;
 
              cd_optimal_tack_started();
          }
@@ -622,8 +622,8 @@ void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code){
  * If we are using either LQR or MPC tack:
  * the tack maneuver is completed if and only if every state of the extended system
  * x[i], i = 0,1,2, computed by @see compute_state_extended_model(), is in the range
- * [ -optimal_control_data.delta_values[i], optimal_control_data.delta_values[i] ]
- * for at least optimal_control_data.min_time_in_band_us micro seconds.
+ * [ -opc_data.delta_values[i], opc_data.delta_values[i] ]
+ * for at least opc_data.min_time_in_band_us micro seconds.
  * For safety reason, the tack will be considered completed if the time elapsead since the
  * starting of the maneuver is greater or equal to SAFETY_TIME_STOP_TCK constant; even
  * if the system is not in the band.
@@ -649,47 +649,47 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
         bool state_in_band = true;//initial guess
 
         for(uint8_t i = 0; i < 3; i++){
-            if(my_fabs(optimal_control_data.state_extended_model[i]) >
-                       optimal_control_data.delta_values[i])
+            if(my_fabs(opc_data.state_extended_model[i]) >
+                       opc_data.delta_values[i])
                 state_in_band = false;
         }
 
         if(state_in_band == true){
             //the extended state is in the band near the origin
 
-            if(optimal_control_data.last_time_valid == false){
+            if(opc_data.last_time_valid == false){
                 //This is the first time the state (re)entered in the band near the origin
-                optimal_control_data.last_time_in_band_us = hrt_absolute_time();
-                optimal_control_data.last_time_valid = true;
+                opc_data.last_time_in_band_us = hrt_absolute_time();
+                opc_data.last_time_valid = true;
             }
             else{
                 //the system was already in the band near the origin
                 uint64_t now_us = hrt_absolute_time();
                 //check if the state has been in the band for at least min_time_in_band_us
-                if((now_us - optimal_control_data.last_time_in_band_us) >=
-                    optimal_control_data.min_time_in_band_us){
+                if((now_us - opc_data.last_time_in_band_us) >=
+                    opc_data.min_time_in_band_us){
 
                     //the tack can be considered completed
                     completed = true;
                     //set last_time_valid and time_started_valid to false
-                    optimal_control_data.last_time_valid = false;
-                    optimal_control_data.time_started_valid = false;
+                    opc_data.last_time_valid = false;
+                    opc_data.time_started_valid = false;
                 }
             }
         }
         //perfrom anyway safety check to see if we have to force stopping tack
-        if(optimal_control_data.time_started_valid == true){
+        if(opc_data.time_started_valid == true){
             //we have already started the tack in the past
             //use time_started_tack_us to check if we have to force stopping the tack for safety reason
             uint64_t now_us = hrt_absolute_time();
-            if((now_us - optimal_control_data.time_started_tack_us) >= optimal_control_data.safety_time_stop_tack){
+            if((now_us - opc_data.time_started_tack_us) >= opc_data.safety_time_stop_tack){
                 //the tack MUST be forced to be finished
                 completed = true;
                 //signal this updating error_p
                 *error_p = FORCED_TACK_STOP;
                 //set last_time_valid and time_started_valid to false
-                optimal_control_data.last_time_valid = false;
-                optimal_control_data.time_started_valid = false;
+                opc_data.last_time_valid = false;
+                opc_data.time_started_valid = false;
             }
         }
     }
@@ -711,7 +711,7 @@ void lqr_control_rudder(float *p_rudder_cmd,
     uint64_t now_us = hrt_absolute_time(); //absolute time in micro seconds
 
     //compute a new command only if the time elapsed since time_last_lqr is greater or equal to lqr_sampling_time_us.
-    if((now_us - optimal_control_data.time_last_lqr) >= optimal_control_data.lqr_sampling_time_us){
+    if((now_us - opc_data.time_last_lqr) >= opc_data.lqr_sampling_time_us){
 
         //compute the new state of the extended model based on the latest measurements
         compute_state_extended_model(ref_act_p);
@@ -723,7 +723,7 @@ void lqr_control_rudder(float *p_rudder_cmd,
         // u_k = K_LQR * extendedState
         for(uint8_t i = 0; i < 3; i++){
             u_k = u_k +
-                  optimal_control_data.lqr_gain[i] * optimal_control_data.state_extended_model[i];
+                  opc_data.lqr_gain[i] * opc_data.state_extended_model[i];
         }
         /** Pay attention: the gain matrix for the LQR controller computed by Matlab requires
          * a negative feedback control law! So the right command is
@@ -732,16 +732,16 @@ void lqr_control_rudder(float *p_rudder_cmd,
         u_k = -u_k;
 
         //compute rudder command at step k to give to the real system: u_k + rudder_{k-1}
-        *p_rudder_cmd = u_k + optimal_control_data.state_extended_model[2];
+        *p_rudder_cmd = u_k + opc_data.state_extended_model[2];
 
         //update time_last_lqr
-        optimal_control_data.time_last_lqr = now_us;
+        opc_data.time_last_lqr = now_us;
 
         //save the new status of the optimal control
         strs_p->boat_opt_status.timestamp = hrt_absolute_time();
-        strs_p->boat_opt_status.x1 = optimal_control_data.state_extended_model[0];
-        strs_p->boat_opt_status.x2 = optimal_control_data.state_extended_model[1];
-        strs_p->boat_opt_status.x3 = optimal_control_data.state_extended_model[2];
+        strs_p->boat_opt_status.x1 = opc_data.state_extended_model[0];
+        strs_p->boat_opt_status.x2 = opc_data.state_extended_model[1];
+        strs_p->boat_opt_status.x3 = opc_data.state_extended_model[2];
         strs_p->boat_opt_status.opt_rud = *p_rudder_cmd;
         strs_p->boat_opt_status.type_controller = 0;//I am the LQR controller
         //set to -1 the MPC status 'cause I am the LQR
@@ -758,9 +758,9 @@ void lqr_control_rudder(float *p_rudder_cmd,
     else{
         /* the time elapsed since the last time the LQR was computed is less than
          * LQR_MODEL_TS. Use the last command provided to the rudder that has been
-         * saved by the function guidance_module into optimal_control_data.rudder_latest
+         * saved by the function guidance_module into opc_data.rudder_latest
         */
-        *p_rudder_cmd = optimal_control_data.rudder_latest;
+        *p_rudder_cmd = opc_data.rudder_latest;
     }
 }
 
@@ -787,15 +787,15 @@ void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3],
 
     //set Hessina matrix
     for(uint8_t i = 0; i < 4; i++)
-        optimal_control_data.forces_params.Hessians[i] = h[i];
+        opc_data.forces_params.Hessians[i] = h[i];
 
     //set lower bound values
     for(uint8_t i = 0; i < 2; i++)
-        optimal_control_data.forces_params.lowerBound[i] = lb[i];
+        opc_data.forces_params.lowerBound[i] = lb[i];
 
     //set upper bound values
     for(uint8_t i = 0; i < 2; i++)
-        optimal_control_data.forces_params.upperBound[i] = ub[i];
+        opc_data.forces_params.upperBound[i] = ub[i];
 
     /* The real matrix HessinaFinal is about the input and the state of the system,
      * since we want a final cost only for the state at the end of the horizon, we
@@ -814,11 +814,11 @@ void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3],
 
             if(i == 0 || j == 0){
                 //first row or first coulumn of HessiansFinal, set it to 0
-                optimal_control_data.forces_params.HessiansFinal[index_hf] = 0.0f;
+                opc_data.forces_params.HessiansFinal[index_hf] = 0.0f;
             }
             else{
                 //remember that HessianFinal is 4x4 (column major format) but h_final is 3x3
-                optimal_control_data.forces_params.HessiansFinal[index_hf] = h_final[i-1][j-1];
+                opc_data.forces_params.HessiansFinal[index_hf] = h_final[i-1][j-1];
             }
         }
     }
@@ -827,7 +827,7 @@ void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3],
     if(pred_horz_steps == 10 || pred_horz_steps == 15 || pred_horz_steps == 20
        || pred_horz_steps == 25){
         //save prediction horizon
-        optimal_control_data.pred_horz_steps = pred_horz_steps;
+        opc_data.pred_horz_steps = pred_horz_steps;
     }
     else{
         //the horizon inserted is not available
@@ -836,43 +836,43 @@ void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3],
     }
 
     //save models sampling time
-    optimal_control_data.mpc_sampling_time_us = (uint64_t)mpc_sampling_time_us;
+    opc_data.mpc_sampling_time_us = (uint64_t)mpc_sampling_time_us;
 
     //A_ext = [A, B; 0, I], B_ext = [B; I]
 
     //put A_ext in the vector C of forces_params_s (column major format)
-    optimal_control_data.forces_params.C[0] = 0.0f;
-    optimal_control_data.forces_params.C[1] = 0.0f;
-    optimal_control_data.forces_params.C[2] = 0.0f;
+    opc_data.forces_params.C[0] = 0.0f;
+    opc_data.forces_params.C[1] = 0.0f;
+    opc_data.forces_params.C[2] = 0.0f;
 
-    optimal_control_data.forces_params.C[3] = A[0][0];
-    optimal_control_data.forces_params.C[4] = A[1][0];
-    optimal_control_data.forces_params.C[5] = 0.0f;
+    opc_data.forces_params.C[3] = A[0][0];
+    opc_data.forces_params.C[4] = A[1][0];
+    opc_data.forces_params.C[5] = 0.0f;
 
-    optimal_control_data.forces_params.C[6] = A[0][1];
-    optimal_control_data.forces_params.C[7] = A[1][1];
-    optimal_control_data.forces_params.C[8] = 0.0f;
+    opc_data.forces_params.C[6] = A[0][1];
+    opc_data.forces_params.C[7] = A[1][1];
+    opc_data.forces_params.C[8] = 0.0f;
 
-    optimal_control_data.forces_params.C[9] = B[0];
-    optimal_control_data.forces_params.C[10] = B[1];
-    optimal_control_data.forces_params.C[11] = 1.0f;
+    opc_data.forces_params.C[9] = B[0];
+    opc_data.forces_params.C[10] = B[1];
+    opc_data.forces_params.C[11] = 1.0f;
 
     //forces D must be = [B_ext, -eye(3)], (column major form)
-    optimal_control_data.forces_params.D[0] = B[0];
-    optimal_control_data.forces_params.D[1] = B[1];
-    optimal_control_data.forces_params.D[2] = 1.0f;
+    opc_data.forces_params.D[0] = B[0];
+    opc_data.forces_params.D[1] = B[1];
+    opc_data.forces_params.D[2] = 1.0f;
 
-    optimal_control_data.forces_params.D[3] = -1.0f;
-    optimal_control_data.forces_params.D[4] = 0.0f;
-    optimal_control_data.forces_params.D[5] = 0.0f;
+    opc_data.forces_params.D[3] = -1.0f;
+    opc_data.forces_params.D[4] = 0.0f;
+    opc_data.forces_params.D[5] = 0.0f;
 
-    optimal_control_data.forces_params.D[6] = 0.0f;
-    optimal_control_data.forces_params.D[7] = -1.0f;
-    optimal_control_data.forces_params.D[8] = 0.0f;
+    opc_data.forces_params.D[6] = 0.0f;
+    opc_data.forces_params.D[7] = -1.0f;
+    opc_data.forces_params.D[8] = 0.0f;
 
-    optimal_control_data.forces_params.D[9] = 0.0f;
-    optimal_control_data.forces_params.D[10] = 0.0f;
-    optimal_control_data.forces_params.D[11] = -1.0f;
+    opc_data.forces_params.D[9] = 0.0f;
+    opc_data.forces_params.D[10] = 0.0f;
+    opc_data.forces_params.D[11] = -1.0f;
 }
 
 /**
@@ -898,26 +898,26 @@ void mpc_control_rudder(float *p_rudder_cmd,
 
     //compute a new command only if the time elapsed since time_last_lqr is greater or equal to LQR_MODEL_TS.
     #if TEST_MPC == 0
-    if((now_us - optimal_control_data.time_last_mpc) >= optimal_control_data.mpc_sampling_time_us){
+    if((now_us - opc_data.time_last_mpc) >= opc_data.mpc_sampling_time_us){
     #else
-    if((now_us - optimal_control_data.time_last_mpc) >= optimal_control_data.mpc_sampling_time_us && mt_still_data()){//cancellare
+    if((now_us - opc_data.time_last_mpc) >= opc_data.mpc_sampling_time_us && mt_still_data()){//cancellare
     #endif
         //compute the new state of the extended model based on the latest measurements
         compute_state_extended_model(ref_act_p);
 
         #if TEST_MPC == 1
-        mt_get_next_yr_y(&optimal_control_data.state_extended_model);
-        optimal_control_data.state_extended_model[2] = optimal_control_data.rudder_latest;
+        mt_get_next_yr_y(&opc_data.state_extended_model);
+        opc_data.state_extended_model[2] = opc_data.rudder_latest;
         printf("\n ---------------------- \n");
         #endif
 
         //init parameters before calling the solver
-        compute_minusAExt_times_x0(&(optimal_control_data.forces_params.minusAExt_times_x0));
+        compute_minusAExt_times_x0(&(opc_data.forces_params.minusAExt_times_x0));
 
         #if TEST_MPC == 1
 //        for(uint8_t i = 0; i < 3; i++){
 //            printf("x0[%d]: %2.4f \t", i,
-//                   (double)  optimal_control_data.state_extended_model[i]);
+//                   (double)  opc_data.state_extended_model[i]);
 //        }
         #endif
 
@@ -925,30 +925,30 @@ void mpc_control_rudder(float *p_rudder_cmd,
         uint64_t time_before_sol = hrt_absolute_time();
 
         //based on the prediction horizon value, see which solver we have to call
-        if(optimal_control_data.pred_horz_steps == 10){
-            solver_ret = mpc_boatTack_h10_solve((mpc_boatTack_h10_params*) &(optimal_control_data.forces_params),
-                                            (mpc_boatTack_h10_output*) &(optimal_control_data.forces_output),
-                                            (mpc_boatTack_h10_info*) &(optimal_control_data.forces_info));
+        if(opc_data.pred_horz_steps == 10){
+            solver_ret = mpc_boatTack_h10_solve((mpc_boatTack_h10_params*) &(opc_data.forces_params),
+                                            (mpc_boatTack_h10_output*) &(opc_data.forces_output),
+                                            (mpc_boatTack_h10_info*) &(opc_data.forces_info));
         }
-        else if(optimal_control_data.pred_horz_steps == 15){
-            solver_ret = mpc_boatTack_h15_solve((mpc_boatTack_h15_params*) &(optimal_control_data.forces_params),
-                                            (mpc_boatTack_h15_output*) &(optimal_control_data.forces_output),
-                                            (mpc_boatTack_h15_info*) &(optimal_control_data.forces_info));
+        else if(opc_data.pred_horz_steps == 15){
+            solver_ret = mpc_boatTack_h15_solve((mpc_boatTack_h15_params*) &(opc_data.forces_params),
+                                            (mpc_boatTack_h15_output*) &(opc_data.forces_output),
+                                            (mpc_boatTack_h15_info*) &(opc_data.forces_info));
         }
-        else if(optimal_control_data.pred_horz_steps == 20){
-            solver_ret = mpc_boatTack_h20_solve((mpc_boatTack_h20_params*) &(optimal_control_data.forces_params),
-                                            (mpc_boatTack_h20_output*) &(optimal_control_data.forces_output),
-                                            (mpc_boatTack_h20_info*) &(optimal_control_data.forces_info));
+        else if(opc_data.pred_horz_steps == 20){
+            solver_ret = mpc_boatTack_h20_solve((mpc_boatTack_h20_params*) &(opc_data.forces_params),
+                                            (mpc_boatTack_h20_output*) &(opc_data.forces_output),
+                                            (mpc_boatTack_h20_info*) &(opc_data.forces_info));
         }
-        else if(optimal_control_data.pred_horz_steps == 25){
-            solver_ret = mpc_boatTack_h25_solve((mpc_boatTack_h25_params*) &(optimal_control_data.forces_params),
-                                            (mpc_boatTack_h25_output*) &(optimal_control_data.forces_output),
-                                            (mpc_boatTack_h25_info*) &(optimal_control_data.forces_info));
+        else if(opc_data.pred_horz_steps == 25){
+            solver_ret = mpc_boatTack_h25_solve((mpc_boatTack_h25_params*) &(opc_data.forces_params),
+                                            (mpc_boatTack_h25_output*) &(opc_data.forces_output),
+                                            (mpc_boatTack_h25_info*) &(opc_data.forces_info));
         }
-//        else if(optimal_control_data.pred_horz_steps == 30){
-//            solver_ret = mpc_boatTack_h30_solve((mpc_boatTack_h30_params*) &(optimal_control_data.forces_params),
-//                                            (mpc_boatTack_h30_output*) &(optimal_control_data.forces_output),
-//                                            (mpc_boatTack_h30_info*) &(optimal_control_data.forces_info));
+//        else if(opc_data.pred_horz_steps == 30){
+//            solver_ret = mpc_boatTack_h30_solve((mpc_boatTack_h30_params*) &(opc_data.forces_params),
+//                                            (mpc_boatTack_h30_output*) &(opc_data.forces_output),
+//                                            (mpc_boatTack_h30_info*) &(opc_data.forces_info));
 //        }
         else{
             //error, no solve function available!
@@ -969,8 +969,8 @@ void mpc_control_rudder(float *p_rudder_cmd,
         //check solver_ret before using result as rudder command!
         if(solver_ret == 1){
             //compute rudder command at step k to give to the real system: optimalU + rudder_{k-1}
-            *p_rudder_cmd = optimal_control_data.forces_output.u0[0] +
-                            optimal_control_data.state_extended_model[2];
+            *p_rudder_cmd = opc_data.forces_output.u0[0] +
+                            opc_data.state_extended_model[2];
 //            //TODO check this or at least write some comments!
 //            if(*p_rudder_cmd > rudder_controller_data.rud_cmd_45_left)
 //                *p_rudder_cmd = rudder_controller_data.rud_cmd_45_left;
@@ -983,7 +983,7 @@ void mpc_control_rudder(float *p_rudder_cmd,
         }
         else{
             //something went wrong in the solver! Give the last command that has been given
-            *p_rudder_cmd = optimal_control_data.state_extended_model[2];
+            *p_rudder_cmd = opc_data.state_extended_model[2];
             #if TEST_MPC == 1
             printf("--- recovery Rud: %1.3f \n", (double) *p_rudder_cmd);
             #endif
@@ -995,23 +995,23 @@ void mpc_control_rudder(float *p_rudder_cmd,
         #endif
 
         //update time_last_lqr
-        optimal_control_data.time_last_mpc = now_us;
+        opc_data.time_last_mpc = now_us;
 
         //save optimal control data
         strs_p->boat_opt_status.timestamp = hrt_absolute_time();
-        strs_p->boat_opt_status.x1 = optimal_control_data.state_extended_model[0];
-        strs_p->boat_opt_status.x2 = optimal_control_data.state_extended_model[1];
-        strs_p->boat_opt_status.x3 = optimal_control_data.state_extended_model[2];
+        strs_p->boat_opt_status.x1 = opc_data.state_extended_model[0];
+        strs_p->boat_opt_status.x2 = opc_data.state_extended_model[1];
+        strs_p->boat_opt_status.x3 = opc_data.state_extended_model[2];
         strs_p->boat_opt_status.opt_rud = *p_rudder_cmd;
         strs_p->boat_opt_status.type_controller = 1; //I am the MPC controller
-        strs_p->boat_opt_status.it = optimal_control_data.forces_info.it;
+        strs_p->boat_opt_status.it = opc_data.forces_info.it;
         //solvetime in milliseconds
         strs_p->boat_opt_status.solvetime = solve_time_ms;
-        strs_p->boat_opt_status.res_eq = optimal_control_data.forces_info.res_eq;
-        strs_p->boat_opt_status.pobj = optimal_control_data.forces_info.pobj;
-        strs_p->boat_opt_status.dobj = optimal_control_data.forces_info.dobj;
-        strs_p->boat_opt_status.dgap = optimal_control_data.forces_info.dgap;
-        strs_p->boat_opt_status.rdgap = optimal_control_data.forces_info.rdgap;
+        strs_p->boat_opt_status.res_eq = opc_data.forces_info.res_eq;
+        strs_p->boat_opt_status.pobj = opc_data.forces_info.pobj;
+        strs_p->boat_opt_status.dobj = opc_data.forces_info.dobj;
+        strs_p->boat_opt_status.dgap = opc_data.forces_info.dgap;
+        strs_p->boat_opt_status.rdgap = opc_data.forces_info.rdgap;
 
         //boat_opt_status just updated
         strs_p->boat_opt_status_updated = true;
@@ -1019,9 +1019,9 @@ void mpc_control_rudder(float *p_rudder_cmd,
     else{
         /* the time elapsed since the last time the MPC was computed is less than
          * MPC_MODEL_TS. Use the last command provided to the rudder that has been
-         * saved by the function guidance_module into optimal_control_data.rudder_latest
+         * saved by the function guidance_module into opc_data.rudder_latest
         */
-        *p_rudder_cmd = optimal_control_data.rudder_latest;
+        *p_rudder_cmd = opc_data.rudder_latest;
     }
 
 }
@@ -1034,21 +1034,21 @@ void mpc_control_rudder(float *p_rudder_cmd,
  *
  * The input of the extended model is u_k = rudder_k - rudder_{k-1}.
  *
- * The updated state value is stored in optimal_control_data.state_extended_model.
+ * The updated state value is stored in opc_data.state_extended_model.
 */
 void compute_state_extended_model(const struct reference_actions_s *ref_act_p){
 
     //yaw rate from measurements
-    optimal_control_data.state_extended_model[0] = get_yaw_rate_sns();
+    opc_data.state_extended_model[0] = get_yaw_rate_sns();
 
     /* difference from the actual yaw and the desired yaw, assuming true wind
      * will be constant and there will be no drift (in general these
      * two assumptions are not true, but it is the best we can do).
     */
-    optimal_control_data.state_extended_model[1] = ref_act_p->alpha_star - get_alpha_dumas();
+    opc_data.state_extended_model[1] = ref_act_p->alpha_star - get_alpha_dumas();
 
     //latest command given to the rudder
-    optimal_control_data.state_extended_model[2] = optimal_control_data.rudder_latest;
+    opc_data.state_extended_model[2] = opc_data.rudder_latest;
 }
 
 /**
@@ -1078,9 +1078,9 @@ void compute_minusAExt_times_x0(float *minusAExt_times_x0){
     for(uint8_t i = 3; i <= 5; i++){
 
         minusAExt_times_x0[index_current_state] =
-                    -optimal_control_data.forces_params.C[i] * optimal_control_data.state_extended_model[0] -
-                    optimal_control_data.forces_params.C[i+3] * optimal_control_data.state_extended_model[1] -
-                    optimal_control_data.forces_params.C[i+6] * optimal_control_data.state_extended_model[2];
+                    -opc_data.forces_params.C[i] * opc_data.state_extended_model[0] -
+                    opc_data.forces_params.C[i+3] * opc_data.state_extended_model[1] -
+                    opc_data.forces_params.C[i+6] * opc_data.state_extended_model[2];
 
         index_current_state++;
     }
@@ -1098,20 +1098,20 @@ void set_band_data(float *delta, float min_time_s, float safety_time_stop_tack_s
 
     //save delta and make sure every value is positive
     for(uint8_t i = 0; i < 3; i++){
-        optimal_control_data.delta_values[i] = (delta[i] > 0.0f) ? delta[i] : -delta[i];
+        opc_data.delta_values[i] = (delta[i] > 0.0f) ? delta[i] : -delta[i];
     }
     //save mint_time
     min_time_s = (min_time_s > 0.0f) ? min_time_s : -min_time_s;
     //convert min_time_s in microsecond and save it
-    optimal_control_data.min_time_in_band_us = (uint64_t)((double)min_time_s * 1e6);
+    opc_data.min_time_in_band_us = (uint64_t)((double)min_time_s * 1e6);
 
     //save max_time
     safety_time_stop_tack_s = (safety_time_stop_tack_s > 0.0f) ? safety_time_stop_tack_s : -safety_time_stop_tack_s;
     //convert max_time in microsecond and save it
-    optimal_control_data.safety_time_stop_tack = (uint64_t)((double)safety_time_stop_tack_s * 1e6);
+    opc_data.safety_time_stop_tack = (uint64_t)((double)safety_time_stop_tack_s * 1e6);
     //safety_time_stop_tack must be >= MIN_SAFETY_TIME_STOP_TCK
-    if(optimal_control_data.safety_time_stop_tack < MIN_SAFETY_TIME_STOP_TCK)
-        optimal_control_data.safety_time_stop_tack = MIN_SAFETY_TIME_STOP_TCK;
+    if(opc_data.safety_time_stop_tack < MIN_SAFETY_TIME_STOP_TCK)
+        opc_data.safety_time_stop_tack = MIN_SAFETY_TIME_STOP_TCK;
 
 }
 
@@ -1247,7 +1247,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     strs_p->actuators.control[3] =  sail_command;
 
     //update rudder_latest in any case, even if we are not tacking
-    optimal_control_data.rudder_latest = rudder_command;
+    opc_data.rudder_latest = rudder_command;
 
     //save first debug values for post-processing, other values set in path_planning()
     strs_p->boat_guidance_debug.alpha = alpha;
