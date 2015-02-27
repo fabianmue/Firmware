@@ -137,7 +137,7 @@ float essc_sail_control_value() {
 	 */
 	uint32_t ActTime = hrt_absolute_time();
 
-	if(ActTime - State.lastCall >= Config.frequency*1000000) {
+	if(ActTime - State.lastCall >= Config.frequency*1000000.0f) {
 		/* A new Sail-Control-Value has to be calculated in this step */
 
 		//Store the current time as the last time a new Sailvalue was calcualted
