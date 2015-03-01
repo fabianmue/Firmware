@@ -47,7 +47,7 @@ static const float deg2rad = 0.0174532925199433f; // pi / 180
 
 
 /**
- * Reference angle with respect true wind [deg]
+ * Reference angle with respect to the wind, in degrees.
  *
  * Use Dumas'convention.
  *
@@ -57,7 +57,8 @@ static const float deg2rad = 0.0174532925199433f; // pi / 180
 PARAM_DEFINE_FLOAT(AS_ALST_ANG_D, 45.0f);
 
 /**
- * 1 if you wish to use the alpha star specified by AS_ALSTR, 0 otherwise
+ * If AS_ALST_SET == 1, the value of AS_ALST_ANG_D will be used
+ * as the new reference angle.
  *
  * @min 0
  * @max 1
@@ -73,20 +74,22 @@ PARAM_DEFINE_INT32(AS_ALST_SET, 1);
 PARAM_DEFINE_INT32(AS_TCK_NOW, 0);
 
 /**
- * Sails position
+ * Sails command.
  *
- * Default value for sails position. 0.56 = fully closed, 0.0 = fully opened.
- * If a negative value is set, then the sail control is in charge to control sails.
+ * Use a negative value (ex -1) to let autonomous controller use its computed
+ * value for the sails. If you want to force tha sails to be in a certain position
+ * set this parameter to a positive value within [0, 0.56], where
+ * 0 mean sails fully opened, 0.56 means sails fully closed.
  *
- * @min 0
+ * @min -1
  * @max 0.56
  */
 PARAM_DEFINE_FLOAT(AS_SAIL, -1.0f);
 
 
 /**
- * Set a new value for the maximum rudder command. Must be a positive value and <= 1
- *
+ * Set a new value for the maximum rudder command.
+ * Must be a positive value and <= 1.
  *
  * @min 0
  * @max 1
@@ -94,7 +97,7 @@ PARAM_DEFINE_FLOAT(AS_SAIL, -1.0f);
 PARAM_DEFINE_FLOAT(AS_MAX_RUD, 1.0f);
 
 /**
- * Sails command when sails should be considered fully closed.
+ * Sails command value when sails should be considered fully closed.
  *
  * @min 0
  * @max 0.56
@@ -102,7 +105,7 @@ PARAM_DEFINE_FLOAT(AS_MAX_RUD, 1.0f);
 PARAM_DEFINE_FLOAT(AS_SAI_CL_CMD, 0.56f);
 
 /**
- * Positive alpha angle [deg] at which sails should start opening
+ * Positive alpha angle [deg] at which sails should start opening.
  *
  * @min 0
  * @max 180
@@ -110,7 +113,7 @@ PARAM_DEFINE_FLOAT(AS_SAI_CL_CMD, 0.56f);
 PARAM_DEFINE_FLOAT(AS_SAI_X1_AL, 45.0f);
 
 /**
- * Positive alpha angle [deg] at which sails should be fully opened
+ * Positive alpha angle [deg] at which sails should be fully opened.
  *
  * @min 0
  * @max 180
@@ -123,7 +126,7 @@ PARAM_DEFINE_FLOAT(AS_SAI_X2_AL, 150.0f);
  * Type of tack maneuver
  *
  * Tack maneuver can be performed in three ways:
- * 0 = implicit tack by changing the alpha reference and wait for the PI to follow the ne value.
+ * 0 = implicit tack by changing the alpha reference and wait for the PI to follow the nee value.
  * 1 = LQR tack.
  * 2 = MPC tack
  *
@@ -133,47 +136,39 @@ PARAM_DEFINE_FLOAT(AS_SAI_X2_AL, 150.0f);
 PARAM_DEFINE_INT32(AS_TY_TCK, 0);
 
 /**
- * Proportional gain for rudder PI.
- *
+ * Proportional gain of the PI controller for the rudder.
+ * When using the conditional PI, this value is even reffered as Kp.
  *
  * @min 0
- * @max ?
  */
 PARAM_DEFINE_FLOAT(AS_RUD_P, 0.35f);
 
 /**
- * Integral gain for rudder PI.
- *
+ * Integral gain of the PI controller for the rudder.
+ * When using the conditional PI, this value is even reffered as Ki.
  *
  * @min 0
- * @max ?
  */
 PARAM_DEFINE_FLOAT(AS_RUD_I, 0.0f);
 
 /**
- * Constant fo anti-wind up in normal digital PI
- *
+ * Constant for anti-wind up action in standard digital PI
  *
  * @min 0
- * @max ?
  */
 PARAM_DEFINE_FLOAT(AS_RUD_KAW, 0.5f);
 
 /**
- * Constant used in conditionl integral to adjust denominator in integral action.
- *
+ * Ci value used in the conditional PI.
  *
  * @min 0
- * @max ?
  */
 PARAM_DEFINE_FLOAT(AS_RUD_CI, 1.0f);
 
 /**
- * Constant used in conditionl integral to adjust denominator in proportional action.
- *
+ * Cp value used in the conditional PI.
  *
  * @min 0
- * @max ?
  */
 PARAM_DEFINE_FLOAT(AS_RUD_CP, 0.35f);
 
@@ -183,31 +178,32 @@ PARAM_DEFINE_FLOAT(AS_RUD_CP, 0.35f);
  *
  * 0: standard PI with anti-wind up gain
  * 1: conditional PI
- * 2: LQR controller
  *
  * @min 0
- * @max 2
+ * @max 1
  */
 PARAM_DEFINE_INT32(AS_RUD_TYPE, 0);
 
 /**
- * Set how much time should passed without any new cog value.
+ * Set after how many seconds without a new cog value, only the yaw angle should
+ * considered to compute the alpha angle.
+ *
  * @see set_max_time_cog_not_up
  */
 PARAM_DEFINE_FLOAT(AS_COG_DELAY_S, 1.5f);
 
 /**
- * AS_WIN_AL, specifies the number of samples for the moving average of true wind angle (alpha).
+ * Specifies the number of samples for the moving average filt of
+ * the angle with respect to the wind (alpha).
  *
  *
  * @min 1
- * @max ?
  */
 PARAM_DEFINE_INT32(AS_WIN_AL, 10);
 
 /**
- * AS_WIN_APP, specifies the number of samples for the moving average of apparent wind direction.
- *
+ * Specifies the number of samples for the moving average filt of
+ * the apparant wind direction.
  *
  * @min 1
  * @max ?
@@ -215,8 +211,12 @@ PARAM_DEFINE_INT32(AS_WIN_AL, 10);
 PARAM_DEFINE_INT32(AS_WIN_APP, 10);
 
 /**
- * AS_WIN_TWD, specifies the number of samples for the moving average of true wind direction.
+ * Specifies the number of samples for the moving average filt of
+ * the true wind direction.
  *
+ * A new value of the raw true wind direction is provided by the weather station
+ * roughly every 0.2 seconds.
+ * So, for example, AS_WIN_TWD = 10 mean a window of 2 seconds (more or less).
  *
  * @min 1
  * @max ?
@@ -226,8 +226,7 @@ PARAM_DEFINE_INT32(AS_WIN_TWD, 10);
 
 
 /**
- * Latitude of origin of NED system, in degrees * E7.
- *
+ * Latitude of the origin of the NED system, in degrees * E7.
  *
  * @min -900000000
  * @max 900000000
@@ -235,8 +234,7 @@ PARAM_DEFINE_INT32(AS_WIN_TWD, 10);
 PARAM_DEFINE_INT32(AS_R_LAT0_E7, 473494820);
 
 /**
- * Longitude of origin of NED system, in degrees * E7.
- *
+ * Longitude of the origin of the NED system, in degrees * E7.
  *
  * @min -1800000000
  * @max 1800000000
@@ -246,7 +244,6 @@ PARAM_DEFINE_INT32(AS_R_LON0_E7, 85605120);
 /**
  * Altitude of origin of NED system, in millimeters.
  *
- *
  * @min 0
  * @max ?
  */
@@ -255,8 +252,8 @@ PARAM_DEFINE_INT32(AS_R_ALT0_E3, 406000);
 
 /**
  * AS_MEAN_WIND_D, specifies the mean wind direction [deg], in [-180, 180].
- * Positive on the right (going from North to East), negative on the left (going from North to West).
- *
+ * Positive on the right (going from North to East),
+ * negative on the left (going from North to West).
  *
  * @min -180
  * @max 180
@@ -272,8 +269,7 @@ PARAM_DEFINE_FLOAT(AS_MEAN_WIND_D, 0.0f);
 PARAM_DEFINE_INT32(AS_USE_FIXED_TWD, 0);
 
 /**
- * Latitude of top mark, in degrees * E7.
- *
+ * Latitude of the top mark, in degrees * E7.
  *
  * @min -900000000
  * @max 900000000
@@ -281,8 +277,7 @@ PARAM_DEFINE_INT32(AS_USE_FIXED_TWD, 0);
 PARAM_DEFINE_INT32(AS_T_LAT_E7, 473459370);
 
 /**
- * Longitude of top mark, in degrees * E7.
- *
+ * Longitude of the top mark, in degrees * E7.
  *
  * @min -1800000000
  * @max 1800000000
@@ -290,8 +285,7 @@ PARAM_DEFINE_INT32(AS_T_LAT_E7, 473459370);
 PARAM_DEFINE_INT32(AS_T_LON_E7, 85547940);
 
 /**
- * Altitude of top mark, in millimeters.
- *
+ * Altitude of the top mark, in millimeters.
  *
  * @min 0
  * @max ?
@@ -302,8 +296,7 @@ PARAM_DEFINE_INT32(AS_T_ALT_E3, 406000);
 #if USE_GRID_LINES == 1
 
 /**
- * Total numbers of grid lines
- *
+ * Total numbers of grid lines.
  *
  * @min 1
  * @max ?
@@ -311,17 +304,13 @@ PARAM_DEFINE_INT32(AS_T_ALT_E3, 406000);
 PARAM_DEFINE_INT32(AS_P_TOT_G, 1);
 
 /**
- * X coordinate in Race frame of grid line of index AS_P_INDEX, [m]
+ * X coordinate in Race frame of grid line of index AS_P_INDEX, in meters.
  *
- *
- * @min ?
- * @max ?
  */
 PARAM_DEFINE_FLOAT(AS_P_X_M, 0.0f);
 
 /**
- * 1 if you want to add a new grid line
- *
+ * 1 if you want to add a new grid line at x = AS_P_X_M.
  *
  * @min 0
  * @max 1
@@ -329,8 +318,7 @@ PARAM_DEFINE_FLOAT(AS_P_X_M, 0.0f);
 PARAM_DEFINE_INT32(AS_P_ADD, 0);
 
 /**
- * 1 if you want to re-insert the same grid lines you used before
- *
+ * 1 if you want to re-insert the same grid lines you used before.
  *
  * @min 0
  * @max 1
@@ -421,7 +409,7 @@ PARAM_DEFINE_FLOAT(ASO_MPC_HF44, 1.8832249457f);
  *
  * @min 0
 */
-PARAM_DEFINE_FLOAT(ASO_DLT_YR_D, 5.0f);
+PARAM_DEFINE_FLOAT(ASO_DLT_YR_D, 10.0f);
 
 /**
  * Create a band around the origin for the yaw value.
@@ -429,7 +417,7 @@ PARAM_DEFINE_FLOAT(ASO_DLT_YR_D, 5.0f);
  *
  * @min 0
 */
-PARAM_DEFINE_FLOAT(ASO_DLT_Y_D, 8.0f);
+PARAM_DEFINE_FLOAT(ASO_DLT_Y_D, 10.0f);
 
 /**
  * Create a band around the origin for the rudder command.
@@ -498,7 +486,8 @@ PARAM_DEFINE_FLOAT(ASO_MPC_B1, -0.3093770863f);
 PARAM_DEFINE_FLOAT(ASO_MPC_B2, -0.0229457259f);
 
 /**
- * ASO_WIN_AL, specifies the number of samples for the moving average of true wind angle (alpha) DURING tack.
+ * ASO_WIN_AL, specifies the number of samples for the moving average of
+ * true wind angle (alpha) DURING tack.
  * Must be <= @see AS_WIN_APP.
  *
  * @min 1
@@ -508,7 +497,8 @@ PARAM_DEFINE_INT32(ASO_WIN_AL, 1);
 
 
 /**
- * ASO_WIN_TWD, specifies the number of samples for the moving average of true wind direction DURING tack.
+ * ASO_WIN_TWD, specifies the number of samples for the moving average of
+ * true wind direction DURING tack.
  * Must be <= @see AS_WIN_TWD
  *
  * @min 1

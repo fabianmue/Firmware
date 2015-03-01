@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "settings.h"
+#include "send_msg_qgc.h"
 
 
 /** @brief initialize controller data before starting*/

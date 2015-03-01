@@ -46,6 +46,9 @@
 #define M_PI_F 3.14159265358979323846f
 #define TWO_PI_F 2 * M_PI_F
 
+static float rad2deg = 57.2957795130823;
+static char txt_msg[150]; ///used to send messages to QGC
+
 #ifndef NULL
     #define NULL 0
 #endif
@@ -668,6 +671,17 @@ void cd_use_fixed_twd(int32_t use_fixed_twd, float fixed_twd_r){
         fixed_twd_r = M_PI_F;
     else if(fixed_twd_r < - M_PI_F)
         fixed_twd_r = -M_PI_F;
+
+    //se if use_fixed_twd value is not equal to the one we are using now
+    if(use_fixed_twd == 0 && user_params.use_fixed_twd == true){
+        //new value for user_params.use_fixed_twd, send a msg to QGC
+        send_log_info("Use TWD from moving avg filt.");
+    }
+    else if(use_fixed_twd != 0 && user_params.use_fixed_twd == false){
+        //new value for user_params.use_fixed_twd, send a msg to QGC
+        sprintf(txt_msg, "Use fixed TWD = %0.1f [deg]", (double) fixed_twd_r * rad2deg);
+        send_log_info(txt_msg);
+    }
 
     user_params.use_fixed_twd = (use_fixed_twd == 0) ? false : true;
     user_params.fixed_twd_r = fixed_twd_r;

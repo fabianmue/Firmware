@@ -137,7 +137,7 @@ struct forces_info_s{
 #define M_PI_F 3.14159265358979323846f
 #define TWO_M_PI_F 6.28318530717959f
 
-static char txt_msg[250]; ///used to send messages to QGC
+static char txt_msg[150]; ///used to send messages to QGC
 static const float deg2rad = 0.0174532925199433f; // pi / 180
 
 //static float sum_error_pi = 0.0f; ///error sum from iterations of guidance_module, used in PI
@@ -334,20 +334,17 @@ void set_tack_data(uint16_t tack_type){
     //notify the changing to QGroundControl what kind of tack the boat will do
     if(old_tack_type != tack_type){
         if(tack_type == TACK_PI){
-            sprintf(txt_msg, "Implicit (PI) Tack.");
-            send_log_info(txt_msg);
+            send_log_info("Implicit (PI) Tack.");
             //save new value
             tack_data.tack_type = tack_type;
         }
         else if(tack_type == TACK_LQR){
-            sprintf(txt_msg, "LQR Tack.");
-            send_log_info(txt_msg);
+            send_log_info("LQR Tack.");
             //save new value
             tack_data.tack_type = tack_type;
         }
         else if(tack_type == TACK_MPC){
-            sprintf(txt_msg, "MPC Tack.");
-            send_log_info(txt_msg);
+            send_log_info("MPC Tack.");
             //save new value
             tack_data.tack_type = tack_type;
         }
@@ -592,28 +589,19 @@ void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code){
     //check error_code to give a feedback to QGroundControl
     if(error_code == EVERYTHING_OK){
         //notify to QGC that we've completed the tack action
-        sprintf(txt_msg, "Tack completed.");
-        //send message
-        send_log_info(txt_msg);
+        send_log_info("Tack completed.");
     }
     else if(error_code == FORCED_TACK_STOP){
         //notify to QGC that we had to force stopping the tack
-        sprintf(txt_msg, "Tack forced to be completed.");
-        //send message
-        send_log_critical(txt_msg);
+        send_log_critical("Tack forced to be completed.");
     }
     else if(error_code == NO_MPC_SOLVE_FNC){
         //notify to QGC the error
-        sprintf(txt_msg, "No MPC solve for this horizon!");
-        //send message
-        send_log_critical(txt_msg);
+        send_log_critical("No MPC solve for this horizon!");
     }
     else{
-        sprintf(txt_msg, "Error: check error_code in guidance_module");
-        //send message
-        send_log_critical(txt_msg);
+        send_log_critical("Error: check error_code in guidance_module");
     }
-
 }
 
 /**
