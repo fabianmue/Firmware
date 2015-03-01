@@ -97,4 +97,7 @@ void cd_optimal_tack_started(void);
 /** @brief notify that the "optimal" tack is completed*/
 void cd_optimal_tack_completed(void);
 
+/** @brief set if alpha must be computed using the real TWD or a fixed one */
+void cd_use_fixed_twd(int32_t use_fixed_twd, float fixed_twd_r);
+
 #endif // CONTROLLER_DATA_H

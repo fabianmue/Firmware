@@ -66,7 +66,7 @@ float compute_instant_alpha_sns(float angle);
 /** @brief fill a float vector with a constant value*/
 void fill_fvector(float* vector, uint16_t vector_size, float value);
 
-//actual raw measurements from parser_200WX
+//actual raw measurements from parser_200WX and other usefull data
 static struct{
     float cog_sns;///last cog value supplied by the gps
     float alpha_cog_sns;///last alpha angle computed using cog, according to our sensor convention
@@ -104,9 +104,13 @@ static struct{
 
 //other user's paramters
 static struct{
-    uint64_t max_time_cog_not_up;//maximum time without updating cog, in microseconds
+    uint64_t max_time_cog_not_up;///maximum time without updating cog, in microseconds
+    bool use_fixed_twd; ///true if alpha must be computed with a constant twd value
+    float fixed_twd_r; ///fixed true wind direction in rad
 }user_params = {
-    .max_time_cog_not_up = 2 * 1000000//micro seconds
+    .max_time_cog_not_up = 2 * 1000000,//micro seconds
+    .use_fixed_twd = false, //us twd from get_twd_sns()
+    .fixed_twd_r = 0
 };
 
 /**
@@ -122,7 +126,10 @@ void set_max_time_cog_not_up(float max_time_cog_not_up_sec){
     user_params.max_time_cog_not_up = (uint64_t)(max_time_cog_not_up_sec * 1000000.0f);
 }
 
-/** Initialize all the structures necessary to compute moving average window of true wind angle (alpha)*/
+/**
+ * Initialize all the necessary structurs.
+ * Call this function only once, before starting the while loop in autonomous_sailing app.
+*/
 void init_controller_data(void){
     measurements_raw.alpha_cog_sns = 0.0f;
     measurements_raw.alpha_yaw_sns = 0.0f;
@@ -205,9 +212,6 @@ void update_k_twd(const uint16_t k, uint16_t opt_tack_twd_win){
 
         //initialize all the elements of twd_p to 0
         fill_fvector(measurements_filtered.twd_p, k, 0.0f);
-//        for(uint16_t i = 0; i < measurements_filtered.k_twd; i++){
-//            measurements_filtered.twd_p[i] = 0.0f;
-//        }
 
         measurements_filtered.oldestValueTwd = 0;
 
@@ -267,38 +271,16 @@ void update_k(const uint16_t k, uint16_t opt_tack_alpha_win){
         measurements_filtered.alpha_window_length = measurements_filtered.opt_tack_alpha_win;
     else
         measurements_filtered.alpha_window_length = measurements_filtered.k;
-
-    //----------------********************************------------
-//    //some controls before freeing memory
-//    if(k == measurements_filtered.k || k == 0)
-//        return; //nothing to do
-
-//    if(measurements_filtered.alpha_p != NULL)
-//        free(measurements_filtered.alpha_p); //free memory
-
-//    measurements_filtered.alpha_p = malloc(sizeof(float) * k);
-
-//    measurements_filtered.k = k;
-
-//    //make sure opt_tack_alpha_win <= k and opt_tack_alpha_win > 0
-//    if(opt_tack_alpha_win > k || opt_tack_alpha_win > 0)
-//        opt_tack_alpha_win = k;
-//    measurements_filtered.opt_tack_alpha_win = opt_tack_alpha_win;
-
-//    //initialize all the elements of alpha_p to 0
-//    for(uint16_t i = 0; i < measurements_filtered.k; i++){
-//        measurements_filtered.alpha_p[i] = 0.0f;
-//    }
-
-//    measurements_filtered.oldestValue = 0;
 }
 
 /**
  * Compute the alpha angle in our sensor convention
  *
- * The alpha angle is computed using the param angle minus
- * the averaged value of the true wind direction supplied by
- * @see get_twd_sns()
+ * The alpha angle is defined as angle - true wind direction,
+ * where angle can be either the yaw angle or the corse over ground angle.
+ * The true wind direction can be either the twd provided by a moving
+ * average filter, @see get_twd_sns(), or a fixed twd set by the
+ * user via QGroundControl.
  *
  * @param angle     yaw or cog angle, in sensor convention
  * @return          instant alpha computed using angle, in sensor frame
@@ -306,9 +288,16 @@ void update_k(const uint16_t k, uint16_t opt_tack_alpha_win){
 float compute_instant_alpha_sns(float angle)
 {
     float alpha;
+    float twd;
 
-    //alpha = angle - twd; use the twd supplied by the moving average filter
-    alpha = angle - get_twd_sns();
+    //see which twd angle we must use
+    if(user_params.use_fixed_twd == true)
+        twd = user_params.fixed_twd_r;
+    else
+        twd = get_twd_sns();
+
+    //compute alpha
+    alpha = angle - twd;
 
     //constrain alpha to be the CLOSEST angle between TWD and angle
     if(alpha > M_PI_F) alpha = alpha - TWO_PI_F;
@@ -663,4 +652,23 @@ void cd_optimal_tack_completed(void){
 void fill_fvector(float* vector, uint16_t vector_size, float value){
     for(uint16_t i = 0; i < vector_size; i++)
         vector[i] = value;
+}
+
+/**
+ * Set if alpha angle must be computed using the twd provided by the moving average
+ * filter @see get_twd_sns() or using a fixed value as twd.
+ *
+ * @param use_fixed_twd 0 if you want to use twd from moving filter
+ * @param fixed_twd_r   fixed value for twd, in [-pi, pi], in our sensor convention.
+ */
+void cd_use_fixed_twd(int32_t use_fixed_twd, float fixed_twd_r){
+
+    //make sure fixed_twd_r is in [-pi, pi]
+    if(fixed_twd_r > M_PI_F)
+        fixed_twd_r = M_PI_F;
+    else if(fixed_twd_r < - M_PI_F)
+        fixed_twd_r = -M_PI_F;
+
+    user_params.use_fixed_twd = (use_fixed_twd == 0) ? false : true;
+    user_params.fixed_twd_r = fixed_twd_r;
 }

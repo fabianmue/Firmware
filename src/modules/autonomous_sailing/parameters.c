@@ -264,6 +264,14 @@ PARAM_DEFINE_INT32(AS_R_ALT0_E3, 406000);
 PARAM_DEFINE_FLOAT(AS_MEAN_WIND_D, 0.0f);
 
 /**
+ * Choose if you want to compute the alpha angle (angle with respect to the wind) using
+ * a TWD (true wind direction) supplied by a moving average filter using the twd read by the
+ * weather station (AS_USE_FIXED_TWD = 0), or if you want to use the value set
+ * with @see AS_MEAN_WIND_D as constant value for twd (AS_USE_FIXED_TWD = 1).
+*/
+PARAM_DEFINE_INT32(AS_USE_FIXED_TWD, 0);
+
+/**
  * Latitude of top mark, in degrees * E7.
  *
  *
@@ -614,6 +622,7 @@ static struct pointers_param_qgc_s{
     param_t alt0_pointer;         /**< pointer to param AS_R_ALT0_E3*/
 
     param_t mean_wind_pointer;/**< pointer to param AS_MEAN_WIND_D*/
+    param_t use_fixed_twd_pointer; /**< pointer to AS_USE_FIXED_TWD */
 
     param_t lat_tmark_pointer;         /**< pointer to param AS_T_LAT_E7*/
     param_t lon_tmark_pointer;         /**< pointer to param AS_T_LON_E7*/
@@ -745,6 +754,7 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.alt0_pointer    = param_find("AS_R_ALT0_E3");
 
     pointers_param_qgc.mean_wind_pointer = param_find("AS_MEAN_WIND_D");
+    pointers_param_qgc.use_fixed_twd_pointer = param_find("AS_USE_FIXED_TWD");
 
     pointers_param_qgc.lat_tmark_pointer    = param_find("AS_T_LAT_E7");
     pointers_param_qgc.lon_tmark_pointer    = param_find("AS_T_LON_E7");
@@ -932,11 +942,17 @@ void param_update(struct parameters_qgc *params_p,
 
     //----- mean wind
     float mean_wind;
+    int32_t use_fixed_twd;
     param_get(pointers_param_qgc.mean_wind_pointer, &mean_wind);
+    param_get(pointers_param_qgc.use_fixed_twd_pointer, &use_fixed_twd);
+
     //convert mean_wind in rad
     mean_wind = mean_wind * deg2rad;
+
     //set mean wind angle in navigation.h
     set_mean_wind_angle(mean_wind);
+    //pass mean_wind and use_fixed_twd to controller_data module
+    cd_use_fixed_twd(use_fixed_twd, mean_wind);
 
     //----- top mark geo coordinate
     int32_t lat_tmark;
@@ -1137,6 +1153,8 @@ void param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param2.delta1 = delta_vect[0];
     strs_p->boat_qgc_param2.delta2 = delta_vect[1];
     strs_p->boat_qgc_param2.delta3 = delta_vect[2];
+    strs_p->boat_qgc_param2.use_fixed_twd = (uint16_t)use_fixed_twd;
+
     orb_publish(ORB_ID(boat_qgc_param2), pubs_p->boat_qgc_param2, &(strs_p->boat_qgc_param2));
 
     //qgc3
