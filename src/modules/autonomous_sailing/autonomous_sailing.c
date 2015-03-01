@@ -196,20 +196,20 @@ int as_daemon_thread_main(int argc, char *argv[]){
     warnx(" starting\n");
 
     //initialize controller data structures
-    init_controller_data();
+    cd_init_controller_data();
 
     //initialize grid lines in Race frame
-    init_grids();
+    pp_init_grids();
 
     //init message module
-    init_msg_module();
+    smq_init_msg_module();
 
     //subscribe/advertise interested topics
     as_topics(&subs, &pubs, &strs);
 
     #if TEST_MPC != 1
     //initialize local copy of parameters from QGroundControl
-    param_init(&params, &strs, &pubs);
+    p_param_init(&params, &strs, &pubs);
     #endif
 
     //limit update rate of attitude every 50 milliseconds --> f = 20 Hz
@@ -276,7 +276,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     orb_copy(ORB_ID(vehicle_global_position), subs.gps_filtered, &(strs.gps_filtered));
 
                     //look into optimal path planning maps for reference actions
-                    path_planning(&ref_act, &strs);
+                    pp_path_planning(&ref_act, &strs);
 
                     //update NED velocities in navigation module
                     //update_ned_vel(strs.gps_filtered.vel_n, strs.gps_filtered.vel_e, strs.gps_filtered.vel_d);
@@ -287,7 +287,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     orb_copy(ORB_ID(wind_sailing), subs.wind_sailing, &(strs.wind_sailing));
 
                     //update apparent wind direction in control data
-                    update_raw_app_wind(strs.wind_sailing.angle_apparent);
+                    cd_update_raw_app_wind(strs.wind_sailing.angle_apparent);
 
                     #if SIMULATION_FLAG == 0
                     //update true wind direction in control data
@@ -300,7 +300,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     orb_copy(ORB_ID(parameter_update), subs.parameter_update, &(strs.update));
 
                     //update param
-                    param_update(&params, &strs, true, &pubs);
+                    p_param_update(&params, &strs, true, &pubs);
                 }
                 if(fds[4].revents & POLLIN){
                     // attitude updated
@@ -329,12 +329,12 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 update_raw_cog(cog);
                 update_raw_twd(twd);
             #else
-                update_raw_cog(params.cog_sim);
-                update_raw_twd(params.twd_sim);
-                update_raw_yaw_yaw_rate(params.yaw_sim, 0.0f);//dummy yawRate value
+                cd_update_raw_cog(params.cog_sim);
+                cd_update_raw_twd(params.twd_sim);
+                cd_update_raw_yaw_yaw_rate(params.yaw_sim, 0.0f);//dummy yawRate value
             #endif
             //look into optimal path planning maps for reference actions
-            path_planning(&ref_act, &strs);
+            pp_path_planning(&ref_act, &strs);
             //fine cancella
         #endif
 
@@ -342,7 +342,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
         printf("before guidance module\n");
         #endif
         //always perfrom guidance module to control the boat
-        guidance_module(&ref_act, &params, &strs);
+        gm_guidance_module(&ref_act, &params, &strs);
 
         //publish out commands
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));

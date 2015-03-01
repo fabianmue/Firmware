@@ -51,46 +51,46 @@
 
 
 /** @brief initialize controller data before starting*/
-void init_controller_data(void);
+void cd_init_controller_data(void);
 
 /** @brief modify size of the moving window for alpha angle*/
-void update_k(const uint16_t k, uint16_t opt_tack_alpha_win);
+void cd_update_k(const uint16_t k, uint16_t opt_tack_alpha_win);
 
 /** @brief modify size of the moving window for apparent angle*/
-void update_k_app(const uint16_t k);
+void cd_update_k_app(const uint16_t k);
 
 /** @brief modify size of the moving window for true wind angle*/
-void update_k_twd(const uint16_t k, uint16_t opt_tack_twd_win);
+void cd_update_k_twd(const uint16_t k, uint16_t opt_tack_twd_win);
 
 /** @brief update course over ground with a new raw value from the GPS*/
-void update_raw_cog(const float cog_r);
+void cd_update_raw_cog(const float cog_r);
 
 /** @brief update true wind (estimated) raw direction with a new value*/
-void update_raw_twd(const float twd_r);
+void cd_update_raw_twd(const float twd_r);
 
 /** @brief update apparent wind raw direction with a new value*/
-void update_raw_app_wind(const float app_r);
+void cd_update_raw_app_wind(const float app_r);
 
 /** @brief get the average value of alpha*/
-float get_alpha_dumas(void);
+float cd_get_alpha_dumas(void);
 
 /** @brief get the average value of apparent wind in sensor frame*/
-float get_app_wind_sns(void);
+float cd_get_app_wind_sns(void);
 
 /** @brief get the average value of true wind direction in sensor frame*/
-float get_twd_sns(void);
+float cd_get_twd_sns(void);
 
 /** @brief update yaw and yawRate (w.r.t. true North)*/
-void update_raw_yaw_yaw_rate(float yaw_r, float yaw_rate_r);
+void cd_update_raw_yaw_yaw_rate(float yaw_r, float yaw_rate_r);
 
 /** @brief get alpha_yaw in Dumas' convention*/
-float get_alpha_yaw_dumas(void);
+float cd_get_alpha_yaw_dumas(void);
 
 /** @brief set the maximum time after that alpha = alpha_yaw if cog not updated*/
-void set_max_time_cog_not_up(float max_time_cog_not_up_sec);
+void cd_set_max_time_cog_not_up(float max_time_cog_not_up_sec);
 
 /** @brief get latest yawRate value*/
-float get_yaw_rate_sns(void);
+float cd_get_yaw_rate_sns(void);
 
 /** @brief notify boat is performing a tack using either LQR or MPC*/
 void cd_optimal_tack_started(void);

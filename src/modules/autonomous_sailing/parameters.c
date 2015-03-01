@@ -710,7 +710,7 @@ static struct pointers_param_qgc_s{
 * Initialize parameters.
 *
 */
-void param_init(struct parameters_qgc *params_p,
+void p_param_init(struct parameters_qgc *params_p,
                 struct structs_topics_s *strs_p,
                 const struct published_fd_s *pubs_p){
 
@@ -837,14 +837,14 @@ void param_init(struct parameters_qgc *params_p,
     #endif
 
     //get parameters but do not add any grid lines at start up
-    param_update(params_p, strs_p, false, pubs_p);
+    p_param_update(params_p, strs_p, false, pubs_p);
 
 }
 
 /** Update local copy of parameters.
  *
 */
-void param_update(struct parameters_qgc *params_p,
+void p_param_update(struct parameters_qgc *params_p,
                   struct structs_topics_s *strs_p, bool update_path_param,
                   const struct published_fd_s *pubs_p){
 
@@ -865,11 +865,11 @@ void param_update(struct parameters_qgc *params_p,
 
     //set alpha_tmp as the new alpha star ONLY if set_alpha is not 0 AND tack_now is 0
     if(set_alpha != 0 && tack_now == 0)
-        set_alpha_star(alpha_tmp);
+        pp_set_alpha_star(alpha_tmp);
 
     //pass tack_now to path_planning module, only if update_path_param is true
     if(update_path_param)
-        boat_should_tack(tack_now);
+        pp_boat_should_tack(tack_now);
 
     //----- sail_servo
     param_get(pointers_param_qgc.sail_pointer, &(params_p->sail_servo));
@@ -878,7 +878,7 @@ void param_update(struct parameters_qgc *params_p,
     int32_t tack_type;
 
     param_get(pointers_param_qgc.tack_type_pointer, &tack_type);
-    set_tack_data((uint16_t)tack_type);
+    gm_set_tack_data((uint16_t)tack_type);
 
     //----- param for rudder controller
     float rud_p;
@@ -897,7 +897,7 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.rud_controller_type_pointer, &rudder_controller_type);
     param_get(pointers_param_qgc.max_rudder_cmd_pointer, &max_rudder_cmd);
 
-    set_rudder_data(rud_p, rud_i, rud_cp, rud_ci, rudder_controller_type, rud_kaw,
+    gm_set_rudder_data(rud_p, rud_i, rud_cp, rud_ci, rudder_controller_type, rud_kaw,
                     max_rudder_cmd);
 
     //----- sails controller
@@ -912,7 +912,7 @@ void param_update(struct parameters_qgc *params_p,
     alpha_sail_closed_r = alpha_sail_closed_r * deg2rad;
     alpha_sail_opened_r = alpha_sail_opened_r * deg2rad;
 
-    set_sail_data(sail_closed_cmd, alpha_sail_closed_r, alpha_sail_opened_r);
+    gm_set_sail_data(sail_closed_cmd, alpha_sail_closed_r, alpha_sail_opened_r);
 
     //----- reference geo coordinate
     int32_t lat0;
@@ -928,7 +928,7 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.alt0_pointer, &alt0);
 
     //update NED origin using API in navigation.h
-    set_ref0(&lat0, &lon0, &alt0);
+    n_set_ref0(&lat0, &lon0, &alt0);
 
     //----- mean wind
     float mean_wind;
@@ -940,7 +940,7 @@ void param_update(struct parameters_qgc *params_p,
     mean_wind = mean_wind * deg2rad;
 
     //set mean wind angle in navigation.h
-    set_mean_wind_angle(mean_wind);
+    n_set_mean_wind_angle(mean_wind);
     //pass mean_wind and use_fixed_twd to controller_data module
     cd_use_fixed_twd(use_fixed_twd, mean_wind);
 
@@ -958,7 +958,7 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.alt_tmark_pointer, &alt_tmark);
 
     //set top mark position
-    set_pos_top_mark(&lat_tmark, &lon_tmark, &alt_tmark);
+    n_set_pos_top_mark(&lat_tmark, &lon_tmark, &alt_tmark);
 
     // --- grid lines system parameters
     #if USE_GRID_LINES == 1
@@ -998,16 +998,16 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.moving_alpha_window_pointer, &window_alpha);
     param_get(pointers_param_qgc.alpha_window_tack_pointer, &alpha_window_during_tack);
     //update window size using API in controller_data.h
-    update_k(window_alpha, alpha_window_during_tack);
+    cd_update_k(window_alpha, alpha_window_during_tack);
 
     param_get(pointers_param_qgc.moving_apparent_window_pointer, &window_apparent);
     //update window size using API in controller_data.h
-    update_k_app(window_apparent);
+    cd_update_k_app(window_apparent);
 
     param_get(pointers_param_qgc.moving_twd_window_pointer, &window_twd);
     param_get(pointers_param_qgc.twd_window_tack_pointer, &twd_window_during_tack);
     //update window size using API in controller_data.h
-    update_k_twd(window_twd, twd_window_during_tack);
+    cd_update_k_twd(window_twd, twd_window_during_tack);
 
     //-- param for LQR controller
     float lqr_k1;
@@ -1020,7 +1020,7 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.lqr_k3_poniter, &lqr_k3);
     param_get(pointers_param_qgc.lqr_sampling_time_pointer, &lqr_sampling_time_us);
 
-    set_lqr_gain(lqr_k1, lqr_k2, lqr_k3, lqr_sampling_time_us);
+    gm_set_lqr_gain(lqr_k1, lqr_k2, lqr_k3, lqr_sampling_time_us);
 
     //-- param for MPC controller
     float mpc_h[4];
@@ -1067,7 +1067,7 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.mpc_b1_pointer, &mpc_B[0]);
     param_get(pointers_param_qgc.mpc_b2_pointer, &mpc_B[1]);
 
-    set_mpc_data(mpc_h, mpc_lb, mpc_ub, mpc_hf, mpc_sampling_time_us,
+    gm_set_mpc_data(mpc_h, mpc_lb, mpc_ub, mpc_hf, mpc_sampling_time_us,
                  mpc_A, mpc_B, mpc_pred_horiz_steps);
 
     //--- define band around origin
@@ -1086,12 +1086,12 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.min_time_in_band_poniter, &min_time_in_band);
     param_get(pointers_param_qgc.safety_stop_tack_pointer, &safety_time_stop_s);
 
-    set_band_data(delta_vect, min_time_in_band, safety_time_stop_s);
+    gm_set_band_data(delta_vect, min_time_in_band, safety_time_stop_s);
 
     //--- cog delay
     float cog_max_delay_sec;
     param_get(pointers_param_qgc.cog_max_delay_pointer, &cog_max_delay_sec);
-    set_max_time_cog_not_up(cog_max_delay_sec);
+    cd_set_max_time_cog_not_up(cog_max_delay_sec);
 
     //save boat_opt_matrices
     strs_p->boat_opt_mat.timestamp = hrt_absolute_time();

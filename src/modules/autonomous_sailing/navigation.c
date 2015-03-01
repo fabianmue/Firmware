@@ -182,7 +182,7 @@ float degE7_to_rad(const int32_t  *deg_e7_p){
  * @param _lon0_d_e7_p   pointer to longitude, in degrees, in degress * E7.
  * @param _alt0_mm_p     pointer to altitude value of new origin, in millimeters
 */
-void set_ref0(const int32_t *_lat0_d_e7_p, const int32_t *_lon0_d_e7_p, const int32_t *_alt0_mm_p){
+void n_set_ref0(const int32_t *_lat0_d_e7_p, const int32_t *_lon0_d_e7_p, const int32_t *_alt0_mm_p){
 
     //convert lat0 and lon0 in degrees and then in rad, after that compute sinusoidal function used later
     cosPhi = (float)cos(degE7_to_rad(_lat0_d_e7_p));
@@ -303,7 +303,7 @@ void ecef_to_ned(const int32_t *x_dm_p, const int32_t *y_dm_p, const int32_t *z_
  *
  * @param mean_wind mean wind direction w.r.t. true North [rad], positive N. to E., negative N. to W.
 */
-void set_mean_wind_angle(float mean_wind){
+void n_set_mean_wind_angle(float mean_wind){
 
     /** Race frame has X-axis oriented as the wind direction,
      * Y-axis is defined so that the system is positively oriented.
@@ -325,7 +325,7 @@ void set_mean_wind_angle(float mean_wind){
 /**
  * get the mean wind angle with respect to true North.
 */
-float get_mean_wind_angle(void){
+float n_get_mean_wind_angle(void){
     return ned_to_race_s.mean_wind_angle_r;
 }
 
@@ -337,7 +337,7 @@ float get_mean_wind_angle(void){
  * @param lon_d_e7_p    pointer to longitude value, in degress * E7.
  * @param alt_mm_p      pointer to altitude value, in millimeters.
 */
-void set_pos_top_mark(const int32_t *lat_d_e7_p, const int32_t *lon_d_e7_p, const int32_t *alt_mm_p){
+void n_set_pos_top_mark(const int32_t *lat_d_e7_p, const int32_t *lon_d_e7_p, const int32_t *alt_mm_p){
 
     int32_t north_dm;
     int32_t east_dm;
@@ -374,7 +374,7 @@ void set_pos_top_mark(const int32_t *lat_d_e7_p, const int32_t *lon_d_e7_p, cons
  * Compute from vehicle_global_position topic the boat's position in Race frame. Set up the next target position.
  *
 */
-void navigation_module(const struct structs_topics_s *strs_p,
+void n_navigation_module(const struct structs_topics_s *strs_p,
                        struct local_position_race_s *lp_p){
 
     int32_t x_dm;
@@ -391,7 +391,7 @@ void navigation_module(const struct structs_topics_s *strs_p,
 /**
  * Update the rotation matrix that converts coordinates from body frame to NED frame.
 */
-void update_r_ned_body(float R[3][3], bool valid_matrix){
+void n_update_r_ned_body(float R[3][3], bool valid_matrix){
     if(valid_matrix){
         for(int8_t i = 0; i < 3; i++){
             for(int8_t j = 0; j < 3; j++){
@@ -404,7 +404,7 @@ void update_r_ned_body(float R[3][3], bool valid_matrix){
 /**
  * Update velocities in the NEd frame
 */
-void update_ned_vel(float vn, float ve, float vd){
+void n_update_ned_vel(float vn, float ve, float vd){
     vel_ned[0] = vn;
     vel_ned[1] = ve;
     vel_ned[2] = vd;
@@ -413,7 +413,7 @@ void update_ned_vel(float vn, float ve, float vd){
 /**
  * Get longitudinal velocity in the body frame
 */
-float get_u_vel(void){
+float n_get_u_vel(void){
 
     /* Use R_ned_body to rotate vel_ned from NED frame to body frame.
      * Rememebr that R_ned_body conerts coordinates from body frame to NED frame.

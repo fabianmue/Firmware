@@ -273,7 +273,7 @@ float my_fabs(float x){
  * Set LQR gain.
  *
 */
-void set_lqr_gain(float lqr_k1, float lqr_k2, float lqr_k3, int32_t lqr_samp_time_us){
+void gm_set_lqr_gain(float lqr_k1, float lqr_k2, float lqr_k3, int32_t lqr_samp_time_us){
     opc_data.lqr_gain[0] = lqr_k1;
     opc_data.lqr_gain[1] = lqr_k2;
     opc_data.lqr_gain[2] = lqr_k3;
@@ -292,7 +292,7 @@ void set_lqr_gain(float lqr_k1, float lqr_k2, float lqr_k3, int32_t lqr_samp_tim
  * @param aplha_sail_opend_r  absolute angle[rad] where sails should be fully opened
  *
 */
-void set_sail_data(float sail_closed_cmd, float alpha_sail_closed_r, float alpha_sail_opened_r){
+void gm_set_sail_data(float sail_closed_cmd, float alpha_sail_closed_r, float alpha_sail_opened_r){
 
     //make sure sail_closed_cmd is in the saturation sails limits
     sail_closed_cmd = sail_saturation(sail_closed_cmd);
@@ -328,29 +328,29 @@ void set_sail_data(float sail_closed_cmd, float alpha_sail_closed_r, float alpha
  *
  * @param tack_type               type of tack to perform
 */
-void set_tack_data(uint16_t tack_type){
+void gm_set_tack_data(uint16_t tack_type){
     uint16_t old_tack_type = tack_data.tack_type;
 
     //notify the changing to QGroundControl what kind of tack the boat will do
     if(old_tack_type != tack_type){
         if(tack_type == TACK_PI){
-            send_log_info("Implicit (PI) Tack.");
+            smq_send_log_info("Implicit (PI) Tack.");
             //save new value
             tack_data.tack_type = tack_type;
         }
         else if(tack_type == TACK_LQR){
-            send_log_info("LQR Tack.");
+            smq_send_log_info("LQR Tack.");
             //save new value
             tack_data.tack_type = tack_type;
         }
         else if(tack_type == TACK_MPC){
-            send_log_info("MPC Tack.");
+            smq_send_log_info("MPC Tack.");
             //save new value
             tack_data.tack_type = tack_type;
         }
         else{
             //error: no valid type of tack selected
-            send_log_critical("Error: no valid type of tack selected.");
+            smq_send_log_critical("Error: no valid type of tack selected.");
             //use the last valid type of tack set
         }
     }
@@ -428,7 +428,7 @@ float pi_controller(const float *ref_p, const float *meas_p){
  * @param kaw                       constant used for anti-wind up in normal PI
  * @param abs_rudder_saturation     max rudder command, must be <= 1.0
 */
-void set_rudder_data(float p, float i, float cp,
+void gm_set_rudder_data(float p, float i, float cp,
                      float ci, int32_t rudder_controller_type, float kaw,
                      float abs_rudder_saturation){
 
@@ -452,19 +452,19 @@ void set_rudder_data(float p, float i, float cp,
         //send message to QGC
         if(rudder_type == SAILING_RUD_STD_PI){
             sprintf(txt_msg, "Switched to normal PI with anti wind-up gain.");
-            send_log_info(txt_msg);
+            smq_send_log_info(txt_msg);
             //save new type of controller
             rudder_controller_data.rudder_controller_type = rudder_type;
         }
         else if(rudder_type == SAILING_RUD_COND_PI){
             sprintf(txt_msg, "Switched to conditional PI.");
-            send_log_info(txt_msg);
+            smq_send_log_info(txt_msg);
             //save new type of controller
             rudder_controller_data.rudder_controller_type = rudder_type;
         }
         else{
             sprintf(txt_msg, "Error: select a rudder controller: 0 or 1.");
-            send_log_critical(txt_msg);
+            smq_send_log_critical(txt_msg);
             //use the old PI
         }
     }
@@ -474,7 +474,7 @@ void set_rudder_data(float p, float i, float cp,
     abs_rudder_saturation = my_fabs(abs_rudder_saturation);
     if(abs_rudder_saturation > MAX_RUDDER_SATURATION){
         abs_rudder_saturation = MAX_RUDDER_SATURATION;
-        send_log_info("AS_MAX_RUD must be <= 1.");
+        smq_send_log_info("AS_MAX_RUD must be <= 1.");
     }
 
     rudder_controller_data.abs_rud_saturation = abs_rudder_saturation;
@@ -549,13 +549,13 @@ void tack_action(struct reference_actions_s *ref_act_p,
         //LQR controller
         lqr_control_rudder(p_rudder_cmd, ref_act_p, strs_p);
         //use standard sail controller
-        *p_sails_cmd = sail_controller(get_alpha_dumas());
+        *p_sails_cmd = sail_controller(cd_get_alpha_dumas());
     }
     else if(tack_data.tack_type == TACK_MPC){
         //MPC controller
         mpc_control_rudder(p_rudder_cmd, ref_act_p, strs_p);
         //use standard sail controller
-        *p_sails_cmd = sail_controller(get_alpha_dumas());
+        *p_sails_cmd = sail_controller(cd_get_alpha_dumas());
     }
     else{
         //error, no valid type of tack! End tack for safety reason
@@ -589,18 +589,18 @@ void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code){
     //check error_code to give a feedback to QGroundControl
     if(error_code == EVERYTHING_OK){
         //notify to QGC that we've completed the tack action
-        send_log_info("Tack completed.");
+        smq_send_log_info("Tack completed.");
     }
     else if(error_code == FORCED_TACK_STOP){
         //notify to QGC that we had to force stopping the tack
-        send_log_critical("Tack forced to be completed.");
+        smq_send_log_critical("Tack forced to be completed.");
     }
     else if(error_code == NO_MPC_SOLVE_FNC){
         //notify to QGC the error
-        send_log_critical("No MPC solve for this horizon!");
+        smq_send_log_critical("No MPC solve for this horizon!");
     }
     else{
-        send_log_critical("Error: check error_code in guidance_module");
+        smq_send_log_critical("Error: check error_code in guidance_module");
     }
 }
 
@@ -770,7 +770,7 @@ void lqr_control_rudder(float *p_rudder_cmd,
  * @param B B matrix that will be extended to be used in the MPC
  * @param pred_horz_steps number of steps for the prediction horizon
 */
-void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3],
+void gm_set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3],
                   int32_t mpc_sampling_time_us, float A[2][2], float B[2], int32_t pred_horz_steps){
 
     //set Hessina matrix
@@ -819,7 +819,7 @@ void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3],
     }
     else{
         //the horizon inserted is not available
-        send_log_critical("Horizon not available");
+        smq_send_log_critical("Horizon not available");
         //use the last one valid
     }
 
@@ -1027,13 +1027,13 @@ void mpc_control_rudder(float *p_rudder_cmd,
 void compute_state_extended_model(const struct reference_actions_s *ref_act_p){
 
     //yaw rate from measurements
-    opc_data.state_extended_model[0] = get_yaw_rate_sns();
+    opc_data.state_extended_model[0] = cd_get_yaw_rate_sns();
 
     /* difference from the actual yaw and the desired yaw, assuming true wind
      * will be constant and there will be no drift (in general these
      * two assumptions are not true, but it is the best we can do).
     */
-    opc_data.state_extended_model[1] = ref_act_p->alpha_star - get_alpha_dumas();
+    opc_data.state_extended_model[1] = ref_act_p->alpha_star - cd_get_alpha_dumas();
 
     //latest command given to the rudder
     opc_data.state_extended_model[2] = opc_data.rudder_latest;
@@ -1082,7 +1082,7 @@ void compute_minusAExt_times_x0(float *minusAExt_times_x0){
  * @param min_time_s minimum time the system should be in the band to consider the tack completed.
  * @param safety_time_stop_tack_s  max time after that a tack mst be forced to be considered completed
 */
-void set_band_data(float *delta, float min_time_s, float safety_time_stop_tack_s){
+void gm_set_band_data(float *delta, float min_time_s, float safety_time_stop_tack_s){
 
     //save delta and make sure every value is positive
     for(uint8_t i = 0; i < 3; i++){
@@ -1171,7 +1171,7 @@ float sail_saturation(float command){
  * sail commands. In this way they will be shown in QGC and logged in the sdCard.
  * If the autonomous mode is selected, call autonomous sailing controllers.
 */
-void guidance_module(struct reference_actions_s *ref_act_p,
+void gm_guidance_module(struct reference_actions_s *ref_act_p,
                      const struct parameters_qgc *param_qgc_p,
                      struct structs_topics_s *strs_p){
 
@@ -1179,7 +1179,7 @@ void guidance_module(struct reference_actions_s *ref_act_p,
     float sail_command = 0.0f;
     float alpha;//angle with respect to the wind
     //get alpha from the moving average filter in controller_data module
-    alpha = get_alpha_dumas();
+    alpha = cd_get_alpha_dumas();
 
     //check if we are in the manual mode
     if(strs_p->rc_channels.channels[RC_MODE_INDEX] == RC_MANUAL_MODE){
@@ -1239,8 +1239,8 @@ void guidance_module(struct reference_actions_s *ref_act_p,
 
     //save first debug values for post-processing, other values set in path_planning()
     strs_p->boat_guidance_debug.alpha = alpha;
-    strs_p->boat_guidance_debug.twd_mean = get_twd_sns();
-    strs_p->boat_guidance_debug.app_mean = get_app_wind_sns();
+    strs_p->boat_guidance_debug.twd_mean = cd_get_twd_sns();
+    strs_p->boat_guidance_debug.app_mean = cd_get_app_wind_sns();
     strs_p->boat_guidance_debug.timestamp = hrt_absolute_time();
     strs_p->boat_guidance_debug.rudder_action = rudder_command;
     strs_p->boat_guidance_debug.sail_action = sail_command;
