@@ -12,6 +12,9 @@
 
 
 #include <math.h>
+#include <stdint.h>
+
+#include "topics_handler.h"
 
 
 /* @brief Set a new target point to be reached from QGround Control */
@@ -23,7 +26,7 @@ void ppc_set_obstacle(float lat, float lon);
 
 
 /* @brief Set the configuration Parameters from QGround Control */
-void ppc_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float ObstSafetyRadius, float ObstHorizon, float HeadResolution, float HeadRange);
+void ppc_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float ObstSafetyRadius, float ObstHorizon);
 
 
 /* @brief Update the Winddirection from the Weatherstation */

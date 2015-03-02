@@ -26,19 +26,33 @@
 
 
 //Weights and other configuration parameters for the Cost-Function-Method
-static struct {
-	float Gw = 0.9;          //Weighting factor for sailing against the target while maximizing speed (was 0.5)
-    float Go = 0.8;          //Weighting factor for avoiding obstacles (was 0.8)
-	float Gm = 0.4;          //Weighting factor for avoiding maneuovres (was 0.5) (higher value <=> less maneuovres are allowed)
-	float Gs = 0.05;         //Weighting factor for prefering courses that need no change in course
-	float Gt = 0.1;          //Weighting factor for tactical considerations
-	float GLee = 0.15;       //Weighting factor for passing Obstacles in Lee. (higher value <=> force boat to pass in Lee)
-	float ObstSafetyRadius = 10; //Safety Radius around an obstacle [m]
-	float ObstHorizon = 100; //Obstacle Horizon <=> inside this horizon obstacles are recognized [m]
-	float HeadResolution = 0.0872664625997f; //Resolution for simulating the headings in [rad] (here 5°)
-	float HeadRange = 1.74532925199f; //Range for simulating the headings in [rad] (here [-100°...100°] wrt. boat-heading)
-} Config;
+struct ppc_config{
+	float Gw;          //Weighting factor for sailing against the target while maximizing speed (was 0.5)
+    float Go;          //Weighting factor for avoiding obstacles (was 0.8)
+	float Gm;          //Weighting factor for avoiding maneuovres (was 0.5) (higher value <=> less maneuovres are allowed)
+	float Gs;         //Weighting factor for prefering courses that need no change in course
+	float Gt;          //Weighting factor for tactical considerations
+	float GLee;       //Weighting factor for passing Obstacles in Lee. (higher value <=> force boat to pass in Lee)
+	float ObstSafetyRadius; //Safety Radius around an obstacle [m]
+	float ObstHorizon; //Obstacle Horizon <=> inside this horizon obstacles are recognized [m]
+	float HeadResolution; //Resolution for simulating the headings in [rad] (here 5°)
+	float HeadRange; //Range for simulating the headings in [rad] (here [-100°...100°] wrt. boat-heading)
+	float WindowSize; //Size of the window for smoothing the Costfunction
+};
 
+static struct ppc_config Config = {
+		.Gw = 0.9,
+		.Go = 0.8,
+		.Gm = 0.4,
+		.Gs = 0.05,
+		.Gt = 0.1,
+		.GLee = 0.15,
+		.ObstSafetyRadius = 10,
+		.ObstHorizon = 100,
+		.HeadResolution = 0.0872664625997f,
+		.HeadRange = 1.74532925199f,
+		.WindowSize = 5
+};
 
 
 //Type definition for a GPS-Point
@@ -49,20 +63,25 @@ typedef struct {		 	 //Contains the GPS-Coordinate of a point
 
 
 //Race-Field-Definition
-static struct {
+struct ppc_Field{
 	Point target;			//Target to be reached represented as a GPS-Position
 	Point obstacles[MAXOBSTACLES]; //Matrix containing the positions of the obstacles (represented as GPS-Positions)
 	uint8_t NumberOfObstacles; 	//Number of Obstacles currently set
-} Field;
+};
+
+static struct ppc_Field Field;
+
 
 
 //State of the System
-static struct {
+static struct ppc_State{
 	Point position;			//Current Position
 	float heading; 			//Current heading of the boat [rad]
 	float windDir;			//Current Wind Direction [rad]
 	float windSpeed; 		//Current Wind Speed [rad]
-} State;
+};
+
+static struct ppc_State State;
 
 
 
@@ -80,6 +99,9 @@ float appWindDir(float heading);
 
 /* @brief Smooth an Array of variable size and with a variable windowSize */
 void smooth(float *array, uint8_t windowSize);
+
+/* @brief Return the speed at a given windangle and windspeed */
+float polardiagram(float AppWindDir, float AppWindSpeed);
 
 
 
@@ -99,14 +121,25 @@ void navigator() {
 	float seg_start = (State.heading-Config.HeadRange);
 	float seg_end = (State.heading+Config.HeadRange);
 
-	float costMat[]
+	float costMat[(int)(2*Config.HeadRange/Config.HeadResolution)];
 
-	for(float seg = seg_start; seg <= seg_start; seg += Config.HeadResolution) {
-		seg = seg%(2*PI);
+	uint8_t ind = 0;	//Index for addressing costMat-Elements
 
-		cost(seg);
+	for(float seg = seg_start; seg <= seg_end; seg += Config.HeadResolution) {
+		seg = fmod(seg,(2*PI));
 
+		costMat[ind] = cost(seg);
+
+
+
+
+		//Update Index
+		ind++;
 	}
+
+
+	//Smooth Cost-Matrix
+	smooth(&costMat,5);
 
 
 }
@@ -236,7 +269,7 @@ void ppc_update_HEADING(const struct structs_topics_s *strs_p) {
 float cost(float seg) {
 
 	//Calculate apparent Wind direction for the the current simulated heading
-	float appWindDir = appWindDir(seg);
+	float appWind= appWindDir(seg);
 
 
 	/************************/
@@ -254,9 +287,9 @@ float cost(float seg) {
 	Tgx = Tgx/norm;											//Create the unity-Vector
 	Tgy = Tgy/norm;
 
-	float boatspeed = polardiagram(abs(appWindDir), State.windSpeed); //Create a vector representing the boat movement
-	float Vhx = cos(seg)*boatspeed;
-	float Vhy = sin(seg)*boatspeed;
+	float boatspeed = polardiagram(fabsf(appWind), State.windSpeed); //Create a vector representing the boat movement
+	float Vhx = (float)cos(seg)*boatspeed;
+	float Vhy = (float)sin(seg)*boatspeed;
 
 	float Vg = Vhx*Tgx + Vhy*Tgy;									//Scalar-Product of Boatmovement and Target Vector
 
@@ -279,7 +312,7 @@ float cost(float seg) {
 
 	//Calculate the new hull
 	uint8_t newhull = 0;
-	if(appWindDir < 0) {
+	if(appWind < 0) {
 		//Wind from Starboard
 		newhull = -1;
 	} else {
@@ -312,7 +345,7 @@ float cost(float seg) {
 	/*********************************/
 	/* Each change of course slows down the boat. Whenever possible a heading close to the current heading should be
 	 * selected. */
-	float Cs = Config.Gs * abs(seg-State.heading)/720.0f;
+	float Cs = Config.Gs * fabsf(seg-State.heading)/720.0f;
 
 
 
@@ -374,13 +407,13 @@ float bearing(Point start, Point end) {
 	//Calculate the bearing
 	float dx = cos(start.lat)*sin(end.lat)-sin(start.lat)*cos(end.lat)*cos(end.lon-start.lon);
 	float dy = sin(end.lon-start.lon)*cos(end.lat);
-	float bearing = atan2(dy,dx);
+	float beari = atan2(dy,dx);
 	/* Note: atan2() returns a value between [-pi,pi]*/
 
 	//transform to a true bearing [0,2pi]
-	bearing = (bearing + 2*PI) % (2*PI);
+	beari = fmod((beari + 2*PI),(2*PI));
 
-	return bearing;
+	return beari;
 }
 
 
@@ -414,7 +447,7 @@ float appWindDir(float heading) {
     	zc = 1;
     }
 
-    return zc*acos((xw*xh + yw*yh)/(wnorm*hnorm));
+    return zc*(float)acos((xw*xh + yw*yh)/(wnorm*hnorm));
 
 }
 
@@ -446,6 +479,8 @@ void smooth(float *array, uint8_t windowSize) {
 
 	//Define Filter-Matrix
 	float filter = 1/windowSize;
+
+	filter = filter + 1; //DEBUG only
 
 	//TODO: Convolution Array with filter
 
