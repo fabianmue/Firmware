@@ -19,25 +19,27 @@
 /****************************  VARIABLES  *****************************************************/
 /**********************************************************************************************/
 
-#define MAXOBSTACLES 10  	 //Maximum number of obstacles
-#define DEG2RAD      0.0174532925199433f //pi/180
+#define MAXOBSTACLES 10  	 				//Maximum number of obstacles
+#define DEG2RAD      0.0174532925199433f 	//pi/180
 #define PI           3.14159265358979323846f //pi
-#define EARTHRADIUS  6371000.0f		//Earth Radius [m]
+#define PIHALF	     1.57079632679f 		//pi/2
+#define EARTHRADIUS  6371000.0f				//Earth Radius [m]
+
+#define HEADRESOLUTION 0.0872664625997f 	//Resolution for simulating the headings in [rad] (here 5°)
+#define HEADRANGE	   1.74532925199f   	//Range for simulating the headings in [rad] (here [-100°...100°] wrt. boat-heading)
 
 
 //Weights and other configuration parameters for the Cost-Function-Method
 struct ppc_config{
-	float Gw;          //Weighting factor for sailing against the target while maximizing speed (was 0.5)
-    float Go;          //Weighting factor for avoiding obstacles (was 0.8)
-	float Gm;          //Weighting factor for avoiding maneuovres (was 0.5) (higher value <=> less maneuovres are allowed)
-	float Gs;         //Weighting factor for prefering courses that need no change in course
-	float Gt;          //Weighting factor for tactical considerations
-	float GLee;       //Weighting factor for passing Obstacles in Lee. (higher value <=> force boat to pass in Lee)
+	float Gw;          		//Weighting factor for sailing against the target while maximizing speed (was 0.5)
+    float Go;          		//Weighting factor for avoiding obstacles (was 0.8)
+	float Gm;          		//Weighting factor for avoiding maneuovres (was 0.5) (higher value <=> less maneuovres are allowed)
+	float Gs;         		//Weighting factor for prefering courses that need no change in course
+	float Gt;          		//Weighting factor for tactical considerations
+	float GLee;       		//Weighting factor for passing Obstacles in Lee. (higher value <=> force boat to pass in Lee)
 	float ObstSafetyRadius; //Safety Radius around an obstacle [m]
-	float ObstHorizon; //Obstacle Horizon <=> inside this horizon obstacles are recognized [m]
-	float HeadResolution; //Resolution for simulating the headings in [rad] (here 5°)
-	float HeadRange; //Range for simulating the headings in [rad] (here [-100°...100°] wrt. boat-heading)
-	float WindowSize; //Size of the window for smoothing the Costfunction
+	float ObstHorizon; 		//Obstacle Horizon <=> inside this horizon obstacles are recognized [m]
+	float WindowSize; 		//Size of the window for smoothing the Costfunction
 };
 
 static struct ppc_config Config = {
@@ -49,8 +51,6 @@ static struct ppc_config Config = {
 		.GLee = 0.15,
 		.ObstSafetyRadius = 10,
 		.ObstHorizon = 100,
-		.HeadResolution = 0.0872664625997f,
-		.HeadRange = 1.74532925199f,
 		.WindowSize = 5
 };
 
@@ -98,10 +98,13 @@ float bearing(Point start, Point end);
 float appWindDir(float heading);
 
 /* @brief Smooth an Array of variable size and with a variable windowSize */
-void smooth(float *array, uint8_t windowSize);
+void smooth(float *array, uint8_t arraySize , uint8_t windowSize);
 
 /* @brief Return the speed at a given windangle and windspeed */
 float polardiagram(float AppWindDir, float AppWindSpeed);
+
+/* @brief Find the minimum in a matrix */
+uint8_t findMin(const float *array, uint8_t arraySize);
 
 
 
@@ -118,29 +121,69 @@ float polardiagram(float AppWindDir, float AppWindSpeed);
 void navigator(void) {
 
 	//Iterate over the possible "probe" headings
-	float seg_start = (State.heading-Config.HeadRange);
-	float seg_end = (State.heading+Config.HeadRange);
+	float seg_start = (State.heading-HEADRANGE);
+	float seg_end = (State.heading+HEADRANGE);
 
-	float costMat[(int)(2*Config.HeadRange/Config.HeadResolution)];
+	uint8_t probeNum = 2*HEADRANGE/HEADRESOLUTION;	//Number of Probe-Headings
+	float costMat[(int)(probeNum)];
+	float headMat[(int)(probeNum)];
 
 	uint8_t ind = 0;	//Index for addressing costMat-Elements
 
-	for(float seg = seg_start; seg <= seg_end; seg += Config.HeadResolution) {
+	for(float seg = seg_start; seg <= seg_end; seg += HEADRESOLUTION) {
 		seg = fmod(seg,(2*PI));
 
+		//Get the cost and save it in the matrix
 		costMat[ind] = cost(seg);
-
-
-
+		headMat[ind] = seg;
 
 		//Update Index
 		ind++;
 	}
 
-
 	//Smooth Cost-Matrix
-	smooth(costMat,5);
+	smooth(costMat,probeNum,5);
 
+	//Find minimum Index
+	uint8_t minIndex = findMin(costMat,probeNum);
+
+	//Get corresponding minimum Heading
+	float optHeading = headMat[minIndex];
+
+
+
+	//****DECISION MAKING
+	/* In the following section the decisions based on the optimal Heading are made. This means
+	 * that the corresponding controller is selected and the order for doing a maneuver is generated */
+	float NewWind = appWindDir(optHeading); 		//New Apparent Winddirection
+	float OldWind = appWindDir(State.heading);		//Current Apparent Winddirection
+
+
+	//Decide if we have to do a tack
+	if(!((NewWind < 0 && OldWind < 0) || (NewWind > 0 && OldWind > 0))) {
+		//A Maneuver is Necessary
+
+		if(fabsf(NewWind) > PIHALF) {
+			//A tack is necessary to reach the new optimal heading
+
+			//TODO: Add the function from Marco here
+		} else {
+			//A gybe is necessary to reach the new optimal heading
+
+			//TODO: Add the function from Marco here
+		}
+
+	}
+
+
+	//Decide if we are upwind sailing
+	//TODO
+
+	//Decide if we are in the normal-sailing region
+	//TODO
+
+	//Decide if we are downwind sailing
+	//TODO
 
 }
 
@@ -166,7 +209,7 @@ void ppc_set_target(float lat, float lon) {
 
 
 /**
- * Set the position of the obstacle (from the worldserver)
+ * Set the position of the obstacle (from the worldserver, done by QGround Control)
  *
  * @param	lat: latitude of the obstacle [°]
  * @param   lon: longitude of the obstacle [°]
@@ -192,8 +235,6 @@ void ppc_set_obstacle(float lat, float lon) {
  * @param GLee
  * @param ObstSafetyRadius
  * @param ObstHorizon
- * @param HeadResolution
- * @param HeadRange
 */
 void ppc_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float ObstSafetyRadius, float ObstHorizon) {
 
@@ -472,18 +513,51 @@ float polardiagram(float AppWindDir, float AppWindSpeed) {
 /**
  * Smooths an array of variable size using a moving averaging window of variable size
  *
- * @param &array: Pointer to an array. Note this array is directly modified!
+ * @param *array: Pointer to an array. Note this array is directly modified!
  * @param windowSize: Size of the moving averaging window
  */
-void smooth(float *array, uint8_t windowSize) {
+void smooth(float *array, uint8_t arraySize , uint8_t windowSize) {
 
-	//Define Filter-Matrix
-	float filter = 1/windowSize;
+	//TODO: Make this faster. The method used here is extremly slow and computationally inefficient!
 
-	filter = filter + 1; //DEBUG only
+	float arrayCpy[arraySize];
 
-	//TODO: Convolution Array with filter
+	for(uint8_t i = windowSize/2; i<arraySize-windowSize/2; i++) {
+		float sum = 0;
+		for(uint8_t j = -windowSize/2; j<windowSize/2; j++) {
+			sum += array[i+j];
+		} //for j
 
+		arrayCpy[i] = sum/windowSize;
+	} //for i
+
+
+	//Copy the array
+	array = arrayCpy;
+
+}
+
+
+
+/**
+ * Search for the minimum element in an array
+ *
+ * @param *array: Pointer to an array.
+ * @return index of the minimum element in the array
+ */
+uint8_t findMin(const float *array, uint8_t arraySize) {
+
+	uint8_t minInd = 0;
+	float minimum = array[0];
+
+	for(uint8_t i = 1; i < arraySize; i++) {
+		if(array[i] < minimum) {
+			minimum = array[i];
+			minInd = i;
+		}
+	}
+
+	return minInd;
 }
 
 
