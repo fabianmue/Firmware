@@ -1077,11 +1077,11 @@ int sdlog2_thread_main(int argc, char *argv[])
 	subs.gps_pos_sub = orb_subscribe(ORB_ID(vehicle_gps_position));
     //subs.sensor_sub = orb_subscribe(ORB_ID(sensor_combined));
 	subs.att_sub = orb_subscribe(ORB_ID(vehicle_attitude));
-	subs.att_sp_sub = orb_subscribe(ORB_ID(vehicle_attitude_setpoint));
+    subs.att_sp_sub = orb_subscribe(ORB_ID(vehicle_attitude_setpoint));
 	subs.rates_sp_sub = orb_subscribe(ORB_ID(vehicle_rates_setpoint));
 	subs.act_outputs_sub = orb_subscribe(ORB_ID_VEHICLE_CONTROLS);
-	subs.act_controls_sub = orb_subscribe(ORB_ID_VEHICLE_ATTITUDE_CONTROLS);
-    subs.local_pos_sub = orb_subscribe(ORB_ID(vehicle_local_position));
+    //subs.act_controls_sub = orb_subscribe(ORB_ID_VEHICLE_ATTITUDE_CONTROLS);
+    //subs.local_pos_sub = orb_subscribe(ORB_ID(vehicle_local_position));
     //subs.local_pos_sp_sub = orb_subscribe(ORB_ID(vehicle_local_position_setpoint));
 	subs.global_pos_sub = orb_subscribe(ORB_ID(vehicle_global_position));
 	subs.triplet_sub = orb_subscribe(ORB_ID(position_setpoint_triplet));
@@ -1100,7 +1100,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 	subs.servorail_status_sub = orb_subscribe(ORB_ID(servorail_status));
 
 
-	subs.wind_sub = orb_subscribe(ORB_ID(wind_estimate));
+    //subs.wind_sub = orb_subscribe(ORB_ID(wind_estimate));
 
 	/* we need to rate-limit wind, as we do not need the full update rate */
 	orb_set_interval(subs.wind_sub, 90);
@@ -1450,14 +1450,14 @@ int sdlog2_thread_main(int argc, char *argv[])
         }
 
         /* --- ACTUATOR CONTROL --- */
-        if (copy_if_updated(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, subs.act_controls_sub, &buf.act_controls)) {
-            log_msg.msg_type = LOG_ATTC_MSG;
-            log_msg.body.log_ATTC.roll = buf.act_controls.control[0];
-            log_msg.body.log_ATTC.pitch = buf.act_controls.control[1];
-            log_msg.body.log_ATTC.yaw = buf.act_controls.control[2];
-            log_msg.body.log_ATTC.thrust = buf.act_controls.control[3];
-            LOGBUFFER_WRITE_AND_COUNT(ATTC);
-        }
+//        if (copy_if_updated(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, subs.act_controls_sub, &buf.act_controls)) {
+//            log_msg.msg_type = LOG_ATTC_MSG;
+//            log_msg.body.log_ATTC.roll = buf.act_controls.control[0];
+//            log_msg.body.log_ATTC.pitch = buf.act_controls.control[1];
+//            log_msg.body.log_ATTC.yaw = buf.act_controls.control[2];
+//            log_msg.body.log_ATTC.thrust = buf.act_controls.control[3];
+//            LOGBUFFER_WRITE_AND_COUNT(ATTC);
+//        }
 
         /* --- LOCAL POSITION --- */
 //        if (copy_if_updated(ORB_ID(vehicle_local_position), subs.local_pos_sub, &buf.local_pos)) {
@@ -1487,14 +1487,14 @@ int sdlog2_thread_main(int argc, char *argv[])
 //        }
 
         /* --- LOCAL POSITION SETPOINT --- */
-        if (copy_if_updated(ORB_ID(vehicle_local_position_setpoint), subs.local_pos_sp_sub, &buf.local_pos_sp)) {
-            log_msg.msg_type = LOG_LPSP_MSG;
-            log_msg.body.log_LPSP.x = buf.local_pos_sp.x;
-            log_msg.body.log_LPSP.y = buf.local_pos_sp.y;
-            log_msg.body.log_LPSP.z = buf.local_pos_sp.z;
-            log_msg.body.log_LPSP.yaw = buf.local_pos_sp.yaw;
-            LOGBUFFER_WRITE_AND_COUNT(LPSP);
-        }
+//        if (copy_if_updated(ORB_ID(vehicle_local_position_setpoint), subs.local_pos_sp_sub, &buf.local_pos_sp)) {
+//            log_msg.msg_type = LOG_LPSP_MSG;
+//            log_msg.body.log_LPSP.x = buf.local_pos_sp.x;
+//            log_msg.body.log_LPSP.y = buf.local_pos_sp.y;
+//            log_msg.body.log_LPSP.z = buf.local_pos_sp.z;
+//            log_msg.body.log_LPSP.yaw = buf.local_pos_sp.yaw;
+//            LOGBUFFER_WRITE_AND_COUNT(LPSP);
+//        }
 
         /* --- GLOBAL POSITION --- */
         if (copy_if_updated(ORB_ID(vehicle_global_position), subs.global_pos_sub, &buf.global_pos)) {
@@ -1715,14 +1715,14 @@ int sdlog2_thread_main(int argc, char *argv[])
         }
 
         /* --- WIND ESTIMATE --- */
-        if (copy_if_updated(ORB_ID(wind_estimate), subs.wind_sub, &buf.wind_estimate)) {
-            log_msg.msg_type = LOG_WIND_MSG;
-            log_msg.body.log_WIND.x = buf.wind_estimate.windspeed_north;
-            log_msg.body.log_WIND.y = buf.wind_estimate.windspeed_east;
-            log_msg.body.log_WIND.cov_x = buf.wind_estimate.covariance_north;
-            log_msg.body.log_WIND.cov_y = buf.wind_estimate.covariance_east;
-            LOGBUFFER_WRITE_AND_COUNT(WIND);
-        }
+//        if (copy_if_updated(ORB_ID(wind_estimate), subs.wind_sub, &buf.wind_estimate)) {
+//            log_msg.msg_type = LOG_WIND_MSG;
+//            log_msg.body.log_WIND.x = buf.wind_estimate.windspeed_north;
+//            log_msg.body.log_WIND.y = buf.wind_estimate.windspeed_east;
+//            log_msg.body.log_WIND.cov_x = buf.wind_estimate.covariance_north;
+//            log_msg.body.log_WIND.cov_y = buf.wind_estimate.covariance_east;
+//            LOGBUFFER_WRITE_AND_COUNT(WIND);
+//        }
 
         //********************** Added by Marco Tranzatto **************
 
@@ -1816,7 +1816,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_QGC_PARAM2.delta1 = buf.boat_qgc_param2.delta1;
             log_msg.body.log_BOAT_QGC_PARAM2.delta2 = buf.boat_qgc_param2.delta2;
             log_msg.body.log_BOAT_QGC_PARAM2.delta3 = buf.boat_qgc_param2.delta3;
-            //log_msg.body.log_BOAT_QGC_PARAM2.use_fixed_twd = buf.boat_qgc_param2.use_fixed_twd;
+            log_msg.body.log_BOAT_QGC_PARAM2.use_fixed_twd = buf.boat_qgc_param2.use_fixed_twd;
             LOGBUFFER_WRITE_AND_COUNT(QGC2);
         }
 

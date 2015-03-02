@@ -959,11 +959,6 @@ void mpc_control_rudder(float *p_rudder_cmd,
             //compute rudder command at step k to give to the real system: optimalU + rudder_{k-1}
             *p_rudder_cmd = opc_data.forces_output.u0[0] +
                             opc_data.state_extended_model[2];
-//            //TODO check this or at least write some comments!
-//            if(*p_rudder_cmd > rudder_controller_data.rud_cmd_45_left)
-//                *p_rudder_cmd = rudder_controller_data.rud_cmd_45_left;
-//            else if(*p_rudder_cmd < -rudder_controller_data.rud_cmd_45_left)
-//                *p_rudder_cmd = -rudder_controller_data.rud_cmd_45_left;
 
             #if TEST_MPC == 1
             printf("rudStar: %1.3f \n", (double) *p_rudder_cmd);
