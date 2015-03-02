@@ -265,7 +265,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                     #if SIMULATION_FLAG == 0
                     //update course over ground in control data
-                    update_raw_cog(strs.gps_raw.cog_rad);
+                    cd_update_raw_cog(strs.gps_raw.cog_rad);
                     #endif
 
                 }
@@ -291,7 +291,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                     #if SIMULATION_FLAG == 0
                     //update true wind direction in control data
-                    update_raw_twd(strs.wind_sailing.angle_true);
+                    cd_update_raw_twd(strs.wind_sailing.angle_true);
                     #endif
                 }
                 if(fds[3].revents & POLLIN){
@@ -308,7 +308,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                     #if SIMULATION_FLAG == 0
                     //update yaw and yawRate in controller_data module
-                    update_raw_yaw_yaw_rate(strs.att.yaw, strs.att.yawspeed);
+                    cd_update_raw_yaw_yaw_rate(strs.att.yaw, strs.att.yawspeed);
 
                     //update rotation matrix from body to ned in navigation module
                     //update_r_ned_body(strs.att.R, strs.att.R_valid);

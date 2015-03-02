@@ -44,9 +44,13 @@
 #ifndef GPS_SIMULATOR_H_
 #define GPS_SIMULATOR_H_
 
+#if GPS_SIMULATION == 1 //save memory, define geo_steady_state only in simulation mode
+
 #include <drivers/drv_hrt.h>
 #include "settings.h"
 
 void sim_steady_pos(char* buf, int *lgt);
+
+#endif
 
 #endif /* GPS_SIMULATOR_H_ */
