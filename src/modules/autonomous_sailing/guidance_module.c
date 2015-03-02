@@ -912,6 +912,10 @@ void mpc_control_rudder(float *p_rudder_cmd,
         uint64_t time_before_sol = hrt_absolute_time();
 
         //based on the prediction horizon value, see which solver we have to call
+
+        /* WARNING: if you want to add/modify a mpc solve function, remember to update
+         * the if clause in gm_set_mpc_data() where pred_horz_steps is checked
+        */
         if(opc_data.pred_horz_steps == 10){
             solver_ret = mpc_boatTack_h10_solve((mpc_boatTack_h10_params*) &(opc_data.forces_params),
                                             (mpc_boatTack_h10_output*) &(opc_data.forces_output),
