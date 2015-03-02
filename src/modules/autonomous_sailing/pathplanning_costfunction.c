@@ -60,6 +60,7 @@ static struct {
 	Point position;			//Current Position
 	float heading; 			//Current heading of the boat [rad]
 	float windDir;			//Current Wind Direction [rad]
+	float windSpeed; 		//Current Wind Speed [rad]
 } State;
 
 
@@ -194,9 +195,87 @@ float cost(float seg) {
 	float appWindDir = appWindDir(seg);
 
 
-	//
+	/************************/
+	/*** WIND/TARGET COST ***/
+	/************************/
+	/* This cost takes the winddirection and the boats expected velocities at different relative angles towards
+	 * the wind into account. Meanwhile it minimizes the distance towards the target. */
+	//TODO: Potential Error-Source: Eventually check the implementation of the target-vector!
+	float targetDir = bearing(State.position,Field.target); //Bearing to target
 
-	return 0.0f;
+	float Tgx = cos(targetDir);								//Create a vector pointing towards the target
+	float Tgy = sin(targetDir);
+	float norm = sqrt(Tgx*Tgx + Tgy*Tgy);
+
+	Tgx = Tgx/norm;											//Create the unity-Vector
+	Tgy = Tgy/norm;
+
+	float boatspeed = polardiagram(State.windDir, State.windSpeed); //Create a vector representing the boat movement
+	float Vhx = cos(seg)*boatspeed;
+	float Vhy = sin(seg)*boatspeed;
+
+	float Vg = Vhx*Tgx + Vhy*Tgy;									//Scalar-Product of Boatmovement and Target Vector
+
+	float Cw = Vg*Config.Gw;								//Wind/Target Cost (weighted)
+
+
+
+	/************************/
+	/*** MANEUVRE COST    ***/
+	/************************/
+	/* This cost prevents the boat from tacking or gybing too often. Each tack or gybe slows down the boat. */
+
+	//TODO: Calculate old and new Hull
+	uint8_t oldhull = 0;
+	uint8_t newhull = 0;
+
+	float Cm = 0;
+	if(oldhull == newhull) {
+		//Boat sails on the same hull <=> assign low cost
+		Cm = 0;
+	} else {
+		//Boat changes hull <=> tack or gybe <=> assign high cost
+		Cm = Config.Gm * 1;
+	}
+
+
+
+	/************************/
+	/*** TACTICAL COST    ***/
+	/************************/
+	/* The boat should not get too close to the laylines. Therefore, sailing close to the centerline is favorable.  */
+
+	//TODO:
+	float Ct;
+
+
+	/*********************************/
+	/*** SMALL HEADING CHANGE COST ***/
+	/*********************************/
+	/* Each change of course slows down the boat. Whenever possible a heading close to the current heading should be
+	 * selected. */
+	float Cs = Config.Gs * abs(seg-State.heading)/720.0f;
+
+
+
+	/************************/
+	/*** OBSTACLE COST    ***/
+	/************************/
+	/* Cost for maximizing the distance to obstacles. */
+
+	//TODO:
+	float Co;
+	float CLee;
+
+
+
+
+	/************************/
+	/*** TOTAL COST       ***/
+	/************************/
+	/* Calculate the total Cost and return the value  */
+
+	return Cw + Co + Cm + Cs + Ct + CLee;
 }
 
 
@@ -249,14 +328,34 @@ float bearing(Point start, Point end) {
 
 /**
  * Calculate the apparent Wind Direction
+ * This is not the real apparent Wind Direction. It is the direction the boat would measure if it is not moving.
  *
  * @param start: Startpoint for the bearing measurement
  * @param end:   Endpoint for the bearing measurement
  * @return Bearing from Start ot Endpoint in rad. A true bearing is returned (element of [0:2pi])
  */
 float appWindDir(float heading) {
+	//TODO Return the apparent wind Direction based on the heading and the winddirection
 
+	return 0.0f;
 }
+
+
+
+/**
+ * Returns the speed to be expected from a Polardiagram
+ * Note: only forward Speed is returned
+ *
+ * @param AppWindDir: Apparent Wind Direction [rad]
+ * @param AppWindSpeed: Apparent Wind Speed [m/s]
+ */
+float polardiagram(float AppWindDir, float AppWindSpeed) {
+
+	//TODO: Add the boats Polardiagram as a lookup table for different Windspeeds.
+
+	return 1.0f;
+}
+
 
 
 
