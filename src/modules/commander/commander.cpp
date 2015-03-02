@@ -2286,7 +2286,10 @@ print_reject_mode(struct vehicle_status_s *status_local, const char *msg)
 
 	if (t - last_print_mode_reject_time > PRINT_MODE_REJECT_INTERVAL) {
 		last_print_mode_reject_time = t;
-		mavlink_log_critical(mavlink_fd, "REJECT %s", msg);
+        //by Marco Tranzatto to work around an annoying msg when autonomous mode is on
+        if(strcmp(msg, "AUTO_MISSION") != 0)
+            mavlink_log_critical(mavlink_fd, "REJECT %s", msg);
+        //else do not print "REJECT AUTO_MISSION"
 
 		/* only buzz if armed, because else we're driving people nuts indoors
 		they really need to look at the leds as well. */
