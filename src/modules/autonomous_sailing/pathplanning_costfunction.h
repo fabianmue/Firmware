@@ -41,6 +41,10 @@ void ppc_update_GPOS(const struct structs_topics_s *strs_p);
 void ppc_update_HEADING(const struct structs_topics_s *strs_p);
 
 
+/* @brief Calculate the optimal heading and give corresponding command to helsman*/
+void navigator(void);
+
+
 
 
 

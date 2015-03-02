@@ -74,7 +74,7 @@ static struct ppc_Field Field;
 
 
 //State of the System
-static struct ppc_State{
+struct ppc_State{
 	Point position;			//Current Position
 	float heading; 			//Current heading of the boat [rad]
 	float windDir;			//Current Wind Direction [rad]
@@ -115,7 +115,7 @@ float polardiagram(float AppWindDir, float AppWindSpeed);
  * This Function calculates the optimal heading according to the cost-function and calls the corresponding
  * Function dependent on the heading. It is simulates a navigator, as he would be present on a real boat.
  */
-void navigator() {
+void navigator(void) {
 
 	//Iterate over the possible "probe" headings
 	float seg_start = (State.heading-Config.HeadRange);
@@ -139,7 +139,7 @@ void navigator() {
 
 
 	//Smooth Cost-Matrix
-	smooth(&costMat,5);
+	smooth(costMat,5);
 
 
 }
@@ -303,8 +303,8 @@ float cost(float seg) {
 	/* This cost prevents the boat from tacking or gybing too often. Each tack or gybe slows down the boat. */
 
 	//Calculate the current hull
-	float oldhull = appWindDir(State.heading);
-	if(oldhull < 0) {
+	uint8_t oldhull = 0;
+	if(appWindDir(State.heading) < 0) {
 		oldhull = -1;
 	} else {
 		oldhull = 1;
@@ -337,7 +337,7 @@ float cost(float seg) {
 	/* The boat should not get too close to the laylines. Therefore, sailing close to the centerline is favorable. */
 
 	//TODO:
-	float Ct;
+	float Ct = 0;
 
 
 	/*********************************/
