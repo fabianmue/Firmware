@@ -83,7 +83,7 @@
 #include "mpc_test_data.h"
 #endif
 
-#define SCHED_PRIORITY_MAX 20					//!!!!!!!!!!!!!!!!!!!JUST A FIX! CHECK THIS!!!! (JW)
+//#define SCHED_PRIORITY_MAX 20					//!!!!!!!!!!!!!!!!!!!JUST A FIX! CHECK THIS!!!! (JW)
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
 
 #if SIMULATION_FLAG == 1 //defined in parameter.h
