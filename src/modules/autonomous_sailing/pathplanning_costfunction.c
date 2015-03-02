@@ -52,6 +52,7 @@ typedef struct {		 	 //Contains the GPS-Coordinate of a point
 static struct {
 	Point target;			//Target to be reached represented as a GPS-Position
 	Point obstacles[MAXOBSTACLES]; //Matrix containing the positions of the obstacles (represented as GPS-Positions)
+	uint8_t NumberOfObstacles; 	//Number of Obstacles currently set
 } Field;
 
 
@@ -77,11 +78,40 @@ float bearing(Point start, Point end);
 /* @brief Apparent Wind direction */
 float appWindDir(float heading);
 
+/* @brief Smooth an Array of variable size and with a variable windowSize */
+void smooth(float *array, uint8_t windowSize);
+
+
 
 
 /**********************************************************************************************/
 /****************************  PUBLIC FUNCTIONS  **********************************************/
 /**********************************************************************************************/
+
+/**
+ * Main Pathplanning Function
+ * This Function calculates the optimal heading according to the cost-function and calls the corresponding
+ * Function dependent on the heading. It is simulates a navigator, as he would be present on a real boat.
+ */
+void navigator() {
+
+	//Iterate over the possible "probe" headings
+	float seg_start = (State.heading-Config.HeadRange);
+	float seg_end = (State.heading+Config.HeadRange);
+
+	float costMat[]
+
+	for(float seg = seg_start; seg <= seg_start; seg += Config.HeadResolution) {
+		seg = seg%(2*PI);
+
+		cost(seg);
+
+	}
+
+
+}
+
+
 
 /**
  * Set the target to be reached. (usually done by QGround Control)
@@ -103,6 +133,22 @@ void ppc_set_target(float lat, float lon) {
 
 
 /**
+ * Set the position of the obstacle (from the worldserver)
+ *
+ * @param	lat: latitude of the obstacle [°]
+ * @param   lon: longitude of the obstacle [°]
+*/
+void ppc_set_obstacle(float lat, float lon) {
+
+	//Assume that the obstacle set over the worldserver is always stored at position 0 in the Matrix
+	Field.obstacles[0].lat = lat;
+	Field.obstacles[0].lon = lon;
+
+}
+
+
+
+/**
  * Set the configuration parameters for the costfunction method
  *
  * @param Gw
@@ -116,7 +162,7 @@ void ppc_set_target(float lat, float lon) {
  * @param HeadResolution
  * @param HeadRange
 */
-void ppc_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float ObstSafetyRadius, float ObstHorizon, float HeadResolution, float HeadRange) {
+void ppc_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float ObstSafetyRadius, float ObstHorizon) {
 
 	Config.Gw = Gw;
 	Config.Go = Go;
@@ -126,8 +172,6 @@ void ppc_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, flo
 	Config.GLee = GLee;
 	Config.ObstSafetyRadius = ObstSafetyRadius;
 	Config.ObstHorizon = ObstHorizon;
-	Config.HeadResolution = HeadResolution;
-	Config.HeadRange = HeadRange;
 }
 
 
@@ -210,7 +254,7 @@ float cost(float seg) {
 	Tgx = Tgx/norm;											//Create the unity-Vector
 	Tgy = Tgy/norm;
 
-	float boatspeed = polardiagram(State.windDir, State.windSpeed); //Create a vector representing the boat movement
+	float boatspeed = polardiagram(abs(appWindDir), State.windSpeed); //Create a vector representing the boat movement
 	float Vhx = cos(seg)*boatspeed;
 	float Vhy = sin(seg)*boatspeed;
 
@@ -225,10 +269,24 @@ float cost(float seg) {
 	/************************/
 	/* This cost prevents the boat from tacking or gybing too often. Each tack or gybe slows down the boat. */
 
-	//TODO: Calculate old and new Hull
-	uint8_t oldhull = 0;
-	uint8_t newhull = 0;
+	//Calculate the current hull
+	float oldhull = appWindDir(State.heading);
+	if(oldhull < 0) {
+		oldhull = -1;
+	} else {
+		oldhull = 1;
+	}
 
+	//Calculate the new hull
+	uint8_t newhull = 0;
+	if(appWindDir < 0) {
+		//Wind from Starboard
+		newhull = -1;
+	} else {
+		newhull = 1;
+	}
+
+	//Calculate the Maneuver Cost
 	float Cm = 0;
 	if(oldhull == newhull) {
 		//Boat sails on the same hull <=> assign low cost
@@ -243,7 +301,7 @@ float cost(float seg) {
 	/************************/
 	/*** TACTICAL COST    ***/
 	/************************/
-	/* The boat should not get too close to the laylines. Therefore, sailing close to the centerline is favorable.  */
+	/* The boat should not get too close to the laylines. Therefore, sailing close to the centerline is favorable. */
 
 	//TODO:
 	float Ct;
@@ -263,9 +321,10 @@ float cost(float seg) {
 	/************************/
 	/* Cost for maximizing the distance to obstacles. */
 
-	//TODO:
-	float Co;
-	float CLee;
+	float Co = 0;
+	float CLee = 0;
+
+
 
 
 
@@ -330,14 +389,33 @@ float bearing(Point start, Point end) {
  * Calculate the apparent Wind Direction
  * This is not the real apparent Wind Direction. It is the direction the boat would measure if it is not moving.
  *
- * @param start: Startpoint for the bearing measurement
- * @param end:   Endpoint for the bearing measurement
- * @return Bearing from Start ot Endpoint in rad. A true bearing is returned (element of [0:2pi])
+ * @param heading: True heading of the boat
+ * @return apparent Wind angle. If positive, the wind comes from Portside, else from Starboard-side
  */
 float appWindDir(float heading) {
-	//TODO Return the apparent wind Direction based on the heading and the winddirection
 
-	return 0.0f;
+	//Calculate Wind-Vector
+    float xw = cos(State.windDir);
+    float yw = sin(State.windDir);
+    float wnorm = sqrt(xw*xw + yw*yw);
+
+    //Calculate Heading-Vector
+    float xh = cos(PI-State.heading);
+    float yh = sin(PI-State.heading);
+    float hnorm = sqrt(xh*xh + yh*yh);
+
+
+    //Calculate Hull (Wind from Starboard <=> -1 ; Wind from Portside <=> 1)
+    float zc = xw*yh - yw*xh;
+
+    if(zc < 0) {
+    	zc = -1;
+    } else {
+    	zc = 1;
+    }
+
+    return zc*acos((xw*xh + yw*yh)/(wnorm*hnorm));
+
 }
 
 
@@ -354,6 +432,23 @@ float polardiagram(float AppWindDir, float AppWindSpeed) {
 	//TODO: Add the boats Polardiagram as a lookup table for different Windspeeds.
 
 	return 1.0f;
+}
+
+
+
+/**
+ * Smooths an array of variable size using a moving averaging window of variable size
+ *
+ * @param &array: Pointer to an array. Note this array is directly modified!
+ * @param windowSize: Size of the moving averaging window
+ */
+void smooth(float *array, uint8_t windowSize) {
+
+	//Define Filter-Matrix
+	float filter = 1/windowSize;
+
+	//TODO: Convolution Array with filter
+
 }
 
 

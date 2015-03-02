@@ -18,6 +18,10 @@
 void ppc_set_target(float lat, float lon);
 
 
+/* @brief Set the position of the obstacle */
+void ppc_set_obstacle(float lat, float lon);
+
+
 /* @brief Set the configuration Parameters from QGround Control */
 void ppc_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float ObstSafetyRadius, float ObstHorizon, float HeadResolution, float HeadRange);
 
@@ -32,6 +36,7 @@ void ppc_update_GPOS(const struct structs_topics_s *strs_p);
 
 /* @brief Update the Vehicles Heading */
 void ppc_update_HEADING(const struct structs_topics_s *strs_p);
+
 
 
 
