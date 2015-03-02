@@ -812,8 +812,7 @@ void gm_set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3],
     }
 
     //check if we have an available mpc solve for the new prediction horizon
-    if(pred_horz_steps == 10 || pred_horz_steps == 15 || pred_horz_steps == 20
-       || pred_horz_steps == 25){
+    if(pred_horz_steps == 10 || pred_horz_steps == 20 || pred_horz_steps == 30){
         //save prediction horizon
         opc_data.pred_horz_steps = pred_horz_steps;
     }
