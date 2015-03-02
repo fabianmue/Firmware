@@ -25,15 +25,20 @@
 #define EARTHRADIUS  6371000.0f		//Earth Radius [m]
 
 
-//Weights for the Cost-Function
-static struct Weights {
+//Weights and other configuration parameters for the Cost-Function-Method
+static struct {
 	float Gw = 0.9;          //Weighting factor for sailing against the target while maximizing speed (was 0.5)
     float Go = 0.8;          //Weighting factor for avoiding obstacles (was 0.8)
 	float Gm = 0.4;          //Weighting factor for avoiding maneuovres (was 0.5) (higher value <=> less maneuovres are allowed)
 	float Gs = 0.05;         //Weighting factor for prefering courses that need no change in course
 	float Gt = 0.1;          //Weighting factor for tactical considerations
 	float GLee = 0.15;       //Weighting factor for passing Obstacles in Lee. (higher value <=> force boat to pass in Lee)
-};
+	float ObstSafetyRadius = 10; //Safety Radius around an obstacle [m]
+	float ObstHorizon = 100; //Obstacle Horizon <=> inside this horizon obstacles are recognized [m]
+	float HeadResolution = 0.0872664625997f; //Resolution for simulating the headings in [rad] (here 5°)
+	float HeadRange = 1.74532925199f; //Range for simulating the headings in [rad] (here [-100°...100°] wrt. boat-heading)
+} Config;
+
 
 
 //Type definition for a GPS-Point
@@ -50,11 +55,12 @@ static struct {
 } Field;
 
 
-
-static struct State {
+//State of the System
+static struct {
 	Point position;			//Current Position
-	float windDir;			//Current Wind Direction
-};
+	float heading; 			//Current heading of the boat [rad]
+	float windDir;			//Current Wind Direction [rad]
+} State;
 
 
 
@@ -77,7 +83,7 @@ float appWindDir(float heading);
 /**********************************************************************************************/
 
 /**
- * Set the target to be reached.
+ * Set the target to be reached. (usually done by QGround Control)
  *
  * @param	lat: latitude of the target [°]
  * @param   lon: longitude of the target [°]
@@ -95,6 +101,83 @@ void ppc_set_target(float lat, float lon) {
 
 
 
+/**
+ * Set the configuration parameters for the costfunction method
+ *
+ * @param Gw
+ * @param Go
+ * @param Gm
+ * @param Gs
+ * @param Gt
+ * @param GLee
+ * @param ObstSafetyRadius
+ * @param ObstHorizon
+ * @param HeadResolution
+ * @param HeadRange
+*/
+void ppc_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float ObstSafetyRadius, float ObstHorizon, float HeadResolution, float HeadRange) {
+
+	Config.Gw = Gw;
+	Config.Go = Go;
+	Config.Gm = Gm;
+	Config.Gs = Gs;
+	Config.Gt = Gt;
+	Config.GLee = GLee;
+	Config.ObstSafetyRadius = ObstSafetyRadius;
+	Config.ObstHorizon = ObstHorizon;
+	Config.HeadResolution = HeadResolution;
+	Config.HeadRange = HeadRange;
+}
+
+
+
+/**
+ * Update the winddirection
+ *
+ * @param	lat: latitude of the target [°]
+ * @param   lon: longitude of the target [°]
+*/
+void ppc_update_WSAI(const struct structs_topics_s *strs_p) {
+
+	//TODO
+}
+
+
+
+/**
+ * Update the current position and heading
+ *
+ * @param	lat: latitude of the target [°]
+ * @param   lon: longitude of the target [°]
+*/
+void ppc_update_GPOS(const struct structs_topics_s *strs_p) {
+
+	//Update the Position
+	float lat = strs_p->gps_filtered.lat;
+	float lon = strs_p->gps_filtered.lon;
+
+	State.position.lat = lat * DEG2RAD;
+	State.position.lon = lon * DEG2RAD;
+
+}
+
+
+
+/**
+ * Update the current heading
+ *
+ * @param	TODO
+*/
+void ppc_update_HEADING(const struct structs_topics_s *strs_p) {
+
+	//TODO
+
+	State.heading = 0.0f; //Store the current heading in radians
+
+}
+
+
+
 
 /**********************************************************************************************/
 /****************************  PRIVATE FUNCTIONS  *********************************************/
@@ -103,9 +186,16 @@ void ppc_set_target(float lat, float lon) {
 /**
  * Calculate the cost for a given (simulated) heading.
  *
- * @param	seg: the angle (true heading), the cost is calculated for
+ * @param	seg: the angle (true heading), the cost is calculated for [rad]
 */
 float cost(float seg) {
+
+	//Calculate apparent Wind direction for the the current simulated heading
+	float appWindDir = appWindDir(seg);
+
+
+	//
+
 	return 0.0f;
 }
 
