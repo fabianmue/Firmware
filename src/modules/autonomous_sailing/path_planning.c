@@ -304,7 +304,7 @@ void pp_path_planning(struct reference_actions_s *ref_act_p,
     //convert geodedical coordinate into Race frame coordinate
     n_navigation_module(strs_p, &local_pos);
 
-
+    #if USE_GRID_LINES == 1
     //check if we are using grid lines to tell the boat where to tack
     //if the next grid line to reach is valid
     if(current_grid_valid){
@@ -333,6 +333,7 @@ void pp_path_planning(struct reference_actions_s *ref_act_p,
         }
     }
     else{
+    #endif
         /* if we are not using grind lines, check if the function
          * boat_should_tack told us to tack as soon as possibile.*/
         if(make_boat_tack){
@@ -343,10 +344,11 @@ void pp_path_planning(struct reference_actions_s *ref_act_p,
             //set make_boat_tack to flase
             make_boat_tack = false;
             //send a message to QGC
-            sprintf(txt_msg, "Tacking now.");
-            smq_send_log_info(txt_msg);
+            smq_send_log_info("Tacking now.");
         }
+    #if USE_GRID_LINES == 1
     }
+    #endif
 
     //copy local reference action to the output struct
     memcpy(ref_act_p, &ref_act, sizeof(ref_act));

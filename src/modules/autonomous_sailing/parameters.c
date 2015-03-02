@@ -864,12 +864,17 @@ void p_param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.tack_now, &tack_now);
 
     //set alpha_tmp as the new alpha star ONLY if set_alpha is not 0 AND tack_now is 0
-    if(set_alpha != 0 && tack_now == 0)
+    if(set_alpha != 0 && tack_now == 0){
         pp_set_alpha_star(alpha_tmp);
+        #if PRINT_DEBUG_STR == 1
+        smq_send_log_info("pp_set_alpha_star");
+        #endif
+    }
 
     //pass tack_now to path_planning module, only if update_path_param is true
-    if(update_path_param)
+    if(update_path_param){
         pp_boat_should_tack(tack_now);
+    }
 
     //----- sail_servo
     param_get(pointers_param_qgc.sail_pointer, &(params_p->sail_servo));

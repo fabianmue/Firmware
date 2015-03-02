@@ -1184,10 +1184,6 @@ void gm_guidance_module(struct reference_actions_s *ref_act_p,
         //read rudder and sails command from RC and save them
         rudder_command = strs_p->rc_channels.channels[RC_RUD_INDEX];
         sail_command = strs_p->rc_channels.channels[RC_SAIL_INDEX];
-
-        #if PRINT_DEBUG_STR
-        printf("manual mode\n");
-        #endif
     }
     else{
         //Autonomous mode
@@ -1217,11 +1213,6 @@ void gm_guidance_module(struct reference_actions_s *ref_act_p,
         #if SIMULATION_FLAG == 1
         //rudder_command = param_qgc_p->deva1;
         #endif
-
-
-        #if PRINT_DEBUG_STR
-        printf("autonomous mode\n");
-        #endif
     }
 
     #if TEST_MPC == 1
@@ -1245,10 +1236,6 @@ void gm_guidance_module(struct reference_actions_s *ref_act_p,
 
     #if SIMULATION_FLAG == 1
     //strs_p->airspeed.true_airspeed_m_s = ref_act_p->alpha_star - get_alpha_dumas();
-    #endif
-
-    #if PRINT_DEBUG_STR
-    printf("leaving guidance_module\n");
     #endif
 }
 

@@ -59,6 +59,10 @@
 //settings
 #include "settings.h"
 
+#if PRINT_DEBUG_STR == 1
+#include "send_msg_qgc.h"
+#endif
+
 //struct for local copy of parameter from QGroundControl
 struct parameters_qgc{
     float sail_servo;
