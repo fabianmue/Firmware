@@ -9,8 +9,7 @@ SRCS				= autonomous_sailing.c \
                                         simulation_utility.c \
                                         send_msg_qgc.c  \
                                         mpcForces/mpc_boatTack_h10.c\
-                                        mpcForces/mpc_boatTack_h15.c\
                                         mpcForces/mpc_boatTack_h20.c\
-                                        mpcForces/mpc_boatTack_h25.c\
+                                        mpcForces/mpc_boatTack_h30.c\
                                         mpc_test_data.c
 

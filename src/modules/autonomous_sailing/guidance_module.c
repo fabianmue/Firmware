@@ -918,26 +918,26 @@ void mpc_control_rudder(float *p_rudder_cmd,
                                             (mpc_boatTack_h10_output*) &(opc_data.forces_output),
                                             (mpc_boatTack_h10_info*) &(opc_data.forces_info));
         }
-        else if(opc_data.pred_horz_steps == 15){
-            solver_ret = mpc_boatTack_h15_solve((mpc_boatTack_h15_params*) &(opc_data.forces_params),
-                                            (mpc_boatTack_h15_output*) &(opc_data.forces_output),
-                                            (mpc_boatTack_h15_info*) &(opc_data.forces_info));
-        }
+//        else if(opc_data.pred_horz_steps == 15){
+//            solver_ret = mpc_boatTack_h15_solve((mpc_boatTack_h15_params*) &(opc_data.forces_params),
+//                                            (mpc_boatTack_h15_output*) &(opc_data.forces_output),
+//                                            (mpc_boatTack_h15_info*) &(opc_data.forces_info));
+//        }
         else if(opc_data.pred_horz_steps == 20){
             solver_ret = mpc_boatTack_h20_solve((mpc_boatTack_h20_params*) &(opc_data.forces_params),
                                             (mpc_boatTack_h20_output*) &(opc_data.forces_output),
                                             (mpc_boatTack_h20_info*) &(opc_data.forces_info));
         }
-        else if(opc_data.pred_horz_steps == 25){
-            solver_ret = mpc_boatTack_h25_solve((mpc_boatTack_h25_params*) &(opc_data.forces_params),
-                                            (mpc_boatTack_h25_output*) &(opc_data.forces_output),
-                                            (mpc_boatTack_h25_info*) &(opc_data.forces_info));
-        }
-//        else if(opc_data.pred_horz_steps == 30){
-//            solver_ret = mpc_boatTack_h30_solve((mpc_boatTack_h30_params*) &(opc_data.forces_params),
-//                                            (mpc_boatTack_h30_output*) &(opc_data.forces_output),
-//                                            (mpc_boatTack_h30_info*) &(opc_data.forces_info));
+//        else if(opc_data.pred_horz_steps == 25){
+//            solver_ret = mpc_boatTack_h25_solve((mpc_boatTack_h25_params*) &(opc_data.forces_params),
+//                                            (mpc_boatTack_h25_output*) &(opc_data.forces_output),
+//                                            (mpc_boatTack_h25_info*) &(opc_data.forces_info));
 //        }
+        else if(opc_data.pred_horz_steps == 30){
+            solver_ret = mpc_boatTack_h30_solve((mpc_boatTack_h30_params*) &(opc_data.forces_params),
+                                            (mpc_boatTack_h30_output*) &(opc_data.forces_output),
+                                            (mpc_boatTack_h30_info*) &(opc_data.forces_info));
+        }
         else{
             //error, no solve function available!
             tack_completed(ref_act_p, NO_MPC_SOLVE_FNC);

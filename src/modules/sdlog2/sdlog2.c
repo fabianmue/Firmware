@@ -1075,14 +1075,14 @@ int sdlog2_thread_main(int argc, char *argv[])
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
 	subs.status_sub = orb_subscribe(ORB_ID(vehicle_status));
 	subs.gps_pos_sub = orb_subscribe(ORB_ID(vehicle_gps_position));
-    subs.sensor_sub = orb_subscribe(ORB_ID(sensor_combined));
+    //subs.sensor_sub = orb_subscribe(ORB_ID(sensor_combined));
 	subs.att_sub = orb_subscribe(ORB_ID(vehicle_attitude));
 	subs.att_sp_sub = orb_subscribe(ORB_ID(vehicle_attitude_setpoint));
 	subs.rates_sp_sub = orb_subscribe(ORB_ID(vehicle_rates_setpoint));
 	subs.act_outputs_sub = orb_subscribe(ORB_ID_VEHICLE_CONTROLS);
 	subs.act_controls_sub = orb_subscribe(ORB_ID_VEHICLE_ATTITUDE_CONTROLS);
     subs.local_pos_sub = orb_subscribe(ORB_ID(vehicle_local_position));
-	subs.local_pos_sp_sub = orb_subscribe(ORB_ID(vehicle_local_position_setpoint));
+    //subs.local_pos_sp_sub = orb_subscribe(ORB_ID(vehicle_local_position_setpoint));
 	subs.global_pos_sub = orb_subscribe(ORB_ID(vehicle_global_position));
 	subs.triplet_sub = orb_subscribe(ORB_ID(position_setpoint_triplet));
 	subs.vicon_pos_sub = orb_subscribe(ORB_ID(vehicle_vicon_position));
@@ -1148,17 +1148,17 @@ int sdlog2_thread_main(int argc, char *argv[])
 	pthread_cond_init(&logbuffer_cond, NULL);
 
     /* track changes in sensor_combined topic */
-    hrt_abstime gyro_timestamp = 0;
-    hrt_abstime accelerometer_timestamp = 0;
-    hrt_abstime magnetometer_timestamp = 0;
-    hrt_abstime barometer_timestamp = 0;
-    hrt_abstime differential_pressure_timestamp = 0;
-    hrt_abstime gyro1_timestamp = 0;
-    hrt_abstime accelerometer1_timestamp = 0;
-    hrt_abstime magnetometer1_timestamp = 0;
-    hrt_abstime gyro2_timestamp = 0;
-    hrt_abstime accelerometer2_timestamp = 0;
-    hrt_abstime magnetometer2_timestamp = 0;
+//    hrt_abstime gyro_timestamp = 0;
+//    hrt_abstime accelerometer_timestamp = 0;
+//    hrt_abstime magnetometer_timestamp = 0;
+//    hrt_abstime barometer_timestamp = 0;
+//    hrt_abstime differential_pressure_timestamp = 0;
+//    hrt_abstime gyro1_timestamp = 0;
+//    hrt_abstime accelerometer1_timestamp = 0;
+//    hrt_abstime magnetometer1_timestamp = 0;
+//    hrt_abstime gyro2_timestamp = 0;
+//    hrt_abstime accelerometer2_timestamp = 0;
+//    hrt_abstime magnetometer2_timestamp = 0;
 
     /* initialize calculated mean SNR */
     float snr_mean = 0.0f;
@@ -1293,120 +1293,120 @@ int sdlog2_thread_main(int argc, char *argv[])
         }
 
         /* --- SENSOR COMBINED --- */
-        if (copy_if_updated(ORB_ID(sensor_combined), subs.sensor_sub, &buf.sensor)) {
-            bool write_IMU = false;
-            bool write_IMU1 = false;
-            bool write_IMU2 = false;
-            bool write_SENS = false;
+//        if (copy_if_updated(ORB_ID(sensor_combined), subs.sensor_sub, &buf.sensor)) {
+//            bool write_IMU = false;
+//            bool write_IMU1 = false;
+//            bool write_IMU2 = false;
+//            bool write_SENS = false;
 
-            if (buf.sensor.timestamp != gyro_timestamp) {
-                gyro_timestamp = buf.sensor.timestamp;
-                write_IMU = true;
-            }
+//            if (buf.sensor.timestamp != gyro_timestamp) {
+//                gyro_timestamp = buf.sensor.timestamp;
+//                write_IMU = true;
+//            }
 
-            if (buf.sensor.accelerometer_timestamp != accelerometer_timestamp) {
-                accelerometer_timestamp = buf.sensor.accelerometer_timestamp;
-                write_IMU = true;
-            }
+//            if (buf.sensor.accelerometer_timestamp != accelerometer_timestamp) {
+//                accelerometer_timestamp = buf.sensor.accelerometer_timestamp;
+//                write_IMU = true;
+//            }
 
-            if (buf.sensor.magnetometer_timestamp != magnetometer_timestamp) {
-                magnetometer_timestamp = buf.sensor.magnetometer_timestamp;
-                write_IMU = true;
-            }
+//            if (buf.sensor.magnetometer_timestamp != magnetometer_timestamp) {
+//                magnetometer_timestamp = buf.sensor.magnetometer_timestamp;
+//                write_IMU = true;
+//            }
 
-            if (buf.sensor.baro_timestamp != barometer_timestamp) {
-                barometer_timestamp = buf.sensor.baro_timestamp;
-                write_SENS = true;
-            }
+//            if (buf.sensor.baro_timestamp != barometer_timestamp) {
+//                barometer_timestamp = buf.sensor.baro_timestamp;
+//                write_SENS = true;
+//            }
 
-            if (buf.sensor.differential_pressure_timestamp != differential_pressure_timestamp) {
-                differential_pressure_timestamp = buf.sensor.differential_pressure_timestamp;
-                write_SENS = true;
-            }
+//            if (buf.sensor.differential_pressure_timestamp != differential_pressure_timestamp) {
+//                differential_pressure_timestamp = buf.sensor.differential_pressure_timestamp;
+//                write_SENS = true;
+//            }
 
-            if (write_IMU) {
-                log_msg.msg_type = LOG_IMU_MSG;
-                log_msg.body.log_IMU.gyro_x = buf.sensor.gyro_rad_s[0];
-                log_msg.body.log_IMU.gyro_y = buf.sensor.gyro_rad_s[1];
-                log_msg.body.log_IMU.gyro_z = buf.sensor.gyro_rad_s[2];
-                log_msg.body.log_IMU.acc_x = buf.sensor.accelerometer_m_s2[0];
-                log_msg.body.log_IMU.acc_y = buf.sensor.accelerometer_m_s2[1];
-                log_msg.body.log_IMU.acc_z = buf.sensor.accelerometer_m_s2[2];
-                log_msg.body.log_IMU.mag_x = buf.sensor.magnetometer_ga[0];
-                log_msg.body.log_IMU.mag_y = buf.sensor.magnetometer_ga[1];
-                log_msg.body.log_IMU.mag_z = buf.sensor.magnetometer_ga[2];
-                LOGBUFFER_WRITE_AND_COUNT(IMU);
-            }
+//            if (write_IMU) {
+//                log_msg.msg_type = LOG_IMU_MSG;
+//                log_msg.body.log_IMU.gyro_x = buf.sensor.gyro_rad_s[0];
+//                log_msg.body.log_IMU.gyro_y = buf.sensor.gyro_rad_s[1];
+//                log_msg.body.log_IMU.gyro_z = buf.sensor.gyro_rad_s[2];
+//                log_msg.body.log_IMU.acc_x = buf.sensor.accelerometer_m_s2[0];
+//                log_msg.body.log_IMU.acc_y = buf.sensor.accelerometer_m_s2[1];
+//                log_msg.body.log_IMU.acc_z = buf.sensor.accelerometer_m_s2[2];
+//                log_msg.body.log_IMU.mag_x = buf.sensor.magnetometer_ga[0];
+//                log_msg.body.log_IMU.mag_y = buf.sensor.magnetometer_ga[1];
+//                log_msg.body.log_IMU.mag_z = buf.sensor.magnetometer_ga[2];
+//                LOGBUFFER_WRITE_AND_COUNT(IMU);
+//            }
 
-            if (write_SENS) {
-                log_msg.msg_type = LOG_SENS_MSG;
-                log_msg.body.log_SENS.baro_pres = buf.sensor.baro_pres_mbar;
-                log_msg.body.log_SENS.baro_alt = buf.sensor.baro_alt_meter;
-                log_msg.body.log_SENS.baro_temp = buf.sensor.baro_temp_celcius;
-                log_msg.body.log_SENS.diff_pres = buf.sensor.differential_pressure_pa;
-                log_msg.body.log_SENS.diff_pres_filtered = buf.sensor.differential_pressure_filtered_pa;
-                LOGBUFFER_WRITE_AND_COUNT(SENS);
-            }
+//            if (write_SENS) {
+//                log_msg.msg_type = LOG_SENS_MSG;
+//                log_msg.body.log_SENS.baro_pres = buf.sensor.baro_pres_mbar;
+//                log_msg.body.log_SENS.baro_alt = buf.sensor.baro_alt_meter;
+//                log_msg.body.log_SENS.baro_temp = buf.sensor.baro_temp_celcius;
+//                log_msg.body.log_SENS.diff_pres = buf.sensor.differential_pressure_pa;
+//                log_msg.body.log_SENS.diff_pres_filtered = buf.sensor.differential_pressure_filtered_pa;
+//                LOGBUFFER_WRITE_AND_COUNT(SENS);
+//            }
 
-            if (buf.sensor.accelerometer1_timestamp != accelerometer1_timestamp) {
-                accelerometer1_timestamp = buf.sensor.accelerometer1_timestamp;
-                write_IMU1 = true;
-            }
+//            if (buf.sensor.accelerometer1_timestamp != accelerometer1_timestamp) {
+//                accelerometer1_timestamp = buf.sensor.accelerometer1_timestamp;
+//                write_IMU1 = true;
+//            }
 
-            if (buf.sensor.gyro1_timestamp != gyro1_timestamp) {
-                gyro1_timestamp = buf.sensor.gyro1_timestamp;
-                write_IMU1 = true;
-            }
+//            if (buf.sensor.gyro1_timestamp != gyro1_timestamp) {
+//                gyro1_timestamp = buf.sensor.gyro1_timestamp;
+//                write_IMU1 = true;
+//            }
 
-            if (buf.sensor.magnetometer1_timestamp != magnetometer1_timestamp) {
-                magnetometer1_timestamp = buf.sensor.magnetometer1_timestamp;
-                write_IMU1 = true;
-            }
+//            if (buf.sensor.magnetometer1_timestamp != magnetometer1_timestamp) {
+//                magnetometer1_timestamp = buf.sensor.magnetometer1_timestamp;
+//                write_IMU1 = true;
+//            }
 
-            if (write_IMU1) {
-                log_msg.msg_type = LOG_IMU1_MSG;
-                log_msg.body.log_IMU.gyro_x = buf.sensor.gyro1_rad_s[0];
-                log_msg.body.log_IMU.gyro_y = buf.sensor.gyro1_rad_s[1];
-                log_msg.body.log_IMU.gyro_z = buf.sensor.gyro1_rad_s[2];
-                log_msg.body.log_IMU.acc_x = buf.sensor.accelerometer1_m_s2[0];
-                log_msg.body.log_IMU.acc_y = buf.sensor.accelerometer1_m_s2[1];
-                log_msg.body.log_IMU.acc_z = buf.sensor.accelerometer1_m_s2[2];
-                log_msg.body.log_IMU.mag_x = buf.sensor.magnetometer1_ga[0];
-                log_msg.body.log_IMU.mag_y = buf.sensor.magnetometer1_ga[1];
-                log_msg.body.log_IMU.mag_z = buf.sensor.magnetometer1_ga[2];
-                LOGBUFFER_WRITE_AND_COUNT(IMU);
-            }
+//            if (write_IMU1) {
+//                log_msg.msg_type = LOG_IMU1_MSG;
+//                log_msg.body.log_IMU.gyro_x = buf.sensor.gyro1_rad_s[0];
+//                log_msg.body.log_IMU.gyro_y = buf.sensor.gyro1_rad_s[1];
+//                log_msg.body.log_IMU.gyro_z = buf.sensor.gyro1_rad_s[2];
+//                log_msg.body.log_IMU.acc_x = buf.sensor.accelerometer1_m_s2[0];
+//                log_msg.body.log_IMU.acc_y = buf.sensor.accelerometer1_m_s2[1];
+//                log_msg.body.log_IMU.acc_z = buf.sensor.accelerometer1_m_s2[2];
+//                log_msg.body.log_IMU.mag_x = buf.sensor.magnetometer1_ga[0];
+//                log_msg.body.log_IMU.mag_y = buf.sensor.magnetometer1_ga[1];
+//                log_msg.body.log_IMU.mag_z = buf.sensor.magnetometer1_ga[2];
+//                LOGBUFFER_WRITE_AND_COUNT(IMU);
+//            }
 
-            if (buf.sensor.accelerometer2_timestamp != accelerometer2_timestamp) {
-                accelerometer2_timestamp = buf.sensor.accelerometer2_timestamp;
-                write_IMU2 = true;
-            }
+//            if (buf.sensor.accelerometer2_timestamp != accelerometer2_timestamp) {
+//                accelerometer2_timestamp = buf.sensor.accelerometer2_timestamp;
+//                write_IMU2 = true;
+//            }
 
-            if (buf.sensor.gyro2_timestamp != gyro2_timestamp) {
-                gyro2_timestamp = buf.sensor.gyro2_timestamp;
-                write_IMU2 = true;
-            }
+//            if (buf.sensor.gyro2_timestamp != gyro2_timestamp) {
+//                gyro2_timestamp = buf.sensor.gyro2_timestamp;
+//                write_IMU2 = true;
+//            }
 
-            if (buf.sensor.magnetometer2_timestamp != magnetometer2_timestamp) {
-                magnetometer2_timestamp = buf.sensor.magnetometer2_timestamp;
-                write_IMU2 = true;
-            }
+//            if (buf.sensor.magnetometer2_timestamp != magnetometer2_timestamp) {
+//                magnetometer2_timestamp = buf.sensor.magnetometer2_timestamp;
+//                write_IMU2 = true;
+//            }
 
-            if (write_IMU2) {
-                log_msg.msg_type = LOG_IMU2_MSG;
-                log_msg.body.log_IMU.gyro_x = buf.sensor.gyro2_rad_s[0];
-                log_msg.body.log_IMU.gyro_y = buf.sensor.gyro2_rad_s[1];
-                log_msg.body.log_IMU.gyro_z = buf.sensor.gyro2_rad_s[2];
-                log_msg.body.log_IMU.acc_x = buf.sensor.accelerometer2_m_s2[0];
-                log_msg.body.log_IMU.acc_y = buf.sensor.accelerometer2_m_s2[1];
-                log_msg.body.log_IMU.acc_z = buf.sensor.accelerometer2_m_s2[2];
-                log_msg.body.log_IMU.mag_x = buf.sensor.magnetometer2_ga[0];
-                log_msg.body.log_IMU.mag_y = buf.sensor.magnetometer2_ga[1];
-                log_msg.body.log_IMU.mag_z = buf.sensor.magnetometer2_ga[2];
-                LOGBUFFER_WRITE_AND_COUNT(IMU);
-            }
+//            if (write_IMU2) {
+//                log_msg.msg_type = LOG_IMU2_MSG;
+//                log_msg.body.log_IMU.gyro_x = buf.sensor.gyro2_rad_s[0];
+//                log_msg.body.log_IMU.gyro_y = buf.sensor.gyro2_rad_s[1];
+//                log_msg.body.log_IMU.gyro_z = buf.sensor.gyro2_rad_s[2];
+//                log_msg.body.log_IMU.acc_x = buf.sensor.accelerometer2_m_s2[0];
+//                log_msg.body.log_IMU.acc_y = buf.sensor.accelerometer2_m_s2[1];
+//                log_msg.body.log_IMU.acc_z = buf.sensor.accelerometer2_m_s2[2];
+//                log_msg.body.log_IMU.mag_x = buf.sensor.magnetometer2_ga[0];
+//                log_msg.body.log_IMU.mag_y = buf.sensor.magnetometer2_ga[1];
+//                log_msg.body.log_IMU.mag_z = buf.sensor.magnetometer2_ga[2];
+//                LOGBUFFER_WRITE_AND_COUNT(IMU);
+//            }
 
-        }
+//        }
 
         /* --- ATTITUDE --- */
         if (copy_if_updated(ORB_ID(vehicle_attitude), subs.att_sub, &buf.att)) {
@@ -1460,31 +1460,31 @@ int sdlog2_thread_main(int argc, char *argv[])
         }
 
         /* --- LOCAL POSITION --- */
-        if (copy_if_updated(ORB_ID(vehicle_local_position), subs.local_pos_sub, &buf.local_pos)) {
-            log_msg.msg_type = LOG_LPOS_MSG;
-            log_msg.body.log_LPOS.x = buf.local_pos.x;
-            log_msg.body.log_LPOS.y = buf.local_pos.y;
-            log_msg.body.log_LPOS.z = buf.local_pos.z;
-            log_msg.body.log_LPOS.ground_dist = buf.local_pos.dist_bottom;
-            log_msg.body.log_LPOS.ground_dist_rate = buf.local_pos.dist_bottom_rate;
-            log_msg.body.log_LPOS.vx = buf.local_pos.vx;
-            log_msg.body.log_LPOS.vy = buf.local_pos.vy;
-            log_msg.body.log_LPOS.vz = buf.local_pos.vz;
-            log_msg.body.log_LPOS.ref_lat = buf.local_pos.ref_lat * 1e7;
-            log_msg.body.log_LPOS.ref_lon = buf.local_pos.ref_lon * 1e7;
-            log_msg.body.log_LPOS.ref_alt = buf.local_pos.ref_alt;
-            log_msg.body.log_LPOS.pos_flags = (buf.local_pos.xy_valid ? 1 : 0) |
-                                              (buf.local_pos.z_valid ? 2 : 0) |
-                                              (buf.local_pos.v_xy_valid ? 4 : 0) |
-                                              (buf.local_pos.v_z_valid ? 8 : 0) |
-                                              (buf.local_pos.xy_global ? 16 : 0) |
-                                              (buf.local_pos.z_global ? 32 : 0);
-            log_msg.body.log_LPOS.landed = buf.local_pos.landed;
-            log_msg.body.log_LPOS.ground_dist_flags = (buf.local_pos.dist_bottom_valid ? 1 : 0);
-            log_msg.body.log_LPOS.eph = buf.local_pos.eph;
-            log_msg.body.log_LPOS.epv = buf.local_pos.epv;
-            LOGBUFFER_WRITE_AND_COUNT(LPOS);
-        }
+//        if (copy_if_updated(ORB_ID(vehicle_local_position), subs.local_pos_sub, &buf.local_pos)) {
+//            log_msg.msg_type = LOG_LPOS_MSG;
+//            log_msg.body.log_LPOS.x = buf.local_pos.x;
+//            log_msg.body.log_LPOS.y = buf.local_pos.y;
+//            log_msg.body.log_LPOS.z = buf.local_pos.z;
+//            log_msg.body.log_LPOS.ground_dist = buf.local_pos.dist_bottom;
+//            log_msg.body.log_LPOS.ground_dist_rate = buf.local_pos.dist_bottom_rate;
+//            log_msg.body.log_LPOS.vx = buf.local_pos.vx;
+//            log_msg.body.log_LPOS.vy = buf.local_pos.vy;
+//            log_msg.body.log_LPOS.vz = buf.local_pos.vz;
+//            log_msg.body.log_LPOS.ref_lat = buf.local_pos.ref_lat * 1e7;
+//            log_msg.body.log_LPOS.ref_lon = buf.local_pos.ref_lon * 1e7;
+//            log_msg.body.log_LPOS.ref_alt = buf.local_pos.ref_alt;
+//            log_msg.body.log_LPOS.pos_flags = (buf.local_pos.xy_valid ? 1 : 0) |
+//                                              (buf.local_pos.z_valid ? 2 : 0) |
+//                                              (buf.local_pos.v_xy_valid ? 4 : 0) |
+//                                              (buf.local_pos.v_z_valid ? 8 : 0) |
+//                                              (buf.local_pos.xy_global ? 16 : 0) |
+//                                              (buf.local_pos.z_global ? 32 : 0);
+//            log_msg.body.log_LPOS.landed = buf.local_pos.landed;
+//            log_msg.body.log_LPOS.ground_dist_flags = (buf.local_pos.dist_bottom_valid ? 1 : 0);
+//            log_msg.body.log_LPOS.eph = buf.local_pos.eph;
+//            log_msg.body.log_LPOS.epv = buf.local_pos.epv;
+//            LOGBUFFER_WRITE_AND_COUNT(LPOS);
+//        }
 
         /* --- LOCAL POSITION SETPOINT --- */
         if (copy_if_updated(ORB_ID(vehicle_local_position_setpoint), subs.local_pos_sp_sub, &buf.local_pos_sp)) {
