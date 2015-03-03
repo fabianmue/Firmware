@@ -10,6 +10,5 @@ SRCS				= autonomous_sailing.c \
                                         send_msg_qgc.c  \
                                         mpcForces/mpc_boatTack_h10.c\
                                         mpc_test_data.c\
-                                        extremum_sailcontrol.c\
-                                        pathplanning_costfunction.c
+                                        extremum_sailcontrol.c
 
