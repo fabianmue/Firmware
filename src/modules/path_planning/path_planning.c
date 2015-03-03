@@ -32,10 +32,10 @@
  ****************************************************************************/
 
 /**
- * @file px4_daemon_app.c
- * daemon application example for PX4 autopilot
+ * @file path_planning.c
+ * Doing pathplanning for the boat. The
  *
- * @author Example User <mail@example.com>
+ * @author Jonas Wirz <wirzjo@student.ethz.ch>
  */
 
 #include <stdio.h>
