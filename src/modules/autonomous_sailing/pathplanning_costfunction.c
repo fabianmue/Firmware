@@ -25,6 +25,10 @@
 #define PIHALF	     1.57079632679f 		//pi/2
 #define EARTHRADIUS  6371000.0f				//Earth Radius [m]
 
+#define ANG_UPWIND   0.7854f				//Maximum Angle for the Upwind-Controller (45°) [rad]
+#define ANG_NORMAL   2.0944f 				//Maximum Angle for the Normal-Controller (120°) [rad]
+#define ANG_DOWNWIND 2.6180f				//Maximum Angle for the Downwind-Controller (150°) [rad]
+
 #define HEADRESOLUTION 0.0872664625997f 	//Resolution for simulating the headings in [rad] (here 5°)
 #define HEADRANGE	   1.74532925199f   	//Range for simulating the headings in [rad] (here [-100°...100°] wrt. boat-heading)
 
@@ -159,7 +163,10 @@ void navigator(void) {
 	float OldWind = appWindDir(State.heading);		//Current Apparent Winddirection
 
 
-	//Decide if we have to do a tack
+	/*Decide if we have to do a tack or a gybe
+	* A maneuver is necessary, iff we change the hull. A change of hull is representet as a change of sign of the
+	* apparent Wind direction.
+	*/
 	if(!((NewWind < 0 && OldWind < 0) || (NewWind > 0 && OldWind > 0))) {
 		//A Maneuver is Necessary
 
@@ -177,13 +184,19 @@ void navigator(void) {
 
 
 	//Decide if we are upwind sailing
-	//TODO
+	if(fabsf(NewWind) <= ANG_UPWIND) {
+		//TODO: Call the Upwind-Sailing-Controller
+	}
 
 	//Decide if we are in the normal-sailing region
-	//TODO
+	if((fabsf(NewWind) > ANG_UPWIND) && (fabsf(NewWind) < ANG_NORMAL)) {
+		//TODO: Call the Normal-Sailing-Controller
+	}
 
 	//Decide if we are downwind sailing
-	//TODO
+	if((fabsf(NewWind) >= ANG_NORMAL) && (fabsf(NewWind) < ANG_DOWNWIND)) {
+		//TODO: Call the Downwind-Sailing-Controller
+	}
 
 }
 
@@ -377,8 +390,15 @@ float cost(float seg) {
 	/************************/
 	/* The boat should not get too close to the laylines. Therefore, sailing close to the centerline is favorable. */
 
-	//TODO:
 	float Ct = 0;
+	/* Prefere Sailing with Wind from Starboard, since then other boats have to give way then => COLREGS*/
+    if(appWind < 0) {
+        Ct = 0;
+    } else {
+        Ct = Config.Gt * 1;
+    }
+
+    //TODO: Add the "stay close to centerline" cost here
 
 
 	/*********************************/
@@ -397,6 +417,59 @@ float cost(float seg) {
 
 	float Co = 0;
 	float CLee = 0;
+
+	//Loop over all Obstacles
+	for (uint8_t i = 0; i < Field.NumberOfObstacles; i++) {
+
+		float C = 0;	//Cost for this Obstacle
+
+		/* Only obstacles within a certain Horizon are taken into account. This means that only obstacles in our range
+		 * affect the Pathplanning. We do not care about far away obstacles. */
+		if(dist > Config.ObstHorizon) {
+			//Obstacle is too far away => continue with the next obstacle
+			continue;
+		}
+
+
+		/* Add the safety radius to the obstacle. An obstacle is modelled as a point on the map. To avoid the obstacle
+		 * and compensate for uncertainties (e.g. sudden changes in wind) the obstacle is made larger virtually */
+		float distance = dist(State.position,Field.obstacles[i]);
+		float obst_bear = bearing(State.position,Field.obstacles[i]);
+
+		float ang_correction = atan(Config.ObstSafetyRadius/distance);
+		//TODO: Be careful here, if distance is close to zero we have a DIVISION BY ZERO!!!
+
+		float max_obst_bear = fmod(ang_correction+obst_bear,2*PI);
+		float min_obst_bear = fmod(obst_bear-ang_correction,2*PI);
+
+
+		/* Check, if the boat is on collision course with an obstacle. It is on collision course,
+		 * min_obst_bear < seg < max_obst_bear    <=> the course to check directly guides us towards
+		 * an obstacle. */
+		if((min_obst_bear < seg) && (seg < max_obst_bear )) {
+			//Boat is on collision course
+			C = Config.Go;
+		} else {
+			//Boat is NOT on collision course
+			C = 0;
+		}
+
+		/* Update the TOTAL obstacle cost */
+		Co = Co + C;
+
+
+
+		/************************************/
+		/************ PASS IN LEE ***********/
+		/************************************/
+		/* Whenever possible pass an obstacle in Lee. This way there is more room left for accounting for windshifts
+		 * and compensating other uncertainties. This is especially important when sailing upwind, because windshifts could
+		 * force the boat to do another tack, what slows down the boat and therefore has to be avoided.*/
+
+		//TODO: add this here
+
+
+	}
 
 
 
@@ -532,7 +605,7 @@ void smooth(float *array, uint8_t arraySize , uint8_t windowSize) {
 	} //for i
 
 
-	//Copy the array
+	//Copy the array *THIS IS VERY BAD*
 	array = arrayCpy;
 
 }
