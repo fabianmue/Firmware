@@ -71,7 +71,7 @@ struct {
 	float period	;				//Timeinterval between two changes in the sail control value [us]
 } Config = {
 		.k = 2.0f,
-		.frequency = 1.0f,
+		.period = 1.0f,
 		.windowSize = 8
 };
 
