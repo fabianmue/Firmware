@@ -13,23 +13,36 @@
 #include "extremum_sailcontrol.h"
 
 
+/** Struct for a Circluar Buffer */
+typedef struct {
+	float *bufferData_p;			//Pointer to an Array containing the Buffer-Data
+	uint8_t head;					//Position of the head of the buffer (index in the array)
+	uint8_t tail;              		//Position of the tail of the buffer (index in the array)
+	uint8_t maxBuffersize;     		//Maximum possible Buffersize
+	uint8_t buffersize;        		//Current size of the buffer
+} CircularBuffer;
+
+
 /** @brief Calculate the Signum of Speed/Sailcontrol (Signum according to the Paper) */
 int sign(float value);
 
 /** @brief Build Mean of Speed */
 float mean_speed(void);
 
+/** @brief Init a circular Buffer of a given Size*/
+CircularBuffer buffer_init(float buffersize);
+
+/** @brief Update the Size of an existing Circular Buffer */
+bool buffer_updateSize(CircularBuffer *buffer, uint8_t buffersize);
+
 /** @brief Add a value to the Buffer */
-bool buffer_add(float value);
+bool buffer_add(CircularBuffer *buffer, float value);
 
 /** @brief Delete the oldest value from the Buffer */
-bool buffer_delete_oldest(void);
-
-/** @brief Flush the buffer */
-bool buffer_flush(void);
+bool buffer_delete_oldest(CircularBuffer *buffer);
 
 /** @brief Get the value at a given buffer position */
-float buffer_get_value(uint8_t pos);
+float buffer_get_value(CircularBuffer *buffer, uint8_t pos);
 
 /** @brief Convert the opening Angle for the sail in degrees to a PWM signal */
 float deg2pwm(float degSail);
@@ -37,15 +50,6 @@ float deg2pwm(float degSail);
 /** @brief Convert the opening Angle for the sail as a PWM signal to degrees */
 float pwm2deg(float pwmSail);
 
-
-/** Struct for a Circluar Buffer */
-typedef struct {
-	float bufferData [BUFFERSIZE];	//Array containing the Buffer-Data
-	uint8_t head;					//Position of the head of the buffer (index in the array)
-	uint8_t tail;              		//Position of the tail of the buffer (index in the array)
-	uint8_t maxBuffersize;     		//Maximum possible Buffersize
-	uint8_t buffersize;        		//Current size of the buffer
-} CircularBuffer;
 
 
 /** Struct holding the state of the Controller */
@@ -282,21 +286,81 @@ float pwm2deg(float pwmSail) {
 
 
 
-/**
- * Add a value to the RingBuffer
- *
- * @param   value: Value to be added to the buffer
- * @return	true, if the value was successfully added
-*/
-bool buffer_add(float value) {
-	uint8_t next = (unsigned int)(State.buffer.head + 1) % State.buffer.maxBuffersize;
 
-	if (next != State.buffer.tail) {
+
+
+
+/**************************************************************/
+/**** DYNAMIC CIRCULAR BUFFER  ********************************/
+/**************************************************************/
+
+/**
+ * Init a new Buffer of a given Size
+ *
+ * @return a circular Buffer
+ */
+CircularBuffer buffer_init(uint8_t buffersize) {
+
+	CircularBuffer ret; 	//Create new Circular Buffer
+
+	buffer_updateSize(ret, buffersize);		//Set the correct length of the buffer
+
+	return ret;
+}
+
+
+
+/**
+ * Update the Size of a given Buffer
+ *
+ * @return true, if the size of the buffer was successfully changed
+ */
+bool buffer_updateSize(CircularBuffer *buffer, uint8_t buffersize) {
+
+	if(buffersize != buffer->maxBuffersize) {
+		//The Size of the buffer has changed => initialize the new buffer
+
+		//Delete the old buffer
+		free(buffer->bufferData_p);
+
+		//Allocate memory for the new buffer
+		buffer->bufferData_p = malloc(sizeof(float) * buffersize);	//Allocate memory for the new buffer
+
+		//Fill the new buffer with zeros
+		for(uint8_t i = 0; i < buffersize; i++) {
+		        buffer->bufferData_p[i] = 0;
+		}
+
+		//Set the new maximum Buffersize
+		buffer->maxBuffersize = buffersize;
+		buffer->buffersize = 0;
+		buffer->head = 0;
+		buffer->tail = 0;
+
+		return true;
+	}
+
+	return false;
+}
+
+
+/**
+ * Add a new Value to the buffer
+ *
+ * @param *buffer: Pointer to a Circluar Buffer
+ * @param value: Value to be added to the buffer
+ * @return true, if the value is added successfully
+ */
+bool buffer_add(CircularBuffer *buffer, float value) {
+
+	uint8_t next = (unsigned int)(buffer->head + 1) % buffer->maxBuffersize;
+
+	if (next != buffer->tail) {
 		//The buffer is not full => add value to the buffer
 
-		State.buffer.bufferData[State.buffer.head] = value;
-		State.buffer.head = next;
-		State.buffer.buffersize = State.buffer.buffersize + 1;
+		buffer->bufferData_p[buffer->head] = value;
+		buffer->head = next;
+		buffer->buffersize += 1;
 	} else {
 		//The buffer is full => delete oldest element and add the new value
 		buffer_delete_oldest();
@@ -304,25 +368,26 @@ bool buffer_add(float value) {
 	}
 
 	return true;
-
-} //End of buffer_add
+}
 
 
 
 /**
  * Delete the oldest value from the RingBuffer
  *
+ * @param *buffer: A pointer to a circular Buffer
  * @return true, if the value was successfully deleted
  */
-bool buffer_delete_oldest(void) {
+bool buffer_delete_oldest(CircularBuffer *buffer) {
 
-	if(State.buffer.head == State.buffer.tail) {
+	if(buffer->head == buffer->tail) {
 		//The buffer is empty
 		return false;
 	} else {
 		//There is at least one element in the buffer
-		State.buffer.tail = (uint8_t) (State.buffer.tail + 1) % State.buffer.maxBuffersize;
-		State.buffer.buffersize = State.buffer.buffersize - 1;
+		buffer->tail = (uint8_t) (buffer->tail + 1) % buffer->maxBuffersize;
+		buffer->buffersize -= 1;
+
 		return true;
 	}
 
@@ -333,32 +398,26 @@ bool buffer_delete_oldest(void) {
 /**
  * Get the value at a certain position in the buffer
  *
+ * Note: This function does not check if the element exists! It always returns a value,
+ * even it lays outside of the buffer (due to the circularity).
+ *
+ * @param  *buffer: Pointer to a Circluar Buffer
  * @param  pos: Position in the buffer
  * @return the value at the given position in the buffer
  */
-float buffer_get_value(uint8_t pos) {
+float buffer_get_value(CircularBuffer *buffer, uint8_t pos) {
 
-	uint8_t index = (uint8_t)(State.buffer.tail + pos) % State.buffer.maxBuffersize;
+	uint8_t ind = (uint8_t)(buffer->tail + pos) % buffer->maxBuffersize;
 
-	return State.buffer.bufferData[index];
-
-} //End of buffer_getValue
-
-
-
-/**
- * Flush the buffer
- *
- * @return true, if the buffer was successfully flushed
- */
-bool buffer_flush(void) {
-
-	State.buffer.head = State.buffer.tail;
-	State.buffer.buffersize = 0;
-
-	return true;
+	return buffer->bufferData_p[ind];
 
 } //End of buffer_getValue
+
+
+
+
+
+
 
 
 
