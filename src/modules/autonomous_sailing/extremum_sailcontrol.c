@@ -30,7 +30,7 @@ int sign(float value);
 float mean_speed(void);
 
 /** @brief Init a circular Buffer of a given Size*/
-CircularBuffer buffer_init(float buffersize);
+CircularBuffer *buffer_init(uint8_t buffersize);
 
 /** @brief Update the Size of an existing Circular Buffer */
 bool buffer_updateSize(CircularBuffer *buffer, uint8_t buffersize);
@@ -54,13 +54,13 @@ float pwm2deg(float pwmSail);
 
 /** Struct holding the state of the Controller */
 static struct {
-	CircularBuffer buffer;          //Buffer containing a limited number of Speed values used to build a mean (window-averaging)
+	CircularBuffer *buffer;          //Buffer containing a limited number of Speed values used to build a mean (window-averaging)
 	float meanSpeeds[2];			//Mean of the speedbuffer at times t-1 and t <=> meanSpeeds = [t-1,t] (in [m/s])
 	float ds[3];					//Last three Sail Control-Values a times t,t-1,t-2 <=> ds = [t-2,t-1,t] (in [°])
 	float ActDs;					//Current Sail Control-Value (as a PWM-Value)
 	uint64_t lastCall; 		    	//Timestamp of the last Functioncall (in [us])
 } State = {
-		.buffer = buffer_init(BUFFERSIZE),
+		.buffer = NULL,
 		.meanSpeeds = {0,0},
 		.ds = {0},
 		.ActDs = 0,
@@ -106,7 +106,12 @@ void essc_speed_update(const struct structs_topics_s *strs_p) {
 
 
     //Add the new Velocity to the buffer
-    buffer_add(uVel);
+    if(State.buffer == NULL) {
+    	//Buffer does not yet exist => create the Buffer
+    	State.buffer = buffer_init(Config.windowSize);
+    }
+
+    buffer_add(State.buffer, uVel);
 
     //Update the meanSpeeds-Matrix
 	State.meanSpeeds[0] = State.meanSpeeds[1];
@@ -249,15 +254,15 @@ float mean_speed(void) {
 	 * take the minimum of the current buffersize and the windowsize.
 	 */
 	uint8_t minSize = Config.windowSize;
-	if(Config.windowSize > State.buffer.buffersize) {
-		minSize = State.buffer.buffersize;
+	if(Config.windowSize > State.buffer->buffersize) {
+		minSize = State.buffer->buffersize;
 	}
 
 
 	//Calculate the mean
 	float sum = 0;
 	for(uint8_t i = 0; i < minSize; i++) {
-		sum += buffer_get_value(i);
+		sum += buffer_get_value(State.buffer,i);
 	}
 
 	return sum/minSize;
@@ -303,11 +308,11 @@ float pwm2deg(float pwmSail) {
  *
  * @return a circular Buffer
  */
-CircularBuffer buffer_init(uint8_t buffersize) {
+CircularBuffer *buffer_init(uint8_t buffersize) {
 
 	CircularBuffer ret; 	//Create new Circular Buffer
 
-	buffer_updateSize(ret, buffersize);		//Set the correct length of the buffer
+	buffer_updateSize(&ret, buffersize);		//Set the correct length of the buffer
 
 	return ret;
 }
@@ -367,8 +372,8 @@ bool buffer_add(CircularBuffer *buffer, float value) {
 		buffer->buffersize += 1;
 	} else {
 		//The buffer is full => delete oldest element and add the new value
-		buffer_delete_oldest();
-		buffer_add(value);
+		buffer_delete_oldest(buffer);
+		buffer_add(buffer,value);
 	}
 
 	return true;
