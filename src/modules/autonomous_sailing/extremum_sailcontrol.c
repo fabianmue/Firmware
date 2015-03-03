@@ -45,45 +45,38 @@ typedef struct {
 	uint8_t tail;              		//Position of the tail of the buffer (index in the array)
 	uint8_t maxBuffersize;     		//Maximum possible Buffersize
 	uint8_t buffersize;        		//Current size of the buffer
-} CircularBuffer;
+} CircluarBuffer;
 
 
 /** Struct holding the state of the Controller */
-struct essc_state{
+static struct {
 	CircularBuffer buffer;          //Buffer containing a limited number of Speed values used to build a mean (window-averaging)
 	float meanSpeeds[2];			//Mean of the speedbuffer at times t-1 and t <=> meanSpeeds = [t-1,t] (in [m/s])
 	float ds[3];					//Last three Sail Control-Values a times t,t-1,t-2 <=> ds = [t-2,t-1,t] (in [°])
 	float ActDs;					//Current Sail Control-Value (as a PWM-Value)
-	uint32_t lastCall; 		    	//Timestamp of the last Functioncall (in [s])
+	uint64_t lastCall; 		    	//Timestamp of the last Functioncall (in [us])
+} State = {
+		.buffer = {{0},0,0,BUFFERSIZE,0},
+		.meanSpeeds = {0,0},
+		.ds = {0},
+		.ActDs = 0,
+		.lastCall = 0
 };
 
 
 /** Struct holding the Configuration Parameters for the Controller */
-struct essc_config{
+struct {
 	float k;						//Stepsize in Degrees
 	unsigned int windowSize;		//Windowsize for building the mean over the speeds (window-averaging)
 	float frequency;				//Frequency for Changes in the sail control value.
 									//Note: In QGroundControl this value is defined as a frequency, but it is internally
 									//      changed to a Time-Period => 1/frequency (for computational reasons).
-};
-
-
-/** Set default Values for the Configuration Parameters */
-static struct essc_config Config = {
+} Config = {
 		.k = 2.0f,
 		.frequency = 1.0f,
 		.windowSize = 8
 };
 
-
-/** Set initial Values for the State Values */
-static struct essc_state State = {
-		.buffer = {{0},0,0,BUFFERSIZE,0},
-		.meanSpeeds = {0},
-		.ds = {0},
-		.ActDs = 0,
-		.lastCall = 0
-};
 
 
 
@@ -107,7 +100,7 @@ void essc_speed_update(const struct structs_topics_s *strs_p) {
     float NorthVel = strs_p->gps_filtered.vel_n;
     float EastVel = strs_p->gps_filtered.vel_e;
 
-    float uVel = sqrt(NorthVel * NorthVel + EastVel * EastVel);
+    float uVel = sqrtf(NorthVel * NorthVel + EastVel * EastVel);
 
 
     //Add the new Velocity to the buffer
@@ -135,9 +128,9 @@ float essc_sail_control_value() {
 	 *
 	 * Note: The following statement limits the frequency to a value of 2.3e-7 Hz
 	 */
-	uint32_t ActTime = hrt_absolute_time();
+	uint64_t ActTime = hrt_absolute_time();
 
-	if(ActTime - State.lastCall >= Config.frequency*1000000.0f) {
+	if(ActTime - State.lastCall >= Config.frequency) {
 		/* A new Sail-Control-Value has to be calculated in this step */
 
 		//Store the current time as the last time a new Sailvalue was calcualted
@@ -168,16 +161,9 @@ float essc_sail_control_value() {
 
         //Set the new Control-Value
         State.ActDs = deg2pwm(newDs);
-		return State.ActDs;
-
-	} else {
-		/* No new Sail-Control is to be set in this Step.
-		 * Return the last calculated Sail-Control-Value as the new value
-		 */
-
-		return State.ActDs;
-
 	}
+
+	return State.ActDs;
 
 } //End of ESSC_SailControlValue
 
@@ -204,7 +190,7 @@ void essc_set_qground_values(float k, int windowSize, float frequency) {
 	//      value is converted to the corresponding period and stored. If the frequency is
 	//      smaller than zero a default value is set.
 	if(frequency > 0) {
-		Config.frequency = 1/frequency;
+		Config.frequency = 1/frequency*1000000.0f;
 	} else {
 		Config.frequency = 1/1.0f;
 	}
