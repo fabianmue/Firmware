@@ -14,7 +14,7 @@
 //Include the math library
 #include <math.h>
 
-#define BUFFERSIZE 20			   	//Maximum size of the Buffer for the Speeds
+#define BUFFERSIZE 8			   	//Maximum size of the Buffer for the Speeds
 
 #define SAIL_CLOSED_PWM 0.56f  		//PWM signal for a fully closed sail
 #define SAIL_OPEN_PWM   0.00f  		//PWM signal for a fully open sail

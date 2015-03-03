@@ -60,7 +60,7 @@ static struct {
 	float ActDs;					//Current Sail Control-Value (as a PWM-Value)
 	uint64_t lastCall; 		    	//Timestamp of the last Functioncall (in [us])
 } State = {
-		.buffer = {{0},0,0,BUFFERSIZE,0},
+		.buffer = buffer_init(BUFFERSIZE),
 		.meanSpeeds = {0,0},
 		.ds = {0},
 		.ActDs = 0,
@@ -184,6 +184,7 @@ void essc_set_qground_values(float k, int windowSize, float period) {
 	if(k > 0) {
 		Config.k = k;
 	} else {
+		//Set the default Value
 		k = 2.0f;
 	}
 
@@ -191,6 +192,7 @@ void essc_set_qground_values(float k, int windowSize, float period) {
 	if(period < 0) {
 		Config.period = period*1000000.0f;
 	} else {
+		//Set the default Value
 		Config.period = 1/1.0f;
 	}
 
@@ -198,8 +200,10 @@ void essc_set_qground_values(float k, int windowSize, float period) {
 	//a default value is set)
 	if(windowSize >= 2) {
 		Config.windowSize = windowSize;
+		buffer_updateSize(State.buffer, windowSize);
 	} else {
-		Config.windowSize = 2;
+		//Set the default Value
+		Config.windowSize = 8;
 	}
 
 }
