@@ -45,7 +45,7 @@ typedef struct {
 	uint8_t tail;              		//Position of the tail of the buffer (index in the array)
 	uint8_t maxBuffersize;     		//Maximum possible Buffersize
 	uint8_t buffersize;        		//Current size of the buffer
-} CircluarBuffer;
+} CircularBuffer;
 
 
 /** Struct holding the state of the Controller */
@@ -68,9 +68,7 @@ static struct {
 struct {
 	float k;						//Stepsize in Degrees
 	unsigned int windowSize;		//Windowsize for building the mean over the speeds (window-averaging)
-	float frequency;				//Frequency for Changes in the sail control value.
-									//Note: In QGroundControl this value is defined as a frequency, but it is internally
-									//      changed to a Time-Period => 1/frequency (for computational reasons).
+	float period	;				//Timeinterval between two changes in the sail control value [us]
 } Config = {
 		.k = 2.0f,
 		.frequency = 1.0f,
@@ -130,7 +128,7 @@ float essc_sail_control_value() {
 	 */
 	uint64_t ActTime = hrt_absolute_time();
 
-	if(ActTime - State.lastCall >= Config.frequency) {
+	if(ActTime - State.lastCall >= Config.period) {
 		/* A new Sail-Control-Value has to be calculated in this step */
 
 		//Store the current time as the last time a new Sailvalue was calcualted
@@ -139,7 +137,7 @@ float essc_sail_control_value() {
 		//Calculate change in Speed (forward Speed)
 		float du = State.meanSpeeds[1] - State.meanSpeeds[0];
 
-		//Calcualte change in Sailangle (State.ds = [t-2,t-1,t])
+		//Calculate change in Sailangle (State.ds = [t-2,t-1,t])
 		float ds = State.ds[1] - State.ds[0];
 
 		//Actual Control Law <=> Calculate new Sail-Control-Value
@@ -174,9 +172,9 @@ float essc_sail_control_value() {
  *
  * @param k:Stepsize in Degrees [°]
  * @param windowSize: Size of the window for Speed-Averaging
- * @param frequency: Frequency for Sailadjustments [Hz]
+ * @param period: Time between two changes of the sailcontrol value [s]
 */
-void essc_set_qground_values(float k, int windowSize, float frequency) {
+void essc_set_qground_values(float k, int windowSize, float period) {
 
 	//Assign the Stepsize (make sure the stepsize is bigger than zero, else set a default value)
 	if(k > 0) {
@@ -185,14 +183,11 @@ void essc_set_qground_values(float k, int windowSize, float frequency) {
 		k = 2.0f;
 	}
 
-	//Assign the Frequency
-	//Note: frequency is a quantity in Hz. Internally the period is used. Therefore, the
-	//      value is converted to the corresponding period and stored. If the frequency is
-	//      smaller than zero a default value is set.
-	if(frequency > 0) {
-		Config.frequency = 1/frequency*1000000.0f;
+	//Assign the Period
+	if(period < 0) {
+		Config.period = period*1000000.0f;
 	} else {
-		Config.frequency = 1/1.0f;
+		Config.period = 1/1.0f;
 	}
 
 	//Assign the Size of the Window for the speed Averaging (must be bigger than two, otherwise
