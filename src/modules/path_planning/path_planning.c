@@ -33,7 +33,7 @@
 
 /**
  * @file path_planning.c
- * Doing pathplanning for the boat. The
+ * Doing pathplanning for the boat.
  *
  * @author Jonas Wirz <wirzjo@student.ethz.ch>
  */
@@ -49,14 +49,18 @@
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
 
+#include "config.h"
+
 static bool thread_should_exit = false;		/**< daemon exit flag */
-static bool thread_running = false;		/**< daemon status flag */
-static int daemon_task;				/**< Handle of daemon task / thread */
+static bool thread_running = false;			/**< daemon status flag */
+static int daemon_task;						/**< Handle of daemon task / thread */
 
 
 
 //THIS IS JUST A FIX!!!
 #define SCHED_PRIORITY_DEFAULT 10
+
+
 
 
 
@@ -68,7 +72,7 @@ __EXPORT int path_planning_main(int argc, char *argv[]);
 /**
  * Mainloop of daemon.
  */
-int path_planning_thread_main(int argc, char *argv[]);
+int pp_thread_main(int argc, char *argv[]);
 
 /**
  * Print the correct usage.
@@ -90,6 +94,10 @@ usage(const char *reason)
  *
  * The actual stack size should be set in the call
  * to task_create().
+ *
+ * Note: This code is standard and should not be changed.
+ *       It is directly copied from the Pixhawk Firmware Example.
+ *
  */
 int path_planning_main(int argc, char *argv[])
 {
@@ -109,8 +117,8 @@ int path_planning_main(int argc, char *argv[])
 					 SCHED_DEFAULT,
 					 SCHED_PRIORITY_DEFAULT,
 					 2000,
-					 path_planning_thread_main,
-					 (argv) ? (char * const *)&argv[2] : (char * const *)NULL);
+					 pp_thread_main,
+					 (argv) ? (const char **)&argv[2] : (const char **)NULL);
 		exit(0);
 	}
 
@@ -132,19 +140,37 @@ int path_planning_main(int argc, char *argv[])
 	exit(1);
 }
 
-int path_planning_thread_main(int argc, char *argv[]) {
 
+
+/**
+ * This is the main Thread that is created as a background Process by the Pixhawk Firmware
+ *
+ */
+int pp_thread_main(int argc, char *argv[]) {
+
+	//**THREAD IS STARTING
 	warnx("[daemon] starting\n");
 
+	//TODO: Add variable Definitions and "Init"-Functions here
+
+
+	//**SET THE THREAD-STATUS TO RUNNING
 	thread_running = true;
 
+
+	/**MAIN THREAD-LOOP
+	 * This is the main Thread Loop. It loops until the Process is killed.*/
 	while (!thread_should_exit) {
-		warnx("Hello daemon!\n");
+		warnx("Pathplanning Thread running!\n");
 		sleep(10);
+
+
+		//TODO: Add repetitive tasks here
 	}
 
-	warnx("[daemon] exiting.\n");
 
+	//**MANAGE THE KILLING OF THE THREAD
+	warnx("[daemon] exiting.\n");
 	thread_running = false;
 
 	return 0;
