@@ -15,7 +15,7 @@
  * @param *strs_p: Pointer to a struct of all interested Topics
  * @return true, iff successfully subscribed to all topics
  */
-bool pp_th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *strs_p) {
+bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *strs_p) {
 
 	//Subscribe to the topics
 	subs_p->vehicle_global_position = orb_subscribe(ORB_ID(vehicle_global_position));
@@ -55,6 +55,24 @@ bool pp_th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *
     //Subscription to all topics was successful
     warnx(" subscribed to all topics \n");
     return true;
+}
+
+
+
+/**
+ * Advertise Topics
+ *
+ * @param *subs_p: Pointer to a struct of all File-Descriptors
+ * @param *strs_p: Pointer to a struct of all interested Topics
+ * @return true, iff successfully subscribed to all topics
+ */
+bool th_advertise(struct published_fd_s *pubs_p,struct structs_topics_s *strs_p) {
+
+	//TODO: So far there are no topics to advertise, but add here the PathPlanning Topic!!!
+	//memset(&(strs_p->boat_guidance_debug), 0, sizeof(strs_p->boat_guidance_debug));
+	//pubs_p->boat_guidance_debug_pub = orb_advertise(ORB_ID(boat_guidance_debug), &(strs_p->boat_guidance_debug));
+
+	return true;
 }
 
 

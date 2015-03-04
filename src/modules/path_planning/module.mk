@@ -38,5 +38,6 @@ SRCS	= path_planning.c\
           pp_cost_method.c\
           pp_navigation_helper.c\
           pp_topics_handler.c\
+          pp_parameters.c
 
 #add here all additional c-Files by using \ at the end of each line

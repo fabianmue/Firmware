@@ -156,9 +156,10 @@ int pp_thread_main(int argc, char *argv[]) {
 	//**HANDLE TOPICS
 	struct subscribtion_fd_s subs;   //File-Descriptors of subscribed topics
 	struct structs_topics_s strs;    //Struct of Interested Topics
-
 	pp_th_subscribe(&subs,&strs);    //Subscribe to interested Topics
-	//TODO: pp_th_advertise();	     //Advertise Topics
+
+	struct published_fd_s pubs;      //File-Descriptors of published topics
+	pp_th_advertise(&pubs,&strs);	 //Advertise Topics
 
 	//orb_set_interval(subs.att, 50); //Eventually limit update rate of a topic to a number of milliseconds (here 50)
 
