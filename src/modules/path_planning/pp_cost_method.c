@@ -12,6 +12,7 @@
  */
 
 #include "pathplanning_costfunction.h"
+#include "pp_config.h"
 
 
 
@@ -20,9 +21,6 @@
 /**********************************************************************************************/
 
 #define MAXOBSTACLES 10  	 				//Maximum number of obstacles
-#define DEG2RAD      0.0174532925199433f 	//pi/180
-#define PI           3.14159265358979323846f //pi
-#define PIHALF	     1.57079632679f 		//pi/2
 #define EARTHRADIUS  6371000.0f				//Earth Radius [m]
 
 #define ANG_UPWIND   0.7854f				//Maximum Angle for the Upwind-Controller (45°) [rad]
@@ -286,8 +284,8 @@ void ppc_update_GPOS(const struct structs_topics_s *strs_p) {
 
 	//Update the Position
 	//TODO
-	float lat = 0;//strs_p->.lat;
-	float lon = 0;//strs_p->gps_filtered.lon;
+	float lat = strs_p->vehicle_global_position.lat;
+	float lon = strs_p->vehicle_global_position.lon;
 
 	State.position.lat = lat * DEG2RAD;
 	State.position.lon = lon * DEG2RAD;

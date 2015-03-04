@@ -43,6 +43,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <poll.h>
+#include <errno.h>
 
 #include <nuttx/config.h>
 #include <nuttx/sched.h>
@@ -61,8 +62,6 @@ static int daemon_task;						/**< Handle of daemon task / thread */
 
 //THIS IS JUST A FIX!!!
 #define SCHED_PRIORITY_DEFAULT 10
-
-
 
 
 
@@ -212,7 +211,7 @@ int pp_thread_main(int argc, char *argv[]) {
 
 				if(fds[0].revents & POLLIN) {
 					//New Data in "vehicle_global_position"
-					orb_copy(ORB_ID(vehicle_gps_position), subs.vehicle_global_position, &(strs.gps_position));
+					orb_copy(ORB_ID(vehicle_global_position), subs.vehicle_global_position, &(strs.vehicle_global_position));
 
 
 				}

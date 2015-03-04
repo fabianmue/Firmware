@@ -33,7 +33,7 @@ struct subscribtion_fd_s{
 
 //Structs of interested topics
 struct structs_topics_s{
-	struct vehicle_global_position_s gps_position;
+	struct vehicle_global_position_s vehicle_global_position;
 	struct wind_estimate_s wind_estimate;
 	struct parameter_update_s parameter_update;
 	struct boat_weather_station_s boat_weather_station;

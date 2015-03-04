@@ -22,5 +22,20 @@
 #define TIMEOUT_POLL 1000
 
 
+/* CONVERT FROM DEGREES TO RADIANS
+ * pi/180 <=> conversion from Degrees to Radians */
+#define DEG2RAD      0.0174532925199433f 	//pi/180
+
+
+/* DEFINITION FOR PI
+ * pi = 3.14159... */
+#define PI           3.14159265358979323846f //pi
+
+
+/* DEFINITION FOR PI/2
+ * pi/2 = 1.57079...*/
+#define PIHALF	     1.57079632679f 		//pi/2
+
+
 
 #endif /* CONFIG_H_ */
