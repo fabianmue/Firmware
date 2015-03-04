@@ -11,8 +11,14 @@
 //Include Topics (for Variables)
 #include "topics_handler.h"
 
-//Include the math library
+//Include c-Libraries
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <drivers/drv_hrt.h>
+#include <unistd.h>
+
+
 
 #define BUFFERSIZE 8			   	//Maximum size of the Buffer for the Speeds
 
@@ -20,6 +26,10 @@
 #define SAIL_OPEN_PWM   0.00f  		//PWM signal for a fully open sail
 #define SAIL_CLOSED_DEG 0           //Sailangle when the sail is fully closed
 #define SAIL_OPEN_DEG   80          //Sailangle when the sail is fully open
+
+
+/** @brief Initialize the use of Extremum Seeking Sailcontrol (ESSC) */
+void essc_init(void);
 
 
 /** @brief Handle a new Speed-Value*/
