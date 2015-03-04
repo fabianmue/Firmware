@@ -17,7 +17,7 @@
 
 struct path_planning_s {
 	uint64_t timestamp;    /**< Time of the last Pathplanning Update since System Start in Microseconds */
-	uint16_t heading_ref;  /**< Heading Reference with respect to true North [0...2pi] [rad] */
+	float    heading_ref;  /**< Heading Reference with respect to true North [0...2pi] [rad] */
 	bool     tack; 		   /**< True, iff boat should tack (is set by pathplanning module and should
 								be reset by Autonomous Sailing module)*/
 	bool     gybe;         /**< True, iff boat should gybe (is set by pathplanning module and should

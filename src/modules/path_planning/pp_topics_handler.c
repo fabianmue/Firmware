@@ -8,6 +8,19 @@
 #include "pp_topics_handler.h"
 
 
+
+/**
+ * The uORB Topic "path_planning" is the interface between the modules "autonomous_sailing" and
+ * "path_planning".
+ * This is the declaration of the topic and registers it in uORB.
+ */
+ORB_DEFINE(path_planning, struct path_planning_s);
+
+
+static struct published_fd_s pubs;      //File-Descriptors of published topics
+
+
+
 /**
  * Subscribe to all Topics in the Topic-Subscription Struct
  *
@@ -66,11 +79,33 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
  * @param *strs_p: Pointer to a struct of all interested Topics
  * @return true, iff successfully subscribed to all topics
  */
-bool th_advertise(struct published_fd_s *pubs_p,struct structs_topics_s *strs_p) {
+bool th_advertise(struct structs_topics_s *strs_p) {
 
-	//TODO: So far there are no topics to advertise, but add here the PathPlanning Topic!!!
-	//memset(&(strs_p->boat_guidance_debug), 0, sizeof(strs_p->boat_guidance_debug));
-	//pubs_p->boat_guidance_debug_pub = orb_advertise(ORB_ID(boat_guidance_debug), &(strs_p->boat_guidance_debug));
+	//Advertise the Pathplanning topic
+	memset(&(strs_p->path_planning), 0, sizeof(strs_p->path_planning));
+	pubs.path_planning = orb_advertise(ORB_ID(path_planning), &(strs_p->path_planning));
+
+	return true;
+}
+
+
+/**
+ * Update Pathplanning Topic
+ *
+ *  @param pp_p: Pointer to a path_planning Struct
+ *	@return true, if successfully updated
+ */
+bool th_update_pathplanning(float heading, bool tack, bool gybe) {
+
+	//Create new Struct with data
+	struct path_planning_s newPPS = {
+			.heading_ref = heading,
+			.tack = tack,
+			.gybe = gybe
+	};
+
+	//Publish the new values
+	orb_publish(ORB_ID(path_planning), pubs.path_planning, &newPPS);
 
 	return true;
 }

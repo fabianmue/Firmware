@@ -35,6 +35,18 @@
  * @file path_planning.c
  * Doing pathplanning for the boat.
  *
+ * The main Software-Structure for reaching a target can be explained as follows:
+ *
+ * -------------------------------                                 --------------------------------
+ * | MODULE "autonomous_sailing" |                                 | MODULE "path_planning"       |
+ * |                             |       -------------------       |                              |
+ * | this module is the HELSMAN. |       |  SHARED MEMEORY |       | this module is the NAVIGATOR.|
+ * | it controls the sails and   | POLL  |                 | PUSH  | it calculates the optimum    |
+ * | the rudder in order to      |------>|  heading        |<------| heading and gives orders     |
+ * | track a given heading.      |       |  tack/gybe      |       | to the helsman.              |
+ * |                             |       -------------------       |                              |
+ * -------------------------------                                 --------------------------------
+ *
  * @author Jonas Wirz <wirzjo@student.ethz.ch>
  */
 
@@ -53,6 +65,7 @@
 
 #include "pp_config.h"
 #include "pp_topics_handler.h"
+#include "pp_navigator.h"
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
@@ -156,10 +169,9 @@ int pp_thread_main(int argc, char *argv[]) {
 	//**HANDLE TOPICS
 	struct subscribtion_fd_s subs;   //File-Descriptors of subscribed topics
 	struct structs_topics_s strs;    //Struct of Interested Topics
-	pp_th_subscribe(&subs,&strs);    //Subscribe to interested Topics
+	th_subscribe(&subs,&strs);       //Subscribe to interested Topics
 
-	struct published_fd_s pubs;      //File-Descriptors of published topics
-	pp_th_advertise(&pubs,&strs);	 //Advertise Topics
+	th_advertise(&strs);	 		 //Advertise Topics
 
 	//orb_set_interval(subs.att, 50); //Eventually limit update rate of a topic to a number of milliseconds (here 50)
 
@@ -170,7 +182,8 @@ int pp_thread_main(int argc, char *argv[]) {
             { .fd = subs.wind_estimate,             .events = POLLIN },
             { .fd = subs.parameter_update,          .events = POLLIN },
             { .fd = subs.boat_weather_station,      .events = POLLIN },
-            { .fd = subs.rc_channels,               .events = POLLIN }
+            { .fd = subs.rc_channels,               .events = POLLIN },
+            { .fd = subs.path_planning,             .events = POLLIN }
     };
 
     int poll_return;				//Return Value of the polling.
@@ -214,6 +227,8 @@ int pp_thread_main(int argc, char *argv[]) {
 					//New Data in "vehicle_global_position"
 					orb_copy(ORB_ID(vehicle_global_position), subs.vehicle_global_position, &(strs.vehicle_global_position));
 
+					/**Send the new Position to the Navigator */
+					//nav_position_update(&strs);
 
 				}
 
@@ -242,6 +257,15 @@ int pp_thread_main(int argc, char *argv[]) {
 					//New Data in "rc_channels"
 					orb_copy(ORB_ID(rc_channels), subs.rc_channels, &(strs.rc_channels));
 
+
+				}
+
+				if(fds[5].revents & POLLIN) {
+					//New Data in "path_planning"
+					orb_copy(ORB_ID(path_planning), subs.path_planning, &(strs.path_planning));
+
+					//**The navigator is noticed by the helsman that a maneuver is completed */
+					//nav_listen2helsman(&strs);
 
 				}
 			}
