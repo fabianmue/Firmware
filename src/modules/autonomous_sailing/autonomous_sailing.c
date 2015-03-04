@@ -210,6 +210,11 @@ int as_daemon_thread_main(int argc, char *argv[]){
     //init message module
     init_msg_module();
 
+
+    //init Extremum Seeking Sailcontrol (ESSC)
+    essc_init();
+
+
     //subscribe/advertise interested topics
     as_topics(&subs, &pubs, &strs);
 
