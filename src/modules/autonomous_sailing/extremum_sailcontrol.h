@@ -19,7 +19,6 @@
 #include <unistd.h>
 
 
-
 #define BUFFERSIZE 8			   	//Maximum size of the Buffer for the Speeds
 
 #define SAIL_CLOSED_PWM 0.56f  		//PWM signal for a fully closed sail

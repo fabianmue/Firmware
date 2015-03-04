@@ -42,8 +42,6 @@
 
 #include "parameters.h"
 
-#include "extremum_sailcontrol.h"
-
 static const float deg2rad = 0.0174532925199433f; // pi / 180
 
 
