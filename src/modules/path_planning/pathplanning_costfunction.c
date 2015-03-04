@@ -285,8 +285,9 @@ void ppc_update_WSAI(const struct structs_topics_s *strs_p) {
 void ppc_update_GPOS(const struct structs_topics_s *strs_p) {
 
 	//Update the Position
-	float lat = strs_p->gps_filtered.lat;
-	float lon = strs_p->gps_filtered.lon;
+	//TODO
+	float lat = 0;//strs_p->.lat;
+	float lon = 0;//strs_p->gps_filtered.lon;
 
 	State.position.lat = lat * DEG2RAD;
 	State.position.lon = lon * DEG2RAD;

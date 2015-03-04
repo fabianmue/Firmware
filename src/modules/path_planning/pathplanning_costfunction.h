@@ -14,7 +14,7 @@
 #include <math.h>
 #include <stdint.h>
 
-#include "topics_handler.h"
+#include "pp_topics_handler.h"
 
 
 /* @brief Set a new target point to be reached from QGround Control */

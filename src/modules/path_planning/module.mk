@@ -36,6 +36,7 @@
 MODULE_COMMAND	= path_planning
 SRCS	= path_planning.c\
           pathplanning_costfunction.c\
-          navigation_helper.c
+          pp_navigation_helper.c\
+          pp_topics_handler.c\
 
 #add here all additional c-Files by using \ at the end of each line

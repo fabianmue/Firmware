@@ -49,7 +49,8 @@
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
 
-#include "config.h"
+#include "pp_config.h"
+#include "pp_topics_handler.h"
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
@@ -164,9 +165,12 @@ int pp_thread_main(int argc, char *argv[]) {
 		warnx("Pathplanning Thread running!\n");
 		sleep(10);
 
+		//**HANDLE TOPICS
+		struct subscribtion_fd_s subs;   //File-Descriptors of subscribed topics
+		struct structs_topics_s strs;    //Struct of Interested Topics
 
-		//
-
+		pp_th_subscribe(&subs,&strs);    //Subscribe to interested Topics
+		//pp_th_advertise();
 
 		//TODO: Add repetitive tasks here
 	}
