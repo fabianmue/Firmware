@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 
 #include <nuttx/config.h>
 #include <nuttx/sched.h>
@@ -152,7 +153,31 @@ int pp_thread_main(int argc, char *argv[]) {
 	//**THREAD IS STARTING
 	warnx("[daemon] starting\n");
 
-	//TODO: Add variable Definitions and "Init"-Functions here
+
+	//**HANDLE TOPICS
+	struct subscribtion_fd_s subs;   //File-Descriptors of subscribed topics
+	struct structs_topics_s strs;    //Struct of Interested Topics
+
+	pp_th_subscribe(&subs,&strs);    //Subscribe to interested Topics
+	//TODO: pp_th_advertise();	     //Advertise Topics
+
+	//orb_set_interval(subs.att, 50); //Eventually limit update rate of a topic to a number of milliseconds (here 50)
+
+
+	//**POLL FOR CHANGES IN SUBSCRIBED TOPICS
+    struct pollfd fds[] = {			 // Polling Management
+            { .fd = subs.vehicle_global_position,   .events = POLLIN },
+            { .fd = subs.wind_estimate,             .events = POLLIN },
+            { .fd = subs.parameter_update,          .events = POLLIN },
+            { .fd = subs.boat_weather_station,      .events = POLLIN },
+            { .fd = subs.rc_channels,               .events = POLLIN }
+    };
+
+    int poll_return;				//Return Value of the polling.
+
+
+    //** INIT FUNCTIONS
+	//TODO: Add Init Functions here
 
 
 	//**SET THE THREAD-STATUS TO RUNNING
@@ -162,18 +187,70 @@ int pp_thread_main(int argc, char *argv[]) {
 	/**MAIN THREAD-LOOP
 	 * This is the main Thread Loop. It loops until the Process is killed.*/
 	while (!thread_should_exit) {
-		warnx("Pathplanning Thread running!\n");
-		sleep(10);
 
-		//**HANDLE TOPICS
-		struct subscribtion_fd_s subs;   //File-Descriptors of subscribed topics
-		struct structs_topics_s strs;    //Struct of Interested Topics
+		#if DEBUG == 1
+			warnx("Pathplanning Thread running!\n");
+			sleep(10);
+		#endif
 
-		pp_th_subscribe(&subs,&strs);    //Subscribe to interested Topics
-		//pp_th_advertise();
 
-		//TODO: Add repetitive tasks here
-	}
+		//**POLL FOR CHANGES IN THE SUBSCRIBED TOPICS
+		poll_return = poll(fds, (sizeof(fds) / sizeof(fds[0])), TIMEOUT_POLL);
+
+		if(poll_return == 0) {
+			//No Topic contains changed data <=> no new Data available
+			warnx("No new Data available\n");
+		} else {
+			//New Data is available
+
+			if(poll_return < 0) {
+				//An error occured during polling
+				warnx("POLL ERR %d, %d", poll_return, errno);
+				continue;
+			} else {
+				//Everything is OK and new Data is available
+
+				if(fds[0].revents & POLLIN) {
+					//New Data in "vehicle_global_position"
+					orb_copy(ORB_ID(vehicle_gps_position), subs.vehicle_global_position, &(strs.gps_position));
+
+
+				}
+
+				if(fds[1].revents & POLLIN) {
+					//New Data in "wind_estimate"
+					orb_copy(ORB_ID(wind_estimate), subs.wind_estimate, &(strs.wind_estimate));
+
+
+				}
+
+				if(fds[2].revents & POLLIN) {
+					//New Data in "parameter_update"
+					orb_copy(ORB_ID(parameter_update), subs.parameter_update, &(strs.parameter_update));
+
+
+				}
+
+				if(fds[3].revents & POLLIN) {
+					//New Data in "boat_weather_station"
+					orb_copy(ORB_ID(boat_weather_station), subs.boat_weather_station, &(strs.boat_weather_station));
+
+
+				}
+
+				if(fds[4].revents & POLLIN) {
+					//New Data in "rc_channels"
+					orb_copy(ORB_ID(rc_channels), subs.rc_channels, &(strs.rc_channels));
+
+
+				}
+			}
+		}
+
+		//TODO: Add further repetitive tasks here
+
+
+	} //END OF MAIN THREAD-LOOP
 
 
 	//**MANAGE THE KILLING OF THE THREAD
@@ -181,4 +258,4 @@ int pp_thread_main(int argc, char *argv[]) {
 	thread_running = false;
 
 	return 0;
-}
+} //END OF pp_main_thread

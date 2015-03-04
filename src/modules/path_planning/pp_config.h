@@ -16,6 +16,10 @@
 #define DEBUG 1
 
 
+/*POLLING TIMEOUT
+ * Timeout, if no change in the polled topics is detected
+ * Value is in MilliSeconds */
+#define TIMEOUT_POLL 1000
 
 
 
