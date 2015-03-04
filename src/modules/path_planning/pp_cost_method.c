@@ -11,8 +11,9 @@
  *      Author: Jonas Wirz (wirzjo@student.ethz.ch)
  */
 
-#include "pathplanning_costfunction.h"
+#include "pp_cost_method.h"
 #include "pp_config.h"
+#include "pp_navigation_helper.h"
 
 
 
@@ -21,7 +22,6 @@
 /**********************************************************************************************/
 
 #define MAXOBSTACLES 10  	 				//Maximum number of obstacles
-#define EARTHRADIUS  6371000.0f				//Earth Radius [m]
 
 #define ANG_UPWIND   0.7854f				//Maximum Angle for the Upwind-Controller (45°) [rad]
 #define ANG_NORMAL   2.0944f 				//Maximum Angle for the Normal-Controller (120°) [rad]
@@ -57,11 +57,7 @@ static struct ppc_config Config = {
 };
 
 
-//Type definition for a GPS-Point
-typedef struct {		 	 //Contains the GPS-Coordinate of a point
-	float lat;				 //Latitude of a point [rad]
-	float lon;				 //Longitude of a point [rad]
-} Point;
+
 
 
 //Race-Field-Definition
@@ -90,23 +86,9 @@ static struct ppc_State State;
 /* @brief Calculate the cost for a given heading */
 float cost(float seg);
 
-/* @brief Calculate the distance between two points */
-float dist(Point point1, Point point2);
-
-/* @brief Calculate the heading from a point to a target point */
-float bearing(Point start, Point end);
-
-/* @brief Apparent Wind direction */
-float appWindDir(float heading);
-
 /* @brief Smooth an Array of variable size and with a variable windowSize */
 void smooth(float *array, uint8_t arraySize , uint8_t windowSize);
 
-/* @brief Return the speed at a given windangle and windspeed */
-float polardiagram(float AppWindDir, float AppWindSpeed);
-
-/* @brief Find the minimum in a matrix */
-uint8_t findMin(const float *array, uint8_t arraySize);
 
 
 
@@ -147,7 +129,7 @@ void navigator(void) {
 	smooth(costMat,probeNum,5);
 
 	//Find minimum Index
-	uint8_t minIndex = findMin(costMat,probeNum);
+	uint8_t minIndex = nh_findMin(costMat,probeNum);
 
 	//Get corresponding minimum Heading
 	float optHeading = headMat[minIndex];
@@ -157,8 +139,8 @@ void navigator(void) {
 	//****DECISION MAKING
 	/* In the following section the decisions based on the optimal Heading are made. This means
 	 * that the corresponding controller is selected and the order for doing a maneuver is generated */
-	float NewWind = appWindDir(optHeading); 		//New Apparent Winddirection
-	float OldWind = appWindDir(State.heading);		//Current Apparent Winddirection
+	float NewWind = nh_appWindDir(optHeading,State.windDir); 		//New Apparent Winddirection
+	float OldWind = nh_appWindDir(State.heading,State.windDir);		//Current Apparent Winddirection
 
 
 	/*Decide if we have to do a tack or a gybe
@@ -322,7 +304,7 @@ void ppc_update_HEADING(const struct structs_topics_s *strs_p) {
 float cost(float seg) {
 
 	//Calculate apparent Wind direction for the the current simulated heading
-	float appWind= appWindDir(seg);
+	float appWind= nh_appWindDir(seg,State.windDir);
 
 
 	/************************/
@@ -331,18 +313,18 @@ float cost(float seg) {
 	/* This cost takes the winddirection and the boats expected velocities at different relative angles towards
 	 * the wind into account. Meanwhile it minimizes the distance towards the target. */
 	//TODO: Potential Error-Source: Eventually check the implementation of the target-vector!
-	float targetDir = bearing(State.position,Field.target); //Bearing to target
+	float targetDir = nh_bearing(State.position,Field.target); //Bearing to target
 
-	float Tgx = cos(targetDir);								//Create a vector pointing towards the target
-	float Tgy = sin(targetDir);
-	float norm = sqrt(Tgx*Tgx + Tgy*Tgy);
+	float Tgx = cosf(targetDir);								//Create a vector pointing towards the target
+	float Tgy = sinf(targetDir);
+	float norm = sqrtf(Tgx*Tgx + Tgy*Tgy);
 
 	Tgx = Tgx/norm;											//Create the unity-Vector
 	Tgy = Tgy/norm;
 
-	float boatspeed = polardiagram(fabsf(appWind), State.windSpeed); //Create a vector representing the boat movement
-	float Vhx = (float)cos(seg)*boatspeed;
-	float Vhy = (float)sin(seg)*boatspeed;
+	float boatspeed = nh_polardiagram(fabsf(appWind), State.windSpeed); //Create a vector representing the boat movement
+	float Vhx = (float)cosf(seg)*boatspeed;
+	float Vhy = (float)sinf(seg)*boatspeed;
 
 	float Vg = Vhx*Tgx + Vhy*Tgy;									//Scalar-Product of Boatmovement and Target Vector
 
@@ -357,7 +339,7 @@ float cost(float seg) {
 
 	//Calculate the current hull
 	uint8_t oldhull = 0;
-	if(appWindDir(State.heading) < 0) {
+	if(nh_appWindDir(State.heading,State.windDir) < 0) {
 		oldhull = -1;
 	} else {
 		oldhull = 1;
@@ -424,7 +406,7 @@ float cost(float seg) {
 
 		/* Only obstacles within a certain Horizon are taken into account. This means that only obstacles in our range
 		 * affect the Pathplanning. We do not care about far away obstacles. */
-		float distance = dist(State.position,Field.obstacles[i]);
+		float distance = nh_dist(State.position,Field.obstacles[i]);
 		if(distance > Config.ObstHorizon) {
 			//Obstacle is too far away => continue with the next obstacle
 			continue;
@@ -433,9 +415,9 @@ float cost(float seg) {
 
 		/* Add the safety radius to the obstacle. An obstacle is modelled as a point on the map. To avoid the obstacle
 		 * and compensate for uncertainties (e.g. sudden changes in wind) the obstacle is made larger virtually */
-		float obst_bear = bearing(State.position,Field.obstacles[i]);
+		float obst_bear = nh_bearing(State.position,Field.obstacles[i]);
 
-		float ang_correction = atan(Config.ObstSafetyRadius/distance);
+		float ang_correction = atanf(Config.ObstSafetyRadius/distance);
 		//TODO: Be careful here, if distance is close to zero we have a DIVISION BY ZERO!!!
 
 		float max_obst_bear = fmod(ang_correction+obst_bear,2*PI);
@@ -486,103 +468,6 @@ float cost(float seg) {
 
 
 /**
- * Calculate the distance between two points
- *
- * Note: The calculation is partly copied from: http://www.movable-type.co.uk/scripts/latlong.html
- *
- * @param point1: Startpoint for the distance measurement
- * @param point2: Endpoint for the distance measurement
- * @return Distance between the point1 and point2 in meters
- */
-float dist(Point point1, Point point2) {
-
-	float a = sin((point2.lat-point1.lat)/2) * sin((point2.lat-point1.lat)/2) +
-	        cos(point1.lat) * cos(point2.lat) *
-	        sin((point2.lon-point1.lon)/2) * sin((point2.lon-point1.lon)/2);
-	float c = 2 * atan2(sqrt(a), sqrt(1-a));
-
-	return (EARTHRADIUS * c);
-}
-
-
-
-/**
- * Calculate the bearing from a point to another point.
- *
- * Note: The calculation is partly copied from: http://www.movable-type.co.uk/scripts/latlong.html
- *
- * @param start: Startpoint for the bearing measurement
- * @param end:   Endpoint for the bearing measurement
- * @return Bearing from Start ot Endpoint in rad. A true bearing is returned (element of [0:2pi])
- */
-float bearing(Point start, Point end) {
-
-	//Calculate the bearing
-	float dx = cos(start.lat)*sin(end.lat)-sin(start.lat)*cos(end.lat)*cos(end.lon-start.lon);
-	float dy = sin(end.lon-start.lon)*cos(end.lat);
-	float beari = atan2(dy,dx);
-	/* Note: atan2() returns a value between [-pi,pi]*/
-
-	//transform to a true bearing [0,2pi]
-	beari = fmod((beari + 2*PI),(2*PI));
-
-	return beari;
-}
-
-
-
-/**
- * Calculate the apparent Wind Direction
- * This is not the real apparent Wind Direction. It is the direction the boat would measure if it is not moving.
- *
- * @param heading: True heading of the boat
- * @return apparent Wind angle. If positive, the wind comes from Portside, else from Starboard-side
- */
-float appWindDir(float heading) {
-
-	//Calculate Wind-Vector
-    float xw = cos(State.windDir);
-    float yw = sin(State.windDir);
-    float wnorm = sqrt(xw*xw + yw*yw);
-
-    //Calculate Heading-Vector
-    float xh = cos(PI-State.heading);
-    float yh = sin(PI-State.heading);
-    float hnorm = sqrt(xh*xh + yh*yh);
-
-
-    //Calculate Hull (Wind from Starboard <=> -1 ; Wind from Portside <=> 1)
-    float zc = xw*yh - yw*xh;
-
-    if(zc < 0) {
-    	zc = -1;
-    } else {
-    	zc = 1;
-    }
-
-    return zc*(float)acos((xw*xh + yw*yh)/(wnorm*hnorm));
-
-}
-
-
-
-/**
- * Returns the speed to be expected from a Polardiagram
- * Note: only forward Speed is returned
- *
- * @param AppWindDir: Apparent Wind Direction [rad]
- * @param AppWindSpeed: Apparent Wind Speed [m/s]
- */
-float polardiagram(float AppWindDir, float AppWindSpeed) {
-
-	//TODO: Add the boats Polardiagram as a lookup table for different Windspeeds.
-
-	return 1.0f;
-}
-
-
-
-/**
  * Smooths an array of variable size using a moving averaging window of variable size
  *
  * @param *array: Pointer to an array. Note this array is directly modified!
@@ -611,26 +496,7 @@ void smooth(float *array, uint8_t arraySize , uint8_t windowSize) {
 
 
 
-/**
- * Search for the minimum element in an array
- *
- * @param *array: Pointer to an array.
- * @return index of the minimum element in the array
- */
-uint8_t findMin(const float *array, uint8_t arraySize) {
 
-	uint8_t minInd = 0;
-	float minimum = array[0];
-
-	for(uint8_t i = 1; i < arraySize; i++) {
-		if(array[i] < minimum) {
-			minimum = array[i];
-			minInd = i;
-		}
-	}
-
-	return minInd;
-}
 
 
 
