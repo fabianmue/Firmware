@@ -60,9 +60,9 @@ static struct {
 	float ActDs;					//Current Sail Control-Value (as a PWM-Value)
 	uint64_t lastCall; 		    	//Timestamp of the last Functioncall (in [us])
 } State = {
-		.buffer = {0},
-		.meanSpeeds = {0,0},
-		.ds = {0},
+		.buffer = {0},				//Init the Buffer with all zeros
+		.meanSpeeds = {0},			//Init the Array with all zeros
+		.ds = {0},					//Init the Array with all zeros
 		.ActDs = 0,
 		.lastCall = 0
 };
@@ -74,7 +74,7 @@ struct {
 	unsigned int windowSize;		//Windowsize for building the mean over the speeds (window-averaging)
 	float period	;				//Timeinterval between two changes in the sail control value [us]
 } Config = {
-		.k = 2.0f,
+		.k = 2.0f,					//Init the values of the struct with the default values
 		.period = 1.0f,
 		.windowSize = 8
 };
@@ -120,7 +120,7 @@ void essc_speed_update(const struct structs_topics_s *strs_p) {
 
     buffer_add(&(State.buffer), uVel);
 
-    //Update the meanSpeeds-Matrix
+    //Update the meanSpeeds-Matrix (not nice, but should be fine here...)
 	State.meanSpeeds[0] = State.meanSpeeds[1];
 	State.meanSpeeds[1] = mean_speed();
 
@@ -168,7 +168,7 @@ float essc_sail_control_value() {
         	newDs = SAIL_CLOSED_DEG;
         }
 
-        //Update the Sailcontrol-History
+        //Update the Sailcontrol-History (not nice, but should be fine here...)
         State.ds[0] = State.ds[1];
         State.ds[1] = State.ds[2];
         State.ds[2] = newDs;
@@ -343,9 +343,10 @@ bool buffer_updateSize(CircularBuffer *buffer, uint8_t buffersize) {
 		buffer->bufferData_p = malloc(sizeof(float) * buffersize);	//Allocate memory for the new buffer
 
 		//Fill the new buffer with zeros
-		for(uint8_t i = 0; i < buffersize; i++) {
-		        buffer->bufferData_p[i] = 0;
-		}
+		memset(buffer->bufferData_p, 0, buffer->buffersize);
+		//for(uint8_t i = 0; i < buffersize; i++) {
+		//        buffer->bufferData_p[i] = 0;
+		//}
 
 		//Set the new maximum Buffersize
 		buffer->maxBuffersize = buffersize;
