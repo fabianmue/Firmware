@@ -625,14 +625,13 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
     bool completed = false;//initial guess
     *error_p = EVERYTHING_OK; // let's hope we will not have any error
 
-    //if we are using either helmsman0 or helmsman1, use alpha_min_stop_tack_r parameter
+    //implicit tack
     if(tack_data.tack_type == TACK_PI){
-        //implicit tack, return false
         completed = false;
     }
     else if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC){
 
-        //LQR or MPC tack, check if the extended state is in the band near the origin
+        //LQR or MPC tack, check if the extended state is in the tube near the origin
         compute_state_extended_model(ref_act_p);
         bool state_in_band = true;//initial guess
 
@@ -652,9 +651,9 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
                 opc_data.last_time_valid = true;
             }
             else{
-                //the system was already in the band near the origin
+                //the system was already in the tube near the origin
                 uint64_t now_us = hrt_absolute_time();
-                //check if the state has been in the band for at least min_time_in_band_us
+                //check if the state has been in the tube for at least min_time_in_band_us
                 if((now_us - opc_data.last_time_in_band_us) >=
                     opc_data.min_time_in_band_us){
 
@@ -664,6 +663,13 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
                     opc_data.last_time_valid = false;
                     opc_data.time_started_valid = false;
                 }
+            }
+        }
+        else{
+            //now we are outside the tube, check if we were inside it previously
+            if(opc_data.last_time_valid == true){
+                //we were in the tube, but now we are not, remember this
+                opc_data.last_time_valid = false;
             }
         }
         //perfrom anyway safety check to see if we have to force stopping tack
