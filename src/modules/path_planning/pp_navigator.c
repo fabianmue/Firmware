@@ -11,6 +11,7 @@
 
 #include "pp_navigator.h"
 #include "pp_config.h"
+#include "pp_navigation_helper.h"
 
 
 /**Struct containing the status of the Navigator */
@@ -99,8 +100,8 @@ void nav_heading_update(const struct structs_topics_s *strs_p) {
  */
 void nav_position_update(const struct structs_topics_s *strs_p) {
 
-	nav_state.position.lat = strs_p->vehicle_global_position.lat * DEG2RAD;
-	nav_state.position.lon = strs_p->vehicle_global_position.lon * DEG2RAD;
+	//nav_state.position.lat = (strs_p->vehicle_global_position.lat) * DEG2RAD;
+	//nav_state.position.lon = (strs_p->vehicle_global_position.lon) * DEG2RAD;
 
 } //end of nav_heading_update
 
