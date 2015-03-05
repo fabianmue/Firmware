@@ -190,7 +190,8 @@ int pp_thread_main(int argc, char *argv[]) {
 
 
     //** INIT FUNCTIONS
-	//TODO: Add Init Functions here
+
+	//nav_init();	//Init a Navigator
 
 
 	//**SET THE THREAD-STATUS TO RUNNING

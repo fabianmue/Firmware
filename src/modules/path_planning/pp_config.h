@@ -37,5 +37,30 @@
 #define PIHALF	     1.57079632679f 		//pi/2
 
 
+/* DEFINE MAXIMUM NUMBER OF TARGETS
+ * Maximum number of targets (waypoints) */
+#define MAXTARGETNUMBER 5
+
+
+/* DEFINE MAXIMUM NUMBER OF OBSTACLES
+ * Maximum number of obstacles */
+#define MAXOBSTACLENUMBER 3
+
+
+/* INITIAL TARGET
+ * Position of the initial Target position */
+#define HOMELAT 47.348877f	//Note: This is a point outside of the testarea near Tiefenbrunnen ZH
+#define HOMELON 8.5604200f
+
+
+/* ALGORITHM FLAG
+ * Chooses a path-planning algorithm
+ * 1 = Cost-Function-Method
+ * 2 = Potential-Field-Method
+ *
+ * DEFAULT = 1 = Cost-Function-Method */
+extern uint8_t pp_algorithm;
+
+
 
 #endif /* CONFIG_H_ */

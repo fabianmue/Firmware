@@ -23,10 +23,6 @@
 
 #define MAXOBSTACLES 10  	 				//Maximum number of obstacles
 
-#define ANG_UPWIND   0.7854f				//Maximum Angle for the Upwind-Controller (45°) [rad]
-#define ANG_NORMAL   2.0944f 				//Maximum Angle for the Normal-Controller (120°) [rad]
-#define ANG_DOWNWIND 2.6180f				//Maximum Angle for the Downwind-Controller (150°) [rad]
-
 #define HEADRESOLUTION 0.0872664625997f 	//Resolution for simulating the headings in [rad] (here 5°)
 #define HEADRANGE	   1.74532925199f   	//Range for simulating the headings in [rad] (here [-100°...100°] wrt. boat-heading)
 
@@ -102,7 +98,7 @@ void smooth(float *array, uint8_t arraySize , uint8_t windowSize);
  * This Function calculates the optimal heading according to the cost-function and calls the corresponding
  * Function dependent on the heading. It is simulates a navigator, as he would be present on a real boat.
  */
-void navigator(void) {
+void cm_NewHeadingReference(void) {
 
 	//Iterate over the possible "probe" headings
 	float seg_start = (State.heading-HEADRANGE);
@@ -134,49 +130,12 @@ void navigator(void) {
 	//Get corresponding minimum Heading
 	float optHeading = headMat[minIndex];
 
+	//DEBUG
+	optHeading = optHeading+1;
 
 
-	//****DECISION MAKING
-	/* In the following section the decisions based on the optimal Heading are made. This means
-	 * that the corresponding controller is selected and the order for doing a maneuver is generated */
-	float NewWind = nh_appWindDir(optHeading,State.windDir); 		//New Apparent Winddirection
-	float OldWind = nh_appWindDir(State.heading,State.windDir);		//Current Apparent Winddirection
 
 
-	/*Decide if we have to do a tack or a gybe
-	* A maneuver is necessary, iff we change the hull. A change of hull is representet as a change of sign of the
-	* apparent Wind direction.
-	*/
-	if(!((NewWind < 0 && OldWind < 0) || (NewWind > 0 && OldWind > 0))) {
-		//A Maneuver is Necessary
-
-		if(fabsf(NewWind) > PIHALF) {
-			//A tack is necessary to reach the new optimal heading
-
-			//TODO: Add the function from Marco here
-		} else {
-			//A gybe is necessary to reach the new optimal heading
-
-			//TODO: Add the function from Marco here
-		}
-
-	}
-
-
-	//Decide if we are upwind sailing
-	if(fabsf(NewWind) <= ANG_UPWIND) {
-		//TODO: Call the Upwind-Sailing-Controller
-	}
-
-	//Decide if we are in the normal-sailing region
-	if((fabsf(NewWind) > ANG_UPWIND) && (fabsf(NewWind) < ANG_NORMAL)) {
-		//TODO: Call the Normal-Sailing-Controller
-	}
-
-	//Decide if we are downwind sailing
-	if((fabsf(NewWind) >= ANG_NORMAL) && (fabsf(NewWind) < ANG_DOWNWIND)) {
-		//TODO: Call the Downwind-Sailing-Controller
-	}
 
 }
 
@@ -197,22 +156,6 @@ void ppc_set_target(float lat, float lon) {
 	//Set the Field-Variable
 	Field.target.lat = lat;
 	Field.target.lon = lon;
-}
-
-
-
-/**
- * Set the position of the obstacle (from the worldserver, done by QGround Control)
- *
- * @param	lat: latitude of the obstacle [°]
- * @param   lon: longitude of the obstacle [°]
-*/
-void ppc_set_obstacle(float lat, float lon) {
-
-	//Assume that the obstacle set over the worldserver is always stored at position 0 in the Matrix
-	Field.obstacles[0].lat = lat;
-	Field.obstacles[0].lon = lon;
-
 }
 
 
@@ -239,54 +182,6 @@ void ppc_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, flo
 	Config.GLee = GLee;
 	Config.ObstSafetyRadius = ObstSafetyRadius;
 	Config.ObstHorizon = ObstHorizon;
-}
-
-
-
-/**
- * Update the winddirection
- *
- * @param	lat: latitude of the target [°]
- * @param   lon: longitude of the target [°]
-*/
-void ppc_update_WSAI(const struct structs_topics_s *strs_p) {
-
-	//TODO
-}
-
-
-
-/**
- * Update the current position and heading
- *
- * @param	lat: latitude of the target [°]
- * @param   lon: longitude of the target [°]
-*/
-void ppc_update_GPOS(const struct structs_topics_s *strs_p) {
-
-	//Update the Position
-	//TODO
-	float lat = strs_p->vehicle_global_position.lat;
-	float lon = strs_p->vehicle_global_position.lon;
-
-	State.position.lat = lat * DEG2RAD;
-	State.position.lon = lon * DEG2RAD;
-
-}
-
-
-
-/**
- * Update the current heading
- *
- * @param	TODO
-*/
-void ppc_update_HEADING(const struct structs_topics_s *strs_p) {
-
-	//TODO
-
-	State.heading = 0.0f; //Store the current heading in radians
-
 }
 
 

@@ -14,7 +14,35 @@
 
 #include <stdbool.h>
 
+#include "pp_config.h"
 #include "pp_topics_handler.h"
+#include "pp_navigation_helper.h"
+#include "pp_cost_method.h"
+
+
+/**Struct containing the status of the Navigator */
+struct nav_state_s {
+	Point position; 				//Last known Position (lat/lon) [rad]
+	float heading_cur;				//Current Heading of the boat [rad]
+	float heading_ref;				//Heading Reference for optimal path [rad]
+	float wind_dir; 				//Direction of the wind (where the wind is blowing to [rad]
+	uint8_t targetNum; 				//Current number of target to be reached (limits number of targets to 256)
+	bool tack;						//true, iff Tack is in progress
+	bool gybe;						//true, iff Gybe is in progress
+};
+
+/**Struct containing the Race-Field-Information */
+struct nav_field_s {
+	Point targets[MAXTARGETNUMBER];
+	uint8_t NumberOfTargets;
+	Point obstacles[MAXOBSTACLENUMBER];
+	uint8_t NumberOfObstacles;
+};
+
+
+
+/** @brief Init a Navigator */
+void nav_init(void);
 
 
 /** @brief Calculate a new optimal heading reference */
@@ -35,6 +63,14 @@ void nav_position_update(const struct structs_topics_s *strs_p);
 
 /** @brief New heading information is available */
 void nav_heading_update(const struct structs_topics_s *strs_p);
+
+
+/** @brief Set Obstacles */
+void nav_setObstacle(uint8_t ObstNumber, Point ObstPos);
+
+
+/** @brief Set Targets */
+void nav_setTarget(uint8_t TargetNumber, Point TargetPos);
 
 
 #endif /* PP_NAVIGATOR_H_ */

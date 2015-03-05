@@ -35,7 +35,7 @@
 #
 MODULE_COMMAND	= path_planning
 SRCS	= path_planning.c\
-          pp_cost_method.c\
+		  pp_cost_method.c\
           pp_navigation_helper.c\
           pp_navigator.c\
           pp_parameters.c\
