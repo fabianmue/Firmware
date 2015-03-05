@@ -11,23 +11,16 @@
 
 #include "pp_navigator.h"
 
+#include "pp_cost_method.h"
+
 
 
 /* Init the Struct containing the current state of the Navigator */
- struct nav_state_s state = {
-		.heading_cur = 0,
-		.heading_ref = 0,
-		.wind_dir = 0,
-		.tack = false,
-		.gybe = false
-};
+static struct nav_state_s state;
 
 
 /**Struct containing the Race-Field-Information */
-struct nav_field_s field = {
-		.NumberOfTargets = 1,
-		.NumberOfObstacles = 1
-};
+static struct nav_field_s field;
 
 
 /** Which algorithm should be used for pathplanning */
@@ -43,6 +36,10 @@ uint8_t pp_algorithm = 1;  	//Set Cost-Function-Method as the default algorithm
  */
 void nav_init(void) {
 
+	//Set the initial values for the Field
+	field.NumberOfTargets = 1;
+	field.NumberOfObstacles = 1;
+
 	//Set the initial Target-Position
 	field.targets[0].lat = HOMELAT;
 	field.targets[0].lat = HOMELON;
@@ -50,6 +47,14 @@ void nav_init(void) {
 	//Set the initial Obstacle-Position
 	field.obstacles[0].lat = 0;
 	field.obstacles[0].lon = 0;
+
+	//Set the initial values for the State
+	state.heading_cur = 0;
+	state.heading_ref = 0;
+	state.wind_dir = 0;
+	state.tack = false;
+	state.gybe = false;
+
 
 }
 
@@ -62,7 +67,6 @@ void nav_navigate(void) {
 
 	/** A new reference heading should only be calculated if the boat is not doing a maneuver */
 	if(!state.tack && !state.gybe) {
-
 
 		if(pp_algorithm == 1) {
 			//TODO add the Cost-Function Reference Heading here

@@ -17,7 +17,6 @@
 #include "pp_config.h"
 #include "pp_topics_handler.h"
 #include "pp_navigation_helper.h"
-#include "pp_cost_method.h"
 
 
 /**Struct containing the status of the Navigator */
@@ -25,7 +24,8 @@ struct nav_state_s {
 	Point position; 				//Last known Position (lat/lon) [rad]
 	float heading_cur;				//Current Heading of the boat [rad]
 	float heading_ref;				//Heading Reference for optimal path [rad]
-	float wind_dir; 				//Direction of the wind (where the wind is blowing to [rad]
+	float wind_dir; 				//average direction of the wind (where the wind is blowing to) [rad]
+	float wind_speed; 				//average Wind Speed [m/s]
 	uint8_t targetNum; 				//Current number of target to be reached (limits number of targets to 256)
 	bool tack;						//true, iff Tack is in progress
 	bool gybe;						//true, iff Gybe is in progress

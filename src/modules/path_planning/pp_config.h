@@ -49,8 +49,8 @@
 
 /* INITIAL TARGET
  * Position of the initial Target position */
-#define HOMELAT 47.348877f	//Note: This is a point outside of the testarea near Tiefenbrunnen ZH
-#define HOMELON 8.5604200f
+#define HOMELAT 47.348877f * DEG2RAD	//Note: This is a point outside of the testarea near Tiefenbrunnen ZH
+#define HOMELON 8.5604200f * DEG2RAD
 
 
 /* ALGORITHM FLAG
