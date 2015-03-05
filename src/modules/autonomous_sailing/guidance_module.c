@@ -203,7 +203,7 @@ static struct {
     float lqr_gain[3]; ///lqr gain vector
     uint64_t lqr_sampling_time_us;///sampling type of the LQR, in uSec
     uint64_t time_last_lqr; ///time when last LQR was computed
-    float delta_values[3]; ///delta values to specify the band around the origin
+    float delta_values[2]; ///delta values to specify the tube around the origin
     uint64_t min_time_in_band_us; ///min microseconds the system should be in the band to complete tacking
     uint64_t last_time_in_band_us;///last time (in this tack) the systm was detected into the band
     uint64_t time_started_tack_us;///first time (in this tack) the systm was detected into the band
@@ -608,8 +608,8 @@ void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code){
  * Determine when a tack maneuver is completed
  *
  * If we are using either LQR or MPC tack:
- * the tack maneuver is completed if and only if every state of the extended system
- * x[i], i = 0,1,2, computed by @see compute_state_extended_model(), is in the range
+ * the tack maneuver is completed if and only if stae[1] and state[2] of the extended system
+ * , computed by @see compute_state_extended_model(), is in the range
  * [ -opc_data.delta_values[i], opc_data.delta_values[i] ]
  * for at least opc_data.min_time_in_band_us micro seconds.
  * For safety reason, the tack will be considered completed if the time elapsead since the
@@ -636,8 +636,9 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
         compute_state_extended_model(ref_act_p);
         bool state_in_band = true;//initial guess
 
-        for(uint8_t i = 0; i < 3; i++){
-            if(my_fabs(opc_data.state_extended_model[i]) >
+        for(uint8_t i = 0; i < 2; i++){
+            //remeber not to check if yaw rate is in the tube 'cause we don't have a delta for it
+            if(my_fabs(opc_data.state_extended_model[i+1]) >
                        opc_data.delta_values[i])
                 state_in_band = false;
         }
@@ -1083,7 +1084,7 @@ void compute_minusAExt_times_x0(float *minusAExt_times_x0){
 void gm_set_band_data(float *delta, float min_time_s, float safety_time_stop_tack_s){
 
     //save delta and make sure every value is positive
-    for(uint8_t i = 0; i < 3; i++){
+    for(uint8_t i = 0; i < 2; i++){
         opc_data.delta_values[i] = (delta[i] > 0.0f) ? delta[i] : -delta[i];
     }
     //save mint_time

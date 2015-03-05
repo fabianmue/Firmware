@@ -403,13 +403,6 @@ PARAM_DEFINE_FLOAT(ASO_MPC_HF42, -1.3281703473f);
 PARAM_DEFINE_FLOAT(ASO_MPC_HF43, -5.5144280101f);
 PARAM_DEFINE_FLOAT(ASO_MPC_HF44, 1.8832249457f);
 
-/**
- * Create a band around the origin for the yaw rate value.
- * Value in degrees.
- *
- * @min 0
-*/
-PARAM_DEFINE_FLOAT(ASO_DLT_YR_D, 10.0f);
 
 /**
  * Create a band around the origin for the yaw value.
@@ -429,7 +422,7 @@ PARAM_DEFINE_FLOAT(ASO_DLT_RD_CM, 0.15f);
 
 /**
  * Min time (in seconds) the state of the system should stay in
- * the band near the origin (defined by @see ASO_DLT_YR_D, @see ASO_DLT_Y_D
+ * the band near the origin (defined by @see ASO_DLT_Y_D
  * and @see ASO_DLT_RD_CM) in order to consider the tack maneuver completed.
  *
  * @min 0
@@ -655,7 +648,6 @@ static struct pointers_param_qgc_s{
     param_t mpc_hf_44_pointer; /**< pointer to ASO_MPC_HF44*/
 
     //--- params to define the band near the origin
-    param_t delta_yaw_rate_pointer; /**< pointer to ASO_DLT_YR_D*/
     param_t delta_yaw_pointer; /**< pointer to ASO_DLT_Y_D*/
     param_t delta_rudder_pointer; /**< pointer to ASO_DLT_RD_CM*/
 
@@ -790,7 +782,6 @@ void p_param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.mpc_hf_44_pointer = param_find("ASO_MPC_HF44");
 
     //--- band params
-    pointers_param_qgc.delta_yaw_rate_pointer = param_find("ASO_DLT_YR_D");
     pointers_param_qgc.delta_yaw_pointer = param_find("ASO_DLT_Y_D");
     pointers_param_qgc.delta_rudder_pointer = param_find("ASO_DLT_RD_CM");
 
@@ -1076,17 +1067,15 @@ void p_param_update(struct parameters_qgc *params_p,
                  mpc_A, mpc_B, mpc_pred_horiz_steps);
 
     //--- define band around origin
-    float delta_vect[3];
+    float delta_vect[2];
     float min_time_in_band;
     float safety_time_stop_s;
 
-    param_get(pointers_param_qgc.delta_yaw_rate_pointer, &delta_vect[0]);
-    param_get(pointers_param_qgc.delta_yaw_pointer, &delta_vect[1]);
-    param_get(pointers_param_qgc.delta_rudder_pointer, &delta_vect[2]);
+    param_get(pointers_param_qgc.delta_yaw_pointer, &delta_vect[0]);
+    param_get(pointers_param_qgc.delta_rudder_pointer, &delta_vect[1]);
 
-    //convert delta0 and delta1 values from deg to rad
-    for(uint8_t i = 0; i < 2; i++)
-        delta_vect[i] = delta_vect[i] * deg2rad;
+    //convert delta0 (daluta for yaw angle) from deg to rad
+    delta_vect[0] = delta_vect[0] * deg2rad;
 
     param_get(pointers_param_qgc.min_time_in_band_poniter, &min_time_in_band);
     param_get(pointers_param_qgc.safety_stop_tack_pointer, &safety_time_stop_s);
@@ -1147,7 +1136,6 @@ void p_param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param2.type_of_tack = (uint16_t)tack_type;
     strs_p->boat_qgc_param2.delta1 = delta_vect[0];
     strs_p->boat_qgc_param2.delta2 = delta_vect[1];
-    strs_p->boat_qgc_param2.delta3 = delta_vect[2];
     strs_p->boat_qgc_param2.use_fixed_twd = (uint16_t)use_fixed_twd;
 
     orb_publish(ORB_ID(boat_qgc_param2), pubs_p->boat_qgc_param2, &(strs_p->boat_qgc_param2));
