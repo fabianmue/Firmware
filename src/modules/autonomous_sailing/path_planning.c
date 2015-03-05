@@ -59,7 +59,7 @@ static struct{
 }grid_lines;
 
 
-static struct reference_actions_s ref_act = {.alpha_star = 0.5f, .should_tack = false};
+static struct reference_actions_s ref_act = {.alpha_star = 0.7853981f, .should_tack = false};
 
 static float current_grid_goal_x_m = 0.0f;//current x coordinate of grid line to reach [m]
 static bool current_grid_valid = false;
@@ -283,6 +283,22 @@ void pp_boat_should_tack(int32_t tack_now){
         make_boat_tack = (tack_now == 0) ? false : true;
 }
 
+/**
+ * When sailing in manual mode, use this function to tell path planning what's the current
+ * alpha angle. Path planning module will figure at at which hail we are sailing at,
+ * in this way when you will switch to autonomous sailing, the current haul will be the
+ * starting haul.
+ * The magnitude of the alpha star angle (the reference) is set by QGC using
+ * @see pp_set_alpha_star() .
+ *
+ * @param alpha_dumas   alpha angle in Dumas' convention.
+*/
+void pp_set_current_alpha(float alpha_dumas){
+
+    float abs_alpha_str = fabsf(ref_act.alpha_star);
+
+    ref_act.alpha_star = (alpha_dumas < 0.0f) ? -abs_alpha_str : abs_alpha_str;
+}
 
 /**
  * Based on a new global position estimate, see if there is a new reference action to perform.

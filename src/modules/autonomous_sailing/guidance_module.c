@@ -43,9 +43,10 @@
 #include "guidance_module.h"
 
 //constant for tack_type
-#define TACK_PI     0
+#define TACK_IMPLICIT     0
 #define TACK_LQR    1
 #define TACK_MPC    2
+#define TACK_P      3
 
 //const for type of rudder controller during normal sailing
 #define SAILING_RUD_STD_PI 0 ///standard PI with anti-wind up action
@@ -55,6 +56,54 @@
 #define EVERYTHING_OK 0
 #define FORCED_TACK_STOP 1 //tack had to be stopped for safety reason
 #define NO_MPC_SOLVE_FNC 2 //no available solve function for the set prediction horizon
+
+#define M_PI_F 3.14159265358979323846f
+#define TWO_M_PI_F 6.28318530717959f
+
+static char txt_msg[150]; ///used to send messages to QGC
+static const float deg2rad = 0.0174532925199433f; // pi / 180
+
+/** @brief PI controller with conditional integration*/
+float pi_controller(const float *ref_p, const float *meas_p);
+
+/** @brief if the boat should tack, perform tack maneuver*/
+void tack_action(struct reference_actions_s *ref_act_p,
+                 float *p_rudder_cmd, float *p_sails_cmd,
+                 struct structs_topics_s *strs_p);
+
+/** @brief determine if the tack maneuver is completed*/
+bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p);
+
+/** @brief rule based control system for sails during upwind sailing*/
+float sail_controller(float alpha);
+
+/** @brief saturation on command to the rudder servo motor*/
+float rudder_saturation(float command);
+
+/** @brief saturation on command to the sails servo motor*/
+float sail_saturation(float command);
+
+/** @brief action to perform when tack maneuver is completed*/
+void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code);
+
+/** @brief control rudder using LQR controller*/
+void lqr_control_rudder(float *p_rudder_cmd,
+                        const struct reference_actions_s *ref_act_p,
+                        struct structs_topics_s *strs_p);
+
+/** @brief control rudder using MPC controller*/
+void mpc_control_rudder(float *p_rudder_cmd,
+                        const struct reference_actions_s *ref_act_p,
+                        struct structs_topics_s *strs_p);
+
+/** @brief compute actual state of the extended model used by both LQR and MPC*/
+void compute_state_extended_model(const struct reference_actions_s *ref_act_p);
+
+/** @brief compute -A * x_0, used by Forces as initil parameter*/
+void compute_minusAExt_times_x0(float* minusAExt_times_x0);
+
+/** @brief compute rudder action for P tack*/
+float p_tack_rudder(const struct reference_actions_s *ref_act_p);
 
 /// Forces parameters
 struct forces_params_s{
@@ -134,14 +183,6 @@ struct forces_info_s{
     float solvetime;
 };
 
-#define M_PI_F 3.14159265358979323846f
-#define TWO_M_PI_F 6.28318530717959f
-
-static char txt_msg[150]; ///used to send messages to QGC
-static const float deg2rad = 0.0174532925199433f; // pi / 180
-
-//static float sum_error_pi = 0.0f; ///error sum from iterations of guidance_module, used in PI
-
 //static data for tack action
 static struct{
     bool boat_is_tacking;       ///true if boat is performing a tack maneuver
@@ -172,20 +213,24 @@ static struct{
     float kaw;              ///constant fo anti-wind up in normal digital PI
     float cp;                ///constant for condition integral, in proportional action
     float ci;                ///constant for condition integral, in integral action
-    uint8_t rudder_controller_type; /// 0 = standard PI 1 = conditional PI 2 = LQR
+    uint8_t rudder_controller_type; /// 0 = standard PI 1 = conditional PI
     float last_command;     ///last command provided by the PI
     float sum_error_pi;     ///error sum from iterations of guidance_module, used in PI
     float abs_rud_saturation;  ///rudder saturation set by QGC
+    float p_tack_kp;           ///kp for P controller during P_TACK maneuver
+    float p_tack_cp;           ///cp for P controller during P_TACK maneuver
 } rudder_controller_data =  {
                                 .p = 0.35f,
                                 .i = 0.0f,
                                 .kaw = 0.5f,
                                 .cp = 0.35f,
                                 .ci = 0.0f,
-                                .rudder_controller_type = 0,//start with standard PI
+                                .rudder_controller_type = 0,//start with conditional PI
                                 .last_command = 0.0f,
                                 .sum_error_pi = 0.0f,
-                                .abs_rud_saturation = MAX_RUDDER_SATURATION
+                                .abs_rud_saturation = MAX_RUDDER_SATURATION,
+                                .p_tack_kp = 0.73661977f,
+                                .p_tack_cp = 0.1f
                             };
 
 //static data for LQR and MPC controllers
@@ -222,46 +267,6 @@ static struct {
                                 .safety_time_stop_tack = MIN_SAFETY_TIME_STOP_TCK,
                                 .pred_horz_steps = 20
                             };
-
-
-/** @brief PI controller with conditional integration*/
-float pi_controller(const float *ref_p, const float *meas_p);
-
-/** @brief if the boat should tack, perform tack maneuver*/
-void tack_action(struct reference_actions_s *ref_act_p,
-                 float *p_rudder_cmd, float *p_sails_cmd,
-                 struct structs_topics_s *strs_p);
-
-/** @brief determine if the tack maneuver is completed*/
-bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p);
-
-/** @brief rule based control system for sails during upwind sailing*/
-float sail_controller(float alpha);
-
-/** @brief saturation on command to the rudder servo motor*/
-float rudder_saturation(float command);
-
-/** @brief saturation on command to the sails servo motor*/
-float sail_saturation(float command);
-
-/** @brief action to perform when tack maneuver is completed*/
-void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code);
-
-/** @brief control rudder using LQR controller*/
-void lqr_control_rudder(float *p_rudder_cmd,
-                        const struct reference_actions_s *ref_act_p,
-                        struct structs_topics_s *strs_p);
-
-/** @brief control rudder using MPC controller*/
-void mpc_control_rudder(float *p_rudder_cmd,
-                        const struct reference_actions_s *ref_act_p,
-                        struct structs_topics_s *strs_p);
-
-/** @brief compute actual state of the extended model used by both LQR and MPC*/
-void compute_state_extended_model(const struct reference_actions_s *ref_act_p);
-
-/** @brief compute -A * x_0, used by Forces as initil parameter*/
-void compute_minusAExt_times_x0(float* minusAExt_times_x0);
 
 /** @brief dummy abs function for float value*/
 float my_fabs(float x){
@@ -317,14 +322,16 @@ void gm_set_sail_data(float sail_closed_cmd, float alpha_sail_closed_r, float al
 
 
 /**
- * Tack maneuver can be performed in three different ways.
+ * Tack maneuver can be performed in four different ways.
  * The first one (type is equal to 0) is performed by changing only the reference
  * angle with respect to the wind (alpha) and then "wait" for the PI controller
- * of the rudder to follow this changing.
+ * of the rudder to follow this changing, this is called implicit tack.
  *
  * The second one (type equal to 1) is performed by a LQR controller.
  *
  * The third one (type equal to 2) is performed by a MPC controller.
+ *
+ * The fourth one (type equal to 3) is performed by a P controller.
  *
  * @param tack_type               type of tack to perform
 */
@@ -333,7 +340,7 @@ void gm_set_tack_data(uint16_t tack_type){
 
     //notify the changing to QGroundControl what kind of tack the boat will do
     if(old_tack_type != tack_type){
-        if(tack_type == TACK_PI){
+        if(tack_type == TACK_IMPLICIT){
             smq_send_log_info("Implicit (PI) Tack.");
             //save new value
             tack_data.tack_type = tack_type;
@@ -345,6 +352,11 @@ void gm_set_tack_data(uint16_t tack_type){
         }
         else if(tack_type == TACK_MPC){
             smq_send_log_info("MPC Tack.");
+            //save new value
+            tack_data.tack_type = tack_type;
+        }
+        else if(tack_type == TACK_P){
+            smq_send_log_info("P Tack.");
             //save new value
             tack_data.tack_type = tack_type;
         }
@@ -510,13 +522,15 @@ void tack_action(struct reference_actions_s *ref_act_p,
         }
     }
     else{
-        //we must start tack maneuver now
+        //we must start the tack maneuver now
         tack_data.boat_is_tacking = true;
 
-         /*if we are using either LQR or MPC, save the time when we start tacking and
-          * tell to controller_data module that an optimal tack has just been started
+         /*if we are using either LQR or MPC or P tack, save the time when we start tacking and
+          * tell controller_data module that a tack has just been started
           */
-         if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC){
+         if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC
+            || tack_data.tack_type == TACK_P){
+
              opc_data.time_started_tack_us = hrt_absolute_time();
              opc_data.time_started_valid = true;
 
@@ -528,7 +542,7 @@ void tack_action(struct reference_actions_s *ref_act_p,
      * Check which type of tack maneuver we should perform by checking
      * tack_data.tack_type
     */
-    if(tack_data.tack_type == TACK_PI){
+    if(tack_data.tack_type == TACK_IMPLICIT){
         /*perform tack maneuver by simply returning the control of rudder
          * and sails to normal controller.
          *
@@ -557,6 +571,12 @@ void tack_action(struct reference_actions_s *ref_act_p,
         //use standard sail controller
         *p_sails_cmd = sail_controller(cd_get_alpha_dumas());
     }
+    else if(tack_data.tack_type == TACK_P){
+        //P controller for p tack
+        *p_rudder_cmd = p_tack_rudder(ref_act_p);
+        //use standard sail controller
+        *p_sails_cmd = sail_controller(cd_get_alpha_dumas());
+    }
     else{
         //error, no valid type of tack! End tack for safety reason
         tack_completed(ref_act_p, FORCED_TACK_STOP);
@@ -582,8 +602,9 @@ void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code){
     //notify to path_planning that we've completed the tack action
     pp_notify_tack_completed();
 
-    //if we had used either LQR or MPC, notify tack completed to controller_data
-    if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC)
+    //if we had used either LQR or MPC or P tack, notify tack completed to controller_data
+    if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC
+       || tack_data.tack_type == TACK_P)
         cd_optimal_tack_completed();
 
     //check error_code to give a feedback to QGroundControl
@@ -607,14 +628,14 @@ void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code){
 /**
  * Determine when a tack maneuver is completed
  *
- * If we are using either LQR or MPC tack:
- * the tack maneuver is completed if and only if stae[1] and state[2] of the extended system
+ * If we are using either LQR or MPC or P tack:
+ * the tack maneuver is completed if and only if state[1] and state[2] of the extended system
  * , computed by @see compute_state_extended_model(), is in the range
  * [ -opc_data.delta_values[i], opc_data.delta_values[i] ]
  * for at least opc_data.min_time_in_band_us micro seconds.
  * For safety reason, the tack will be considered completed if the time elapsead since the
  * starting of the maneuver is greater or equal to SAFETY_TIME_STOP_TCK constant; even
- * if the system is not in the band.
+ * if the system is not in the tube.
  *
  * @param error_p <-- 0 if everything is fine, error code otherwise
  *
@@ -626,17 +647,18 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
     *error_p = EVERYTHING_OK; // let's hope we will not have any error
 
     //implicit tack
-    if(tack_data.tack_type == TACK_PI){
+    if(tack_data.tack_type == TACK_IMPLICIT){
         completed = false;
     }
-    else if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC){
+    else if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC
+            || tack_data.tack_type == TACK_P){
 
-        //LQR or MPC tack, check if the extended state is in the tube near the origin
+        //check if the extended state is in the tube near the origin
         compute_state_extended_model(ref_act_p);
         bool state_in_band = true;//initial guess
 
         for(uint8_t i = 0; i < 2; i++){
-            //remeber not to check if yaw rate is in the tube 'cause we don't have a delta for it
+            //remember not to check if yaw rate is in the tube 'cause we don't have a delta for it
             if(my_fabs(opc_data.state_extended_model[i+1]) >
                        opc_data.delta_values[i])
                 state_in_band = false;
@@ -646,7 +668,7 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
             //the extended state is in the band near the origin
 
             if(opc_data.last_time_valid == false){
-                //This is the first time the state (re)entered in the band near the origin
+                //This is the first time the state (re)entered in the band near the origin, save time
                 opc_data.last_time_in_band_us = hrt_absolute_time();
                 opc_data.last_time_valid = true;
             }
@@ -668,7 +690,7 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
         else{
             //now we are outside the tube, check if we were inside it previously
             if(opc_data.last_time_valid == true){
-                //we were in the tube, but now we are not, remember this
+                //we were in the tube, but now we aren't, remember this
                 opc_data.last_time_valid = false;
             }
         }
@@ -1170,6 +1192,27 @@ float sail_saturation(float command){
 }
 
 /**
+ * Set Kp and Cp constant for the P controller during tack maneuver type = P_TACK
+*/
+void gm_set_p_tack_data(float kp, float cp){
+    rudder_controller_data.p_tack_kp = kp;
+    rudder_controller_data.p_tack_cp = cp;
+}
+
+/**
+ *
+*/
+float p_tack_rudder(const struct reference_actions_s *ref_act_p){
+    float error = ref_act_p->alpha_star - cd_get_alpha_dumas();
+    float gain;
+
+    //conditional P: rud = k(e) * e, where k(e) = kp / (1 + cp * abs(e))
+    gain = rudder_controller_data.p_tack_kp / (1.0f + rudder_controller_data.p_tack_cp * my_fabs(error));
+
+    return gain * error;
+}
+
+/**
  * Main function to control the boat while sailing.
  *
  * If the remote control is in the manual mode, just copy the rudder and
@@ -1191,6 +1234,8 @@ void gm_guidance_module(struct reference_actions_s *ref_act_p,
         //read rudder and sails command from RC and save them
         rudder_command = strs_p->rc_channels.channels[RC_RUD_INDEX];
         sail_command = strs_p->rc_channels.channels[RC_SAIL_INDEX];
+        //tel to path planning what's the current alpha
+        pp_set_current_alpha(alpha);
     }
     else{
         //Autonomous mode

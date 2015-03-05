@@ -104,4 +104,7 @@ void gm_set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3],
 /** @brief set data to specify when 'optimal' tack is completed*/
 void gm_set_band_data(float* delta, float min_time_s, float safety_time_stop_tack_s);
 
+/** @brief set data for P controller during P tack*/
+void gm_set_p_tack_data(float kp, float cp);
+
 #endif //GUIDANCE_MODULE_H

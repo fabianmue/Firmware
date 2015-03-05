@@ -42,6 +42,7 @@
 #ifndef PATH_PLANNING_DATA_H_
 #define PATH_PLANNING_DATA_H_
 
+
 #include <stdio.h>//bool type
 
 //navigation module
@@ -91,5 +92,8 @@ void pp_reuse_last_grids(bool use);
 
 /** @brief tell to the boat if it should tack or not*/
 void pp_boat_should_tack(int32_t tack_now);
+
+/** @brief tell to path planning which is the current alpha*/
+void pp_set_current_alpha(float alpha_dumas);
 
 #endif /* PATH_PLANNING_DATA_H_ */

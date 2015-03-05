@@ -191,7 +191,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
     struct parameters_qgc params;
 
     //optimal path parameters
-    struct reference_actions_s ref_act = {.alpha_star = 0.5f, .should_tack = false};
+    struct reference_actions_s ref_act = {.alpha_star = 0.7853981f, .should_tack = false};
 
     warnx(" starting\n");
 

@@ -1114,7 +1114,8 @@ void p_param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.tack_p_kp_pointer, &p_tack_kp);
     param_get(pointers_param_qgc.tack_p_cp_pointer, &p_tack_cp);
 
-    //give these two values to guidance module!!!
+    //give these two values to guidance module
+    gm_set_p_tack_data(p_tack_kp, p_tack_cp);
 
     //save boat_opt_matrices
     strs_p->boat_opt_mat.timestamp = hrt_absolute_time();
