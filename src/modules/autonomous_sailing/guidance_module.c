@@ -64,15 +64,14 @@ static char txt_msg[150]; ///used to send messages to QGC
 static const float deg2rad = 0.0174532925199433f; // pi / 180
 
 /** @brief PI controller with conditional integration*/
-float pi_controller(const float *ref_p, const float *meas_p);
+float pi_controller(float meas);
 
-/** @brief if the boat should tack, perform tack maneuver*/
-void tack_action(struct reference_actions_s *ref_act_p,
-                 float *p_rudder_cmd, float *p_sails_cmd,
+/** @brief Perform tack or jybe maneuver*/
+void do_maneuver(float *p_rudder_cmd, float *p_sails_cmd,
                  struct structs_topics_s *strs_p);
 
-/** @brief determine if the tack maneuver is completed*/
-bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p);
+/** @brief determine if a maneuver is completed*/
+bool is_maneuver_completed(int8_t *error_p);
 
 /** @brief rule based control system for sails during upwind sailing*/
 float sail_controller(float alpha);
@@ -83,27 +82,34 @@ float rudder_saturation(float command);
 /** @brief saturation on command to the sails servo motor*/
 float sail_saturation(float command);
 
-/** @brief action to perform when tack maneuver is completed*/
-void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code);
+/** @brief action to perform when a maneuver is completed*/
+void maneuver_completed(int8_t error_code);
 
 /** @brief control rudder using LQR controller*/
 void lqr_control_rudder(float *p_rudder_cmd,
-                        const struct reference_actions_s *ref_act_p,
                         struct structs_topics_s *strs_p);
 
 /** @brief control rudder using MPC controller*/
 void mpc_control_rudder(float *p_rudder_cmd,
-                        const struct reference_actions_s *ref_act_p,
                         struct structs_topics_s *strs_p);
 
 /** @brief compute actual state of the extended model used by both LQR and MPC*/
-void compute_state_extended_model(const struct reference_actions_s *ref_act_p);
+void compute_state_extended_model();
 
 /** @brief compute -A * x_0, used by Forces as initil parameter*/
 void compute_minusAExt_times_x0(float* minusAExt_times_x0);
 
-/** @brief compute rudder action for P tack*/
-float p_tack_rudder(const struct reference_actions_s *ref_act_p);
+/** @brief compute rudder action for P tack/jybe*/
+float p_maneuver_rudder();
+
+// reference actions for the guidance_module
+static struct{
+    float alpha_star; ///optimal sailing angle w.r.t. true wind direction
+    bool do_maneuver; ///true if boat should tack/jybe as soon as possible
+}reference_actions = {
+    .alpha_star = 0.7853981f,
+    .do_maneuver = false
+};
 
 /// Forces parameters
 struct forces_params_s{
@@ -376,20 +382,19 @@ void gm_set_tack_data(uint16_t tack_type){
  * Otherwise use a normal digital PI: ret(t) = P * error(t) + I * sum_{k = 0}^{t}(error(k))
  * P and I are qcg parameters.
  *
- * @param ref_p         pointer to reference value
- * @param meas_p        pointer to measurements value
+ * @param meas        measurement value
  * @param param_qgc_p   pointer to struct containing parameters from qgc
  *
  * @return input value for actuator of rudder
 */
-float pi_controller(const float *ref_p, const float *meas_p){
+float pi_controller(float meas){
 
     float error;
     float integral_part = 0.0f;
     float proportional_part = 0.0f;
     float action;
 
-    error = *ref_p - *meas_p;
+    error = reference_actions.alpha_star - meas;
 
     if(rudder_controller_data.rudder_controller_type == SAILING_RUD_COND_PI){
         //Conditional PI
@@ -497,24 +502,22 @@ void gm_set_rudder_data(float p, float i, float cp,
  * Perform tack maneuver based on the type of tack set by QGroundControl.
  * There are two possibles type of tack, @see set_tack_data() .
  *
- * @param ref_act_p     pointer to reference action
  * @param strs_p        pointer to topics data
  * @param p_rudder_cmd  pointer where rudder command will be returned
  * @param p_sails_cmd   pointer where sails command will be returned
  * @param strs_p        pointer to structs_topics_s
 */
-void tack_action(struct reference_actions_s *ref_act_p,
-                 float *p_rudder_cmd, float *p_sails_cmd,
+void do_maneuver(float *p_rudder_cmd, float *p_sails_cmd,
                  struct structs_topics_s *strs_p){
 
     //check if we've already started tacking, or if this is the first time
     if(tack_data.boat_is_tacking){
         //we have already started the tack maneuver, check if it's completed
         int8_t error_code;
-        if(is_tack_completed(ref_act_p, &error_code)){
+        if(is_maneuver_completed(&error_code)){
 
             //we have just completed the tack maneuver
-            tack_completed(ref_act_p, error_code);
+            maneuver_completed(error_code);
             /* return to guidance guidance_module function so the controller for keeping
              * the new haul can start working
             */
@@ -557,29 +560,29 @@ void tack_action(struct reference_actions_s *ref_act_p,
          * sails controller to take care of tracking the new alpha_star set by path_planning.
         */
         //no error can be happened, use erro_code = EVERYTHING_OK
-        tack_completed(ref_act_p, EVERYTHING_OK);
+        maneuver_completed(EVERYTHING_OK);
     }
     else if(tack_data.tack_type == TACK_LQR){
         //LQR controller
-        lqr_control_rudder(p_rudder_cmd, ref_act_p, strs_p);
+        lqr_control_rudder(p_rudder_cmd, strs_p);
         //use standard sail controller
         *p_sails_cmd = sail_controller(cd_get_alpha_dumas());
     }
     else if(tack_data.tack_type == TACK_MPC){
         //MPC controller
-        mpc_control_rudder(p_rudder_cmd, ref_act_p, strs_p);
+        mpc_control_rudder(p_rudder_cmd, strs_p);
         //use standard sail controller
         *p_sails_cmd = sail_controller(cd_get_alpha_dumas());
     }
     else if(tack_data.tack_type == TACK_P){
         //P controller for p tack
-        *p_rudder_cmd = p_tack_rudder(ref_act_p);
+        *p_rudder_cmd = p_maneuver_rudder();
         //use standard sail controller
         *p_sails_cmd = sail_controller(cd_get_alpha_dumas());
     }
     else{
         //error, no valid type of tack! End tack for safety reason
-        tack_completed(ref_act_p, FORCED_TACK_STOP);
+        maneuver_completed(FORCED_TACK_STOP);
     }
 
 }
@@ -590,17 +593,17 @@ void tack_action(struct reference_actions_s *ref_act_p,
  * @param pointer to struct containing reference actions
  * @param error_code error code if something went wrong
 */
-void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code){
+void maneuver_completed(int8_t error_code){
     //we have just completed the tack maneuver
 
     /* Set should_tack to false so normal controllers
      * can compute new values for rudder and sails.
     */
-    ref_act_p->should_tack = false;
+    reference_actions.do_maneuver = false;
     tack_data.boat_is_tacking = false;
 
     //notify to path_planning that we've completed the tack action
-    pp_notify_tack_completed();
+    //pp_notify_tack_completed();
 
     //if we had used either LQR or MPC or P tack, notify tack completed to controller_data
     if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC
@@ -641,7 +644,7 @@ void tack_completed(struct reference_actions_s *ref_act_p, int8_t error_code){
  *
  * @return true if the tack maneuver can be considered completed, false otherwise.
  */
-bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
+bool is_maneuver_completed(int8_t *error_p){
 
     bool completed = false;//initial guess
     *error_p = EVERYTHING_OK; // let's hope we will not have any error
@@ -654,7 +657,7 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
             || tack_data.tack_type == TACK_P){
 
         //check if the extended state is in the tube near the origin
-        compute_state_extended_model(ref_act_p);
+        compute_state_extended_model();
         bool state_in_band = true;//initial guess
 
         for(uint8_t i = 0; i < 2; i++){
@@ -722,7 +725,6 @@ bool is_tack_completed(struct reference_actions_s *ref_act_p, int8_t *error_p){
  * Compute a new command only if the time elapsed since time_last_lqr is greater or equal to LQR_MODEL_TS.
 */
 void lqr_control_rudder(float *p_rudder_cmd,
-                        const struct reference_actions_s *ref_act_p,
                         struct structs_topics_s *strs_p){
     float u_k; //optimal input of the extended state model
     uint64_t now_us = hrt_absolute_time(); //absolute time in micro seconds
@@ -731,7 +733,7 @@ void lqr_control_rudder(float *p_rudder_cmd,
     if((now_us - opc_data.time_last_lqr) >= opc_data.lqr_sampling_time_us){
 
         //compute the new state of the extended model based on the latest measurements
-        compute_state_extended_model(ref_act_p);
+        compute_state_extended_model();
 
         /*apply LQR gain matrix to the actual state of the extended model,
          * this will give you the u_k of the extended state model
@@ -900,7 +902,6 @@ void gm_set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3],
  * Compute a new command only if the time elapsed since time_last_lqr is greater or equal to MPC_MODEL_TS.
 */
 void mpc_control_rudder(float *p_rudder_cmd,
-                        const struct reference_actions_s *ref_act_p,
                         struct structs_topics_s *strs_p){
 
     *p_rudder_cmd = 0.0f;
@@ -919,7 +920,7 @@ void mpc_control_rudder(float *p_rudder_cmd,
     if((now_us - opc_data.time_last_mpc) >= opc_data.mpc_sampling_time_us && mt_still_data()){//cancellare
     #endif
         //compute the new state of the extended model based on the latest measurements
-        compute_state_extended_model(ref_act_p);
+        compute_state_extended_model();
 
         #if TEST_MPC == 1
         mt_get_next_yr_y(&opc_data.state_extended_model);
@@ -945,26 +946,11 @@ void mpc_control_rudder(float *p_rudder_cmd,
         /* WARNING: if you want to add/modify a mpc solve function, remember to update
          * the if clause in gm_set_mpc_data() where pred_horz_steps is checked
         */
-//        if(opc_data.pred_horz_steps == 10){
-//            solver_ret = mpc_boatTack_h10_solve((mpc_boatTack_h10_params*) &(opc_data.forces_params),
-//                                            (mpc_boatTack_h10_output*) &(opc_data.forces_output),
-//                                            (mpc_boatTack_h10_info*) &(opc_data.forces_info));
-//        }
-//        else if(opc_data.pred_horz_steps == 15){
-//            solver_ret = mpc_boatTack_h15_solve((mpc_boatTack_h15_params*) &(opc_data.forces_params),
-//                                            (mpc_boatTack_h15_output*) &(opc_data.forces_output),
-//                                            (mpc_boatTack_h15_info*) &(opc_data.forces_info));
-//        }
         if(opc_data.pred_horz_steps == 20){
             solver_ret = mpc_boatTack_h20_solve((mpc_boatTack_h20_params*) &(opc_data.forces_params),
                                             (mpc_boatTack_h20_output*) &(opc_data.forces_output),
                                             (mpc_boatTack_h20_info*) &(opc_data.forces_info));
         }
-//        else if(opc_data.pred_horz_steps == 25){
-//            solver_ret = mpc_boatTack_h25_solve((mpc_boatTack_h25_params*) &(opc_data.forces_params),
-//                                            (mpc_boatTack_h25_output*) &(opc_data.forces_output),
-//                                            (mpc_boatTack_h25_info*) &(opc_data.forces_info));
-//        }
         else if(opc_data.pred_horz_steps == 30){
             solver_ret = mpc_boatTack_h30_solve((mpc_boatTack_h30_params*) &(opc_data.forces_params),
                                             (mpc_boatTack_h30_output*) &(opc_data.forces_output),
@@ -972,7 +958,7 @@ void mpc_control_rudder(float *p_rudder_cmd,
         }
         else{
             //error, no solve function available!
-            tack_completed(ref_act_p, NO_MPC_SOLVE_FNC);
+            maneuver_completed(NO_MPC_SOLVE_FNC);
             #if TEST_MPC == 1
             printf("\n ------ No solve function available! ------ \n");
             #endif
@@ -1051,7 +1037,7 @@ void mpc_control_rudder(float *p_rudder_cmd,
  *
  * The updated state value is stored in opc_data.state_extended_model.
 */
-void compute_state_extended_model(const struct reference_actions_s *ref_act_p){
+void compute_state_extended_model(){
 
     //yaw rate from measurements
     opc_data.state_extended_model[0] = cd_get_yaw_rate_sns();
@@ -1060,7 +1046,7 @@ void compute_state_extended_model(const struct reference_actions_s *ref_act_p){
      * will be constant and there will be no drift (in general these
      * two assumptions are not true, but it is the best we can do).
     */
-    opc_data.state_extended_model[1] = ref_act_p->alpha_star - cd_get_alpha_dumas();
+    opc_data.state_extended_model[1] = reference_actions.alpha_star - cd_get_alpha_dumas();
 
     //latest command given to the rudder
     opc_data.state_extended_model[2] = opc_data.rudder_latest;
@@ -1202,8 +1188,8 @@ void gm_set_p_tack_data(float kp, float cp){
 /**
  *
 */
-float p_tack_rudder(const struct reference_actions_s *ref_act_p){
-    float error = ref_act_p->alpha_star - cd_get_alpha_dumas();
+float p_maneuver_rudder(){
+    float error = reference_actions.alpha_star - cd_get_alpha_dumas();
     float gain;
 
     //conditional P: rud = k(e) * e, where k(e) = kp / (1 + cp * abs(e))
@@ -1213,15 +1199,22 @@ float p_tack_rudder(const struct reference_actions_s *ref_act_p){
 }
 
 /**
+ * Save data published by path_planning app into local memory of guidance_module.
+*/
+void gm_set_data_by_pp(const struct structs_topics_s *strs_p){
+    reference_actions.alpha_star = strs_p->path_planning.alpha_star;
+    reference_actions.do_maneuver = strs_p->path_planning.do_maneuver;
+}
+
+/**
  * Main function to control the boat while sailing.
  *
  * If the remote control is in the manual mode, just copy the rudder and
  * sail commands. In this way they will be shown in QGC and logged in the sdCard.
  * If the autonomous mode is selected, call autonomous sailing controllers.
 */
-void gm_guidance_module(struct reference_actions_s *ref_act_p,
-                     const struct parameters_qgc *param_qgc_p,
-                     struct structs_topics_s *strs_p){
+void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
+                        struct structs_topics_s *strs_p){
 
     float rudder_command = 0.0f;
     float sail_command = 0.0f;
@@ -1235,20 +1228,20 @@ void gm_guidance_module(struct reference_actions_s *ref_act_p,
         rudder_command = strs_p->rc_channels.channels[RC_RUD_INDEX];
         sail_command = strs_p->rc_channels.channels[RC_SAIL_INDEX];
         //tel to path planning what's the current alpha
-        pp_set_current_alpha(alpha);
+        //pp_set_current_alpha(alpha);
     }
     else{
         //Autonomous mode
 
         //check if path_planning() told us to tack
-        if(ref_act_p->should_tack){
-            //perform tack maneuver
-            tack_action(ref_act_p, &rudder_command, &sail_command, strs_p);
+        if(reference_actions.do_maneuver){
+            //perform tack or jybe
+            do_maneuver(&rudder_command, &sail_command, strs_p);
         }
-        if(!(ref_act_p->should_tack)){
-            //if the boat should not tack, compute rudder and sails actions to follow reference alpha
+        if(!reference_actions.do_maneuver){
+            //compute rudder and sails actions to follow reference alpha
             //PI controller for rudder
-            rudder_command = pi_controller(&(ref_act_p->alpha_star), &alpha);
+            rudder_command = pi_controller(alpha);
 
             //sails control only if AS_SAIL param from QGC is negative
             if(param_qgc_p->sail_servo < 0.0f)
@@ -1270,14 +1263,6 @@ void gm_guidance_module(struct reference_actions_s *ref_act_p,
     #if TEST_MPC == 1
     mpc_control_rudder(&rudder_command, ref_act_p, strs_p);
     #endif
-
-
-    //Use ESSC => Set the sail command by the Extremum Seeking Sailcontrol
-    //if() {
-    	sail_command = essc_sail_control_value();
-    //}
-
-
 
     //update actuator value
     #if SIMULATION_FLAG == 1

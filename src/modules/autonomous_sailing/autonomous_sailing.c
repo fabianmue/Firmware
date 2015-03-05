@@ -198,7 +198,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
     struct parameters_qgc params;
 
     //optimal path parameters
-    struct reference_actions_s ref_act = {.alpha_star = 0.7853981f, .should_tack = false};
+    //struct reference_actions_s ref_act = {.alpha_star = 0.7853981f, .should_tack = false};
 
     warnx(" starting\n");
 
@@ -206,14 +206,14 @@ int as_daemon_thread_main(int argc, char *argv[]){
     cd_init_controller_data();
 
     //initialize grid lines in Race frame
-    pp_init_grids();
+    //pp_init_grids();
 
     //init message module
     smq_init_msg_module();
 
 
     //init Extremum Seeking Sailcontrol (ESSC)
-    essc_init();
+    //essc_init();
 
 
     //subscribe/advertise interested topics
@@ -237,7 +237,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
     // polling management
     struct pollfd fds[] = {
             { .fd = subs.gps_raw,                   .events = POLLIN },
-            { .fd = subs.gps_filtered,              .events = POLLIN },
+            { .fd = subs.path_planning,             .events = POLLIN },
             { .fd = subs.wind_sailing,              .events = POLLIN },
             { .fd = subs.parameter_update,          .events = POLLIN },
             { .fd = subs.att,                       .events = POLLIN },
@@ -278,10 +278,13 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                 }
                 if(fds[1].revents & POLLIN){
-                    // new vehicle_global_position data
+                    // new path_planning data
+                    orb_copy(ORB_ID(path_planning), subs.path_planning, &(strs.path_planning));
+                    //pass these data to guidance_module
+
 
                     //copy GPOS data
-                    orb_copy(ORB_ID(vehicle_global_position), subs.gps_filtered, &(strs.gps_filtered));
+                    /*orb_copy(ORB_ID(vehicle_global_position), subs.gps_filtered, &(strs.gps_filtered));
 
                     //look into optimal path planning maps for reference actions
                     pp_path_planning(&ref_act, &strs);
@@ -290,7 +293,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     essc_speed_update(&strs);
 
                     //update NED velocities in navigation module
-                    //update_ned_vel(strs.gps_filtered.vel_n, strs.gps_filtered.vel_e, strs.gps_filtered.vel_d);
+                    //update_ned_vel(strs.gps_filtered.vel_n, strs.gps_filtered.vel_e, strs.gps_filtered.vel_d);*/
 
                 }
                 if(fds[2].revents & POLLIN){
@@ -345,11 +348,11 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 cd_update_raw_yaw_yaw_rate(params.yaw_sim, 0.0f);//dummy yawRate value
             #endif
             //look into optimal path planning maps for reference actions
-            pp_path_planning(&ref_act, &strs);
+            //pp_path_planning(&ref_act, &strs);
             //fine cancella
         #endif
         //always perfrom guidance module to control the boat
-        gm_guidance_module(&ref_act, &params, &strs);
+        gm_guidance_module(&params, &strs);
 
         //publish out commands
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
@@ -393,7 +396,7 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
                struct structs_topics_s *strs_p){
 
     subs_p->gps_raw = orb_subscribe(ORB_ID(vehicle_gps_position));
-    subs_p->gps_filtered = orb_subscribe(ORB_ID(vehicle_global_position));
+    subs_p->path_planning = orb_subscribe(ORB_ID(path_planning));
     subs_p->wind_sailing = orb_subscribe(ORB_ID(wind_sailing));
     subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
     subs_p->att = orb_subscribe(ORB_ID(vehicle_attitude));
@@ -404,8 +407,8 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
         return false;
     }
 
-    if(subs_p->gps_filtered == -1){
-        warnx(" error on subscribing on vehicle_global_position Topic \n");
+    if(subs_p->path_planning == -1){
+        warnx(" error on subscribing on path_planning Topic \n");
         return false;
     }
 

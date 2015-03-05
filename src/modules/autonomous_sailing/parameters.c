@@ -920,7 +920,7 @@ void p_param_update(struct parameters_qgc *params_p,
 
     //set alpha_tmp as the new alpha star ONLY if set_alpha is not 0 AND tack_now is 0
     if(set_alpha != 0 && tack_now == 0){
-        pp_set_alpha_star(alpha_tmp);
+        //pp_set_alpha_star(alpha_tmp);
         #if PRINT_DEBUG_STR == 1
         smq_send_log_info("pp_set_alpha_star");
         #endif
@@ -928,7 +928,7 @@ void p_param_update(struct parameters_qgc *params_p,
 
     //pass tack_now to path_planning module, only if update_path_param is true
     if(update_path_param){
-        pp_boat_should_tack(tack_now);
+       //pp_boat_should_tack(tack_now);
     }
 
     //----- sail_servo
@@ -988,7 +988,7 @@ void p_param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.alt0_pointer, &alt0);
 
     //update NED origin using API in navigation.h
-    n_set_ref0(&lat0, &lon0, &alt0);
+    //n_set_ref0(&lat0, &lon0, &alt0);
 
     //----- mean wind
     float mean_wind;
@@ -1000,7 +1000,7 @@ void p_param_update(struct parameters_qgc *params_p,
     mean_wind = mean_wind * deg2rad;
 
     //set mean wind angle in navigation.h
-    n_set_mean_wind_angle(mean_wind);
+    //n_set_mean_wind_angle(mean_wind);
     //pass mean_wind and use_fixed_twd to controller_data module
     cd_use_fixed_twd(use_fixed_twd, mean_wind);
 
@@ -1018,7 +1018,7 @@ void p_param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.alt_tmark_pointer, &alt_tmark);
 
     //set top mark position
-    n_set_pos_top_mark(&lat_tmark, &lon_tmark, &alt_tmark);
+    //n_set_pos_top_mark(&lat_tmark, &lon_tmark, &alt_tmark);
 
     // --- grid lines system parameters
     #if USE_GRID_LINES == 1
@@ -1280,14 +1280,14 @@ void p_param_update(struct parameters_qgc *params_p,
     #endif
 
 
-    //Set Parameters for Extremum Seeking Sail Control ESSC (JW)
-    float ESSC_k = 0.0f;
-    int32_t ESSC_windowSize = 0;
-    float ESSC_period = 0.0f;
-    param_get(pointers_param_qgc.ESSC_k, &ESSC_k);
-    param_get(pointers_param_qgc.ESSC_windowSize, &ESSC_windowSize);
-    param_get(pointers_param_qgc.ESSC_period, &ESSC_period);
-    essc_set_qground_values(ESSC_k,ESSC_windowSize,ESSC_period);
+//    //Set Parameters for Extremum Seeking Sail Control ESSC (JW)
+//    float ESSC_k = 0.0f;
+//    int32_t ESSC_windowSize = 0;
+//    float ESSC_period = 0.0f;
+//    param_get(pointers_param_qgc.ESSC_k, &ESSC_k);
+//    param_get(pointers_param_qgc.ESSC_windowSize, &ESSC_windowSize);
+//    param_get(pointers_param_qgc.ESSC_period, &ESSC_period);
+//    essc_set_qground_values(ESSC_k,ESSC_windowSize,ESSC_period);
 
 }
 

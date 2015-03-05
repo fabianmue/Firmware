@@ -46,7 +46,7 @@
 #include <math.h>
 #include <stdint.h>
 
-#include "path_planning.h"
+//#include "path_planning.h"
 #include "parameters.h"
 #include "topics_handler.h"
 #include "controller_data.h"
@@ -77,8 +77,7 @@
 #define RC_AUTONOMOUS_MODE 1.0f     ///Rc_Ch4 == RC_AUTONOMOUS_MODE if autonomous mode selected
 
 /** @brief Implement next control action*/
-void gm_guidance_module(struct reference_actions_s *ref_act_p,
-                     const struct parameters_qgc *param_qgc_p,
+void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
                      struct structs_topics_s *strs_p);
 
 
@@ -106,5 +105,8 @@ void gm_set_band_data(float* delta, float min_time_s, float safety_time_stop_tac
 
 /** @brief set data for P controller during P tack*/
 void gm_set_p_tack_data(float kp, float cp);
+
+/** @brief set new data published by path_planning app*/
+void gm_set_data_by_pp(const struct structs_topics_s *strs_p);
 
 #endif //GUIDANCE_MODULE_H
