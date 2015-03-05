@@ -61,6 +61,10 @@
 //settings
 #include "settings.h"
 
+#if PRINT_DEBUG_STR == 1
+#include "send_msg_qgc.h"
+#endif
+
 //struct for local copy of parameter from QGroundControl
 struct parameters_qgc{
     float sail_servo;
@@ -77,12 +81,12 @@ struct parameters_qgc{
 
 
 /** @brief Initialize parameters*/
-void param_init(struct parameters_qgc *params_p,
+void p_param_init(struct parameters_qgc *params_p,
                 struct structs_topics_s *strs_p,
                 const struct published_fd_s *pubs_p);
 
 /** @brief Check if one or more parameters have been updated and perform appropriate actions*/
-void param_update(struct parameters_qgc *params_p,
+void p_param_update(struct parameters_qgc *params_p,
                   struct structs_topics_s *strs_p,
                   bool update_path_param,
                   const struct published_fd_s *pubs_p);

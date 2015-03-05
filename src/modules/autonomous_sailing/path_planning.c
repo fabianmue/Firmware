@@ -59,7 +59,7 @@ static struct{
 }grid_lines;
 
 
-static struct reference_actions_s ref_act = {.alpha_star = 0.5f, .should_tack = false};
+static struct reference_actions_s ref_act = {.alpha_star = 0.7853981f, .should_tack = false};
 
 static float current_grid_goal_x_m = 0.0f;//current x coordinate of grid line to reach [m]
 static bool current_grid_valid = false;
@@ -81,7 +81,7 @@ void set_grid(float x_m);
 /**
  * Initialize the grid lines struct. Delete all the old grid lines (if any).
 */
-void init_grids(void){
+void pp_init_grids(void){
 
     grid_lines.x_m_p = NULL;
     grid_lines.size = 0;
@@ -122,7 +122,7 @@ void set_grids_number(int16_t size){
 
     //send a message to QGC to tell that grid lines queue has been reset
     sprintf(txt_msg, "Grid lines queue reset, new dim: %d.", size);
-    send_log_info(txt_msg);
+    smq_send_log_info(txt_msg);
 
 }
 
@@ -133,7 +133,7 @@ void set_grids_number(int16_t size){
  *
  * @param size  total number of new grid lines
 */
-void set_grids_number_qgc(int16_t size){
+void pp_set_grids_number_qgc(int16_t size){
         set_grids_number(size);
 }
 
@@ -149,7 +149,7 @@ void set_grid(float x_m){
     if((grid_lines.last_goal + 1) >= grid_lines.size){
         //send msg to QGC via mavlink
         strcpy(txt_msg, "Not enough space to add a grid line.");
-        send_log_info(txt_msg);
+        smq_send_log_info(txt_msg);
 
         return; //not enough space to add a new grid line
     }
@@ -169,7 +169,7 @@ void set_grid(float x_m){
 
     //send a message to QGC to tell that a new grid line has been added
     sprintf(txt_msg, "Added grid number %d at %3.2f meters.", grid_lines.last_goal, (double)x_m);
-    send_log_info(txt_msg);
+    smq_send_log_info(txt_msg);
 }
 
 /**
@@ -178,7 +178,7 @@ void set_grid(float x_m){
  *
  * @param x_m       x coordinate [m] in Race frame of the new grid line
 */
-void set_grid_qgc(float x_m){
+void pp_set_grid_qgc(float x_m){
         set_grid(x_m);
 }
 
@@ -219,13 +219,13 @@ void reached_current_grid(void){
     /*send a message to QGC to tell that a new grid line has been reached
     */
     sprintf(txt_msg, "Grid line reached.");
-    send_log_info(txt_msg);
+    smq_send_log_info(txt_msg);
 }
 
 /**
  * Set new value for reference alpha.
 */
-void set_alpha_star(float val){
+void pp_set_alpha_star(float val){
 
     ref_act.alpha_star = val;
 }
@@ -239,7 +239,7 @@ void pp_notify_tack_completed(void){
 }
 
 
-void reuse_last_grids(bool use){
+void pp_reuse_last_grids(bool use){
     if(use){
         //copy all the grid lines inserted
         float *old_grids = malloc(sizeof(float) * grid_lines.grids_inserted);
@@ -263,7 +263,7 @@ void reuse_last_grids(bool use){
 
         //send a message to QGC
         sprintf(txt_msg, "Reinserted previous grid lines.");
-        send_log_info(txt_msg);
+        smq_send_log_info(txt_msg);
     }
 }
 
@@ -277,12 +277,28 @@ void reuse_last_grids(bool use){
  *
  * @param tack_now: true if the boat should tack now, false otherwise.
 */
-void boat_should_tack(int32_t tack_now){
+void pp_boat_should_tack(int32_t tack_now){
     //update make_boat_tack only if we are not taking
     if(ref_act.should_tack == false)
         make_boat_tack = (tack_now == 0) ? false : true;
 }
 
+/**
+ * When sailing in manual mode, use this function to tell path planning what's the current
+ * alpha angle. Path planning module will figure at at which hail we are sailing at,
+ * in this way when you will switch to autonomous sailing, the current haul will be the
+ * starting haul.
+ * The magnitude of the alpha star angle (the reference) is set by QGC using
+ * @see pp_set_alpha_star() .
+ *
+ * @param alpha_dumas   alpha angle in Dumas' convention.
+*/
+void pp_set_current_alpha(float alpha_dumas){
+
+    float abs_alpha_str = fabsf(ref_act.alpha_star);
+
+    ref_act.alpha_star = (alpha_dumas < 0.0f) ? -abs_alpha_str : abs_alpha_str;
+}
 
 /**
  * Based on a new global position estimate, see if there is a new reference action to perform.
@@ -297,14 +313,14 @@ void boat_should_tack(int32_t tack_now){
  * @param ref_act_p     pointer to struct which will contain next reference action to perform
  * @param strs_p        pointer to struct with data
 */
-void path_planning(struct reference_actions_s *ref_act_p,
+void pp_path_planning(struct reference_actions_s *ref_act_p,
                    struct structs_topics_s *strs_p){
 
     struct local_position_race_s local_pos;
     //convert geodedical coordinate into Race frame coordinate
-    navigation_module(strs_p, &local_pos);
+    n_navigation_module(strs_p, &local_pos);
 
-
+    #if USE_GRID_LINES == 1
     //check if we are using grid lines to tell the boat where to tack
     //if the next grid line to reach is valid
     if(current_grid_valid){
@@ -333,6 +349,7 @@ void path_planning(struct reference_actions_s *ref_act_p,
         }
     }
     else{
+    #endif
         /* if we are not using grind lines, check if the function
          * boat_should_tack told us to tack as soon as possibile.*/
         if(make_boat_tack){
@@ -343,10 +360,11 @@ void path_planning(struct reference_actions_s *ref_act_p,
             //set make_boat_tack to flase
             make_boat_tack = false;
             //send a message to QGC
-            sprintf(txt_msg, "Tacking now.");
-            send_log_info(txt_msg);
+            smq_send_log_info("Tacking now.");
         }
+    #if USE_GRID_LINES == 1
     }
+    #endif
 
     //copy local reference action to the output struct
     memcpy(ref_act_p, &ref_act, sizeof(ref_act));

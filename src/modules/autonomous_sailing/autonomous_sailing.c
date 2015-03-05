@@ -197,18 +197,18 @@ int as_daemon_thread_main(int argc, char *argv[]){
     struct parameters_qgc params;
 
     //optimal path parameters
-    struct reference_actions_s ref_act = {.alpha_star = 0.5f, .should_tack = false};
+    struct reference_actions_s ref_act = {.alpha_star = 0.7853981f, .should_tack = false};
 
     warnx(" starting\n");
 
     //initialize controller data structures
-    init_controller_data();
+    cd_init_controller_data();
 
     //initialize grid lines in Race frame
-    init_grids();
+    pp_init_grids();
 
     //init message module
-    init_msg_module();
+    smq_init_msg_module();
 
 
     //init Extremum Seeking Sailcontrol (ESSC)
@@ -220,7 +220,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
     #if TEST_MPC != 1
     //initialize local copy of parameters from QGroundControl
-    param_init(&params, &strs, &pubs);
+    p_param_init(&params, &strs, &pubs);
     #endif
 
     //limit update rate of attitude every 50 milliseconds --> f = 20 Hz
@@ -249,10 +249,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
     mt_init_mpc_data();
     #endif
 
-    #if PRINT_DEBUG_STR
-    printf("entering while loop\n");
-    #endif
-
     while(!thread_should_exit){
 
         poll_ret = poll(fds, (sizeof(fds) / sizeof(fds[0])), TIMEOUT_POLL);
@@ -276,7 +272,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                     #if SIMULATION_FLAG == 0
                     //update course over ground in control data
-                    update_raw_cog(strs.gps_raw.cog_rad);
+                    cd_update_raw_cog(strs.gps_raw.cog_rad);
                     #endif
 
                 }
@@ -287,7 +283,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     orb_copy(ORB_ID(vehicle_global_position), subs.gps_filtered, &(strs.gps_filtered));
 
                     //look into optimal path planning maps for reference actions
-                    path_planning(&ref_act, &strs);
+                    pp_path_planning(&ref_act, &strs);
 
                     //Call the extremum Seeking Sail Control and hand over the new GPS-Speed-Values
                     essc_speed_update(&strs);
@@ -301,11 +297,11 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     orb_copy(ORB_ID(wind_sailing), subs.wind_sailing, &(strs.wind_sailing));
 
                     //update apparent wind direction in control data
-                    update_raw_app_wind(strs.wind_sailing.angle_apparent);
+                    cd_update_raw_app_wind(strs.wind_sailing.angle_apparent);
 
                     #if SIMULATION_FLAG == 0
                     //update true wind direction in control data
-                    update_raw_twd(strs.wind_sailing.angle_true);
+                    cd_update_raw_twd(strs.wind_sailing.angle_true);
                     #endif
                 }
                 if(fds[3].revents & POLLIN){
@@ -314,7 +310,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     orb_copy(ORB_ID(parameter_update), subs.parameter_update, &(strs.update));
 
                     //update param
-                    param_update(&params, &strs, true, &pubs);
+                    p_param_update(&params, &strs, true, &pubs);
                 }
                 if(fds[4].revents & POLLIN){
                     // attitude updated
@@ -322,7 +318,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
                     #if SIMULATION_FLAG == 0
                     //update yaw and yawRate in controller_data module
-                    update_raw_yaw_yaw_rate(strs.att.yaw, strs.att.yawspeed);
+                    cd_update_raw_yaw_yaw_rate(strs.att.yaw, strs.att.yawspeed);
 
                     //update rotation matrix from body to ned in navigation module
                     //update_r_ned_body(strs.att.R, strs.att.R_valid);
@@ -343,20 +339,16 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 update_raw_cog(cog);
                 update_raw_twd(twd);
             #else
-                update_raw_cog(params.cog_sim);
-                update_raw_twd(params.twd_sim);
-                update_raw_yaw_yaw_rate(params.yaw_sim, 0.0f);//dummy yawRate value
+                cd_update_raw_cog(params.cog_sim);
+                cd_update_raw_twd(params.twd_sim);
+                cd_update_raw_yaw_yaw_rate(params.yaw_sim, 0.0f);//dummy yawRate value
             #endif
             //look into optimal path planning maps for reference actions
-            path_planning(&ref_act, &strs);
+            pp_path_planning(&ref_act, &strs);
             //fine cancella
         #endif
-
-        #if PRINT_DEBUG_STR
-        printf("before guidance module\n");
-        #endif
         //always perfrom guidance module to control the boat
-        guidance_module(&ref_act, &params, &strs);
+        gm_guidance_module(&ref_act, &params, &strs);
 
         //publish out commands
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, pubs.actuator_pub, &(strs.actuators));
@@ -374,10 +366,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
         //strs.airspeed.true_airspeed_m_s = ref_act.should_tack;
         orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
         //fine cancella
-        #endif
-
-        #if PRINT_DEBUG_STR
-        printf("loop completed\n");
         #endif
 	}
 

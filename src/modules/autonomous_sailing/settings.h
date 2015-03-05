@@ -51,6 +51,6 @@
 
 #define PRINT_DEBUG_STR 0 ///1 if you are debugging the code
 
-#define DEBUGGING_CODE 1
+#define DEBUGGING_CODE 0
 
 #endif // SETTINGS_H

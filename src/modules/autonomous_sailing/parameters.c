@@ -47,7 +47,7 @@ static const float deg2rad = 0.0174532925199433f; // pi / 180
 
 
 /**
- * Reference angle with respect true wind [deg]
+ * Reference angle with respect to the wind, in degrees.
  *
  * Use Dumas'convention.
  *
@@ -57,7 +57,8 @@ static const float deg2rad = 0.0174532925199433f; // pi / 180
 PARAM_DEFINE_FLOAT(AS_ALST_ANG_D, 45.0f);
 
 /**
- * 1 if you wish to use the alpha star specified by AS_ALSTR, 0 otherwise
+ * If AS_ALST_SET == 1, the value of AS_ALST_ANG_D will be used
+ * as the new reference angle.
  *
  * @min 0
  * @max 1
@@ -73,45 +74,30 @@ PARAM_DEFINE_INT32(AS_ALST_SET, 1);
 PARAM_DEFINE_INT32(AS_TCK_NOW, 0);
 
 /**
- * Sails position
+ * Sails command.
  *
- * Default value for sails position. 0.56 = fully closed, 0.0 = fully opened.
- * If a negative value is set, then the sail control is in charge to control sails.
+ * Use a negative value (ex -1) to let autonomous controller use its computed
+ * value for the sails. If you want to force tha sails to be in a certain position
+ * set this parameter to a positive value within [0, 0.56], where
+ * 0 mean sails fully opened, 0.56 means sails fully closed.
  *
- * @min 0
+ * @min -1
  * @max 0.56
  */
 PARAM_DEFINE_FLOAT(AS_SAIL, -1.0f);
 
 
 /**
- * Rudder maximum command when tacking from port haul to starboard haul.
- * It has to be a positive value!
- *
- *
- * @min 0
- * @max 0.9
- */
-PARAM_DEFINE_FLOAT(AS_RD_45_CMD, 1.0f);
-
-/**
- * Alpha angle [deg].
+ * Set a new value for the maximum rudder command.
+ * Must be a positive value and <= 1.
  *
  * @min 0
- * @max 180
+ * @max 1
  */
-PARAM_DEFINE_FLOAT(AS_RD_X1_AL, 0.0f);
+PARAM_DEFINE_FLOAT(AS_MAX_RUD, 1.0f);
 
 /**
- * Alpha angle [deg].
- *
- * @min 0
- * @max 180
- */
-PARAM_DEFINE_FLOAT(AS_RD_X2_AL, 20.0f);
-
-/**
- * Sails command when sails should be considered fully closed.
+ * Sails command value when sails should be considered fully closed.
  *
  * @min 0
  * @max 0.56
@@ -119,7 +105,7 @@ PARAM_DEFINE_FLOAT(AS_RD_X2_AL, 20.0f);
 PARAM_DEFINE_FLOAT(AS_SAI_CL_CMD, 0.56f);
 
 /**
- * Positive alpha angle [deg] at which sails should start opening
+ * Positive alpha angle [deg] at which sails should start opening.
  *
  * @min 0
  * @max 180
@@ -127,89 +113,63 @@ PARAM_DEFINE_FLOAT(AS_SAI_CL_CMD, 0.56f);
 PARAM_DEFINE_FLOAT(AS_SAI_X1_AL, 45.0f);
 
 /**
- * Positive alpha angle [deg] at which sails should be fully opened
+ * Positive alpha angle [deg] at which sails should be fully opened.
  *
  * @min 0
  * @max 180
  */
 PARAM_DEFINE_FLOAT(AS_SAI_X2_AL, 150.0f);
 
-/**
- * Positive alpha angle [deg] at which tack from port to starboard
- * should be considered completed
- *
- * @min 0
- * @max 180
- */
-PARAM_DEFINE_FLOAT(AS_TK_ST_AL, 35.0f);
 
 
 /**
  * Type of tack maneuver
  *
- * Tack maneuver can be performed in five different ways.
- * The first one (type is equal to 0) is performed by using a "standard" input sequence
- * as a real helmsman would do. @see helmsman0_tack_p2s and @see helmsman0_tack_s2p.
- *
- * The second one (type is equal to 1) is slightly different from the "standard" helmsman maneuver
- * but it is still reasonable to think of it as a maneuver that helmsman would do.
- * @see helmsman1_tack_p2s and @see helmsman1_tack_s2p.
- *
- * The Third one (type is equal to 2) is performed by changing only the reference
- * angle with respect to the wind (alpha) and then "wait" for the PI controller
- * of the rudder to follow this changing.
- *
- * The fourth one (type equal to 3) is performed by a LQR controller.
- *
- * The fifth one (type equal to 4) is performed by a MPC controller.
+ * Tack maneuver can be performed in three ways:
+ * 0 = implicit tack by changing the alpha reference and wait for the PI to follow the new value.
+ * 1 = LQR tack.
+ * 2 = MPC tack
+ * 3 = conditional P tack
  *
  * @min 0
- * @max 4
+ * @max 2
  */
 PARAM_DEFINE_INT32(AS_TY_TCK, 0);
 
 /**
- * Proportional gain for rudder PI.
- *
+ * Proportional gain of the PI controller for the rudder.
+ * When using the conditional PI, this value is even reffered as Kp.
  *
  * @min 0
- * @max ?
  */
 PARAM_DEFINE_FLOAT(AS_RUD_P, 0.35f);
 
 /**
- * Integral gain for rudder PI.
- *
+ * Integral gain of the PI controller for the rudder.
+ * When using the conditional PI, this value is even reffered as Ki.
  *
  * @min 0
- * @max ?
  */
 PARAM_DEFINE_FLOAT(AS_RUD_I, 0.0f);
 
 /**
- * Constant fo anti-wind up in normal digital PI
- *
+ * Constant for anti-wind up action in standard digital PI
  *
  * @min 0
- * @max ?
  */
 PARAM_DEFINE_FLOAT(AS_RUD_KAW, 0.5f);
 
 /**
- * Constant used in conditionl integral to adjust denominator in integral action.
- *
+ * Ci value used in the conditional PI.
  *
  * @min 0
- * @max ?
  */
 PARAM_DEFINE_FLOAT(AS_RUD_CI, 1.0f);
 
 /**
- * Constant used in conditionl integral to adjust denominator in proportional action.
- *
+ * Cp value used in the conditional PI.
  *
  * @min 0
- * @max ?
  */
 PARAM_DEFINE_FLOAT(AS_RUD_CP, 0.35f);
 
@@ -219,31 +179,32 @@ PARAM_DEFINE_FLOAT(AS_RUD_CP, 0.35f);
  *
  * 0: standard PI with anti-wind up gain
  * 1: conditional PI
- * 2: LQR controller
  *
  * @min 0
- * @max 2
+ * @max 1
  */
 PARAM_DEFINE_INT32(AS_RUD_TYPE, 0);
 
 /**
- * Set how much time should passed without any new cog value.
+ * Set after how many seconds without a new cog value, only the yaw angle should
+ * considered to compute the alpha angle.
+ *
  * @see set_max_time_cog_not_up
  */
 PARAM_DEFINE_FLOAT(AS_COG_DELAY_S, 1.5f);
 
 /**
- * AS_WIN_AL, specifies the number of samples for the moving average of true wind angle (alpha).
+ * Specifies the number of samples for the moving average filt of
+ * the angle with respect to the wind (alpha).
  *
  *
  * @min 1
- * @max ?
  */
 PARAM_DEFINE_INT32(AS_WIN_AL, 10);
 
 /**
- * AS_WIN_APP, specifies the number of samples for the moving average of apparent wind direction.
- *
+ * Specifies the number of samples for the moving average filt of
+ * the apparant wind direction.
  *
  * @min 1
  * @max ?
@@ -251,48 +212,22 @@ PARAM_DEFINE_INT32(AS_WIN_AL, 10);
 PARAM_DEFINE_INT32(AS_WIN_APP, 10);
 
 /**
- * AS_WIN_TWD, specifies the number of samples for the moving average of true wind direction.
+ * Specifies the number of samples for the moving average filt of
+ * the true wind direction.
  *
+ * A new value of the raw true wind direction is provided by the weather station
+ * roughly every 0.2 seconds.
+ * So, for example, AS_WIN_TWD = 10 mean a window of 2 seconds (more or less).
  *
  * @min 1
  * @max ?
  */
 PARAM_DEFINE_INT32(AS_WIN_TWD, 10);
 
-
-
-/**
- * Latitude of origin of NED system, in degrees * E7.
- *
- *
- * @min -900000000
- * @max 900000000
- */
-PARAM_DEFINE_INT32(AS_R_LAT0_E7, 473494820);
-
-/**
- * Longitude of origin of NED system, in degrees * E7.
- *
- *
- * @min -1800000000
- * @max 1800000000
- */
-PARAM_DEFINE_INT32(AS_R_LON0_E7, 85605120);
-
-/**
- * Altitude of origin of NED system, in millimeters.
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_INT32(AS_R_ALT0_E3, 406000);
-
-
 /**
  * AS_MEAN_WIND_D, specifies the mean wind direction [deg], in [-180, 180].
- * Positive on the right (going from North to East), negative on the left (going from North to West).
- *
+ * Positive on the right (going from North to East),
+ * negative on the left (going from North to West).
  *
  * @min -180
  * @max 180
@@ -300,70 +235,107 @@ PARAM_DEFINE_INT32(AS_R_ALT0_E3, 406000);
 PARAM_DEFINE_FLOAT(AS_MEAN_WIND_D, 0.0f);
 
 /**
- * Latitude of top mark, in degrees * E7.
- *
+ * Choose if you want to compute the alpha angle (angle with respect to the wind) using
+ * a TWD (true wind direction) supplied by a moving average filter using the twd read by the
+ * weather station (AS_USE_FIXED_TWD = 0), or if you want to use the value set
+ * with @see AS_MEAN_WIND_D as constant value for twd (AS_USE_FIXED_TWD = 1).
+*/
+PARAM_DEFINE_INT32(AS_USE_FIXED_TWD, 0);
+
+/**
+ * Kp constant for the tack using only P gain.
+ * @min 0
+*/
+PARAM_DEFINE_FLOAT(AS_TCK_P_K, 0.73661977f);
+
+/**
+ * Cp constant for the tack using only P gain.
+ * @min 0
+*/
+PARAM_DEFINE_FLOAT(AS_TCK_P_C, 0.1f);
+
+// --- coordinates variables
+
+/**
+ * Latitude of the origin of the NED system, in degrees * E7.
  *
  * @min -900000000
  * @max 900000000
  */
-PARAM_DEFINE_INT32(AS_T_LAT_E7, 473459370);
+PARAM_DEFINE_INT32(ASC_R_LAT0_E7, 473494820);
 
 /**
- * Longitude of top mark, in degrees * E7.
- *
+ * Longitude of the origin of the NED system, in degrees * E7.
  *
  * @min -1800000000
  * @max 1800000000
  */
-PARAM_DEFINE_INT32(AS_T_LON_E7, 85547940);
+PARAM_DEFINE_INT32(ASC_R_LON0_E7, 85605120);
 
 /**
- * Altitude of top mark, in millimeters.
- *
+ * Altitude of origin of NED system, in millimeters.
  *
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_T_ALT_E3, 406000);
+PARAM_DEFINE_INT32(ASC_R_ALT0_E3, 406000);
+
+/**
+ * Latitude of the top mark, in degrees * E7.
+ *
+ * @min -900000000
+ * @max 900000000
+ */
+PARAM_DEFINE_INT32(ASC_T_LAT_E7, 473459370);
+
+/**
+ * Longitude of the top mark, in degrees * E7.
+ *
+ * @min -1800000000
+ * @max 1800000000
+ */
+PARAM_DEFINE_INT32(ASC_T_LON_E7, 85547940);
+
+/**
+ * Altitude of the top mark, in millimeters.
+ *
+ * @min 0
+ * @max ?
+ */
+PARAM_DEFINE_INT32(ASC_T_ALT_E3, 406000);
 
 //------------------------- grid lines parameters
 #if USE_GRID_LINES == 1
 
 /**
- * Total numbers of grid lines
- *
+ * Total numbers of grid lines.
  *
  * @min 1
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_P_TOT_G, 1);
+PARAM_DEFINE_INT32(ASC_P_TOT_G, 1);
 
 /**
- * X coordinate in Race frame of grid line of index AS_P_INDEX, [m]
+ * X coordinate in Race frame of grid line of index AS_P_INDEX, in meters.
  *
- *
- * @min ?
- * @max ?
  */
-PARAM_DEFINE_FLOAT(AS_P_X_M, 0.0f);
+PARAM_DEFINE_FLOAT(ASC_P_X_M, 0.0f);
 
 /**
- * 1 if you want to add a new grid line
- *
+ * 1 if you want to add a new grid line at x = ASC_P_X_M.
  *
  * @min 0
  * @max 1
  */
-PARAM_DEFINE_INT32(AS_P_ADD, 0);
+PARAM_DEFINE_INT32(ASC_P_ADD, 0);
 
 /**
- * 1 if you want to re-insert the same grid lines you used before
- *
+ * 1 if you want to re-insert the same grid lines you used before.
  *
  * @min 0
  * @max 1
  */
-PARAM_DEFINE_INT32(AS_REIN_GRS, 0);
+PARAM_DEFINE_INT32(ASC_REIN_GRS, 0);
 
 #endif
 
@@ -443,13 +415,6 @@ PARAM_DEFINE_FLOAT(ASO_MPC_HF42, -1.3281703473f);
 PARAM_DEFINE_FLOAT(ASO_MPC_HF43, -5.5144280101f);
 PARAM_DEFINE_FLOAT(ASO_MPC_HF44, 1.8832249457f);
 
-/**
- * Create a band around the origin for the yaw rate value.
- * Value in degrees.
- *
- * @min 0
-*/
-PARAM_DEFINE_FLOAT(ASO_DLT_YR_D, 5.0f);
 
 /**
  * Create a band around the origin for the yaw value.
@@ -457,7 +422,7 @@ PARAM_DEFINE_FLOAT(ASO_DLT_YR_D, 5.0f);
  *
  * @min 0
 */
-PARAM_DEFINE_FLOAT(ASO_DLT_Y_D, 8.0f);
+PARAM_DEFINE_FLOAT(ASO_DLT_Y_D, 10.0f);
 
 /**
  * Create a band around the origin for the rudder command.
@@ -469,7 +434,7 @@ PARAM_DEFINE_FLOAT(ASO_DLT_RD_CM, 0.15f);
 
 /**
  * Min time (in seconds) the state of the system should stay in
- * the band near the origin (defined by @see ASO_DLT_YR_D, @see ASO_DLT_Y_D
+ * the band near the origin (defined by @see ASO_DLT_Y_D
  * and @see ASO_DLT_RD_CM) in order to consider the tack maneuver completed.
  *
  * @min 0
@@ -526,7 +491,8 @@ PARAM_DEFINE_FLOAT(ASO_MPC_B1, -0.3093770863f);
 PARAM_DEFINE_FLOAT(ASO_MPC_B2, -0.0229457259f);
 
 /**
- * ASO_WIN_AL, specifies the number of samples for the moving average of true wind angle (alpha) DURING tack.
+ * ASO_WIN_AL, specifies the number of samples for the moving average of
+ * true wind angle (alpha) DURING tack.
  * Must be <= @see AS_WIN_APP.
  *
  * @min 1
@@ -536,7 +502,8 @@ PARAM_DEFINE_INT32(ASO_WIN_AL, 1);
 
 
 /**
- * ASO_WIN_TWD, specifies the number of samples for the moving average of true wind direction DURING tack.
+ * ASO_WIN_TWD, specifies the number of samples for the moving average of
+ * true wind direction DURING tack.
  * Must be <= @see AS_WIN_TWD
  *
  * @min 1
@@ -664,34 +631,32 @@ static struct pointers_param_qgc_s{
     param_t rud_cp_pointer;       /**< pointer to param AS_RUD_CP*/
     param_t rud_controller_type_pointer;       /**< pointer to param AS_RUD_TYPE*/
 
-    param_t tack_rudder_cmd;        /**< pointer to param AS_RD_45_CMD*/
-    param_t tack_rudder_x1;      /**< pointer to param AS_RD_X1_AL*/
-    param_t tack_rudder_x2;      /**< pointer to param AS_RD_X2_AL*/
+    param_t max_rudder_cmd_pointer;        /**< pointer to param AS_MAX_RUD*/
     param_t sails_closed_cmd;       /**< pointer to param AS_SAI_CL_CMD*/
     param_t sails_closed_alpha;     /**< pointer to param AS_SAI_X1_AL*/
     param_t sails_opened_alpha;     /**< pointer to param AS_SAI_X2_AL*/
-    param_t tack_stop_alpha;        /**< pointer to param AS_TK_ST_AL*/
 
     param_t moving_alpha_window_pointer;/**< pointer to param AS_WIN_AL*/
     param_t moving_apparent_window_pointer;/**< pointer to param AS_WIN_APP*/
     param_t moving_twd_window_pointer;/**< pointer to param AS_WIN_TWD*/
 
-    param_t lat0_pointer;         /**< pointer to param AS_R_LAT0_E7*/
-    param_t lon0_pointer;         /**< pointer to param AS_R_LON0_E7*/
-    param_t alt0_pointer;         /**< pointer to param AS_R_ALT0_E3*/
+    param_t lat0_pointer;         /**< pointer to param ASC_R_LAT0_E7*/
+    param_t lon0_pointer;         /**< pointer to param ASC_R_LON0_E7*/
+    param_t alt0_pointer;         /**< pointer to param ASC_R_ALT0_E3*/
 
     param_t mean_wind_pointer;/**< pointer to param AS_MEAN_WIND_D*/
+    param_t use_fixed_twd_pointer; /**< pointer to AS_USE_FIXED_TWD */
 
-    param_t lat_tmark_pointer;         /**< pointer to param AS_T_LAT_E7*/
-    param_t lon_tmark_pointer;         /**< pointer to param AS_T_LON_E7*/
-    param_t alt_tmark_pointer;         /**< pointer to param AS_T_ALT_E3*/
+    param_t lat_tmark_pointer;         /**< pointer to param ASC_T_LAT_E7*/
+    param_t lon_tmark_pointer;         /**< pointer to param ASC_T_LON_E7*/
+    param_t alt_tmark_pointer;         /**< pointer to param ASC_T_ALT_E3*/
 
     // --- grid lines system parameters
     #if USE_GRID_LINES == 1
-    param_t grids_number_pointer;         /**< pointer to param AS_P_TOT_G*/
-    param_t grid_x_pointer;         /**< pointer to param AS_P_X_M*/
-    param_t grid_add_pointer;         /**< pointer to param AS_P_ADD*/
-    param_t repeat_past_grids_pointer;    /**< pointer to param AS_REIN_GRS */
+    param_t grids_number_pointer;         /**< pointer to param ASC_P_TOT_G*/
+    param_t grid_x_pointer;         /**< pointer to param ASC_P_X_M*/
+    param_t grid_add_pointer;         /**< pointer to param ASC_P_ADD*/
+    param_t repeat_past_grids_pointer;    /**< pointer to param ASC_REIN_GRS */
     #endif
     //-- params for LQR controller
     param_t lqr_k1_poniter; /**< pointer to  ASO_LQR_K1*/
@@ -723,7 +688,6 @@ static struct pointers_param_qgc_s{
     param_t mpc_hf_44_pointer; /**< pointer to ASO_MPC_HF44*/
 
     //--- params to define the band near the origin
-    param_t delta_yaw_rate_pointer; /**< pointer to ASO_DLT_YR_D*/
     param_t delta_yaw_pointer; /**< pointer to ASO_DLT_Y_D*/
     param_t delta_rudder_pointer; /**< pointer to ASO_DLT_RD_CM*/
 
@@ -753,6 +717,10 @@ static struct pointers_param_qgc_s{
 
     //---cog delay
     param_t cog_max_delay_pointer;/**< pointer to param AS_COG_DELAY_S*/
+
+    //--- P tack
+    param_t tack_p_kp_pointer; /**< pointer to param AS_TCK_P_K*/
+    param_t tack_p_cp_pointer; /**< pointer to param AS_TCK_P_C*/
 
     //-- simulation params
 
@@ -786,7 +754,7 @@ static struct pointers_param_qgc_s{
 * Initialize parameters.
 *
 */
-void param_init(struct parameters_qgc *params_p,
+void p_param_init(struct parameters_qgc *params_p,
                 struct structs_topics_s *strs_p,
                 const struct published_fd_s *pubs_p){
 
@@ -806,35 +774,33 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.rud_cp_pointer  = param_find("AS_RUD_CP");
     pointers_param_qgc.rud_controller_type_pointer  = param_find("AS_RUD_TYPE");
 
-    pointers_param_qgc.tack_rudder_cmd = param_find("AS_RD_45_CMD");
-    pointers_param_qgc.tack_rudder_x1 = param_find("AS_RD_X1_AL");
-    pointers_param_qgc.tack_rudder_x2 = param_find("AS_RD_X2_AL");
+    pointers_param_qgc.max_rudder_cmd_pointer = param_find("AS_MAX_RUD");
     pointers_param_qgc.sails_closed_cmd = param_find("AS_SAI_CL_CMD");
     pointers_param_qgc.sails_closed_alpha = param_find("AS_SAI_X1_AL");
     pointers_param_qgc.sails_opened_alpha = param_find("AS_SAI_X2_AL");
-    pointers_param_qgc.tack_stop_alpha = param_find("AS_TK_ST_AL");
 
     pointers_param_qgc.moving_alpha_window_pointer = param_find("AS_WIN_AL");
     pointers_param_qgc.moving_apparent_window_pointer = param_find("AS_WIN_APP");
     pointers_param_qgc.moving_twd_window_pointer = param_find("AS_WIN_TWD");
 
-    pointers_param_qgc.lat0_pointer    = param_find("AS_R_LAT0_E7");
-    pointers_param_qgc.lon0_pointer    = param_find("AS_R_LON0_E7");
-    pointers_param_qgc.alt0_pointer    = param_find("AS_R_ALT0_E3");
+    pointers_param_qgc.lat0_pointer    = param_find("ASC_R_LAT0_E7");
+    pointers_param_qgc.lon0_pointer    = param_find("ASC_R_LON0_E7");
+    pointers_param_qgc.alt0_pointer    = param_find("ASC_R_ALT0_E3");
 
     pointers_param_qgc.mean_wind_pointer = param_find("AS_MEAN_WIND_D");
+    pointers_param_qgc.use_fixed_twd_pointer = param_find("AS_USE_FIXED_TWD");
 
-    pointers_param_qgc.lat_tmark_pointer    = param_find("AS_T_LAT_E7");
-    pointers_param_qgc.lon_tmark_pointer    = param_find("AS_T_LON_E7");
-    pointers_param_qgc.alt_tmark_pointer    = param_find("AS_T_ALT_E3");
+    pointers_param_qgc.lat_tmark_pointer    = param_find("ASC_T_LAT_E7");
+    pointers_param_qgc.lon_tmark_pointer    = param_find("ASC_T_LON_E7");
+    pointers_param_qgc.alt_tmark_pointer    = param_find("ASC_T_ALT_E3");
 
     // --- grid lines system parameters
     #if USE_GRID_LINES == 1
-    pointers_param_qgc.grids_number_pointer    = param_find("AS_P_TOT_G");
-    pointers_param_qgc.grid_x_pointer    = param_find("AS_P_X_M");
+    pointers_param_qgc.grids_number_pointer    = param_find("ASC_P_TOT_G");
+    pointers_param_qgc.grid_x_pointer    = param_find("ASC_P_X_M");
 
-    pointers_param_qgc.grid_add_pointer = param_find("AS_P_ADD");
-    pointers_param_qgc.repeat_past_grids_pointer = param_find("AS_REIN_GRS");
+    pointers_param_qgc.grid_add_pointer = param_find("ASC_P_ADD");
+    pointers_param_qgc.repeat_past_grids_pointer = param_find("ASC_REIN_GRS");
 
     #endif
 
@@ -868,7 +834,6 @@ void param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.mpc_hf_44_pointer = param_find("ASO_MPC_HF44");
 
     //--- band params
-    pointers_param_qgc.delta_yaw_rate_pointer = param_find("ASO_DLT_YR_D");
     pointers_param_qgc.delta_yaw_pointer = param_find("ASO_DLT_Y_D");
     pointers_param_qgc.delta_rudder_pointer = param_find("ASO_DLT_RD_CM");
 
@@ -898,6 +863,10 @@ void param_init(struct parameters_qgc *params_p,
     //----cog delay
     pointers_param_qgc.cog_max_delay_pointer = param_find("AS_COG_DELAY_S");
 
+    //--- P tack
+    pointers_param_qgc.tack_p_kp_pointer = param_find("AS_TCK_P_K");
+    pointers_param_qgc.tack_p_cp_pointer = param_find("AS_TCK_P_C");
+
     #if SIMULATION_FLAG == 1
 
     #if USE_GRID_LINES == 1
@@ -923,14 +892,14 @@ void param_init(struct parameters_qgc *params_p,
 
 
     //get parameters but do not add any grid lines at start up
-    param_update(params_p, strs_p, false, pubs_p);
+    p_param_update(params_p, strs_p, false, pubs_p);
 
 }
 
 /** Update local copy of parameters.
  *
 */
-void param_update(struct parameters_qgc *params_p,
+void p_param_update(struct parameters_qgc *params_p,
                   struct structs_topics_s *strs_p, bool update_path_param,
                   const struct published_fd_s *pubs_p){
 
@@ -950,24 +919,26 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.tack_now, &tack_now);
 
     //set alpha_tmp as the new alpha star ONLY if set_alpha is not 0 AND tack_now is 0
-    if(set_alpha != 0 && tack_now == 0)
-        set_alpha_star(alpha_tmp);
+    if(set_alpha != 0 && tack_now == 0){
+        pp_set_alpha_star(alpha_tmp);
+        #if PRINT_DEBUG_STR == 1
+        smq_send_log_info("pp_set_alpha_star");
+        #endif
+    }
 
     //pass tack_now to path_planning module, only if update_path_param is true
-    if(update_path_param)
-        boat_should_tack(tack_now);
+    if(update_path_param){
+        pp_boat_should_tack(tack_now);
+    }
 
     //----- sail_servo
     param_get(pointers_param_qgc.sail_pointer, &(params_p->sail_servo));
 
     //----- tack type
     int32_t tack_type;
-    float alpha_min_stop_tack_r;
 
     param_get(pointers_param_qgc.tack_type_pointer, &tack_type);
-    param_get(pointers_param_qgc.tack_stop_alpha, &alpha_min_stop_tack_r);
-    alpha_min_stop_tack_r = alpha_min_stop_tack_r * deg2rad;
-    set_tack_data((uint16_t)tack_type, alpha_min_stop_tack_r);
+    gm_set_tack_data((uint16_t)tack_type);
 
     //----- param for rudder controller
     float rud_p;
@@ -976,9 +947,7 @@ void param_update(struct parameters_qgc *params_p,
     float rud_cp;
     float rud_kaw;
     int32_t rudder_controller_type;
-    float alpha_rudder_x1_r;
-    float alpha_rudder_x2_r;
-    float rud_cmd_45_left;
+    float max_rudder_cmd;
 
     param_get(pointers_param_qgc.rud_p_gain_pointer, &rud_p);
     param_get(pointers_param_qgc.rud_i_gain_pointer, &rud_i);
@@ -986,16 +955,10 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.rud_ci_pointer, &rud_ci);
     param_get(pointers_param_qgc.rud_cp_pointer, &rud_cp);
     param_get(pointers_param_qgc.rud_controller_type_pointer, &rudder_controller_type);
+    param_get(pointers_param_qgc.max_rudder_cmd_pointer, &max_rudder_cmd);
 
-    param_get(pointers_param_qgc.tack_rudder_x1, &alpha_rudder_x1_r);
-    param_get(pointers_param_qgc.tack_rudder_x2, &alpha_rudder_x2_r);
-    param_get(pointers_param_qgc.tack_rudder_cmd, &rud_cmd_45_left);
-
-    alpha_rudder_x1_r = alpha_rudder_x1_r * deg2rad;
-    alpha_rudder_x2_r = alpha_rudder_x2_r * deg2rad;
-
-    set_rudder_data(rud_p, rud_i, rud_cp, rud_ci, rudder_controller_type, rud_kaw,
-                    alpha_rudder_x1_r, alpha_rudder_x2_r, rud_cmd_45_left);
+    gm_set_rudder_data(rud_p, rud_i, rud_cp, rud_ci, rudder_controller_type, rud_kaw,
+                    max_rudder_cmd);
 
     //----- sails controller
     float sail_closed_cmd;
@@ -1009,7 +972,7 @@ void param_update(struct parameters_qgc *params_p,
     alpha_sail_closed_r = alpha_sail_closed_r * deg2rad;
     alpha_sail_opened_r = alpha_sail_opened_r * deg2rad;
 
-    set_sail_data(sail_closed_cmd, alpha_sail_closed_r, alpha_sail_opened_r);
+    gm_set_sail_data(sail_closed_cmd, alpha_sail_closed_r, alpha_sail_opened_r);
 
     //----- reference geo coordinate
     int32_t lat0;
@@ -1025,15 +988,21 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.alt0_pointer, &alt0);
 
     //update NED origin using API in navigation.h
-    set_ref0(&lat0, &lon0, &alt0);
+    n_set_ref0(&lat0, &lon0, &alt0);
 
     //----- mean wind
     float mean_wind;
+    int32_t use_fixed_twd;
     param_get(pointers_param_qgc.mean_wind_pointer, &mean_wind);
+    param_get(pointers_param_qgc.use_fixed_twd_pointer, &use_fixed_twd);
+
     //convert mean_wind in rad
     mean_wind = mean_wind * deg2rad;
+
     //set mean wind angle in navigation.h
-    set_mean_wind_angle(mean_wind);
+    n_set_mean_wind_angle(mean_wind);
+    //pass mean_wind and use_fixed_twd to controller_data module
+    cd_use_fixed_twd(use_fixed_twd, mean_wind);
 
     //----- top mark geo coordinate
     int32_t lat_tmark;
@@ -1049,7 +1018,7 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.alt_tmark_pointer, &alt_tmark);
 
     //set top mark position
-    set_pos_top_mark(&lat_tmark, &lon_tmark, &alt_tmark);
+    n_set_pos_top_mark(&lat_tmark, &lon_tmark, &alt_tmark);
 
     // --- grid lines system parameters
     #if USE_GRID_LINES == 1
@@ -1089,16 +1058,16 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.moving_alpha_window_pointer, &window_alpha);
     param_get(pointers_param_qgc.alpha_window_tack_pointer, &alpha_window_during_tack);
     //update window size using API in controller_data.h
-    update_k(window_alpha, alpha_window_during_tack);
+    cd_update_k(window_alpha, alpha_window_during_tack);
 
     param_get(pointers_param_qgc.moving_apparent_window_pointer, &window_apparent);
     //update window size using API in controller_data.h
-    update_k_app(window_apparent);
+    cd_update_k_app(window_apparent);
 
     param_get(pointers_param_qgc.moving_twd_window_pointer, &window_twd);
     param_get(pointers_param_qgc.twd_window_tack_pointer, &twd_window_during_tack);
     //update window size using API in controller_data.h
-    update_k_twd(window_twd, twd_window_during_tack);
+    cd_update_k_twd(window_twd, twd_window_during_tack);
 
     //-- param for LQR controller
     float lqr_k1;
@@ -1111,7 +1080,7 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.lqr_k3_poniter, &lqr_k3);
     param_get(pointers_param_qgc.lqr_sampling_time_pointer, &lqr_sampling_time_us);
 
-    set_lqr_gain(lqr_k1, lqr_k2, lqr_k3, lqr_sampling_time_us);
+    gm_set_lqr_gain(lqr_k1, lqr_k2, lqr_k3, lqr_sampling_time_us);
 
     //-- param for MPC controller
     float mpc_h[4];
@@ -1158,31 +1127,39 @@ void param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.mpc_b1_pointer, &mpc_B[0]);
     param_get(pointers_param_qgc.mpc_b2_pointer, &mpc_B[1]);
 
-    set_mpc_data(mpc_h, mpc_lb, mpc_ub, mpc_hf, mpc_sampling_time_us,
+    gm_set_mpc_data(mpc_h, mpc_lb, mpc_ub, mpc_hf, mpc_sampling_time_us,
                  mpc_A, mpc_B, mpc_pred_horiz_steps);
 
-    //--- define band around origin
-    float delta_vect[3];
+    //--- define the tube around origin
+    float delta_vect[2];
     float min_time_in_band;
     float safety_time_stop_s;
 
-    param_get(pointers_param_qgc.delta_yaw_rate_pointer, &delta_vect[0]);
-    param_get(pointers_param_qgc.delta_yaw_pointer, &delta_vect[1]);
-    param_get(pointers_param_qgc.delta_rudder_pointer, &delta_vect[2]);
+    param_get(pointers_param_qgc.delta_yaw_pointer, &delta_vect[0]);
+    param_get(pointers_param_qgc.delta_rudder_pointer, &delta_vect[1]);
 
-    //convert delta0 and delta1 values from deg to rad
-    for(uint8_t i = 0; i < 2; i++)
-        delta_vect[i] = delta_vect[i] * deg2rad;
+    //convert delta0 (daluta for yaw angle) from deg to rad
+    delta_vect[0] = delta_vect[0] * deg2rad;
 
     param_get(pointers_param_qgc.min_time_in_band_poniter, &min_time_in_band);
     param_get(pointers_param_qgc.safety_stop_tack_pointer, &safety_time_stop_s);
 
-    set_band_data(delta_vect, min_time_in_band, safety_time_stop_s);
+    gm_set_band_data(delta_vect, min_time_in_band, safety_time_stop_s);
 
     //--- cog delay
     float cog_max_delay_sec;
     param_get(pointers_param_qgc.cog_max_delay_pointer, &cog_max_delay_sec);
-    set_max_time_cog_not_up(cog_max_delay_sec);
+    cd_set_max_time_cog_not_up(cog_max_delay_sec);
+
+    //--- P tack
+    float p_tack_kp;
+    float p_tack_cp;
+
+    param_get(pointers_param_qgc.tack_p_kp_pointer, &p_tack_kp);
+    param_get(pointers_param_qgc.tack_p_cp_pointer, &p_tack_cp);
+
+    //give these two values to guidance module
+    gm_set_p_tack_data(p_tack_kp, p_tack_cp);
 
     //save boat_opt_matrices
     strs_p->boat_opt_mat.timestamp = hrt_absolute_time();
@@ -1233,7 +1210,10 @@ void param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param2.type_of_tack = (uint16_t)tack_type;
     strs_p->boat_qgc_param2.delta1 = delta_vect[0];
     strs_p->boat_qgc_param2.delta2 = delta_vect[1];
-    strs_p->boat_qgc_param2.delta3 = delta_vect[2];
+    strs_p->boat_qgc_param2.use_fixed_twd = (uint16_t)use_fixed_twd;
+    strs_p->boat_qgc_param2.p_tack_kp = p_tack_kp;
+    strs_p->boat_qgc_param2.p_tack_cp = p_tack_cp;
+
     orb_publish(ORB_ID(boat_qgc_param2), pubs_p->boat_qgc_param2, &(strs_p->boat_qgc_param2));
 
     //qgc3

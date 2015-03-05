@@ -45,9 +45,12 @@
 #include <mavlink/mavlink_log.h>
 
 /** @brief Initiliaze msg module to send messages to QGC*/
-void init_msg_module(void);
+void smq_init_msg_module(void);
 
 /** @brief Send log info message*/
-void send_log_info(const char* txt);
+void smq_send_log_info(const char* txt);
+
+/** @brief Send log critical message*/
+void smq_send_log_critical(const char* txt);
 
 #endif // SEND_MSG_QGC_H

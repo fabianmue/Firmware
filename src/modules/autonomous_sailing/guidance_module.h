@@ -51,11 +51,8 @@
 #include "topics_handler.h"
 #include "controller_data.h"
 #include "simulation_utility.h"
-#include "mpcForces/mpc_boatTack_h10.h"
-//#include "mpcForces/mpc_boatTack_h15.h"
-//#include "mpcForces/mpc_boatTack_h20.h"
-//#include "mpcForces/mpc_boatTack_h25.h"
-//#include "mpcForces/mpc_boatTack_h30.h"
+#include "mpcForces/mpc_boatTack_h20.h"
+#include "mpcForces/mpc_boatTack_h30.h"
 
 //log messages to QGroundControl
 #include "send_msg_qgc.h"
@@ -64,7 +61,7 @@
 #include "mpc_test_data.h"
 #endif
 
-#define RUDDER_SATURATION 1.0f /// 1.0f = most left rudder position, -1.0f, most right rudder position
+#define MAX_RUDDER_SATURATION 1.0f /// 1.0f = most left rudder position, -1.0f, most right rudder position
 #define RUDDER_45_LEFT 0.85f /// rudder at 45 deg and the boat steers on the left
 
 #define SAIL_SATURATION 0.56f  /// 0.56f = sails fully closed; 0.0f = sails fully opened
@@ -80,31 +77,34 @@
 #define RC_AUTONOMOUS_MODE 1.0f     ///Rc_Ch4 == RC_AUTONOMOUS_MODE if autonomous mode selected
 
 /** @brief Implement next control action*/
-void guidance_module(struct reference_actions_s *ref_act_p,
+void gm_guidance_module(struct reference_actions_s *ref_act_p,
                      const struct parameters_qgc *param_qgc_p,
                      struct structs_topics_s *strs_p);
 
 
 /** @brief Set data of the PI which controls rudder*/
-void set_rudder_data(float p, float i, float cp,
+void gm_set_rudder_data(float p, float i, float cp,
                      float ci, int32_t rudder_controller_type, float kaw,
-                     float alpha_rudder_x1_r, float alpha_rudder_x2_r, float rud_cmd_45_left);
+                     float abs_rudder_saturation);
 
 /** @brief set which kind of tack maneuver should be performed */
-void set_tack_data(uint16_t tack_type, float alpha_min_stop_tack_r);
+void gm_set_tack_data(uint16_t tack_type);
 
 /** @brief set data of the sail controller*/
-void set_sail_data(float sail_closed_cmd, float alpha_sail_closed_r, float alpha_sail_opened_r);
+void gm_set_sail_data(float sail_closed_cmd, float alpha_sail_closed_r, float alpha_sail_opened_r);
 
 /** @brief set lqr gain for lqr tack maneuver*/
-void set_lqr_gain(float lqr_k1, float lqr_k2, float lqr_k3, int32_t lqr_samp_time_us);
+void gm_set_lqr_gain(float lqr_k1, float lqr_k2, float lqr_k3, int32_t lqr_samp_time_us);
 
 /** @brief set MPC cost function, lower and upper bound */
-void set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3],
+void gm_set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3],
                   int32_t mpc_sampling_time_us, float A[2][2], float B[2],
                   int32_t pred_horz_steps);
 
 /** @brief set data to specify when 'optimal' tack is completed*/
-void set_band_data(float* delta, float min_time_s, float safety_time_stop_tack_s);
+void gm_set_band_data(float* delta, float min_time_s, float safety_time_stop_tack_s);
+
+/** @brief set data for P controller during P tack*/
+void gm_set_p_tack_data(float kp, float cp);
 
 #endif //GUIDANCE_MODULE_H
