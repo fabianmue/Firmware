@@ -8,18 +8,10 @@
 #include "pp_topics_handler.h"
 
 
-
-/**
- * The uORB Topic "path_planning" is the interface between the modules "autonomous_sailing" and
- * "path_planning".
- * This is the declaration of the topic and registers it in uORB.
- */
-ORB_DEFINE(path_planning, struct path_planning_s);
-
-
-static struct published_fd_s pubs;      //File-Descriptors of published topics
-
-
+//Stuct of all topic-Advertisements
+static struct{
+    orb_advert_t path_planning;
+}pubs;
 
 /**
  * Subscribe to all Topics in the Topic-Subscription Struct
@@ -32,10 +24,9 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
 
 	//Subscribe to the topics
 	subs_p->vehicle_global_position = orb_subscribe(ORB_ID(vehicle_global_position));
-	subs_p->wind_estimate = orb_subscribe(ORB_ID(wind_estimate));
+    subs_p->wind_sailing = orb_subscribe(ORB_ID(wind_sailing));
 	subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
-	subs_p->boat_weather_station = orb_subscribe(ORB_ID(boat_weather_station));
-	subs_p->rc_channels = orb_subscribe(ORB_ID(rc_channels));
+    subs_p->boat_guidance_debug = orb_subscribe(ORB_ID(boat_guidance_debug));
 
 
 	//Check correct subscription
@@ -44,8 +35,8 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
         return false;
     }
 
-    if(subs_p->wind_estimate == -1){
-        warnx(" error on subscribing on wind_estimate Topic \n");
+    if(subs_p->wind_sailing == -1){
+        warnx(" error on subscribing on wind_sailing Topic \n");
         return false;
     }
 
@@ -54,15 +45,12 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
         return false;
     }
 
-    if(subs_p->boat_weather_station == -1){
-        warnx(" error on subscribing on boat_weather_station Topic \n");
+    if(subs_p->boat_guidance_debug == -1){
+        warnx(" error on subscribing on boat_guidance_debug Topic \n");
         return false;
     }
 
-    if(subs_p->rc_channels == -1){
-        warnx(" error on subscribing on rc_channels Topic \n");
-        return false;
-    }
+    //advertise path_planning topic
 
 
     //Subscription to all topics was successful
@@ -95,19 +83,10 @@ bool th_advertise(struct structs_topics_s *strs_p) {
  *  @param pp_p: Pointer to a path_planning Struct
  *	@return true, if successfully updated
  */
-bool th_update_pathplanning(float heading, bool tack, bool gybe) {
-
-	//Create new Struct with data
-	struct path_planning_s newPPS = {
-			.heading_ref = heading,
-			.tack = tack,
-			.gybe = gybe
-	};
-
-	newPPS.timestamp = hrt_absolute_time();	//Store time since system start in microseconds
+bool th_publish(const struct structs_topics_s *strs_p) {
 
 	//Publish the new values
-	orb_publish(ORB_ID(path_planning), pubs.path_planning, &newPPS);
+    orb_publish(ORB_ID(path_planning), pubs.path_planning, &(strs_p->path_planning));
 
 	return true;
 }

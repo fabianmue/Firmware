@@ -253,4 +253,7 @@ ORB_DEFINE(boat_qgc_param3, struct boat_qgc_param3_s);
 //Added by Marco Tranzatto
 #include "topics/boat_optimal_control.h"
 ORB_DEFINE(boat_opt_mat, struct boat_opt_mat_s);
-//ORB_DEFINE(boat_opt_ctr, struct boat_opt_ctr_s);
+
+//Added by Jonas Wirz
+#include "topics/path_planning.h"
+ORB_DEFINE(path_planning, struct path_planning_s);

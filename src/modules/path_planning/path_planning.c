@@ -175,21 +175,18 @@ int pp_thread_main(int argc, char *argv[]) {
 	//**HANDLE TOPICS
 	struct subscribtion_fd_s subs;   //File-Descriptors of subscribed topics
 	struct structs_topics_s strs;    //Struct of Interested Topics
-	th_subscribe(&subs,&strs);       //Subscribe to interested Topics
 
-	th_advertise(&strs);	 		 //Advertise Topics
 
-	//orb_set_interval(subs.att, 50); //Eventually limit update rate of a topic to a number of milliseconds (here 50)
+    th_subscribe(&subs,&strs);       //Subscribe to interested Topics
+    th_advertise(&strs);	 		 //Advertise Topics
 
 
 	//**POLL FOR CHANGES IN SUBSCRIBED TOPICS
     struct pollfd fds[] = {			 // Polling Management
             { .fd = subs.vehicle_global_position,   .events = POLLIN },
-            { .fd = subs.wind_estimate,             .events = POLLIN },
-            { .fd = subs.parameter_update,          .events = POLLIN },
-            { .fd = subs.boat_weather_station,      .events = POLLIN },
-            { .fd = subs.rc_channels,               .events = POLLIN },
-            { .fd = subs.path_planning,             .events = POLLIN }
+            { .fd = subs.boat_guidance_debug,       .events = POLLIN },
+            { .fd = subs.wind_sailing,              .events = POLLIN },
+            { .fd = subs.parameter_update,          .events = POLLIN }
     };
 
     int poll_return;				//Return Value of the polling.
@@ -208,12 +205,6 @@ int pp_thread_main(int argc, char *argv[]) {
 	 * This is the main Thread Loop. It loops until the Process is killed.*/
 	while (!thread_should_exit) {
 
-		#if DEBUG == 1
-			warnx("Pathplanning Thread running!\n");
-			sleep(10);
-		#endif
-
-
 		//**POLL FOR CHANGES IN THE SUBSCRIBED TOPICS
 		poll_return = poll(fds, (sizeof(fds) / sizeof(fds[0])), TIMEOUT_POLL);
 
@@ -229,52 +220,26 @@ int pp_thread_main(int argc, char *argv[]) {
 				continue;
 			} else {
 				//Everything is OK and new Data is available
-
-				if(fds[0].revents & POLLIN) {
-					//New Data in "vehicle_global_position"
-					orb_copy(ORB_ID(vehicle_global_position), subs.vehicle_global_position, &(strs.vehicle_global_position));
-
-					/**Send the new Position to the Navigator */
-					//nav_position_update(&strs);
-
-				}
-
-				if(fds[1].revents & POLLIN) {
-					//New Data in "wind_estimate"
-					orb_copy(ORB_ID(wind_estimate), subs.wind_estimate, &(strs.wind_estimate));
-
-
-				}
-
-				if(fds[2].revents & POLLIN) {
-					//New Data in "parameter_update"
-					orb_copy(ORB_ID(parameter_update), subs.parameter_update, &(strs.parameter_update));
-
-
-				}
-
-				if(fds[3].revents & POLLIN) {
-					//New Data in "boat_weather_station"
-					orb_copy(ORB_ID(boat_weather_station), subs.boat_weather_station, &(strs.boat_weather_station));
-
-
-				}
-
-				if(fds[4].revents & POLLIN) {
-					//New Data in "rc_channels"
-					orb_copy(ORB_ID(rc_channels), subs.rc_channels, &(strs.rc_channels));
-
-
-				}
-
-				if(fds[5].revents & POLLIN) {
-					//New Data in "path_planning"
-					orb_copy(ORB_ID(path_planning), subs.path_planning, &(strs.path_planning));
-
-					//**The navigator is noticed by the helsman that a maneuver is completed */
-					//nav_listen2helsman(&strs);
-
-				}
+                if(fds[0].revents & POLLIN){
+                    //copy new GPOS data
+                    orb_copy(ORB_ID(vehicle_global_position), subs.vehicle_global_position,
+                             &(strs.vehicle_global_position));
+                }
+                if(fds[1].revents & POLLIN){
+                    //copy new BGUD data
+                    orb_copy(ORB_ID(boat_guidance_debug), subs.boat_guidance_debug,
+                             &(strs.boat_guidance_debug));
+                }
+                if(fds[2].revents & POLLIN){
+                    //copy new WSAI data
+                    orb_copy(ORB_ID(wind_sailing), subs.wind_sailing,
+                             &(strs.wind_sailing));
+                }
+                if(fds[3].revents & POLLIN){
+                    //copy new parameters from QGC
+                    orb_copy(ORB_ID(parameter_update), subs.parameter_update,
+                             &(strs.parameter_update));
+                }
 			}
 		}
 

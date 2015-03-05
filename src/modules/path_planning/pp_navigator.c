@@ -130,10 +130,10 @@ void nav_navigate(void) {
 void nav_listen2helsman(const struct structs_topics_s *strs_p) {
 
 	//Get the state of the tack
-	state.tack = strs_p->path_planning.tack;
+    //state.tack = strs_p->path_planning.tack;
 
 	//Get the state of the gybe
-	state.gybe = strs_p->path_planning.gybe;
+    //state.gybe = strs_p->path_planning.gybe;
 
 } //end of nav_listen2helsman
 
@@ -146,7 +146,7 @@ void nav_listen2helsman(const struct structs_topics_s *strs_p) {
 void nav_speak2helsman(void) {
 
 	//Communicate the new data to the Helsman
-	th_update_pathplanning(state.heading_ref, state.tack, state.gybe);
+    //th_update_pathplanning(state.heading_ref, state.tack, state.gybe);
 }
 
 
