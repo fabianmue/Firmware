@@ -1272,8 +1272,14 @@ void gm_guidance_module(struct reference_actions_s *ref_act_p,
     #endif
 
     //update actuator value
+    #if SIMULATION_FLAG == 1
+    if(strs_p->rc_channels.channels[RC_MODE_INDEX] == RC_MANUAL_MODE){
+    #endif
     strs_p->actuators.control[0] = rudder_command;
     strs_p->actuators.control[3] =  sail_command;
+    #if SIMULATION_FLAG == 1
+    }
+    #endif
 
     //update rudder_latest in any case, even if we are not tacking
     opc_data.rudder_latest = rudder_command;

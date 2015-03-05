@@ -246,13 +246,13 @@ PARAM_DEFINE_INT32(AS_USE_FIXED_TWD, 0);
  * Kp constant for the tack using only P gain.
  * @min 0
 */
-PARAM_DEFINE_INT32(AS_TCK_P_K, 0.73661977f);
+PARAM_DEFINE_FLOAT(AS_TCK_P_K, 0.73661977f);
 
 /**
  * Cp constant for the tack using only P gain.
  * @min 0
 */
-PARAM_DEFINE_INT32(AS_TCK_P_C, 0.1f);
+PARAM_DEFINE_FLOAT(AS_TCK_P_C, 0.1f);
 
 // --- coordinates variables
 
