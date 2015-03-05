@@ -9,6 +9,14 @@
  *      Author: Jonas Wirz <wirzjo@student.ethz.ch>
  */
 
+/* TODO:
+ * - add logging of variables
+ * - add parameters from QGroundControl
+ * - add Potentialfield Method
+ */
+
+
+
 #include "pp_navigator.h"
 
 #include "pp_cost_method.h"

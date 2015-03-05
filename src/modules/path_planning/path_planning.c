@@ -55,7 +55,6 @@
  * - add logging of variables
  * - add parameters from QGroundControl
  * - add Potentialfield Method
- * - solve missing Reference Problem to PRIORITY VARIABLES
  */
 
 
