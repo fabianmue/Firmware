@@ -10,6 +10,9 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+//set if you want to use a path planning that uses grid lines
+#define USE_GRIDLINES_PP 1
+
 /*DEBUG FLAG
  * If this flag is enabled (set to 1) the module is in Debug-Mode
  * and outputs comments onto the console.*/
