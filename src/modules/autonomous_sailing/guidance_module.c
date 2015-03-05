@@ -220,7 +220,7 @@ static struct {
                                 .time_started_valid = false,//time_started_tack_us not valid now
                                 .last_time_valid = false, //last_time_in_band_us not valid now
                                 .safety_time_stop_tack = MIN_SAFETY_TIME_STOP_TCK,
-                                .pred_horz_steps = 10
+                                .pred_horz_steps = 20
                             };
 
 
@@ -819,7 +819,7 @@ void gm_set_mpc_data(float h[4], float lb[2], float ub[2], float h_final[3][3],
     }
 
     //check if we have an available mpc solve for the new prediction horizon
-    if(pred_horz_steps == 10 || pred_horz_steps == 20 || pred_horz_steps == 30){
+    if(pred_horz_steps == 20 || pred_horz_steps == 30){
         //save prediction horizon
         opc_data.pred_horz_steps = pred_horz_steps;
     }
@@ -923,17 +923,17 @@ void mpc_control_rudder(float *p_rudder_cmd,
         /* WARNING: if you want to add/modify a mpc solve function, remember to update
          * the if clause in gm_set_mpc_data() where pred_horz_steps is checked
         */
-        if(opc_data.pred_horz_steps == 10){
-            solver_ret = mpc_boatTack_h10_solve((mpc_boatTack_h10_params*) &(opc_data.forces_params),
-                                            (mpc_boatTack_h10_output*) &(opc_data.forces_output),
-                                            (mpc_boatTack_h10_info*) &(opc_data.forces_info));
-        }
+//        if(opc_data.pred_horz_steps == 10){
+//            solver_ret = mpc_boatTack_h10_solve((mpc_boatTack_h10_params*) &(opc_data.forces_params),
+//                                            (mpc_boatTack_h10_output*) &(opc_data.forces_output),
+//                                            (mpc_boatTack_h10_info*) &(opc_data.forces_info));
+//        }
 //        else if(opc_data.pred_horz_steps == 15){
 //            solver_ret = mpc_boatTack_h15_solve((mpc_boatTack_h15_params*) &(opc_data.forces_params),
 //                                            (mpc_boatTack_h15_output*) &(opc_data.forces_output),
 //                                            (mpc_boatTack_h15_info*) &(opc_data.forces_info));
 //        }
-        else if(opc_data.pred_horz_steps == 20){
+        if(opc_data.pred_horz_steps == 20){
             solver_ret = mpc_boatTack_h20_solve((mpc_boatTack_h20_params*) &(opc_data.forces_params),
                                             (mpc_boatTack_h20_output*) &(opc_data.forces_output),
                                             (mpc_boatTack_h20_info*) &(opc_data.forces_info));
