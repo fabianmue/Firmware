@@ -69,7 +69,7 @@ void nav_navigate(void) {
 	if(!state.tack && !state.gybe) {
 
 		if(pp_algorithm == 1) {
-			//TODO add the Cost-Function Reference Heading here
+			state.heading_ref = cm_NewReferenceHeading(&state,&field);
 		}
 
 		if(pp_algorithm == 2) {
@@ -78,8 +78,8 @@ void nav_navigate(void) {
 
 
 		//****DECISION MAKING
-		/* In the following section the decisions based on the optimal Heading are made. This means
-		 * that a decision is made, iff the boat should tack or gybe. */
+		/* In the following section the decisions based on the optimal Heading are made. In particular
+		 * the the Navigator decides if the boat should tack */
 		float NewWind = nh_appWindDir(state.heading_ref,state.wind_dir); 		//New Apparent Winddirection
 		float OldWind = nh_appWindDir(state.heading_cur,state.wind_dir);		//Current Apparent Winddirection
 
@@ -91,24 +91,25 @@ void nav_navigate(void) {
 		if(!((NewWind < 0 && OldWind < 0) || (NewWind > 0 && OldWind > 0))) {
 			//A Maneuver is Necessary
 
-			if(fabsf(NewWind) > PIHALF) {
+			if(fabsf(OldWind) < PIHALF) {
 				//A tack is necessary to reach the new optimal heading
-
 				state.tack = true;
+
 			} else {
 				//A gybe is necessary to reach the new optimal heading
-
 				state.gybe = true;
+
 			}
 
-		} //if no tack or gybe in progress
+		} //if boat should do a maneuver
 
 
 
 		/****COMMUNICATION
 		* A new Reference Heading is generated => send this data to the Helsman (autonomous_sailing module) */
 		nav_speak2helsman();
-	}
+
+	} //if no tack or gybe is in progress
 
 } //end of nav_navigate
 

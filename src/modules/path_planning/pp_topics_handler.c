@@ -104,6 +104,8 @@ bool th_update_pathplanning(float heading, bool tack, bool gybe) {
 			.gybe = gybe
 	};
 
+	newPPS.timestamp = hrt_absolute_time();	//Store time since system start in microseconds
+
 	//Publish the new values
 	orb_publish(ORB_ID(path_planning), pubs.path_planning, &newPPS);
 

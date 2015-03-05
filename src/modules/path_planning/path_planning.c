@@ -50,6 +50,15 @@
  * @author Jonas Wirz <wirzjo@student.ethz.ch>
  */
 
+
+/* TODO:
+ * - add logging of variables
+ * - add parameters from QGroundControl
+ * - add Potentialfield Method
+ * - solve missing Reference Problem to PRIORITY VARIABLES
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
