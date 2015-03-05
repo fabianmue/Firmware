@@ -54,8 +54,7 @@ void nav_init(void) {
 	state.wind_dir = 0;
 	state.tack = false;
 	state.gybe = false;
-
-
+	state.targetNum = 0;
 }
 
 
@@ -68,11 +67,18 @@ void nav_navigate(void) {
 	/** A new reference heading should only be calculated if the boat is not doing a maneuver */
 	if(!state.tack && !state.gybe) {
 
+
+		/****FIND A NEW REFERENCE HEADING
+		 * Different algorithms can be used. */
 		if(pp_algorithm == 1) {
+			//Use Cost-Function-Method
+
 			state.heading_ref = cm_NewReferenceHeading(&state,&field);
 		}
 
 		if(pp_algorithm == 2) {
+			//Use Potential-Field-Method
+
 			//TODO add the Potential-Field Reference Heading here
 		}
 
@@ -165,11 +171,29 @@ void nav_heading_update(const struct structs_topics_s *strs_p) {
  */
 void nav_position_update(const struct structs_topics_s *strs_p) {
 
-	//TODO: check if we reached the target and possibly set the new target
+	Point newPos;
+	newPos.lat = ((float)(strs_p->vehicle_global_position.lat)) * DEG2RAD;
+	newPos.lon = ((float)(strs_p->vehicle_global_position.lon)) * DEG2RAD;
+
+	//Check, if we reached a target
+	if(dist(newPos,field.targets[state.targetNum]) <= TARGETTOLERANCE) {
+		//We are inside the tolerance => target is counted as reached
+
+		if(state.targetNum != (field.NumberOfTargets-1)) {
+			//This is not the last target => set new Target
+
+			state.targetNum += 1;
+		} else {
+			//This was the last target
+
+			//TODO: Report to QGround Control
+
+		}
+	}
 
 
-	state.position.lat = ((float)(strs_p->vehicle_global_position.lat)) * DEG2RAD;
-	state.position.lon = ((float)(strs_p->vehicle_global_position.lon)) * DEG2RAD;
+	//Update the state to the new Position
+	state.position = newPos;
 
 } //end of nav_heading_update
 

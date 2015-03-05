@@ -48,9 +48,15 @@
 
 
 /* INITIAL TARGET
- * Position of the initial Target position */
+ * Position of the initial Target position [rad]*/
 #define HOMELAT 47.348877f * DEG2RAD	//Note: This is a point outside of the testarea near Tiefenbrunnen ZH
 #define HOMELON 8.5604200f * DEG2RAD
+
+
+/* TARGET TOLERANCE
+ * Radius of a circle around the target, inside which the target is counted as reached. This radius depends
+ * on the GPS Accuracy. [m]*/
+#define TARGETTOLERANCE 3
 
 
 /* ALGORITHM FLAG
