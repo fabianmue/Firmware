@@ -223,33 +223,6 @@ PARAM_DEFINE_INT32(AS_WIN_APP, 10);
  */
 PARAM_DEFINE_INT32(AS_WIN_TWD, 10);
 
-
-
-/**
- * Latitude of the origin of the NED system, in degrees * E7.
- *
- * @min -900000000
- * @max 900000000
- */
-PARAM_DEFINE_INT32(AS_R_LAT0_E7, 473494820);
-
-/**
- * Longitude of the origin of the NED system, in degrees * E7.
- *
- * @min -1800000000
- * @max 1800000000
- */
-PARAM_DEFINE_INT32(AS_R_LON0_E7, 85605120);
-
-/**
- * Altitude of origin of NED system, in millimeters.
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_INT32(AS_R_ALT0_E3, 406000);
-
-
 /**
  * AS_MEAN_WIND_D, specifies the mean wind direction [deg], in [-180, 180].
  * Positive on the right (going from North to East),
@@ -268,13 +241,39 @@ PARAM_DEFINE_FLOAT(AS_MEAN_WIND_D, 0.0f);
 */
 PARAM_DEFINE_INT32(AS_USE_FIXED_TWD, 0);
 
+// --- coordinates variables
+
+/**
+ * Latitude of the origin of the NED system, in degrees * E7.
+ *
+ * @min -900000000
+ * @max 900000000
+ */
+PARAM_DEFINE_INT32(ASC_R_LAT0_E7, 473494820);
+
+/**
+ * Longitude of the origin of the NED system, in degrees * E7.
+ *
+ * @min -1800000000
+ * @max 1800000000
+ */
+PARAM_DEFINE_INT32(ASC_R_LON0_E7, 85605120);
+
+/**
+ * Altitude of origin of NED system, in millimeters.
+ *
+ * @min 0
+ * @max ?
+ */
+PARAM_DEFINE_INT32(ASC_R_ALT0_E3, 406000);
+
 /**
  * Latitude of the top mark, in degrees * E7.
  *
  * @min -900000000
  * @max 900000000
  */
-PARAM_DEFINE_INT32(AS_T_LAT_E7, 473459370);
+PARAM_DEFINE_INT32(ASC_T_LAT_E7, 473459370);
 
 /**
  * Longitude of the top mark, in degrees * E7.
@@ -282,7 +281,7 @@ PARAM_DEFINE_INT32(AS_T_LAT_E7, 473459370);
  * @min -1800000000
  * @max 1800000000
  */
-PARAM_DEFINE_INT32(AS_T_LON_E7, 85547940);
+PARAM_DEFINE_INT32(ASC_T_LON_E7, 85547940);
 
 /**
  * Altitude of the top mark, in millimeters.
@@ -290,7 +289,7 @@ PARAM_DEFINE_INT32(AS_T_LON_E7, 85547940);
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_T_ALT_E3, 406000);
+PARAM_DEFINE_INT32(ASC_T_ALT_E3, 406000);
 
 //------------------------- grid lines parameters
 #if USE_GRID_LINES == 1
@@ -301,21 +300,21 @@ PARAM_DEFINE_INT32(AS_T_ALT_E3, 406000);
  * @min 1
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_P_TOT_G, 1);
+PARAM_DEFINE_INT32(ASC_P_TOT_G, 1);
 
 /**
  * X coordinate in Race frame of grid line of index AS_P_INDEX, in meters.
  *
  */
-PARAM_DEFINE_FLOAT(AS_P_X_M, 0.0f);
+PARAM_DEFINE_FLOAT(ASC_P_X_M, 0.0f);
 
 /**
- * 1 if you want to add a new grid line at x = AS_P_X_M.
+ * 1 if you want to add a new grid line at x = ASC_P_X_M.
  *
  * @min 0
  * @max 1
  */
-PARAM_DEFINE_INT32(AS_P_ADD, 0);
+PARAM_DEFINE_INT32(ASC_P_ADD, 0);
 
 /**
  * 1 if you want to re-insert the same grid lines you used before.
@@ -323,7 +322,7 @@ PARAM_DEFINE_INT32(AS_P_ADD, 0);
  * @min 0
  * @max 1
  */
-PARAM_DEFINE_INT32(AS_REIN_GRS, 0);
+PARAM_DEFINE_INT32(ASC_REIN_GRS, 0);
 
 #endif
 
@@ -600,23 +599,23 @@ static struct pointers_param_qgc_s{
     param_t moving_apparent_window_pointer;/**< pointer to param AS_WIN_APP*/
     param_t moving_twd_window_pointer;/**< pointer to param AS_WIN_TWD*/
 
-    param_t lat0_pointer;         /**< pointer to param AS_R_LAT0_E7*/
-    param_t lon0_pointer;         /**< pointer to param AS_R_LON0_E7*/
-    param_t alt0_pointer;         /**< pointer to param AS_R_ALT0_E3*/
+    param_t lat0_pointer;         /**< pointer to param ASC_R_LAT0_E7*/
+    param_t lon0_pointer;         /**< pointer to param ASC_R_LON0_E7*/
+    param_t alt0_pointer;         /**< pointer to param ASC_R_ALT0_E3*/
 
     param_t mean_wind_pointer;/**< pointer to param AS_MEAN_WIND_D*/
     param_t use_fixed_twd_pointer; /**< pointer to AS_USE_FIXED_TWD */
 
-    param_t lat_tmark_pointer;         /**< pointer to param AS_T_LAT_E7*/
-    param_t lon_tmark_pointer;         /**< pointer to param AS_T_LON_E7*/
-    param_t alt_tmark_pointer;         /**< pointer to param AS_T_ALT_E3*/
+    param_t lat_tmark_pointer;         /**< pointer to param ASC_T_LAT_E7*/
+    param_t lon_tmark_pointer;         /**< pointer to param ASC_T_LON_E7*/
+    param_t alt_tmark_pointer;         /**< pointer to param ASC_T_ALT_E3*/
 
     // --- grid lines system parameters
     #if USE_GRID_LINES == 1
-    param_t grids_number_pointer;         /**< pointer to param AS_P_TOT_G*/
-    param_t grid_x_pointer;         /**< pointer to param AS_P_X_M*/
-    param_t grid_add_pointer;         /**< pointer to param AS_P_ADD*/
-    param_t repeat_past_grids_pointer;    /**< pointer to param AS_REIN_GRS */
+    param_t grids_number_pointer;         /**< pointer to param ASC_P_TOT_G*/
+    param_t grid_x_pointer;         /**< pointer to param ASC_P_X_M*/
+    param_t grid_add_pointer;         /**< pointer to param ASC_P_ADD*/
+    param_t repeat_past_grids_pointer;    /**< pointer to param ASC_REIN_GRS */
     #endif
     //-- params for LQR controller
     param_t lqr_k1_poniter; /**< pointer to  ASO_LQR_K1*/
@@ -731,24 +730,24 @@ void p_param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.moving_apparent_window_pointer = param_find("AS_WIN_APP");
     pointers_param_qgc.moving_twd_window_pointer = param_find("AS_WIN_TWD");
 
-    pointers_param_qgc.lat0_pointer    = param_find("AS_R_LAT0_E7");
-    pointers_param_qgc.lon0_pointer    = param_find("AS_R_LON0_E7");
-    pointers_param_qgc.alt0_pointer    = param_find("AS_R_ALT0_E3");
+    pointers_param_qgc.lat0_pointer    = param_find("ASC_R_LAT0_E7");
+    pointers_param_qgc.lon0_pointer    = param_find("ASC_R_LON0_E7");
+    pointers_param_qgc.alt0_pointer    = param_find("ASC_R_ALT0_E3");
 
     pointers_param_qgc.mean_wind_pointer = param_find("AS_MEAN_WIND_D");
     pointers_param_qgc.use_fixed_twd_pointer = param_find("AS_USE_FIXED_TWD");
 
-    pointers_param_qgc.lat_tmark_pointer    = param_find("AS_T_LAT_E7");
-    pointers_param_qgc.lon_tmark_pointer    = param_find("AS_T_LON_E7");
-    pointers_param_qgc.alt_tmark_pointer    = param_find("AS_T_ALT_E3");
+    pointers_param_qgc.lat_tmark_pointer    = param_find("ASC_T_LAT_E7");
+    pointers_param_qgc.lon_tmark_pointer    = param_find("ASC_T_LON_E7");
+    pointers_param_qgc.alt_tmark_pointer    = param_find("ASC_T_ALT_E3");
 
     // --- grid lines system parameters
     #if USE_GRID_LINES == 1
-    pointers_param_qgc.grids_number_pointer    = param_find("AS_P_TOT_G");
-    pointers_param_qgc.grid_x_pointer    = param_find("AS_P_X_M");
+    pointers_param_qgc.grids_number_pointer    = param_find("ASC_P_TOT_G");
+    pointers_param_qgc.grid_x_pointer    = param_find("ASC_P_X_M");
 
-    pointers_param_qgc.grid_add_pointer = param_find("AS_P_ADD");
-    pointers_param_qgc.repeat_past_grids_pointer = param_find("AS_REIN_GRS");
+    pointers_param_qgc.grid_add_pointer = param_find("ASC_P_ADD");
+    pointers_param_qgc.repeat_past_grids_pointer = param_find("ASC_REIN_GRS");
 
     #endif
 
