@@ -1271,6 +1271,14 @@ void gm_guidance_module(struct reference_actions_s *ref_act_p,
     mpc_control_rudder(&rudder_command, ref_act_p, strs_p);
     #endif
 
+
+    //Use ESSC => Set the sail command by the Extremum Seeking Sailcontrol
+    //if() {
+    	sail_command = essc_sail_control_value();
+    //}
+
+
+
     //update actuator value
     #if SIMULATION_FLAG == 1
     if(strs_p->rc_channels.channels[RC_MODE_INDEX] == RC_MANUAL_MODE){
