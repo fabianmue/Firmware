@@ -1816,6 +1816,8 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_QGC_PARAM2.delta1 = buf.boat_qgc_param2.delta1;
             log_msg.body.log_BOAT_QGC_PARAM2.delta2 = buf.boat_qgc_param2.delta2;
             log_msg.body.log_BOAT_QGC_PARAM2.use_fixed_twd = buf.boat_qgc_param2.use_fixed_twd;
+            log_msg.body.log_BOAT_QGC_PARAM2.p_tack_kp = buf.boat_qgc_param2.p_tack_kp;
+            log_msg.body.log_BOAT_QGC_PARAM2.p_tack_cp = buf.boat_qgc_param2.p_tack_cp;
             LOGBUFFER_WRITE_AND_COUNT(QGC2);
         }
 

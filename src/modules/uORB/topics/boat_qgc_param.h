@@ -70,6 +70,8 @@ struct boat_qgc_param2_s {
     float delta1;               /// Delta1 used to define the band in optimal tack maneuver
     float delta2;               /// Delta2 used to define the band in optimal tack maneuver
     uint16_t use_fixed_twd;     /// True if a fixed twd is used to compute alpha angle
+    float p_tack_kp;            /// kp value for P controller during tack
+    float p_tack_cp;            /// cp value for P controller during tack
 };
 
 struct boat_qgc_param3_s{

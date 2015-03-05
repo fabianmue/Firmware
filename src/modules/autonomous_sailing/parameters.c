@@ -126,9 +126,10 @@ PARAM_DEFINE_FLOAT(AS_SAI_X2_AL, 150.0f);
  * Type of tack maneuver
  *
  * Tack maneuver can be performed in three ways:
- * 0 = implicit tack by changing the alpha reference and wait for the PI to follow the nee value.
+ * 0 = implicit tack by changing the alpha reference and wait for the PI to follow the new value.
  * 1 = LQR tack.
  * 2 = MPC tack
+ * 3 = conditional P tack
  *
  * @min 0
  * @max 2
@@ -240,6 +241,18 @@ PARAM_DEFINE_FLOAT(AS_MEAN_WIND_D, 0.0f);
  * with @see AS_MEAN_WIND_D as constant value for twd (AS_USE_FIXED_TWD = 1).
 */
 PARAM_DEFINE_INT32(AS_USE_FIXED_TWD, 0);
+
+/**
+ * Kp constant for the tack using only P gain.
+ * @min 0
+*/
+PARAM_DEFINE_INT32(AS_TCK_P_K, 0.73661977f);
+
+/**
+ * Cp constant for the tack using only P gain.
+ * @min 0
+*/
+PARAM_DEFINE_INT32(AS_TCK_P_C, 0.1f);
 
 // --- coordinates variables
 
@@ -677,6 +690,10 @@ static struct pointers_param_qgc_s{
     //---cog delay
     param_t cog_max_delay_pointer;/**< pointer to param AS_COG_DELAY_S*/
 
+    //--- P tack
+    param_t tack_p_kp_pointer; /**< pointer to param AS_TCK_P_K*/
+    param_t tack_p_cp_pointer; /**< pointer to param AS_TCK_P_C*/
+
     //-- simulation params
 
     #if SIMULATION_FLAG == 1
@@ -809,6 +826,10 @@ void p_param_init(struct parameters_qgc *params_p,
 
     //----cog delay
     pointers_param_qgc.cog_max_delay_pointer = param_find("AS_COG_DELAY_S");
+
+    //--- P tack
+    pointers_param_qgc.tack_p_kp_pointer = param_find("AS_TCK_P_K");
+    pointers_param_qgc.tack_p_cp_pointer = param_find("AS_TCK_P_C");
 
     #if SIMULATION_FLAG == 1
 
@@ -1065,7 +1086,7 @@ void p_param_update(struct parameters_qgc *params_p,
     gm_set_mpc_data(mpc_h, mpc_lb, mpc_ub, mpc_hf, mpc_sampling_time_us,
                  mpc_A, mpc_B, mpc_pred_horiz_steps);
 
-    //--- define band around origin
+    //--- define the tube around origin
     float delta_vect[2];
     float min_time_in_band;
     float safety_time_stop_s;
@@ -1085,6 +1106,15 @@ void p_param_update(struct parameters_qgc *params_p,
     float cog_max_delay_sec;
     param_get(pointers_param_qgc.cog_max_delay_pointer, &cog_max_delay_sec);
     cd_set_max_time_cog_not_up(cog_max_delay_sec);
+
+    //--- P tack
+    float p_tack_kp;
+    float p_tack_cp;
+
+    param_get(pointers_param_qgc.tack_p_kp_pointer, &p_tack_kp);
+    param_get(pointers_param_qgc.tack_p_cp_pointer, &p_tack_cp);
+
+    //give these two values to guidance module!!!
 
     //save boat_opt_matrices
     strs_p->boat_opt_mat.timestamp = hrt_absolute_time();
@@ -1136,6 +1166,8 @@ void p_param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param2.delta1 = delta_vect[0];
     strs_p->boat_qgc_param2.delta2 = delta_vect[1];
     strs_p->boat_qgc_param2.use_fixed_twd = (uint16_t)use_fixed_twd;
+    strs_p->boat_qgc_param2.p_tack_kp = p_tack_kp;
+    strs_p->boat_qgc_param2.p_tack_cp = p_tack_cp;
 
     orb_publish(ORB_ID(boat_qgc_param2), pubs_p->boat_qgc_param2, &(strs_p->boat_qgc_param2));
 
