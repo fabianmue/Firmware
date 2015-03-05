@@ -80,11 +80,8 @@ static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
 static int daemon_task;						/**< Handle of daemon task / thread */
 
-
-
-//THIS IS JUST A FIX!!!
-#define SCHED_PRIORITY_DEFAULT 10
-
+//thread priority
+#define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 20 ///daemon priority
 
 
 /**
@@ -138,8 +135,8 @@ int path_planning_main(int argc, char *argv[])
 		thread_should_exit = false;
 		daemon_task = task_spawn_cmd("daemon",
 					 SCHED_DEFAULT,
-					 SCHED_PRIORITY_DEFAULT,
-					 2000,
+                     DAEMON_PRIORITY,
+                     4096,
 					 pp_thread_main,
 					 (argv) ? (const char **)&argv[2] : (const char **)NULL);
 		exit(0);

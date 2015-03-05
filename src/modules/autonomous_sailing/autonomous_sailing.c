@@ -73,18 +73,19 @@
 //settings
 #include "settings.h"
 
-
-
 // To be able to use the "parameter function" from Q ground control:
 #include <systemlib/param/param.h>
 #include <systemlib/systemlib.h>
 
+#include <nuttx/config.h>
+#include <nuttx/sched.h>
+
+//thread priority
+#define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
+
 #if TEST_MPC == 1
 #include "mpc_test_data.h"
 #endif
-
-#define SCHED_PRIORITY_MAX 20      // JW THIS IS JUST A FIX!!!!
-#define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 10 ///daemon priority
 
 #if SIMULATION_FLAG == 1 //defined in parameter.h
     #define TIMEOUT_POLL 400 //ms between every simulation
