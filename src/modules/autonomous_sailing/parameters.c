@@ -196,21 +196,12 @@ PARAM_DEFINE_INT32(AS_WIN_APP, 10);
  */
 PARAM_DEFINE_INT32(AS_WIN_TWD, 10);
 
-/**
- * AS_MEAN_WIND_D, specifies the mean wind direction [deg], in [-180, 180].
- * Positive on the right (going from North to East),
- * negative on the left (going from North to West).
- *
- * @min -180
- * @max 180
- */
-PARAM_DEFINE_FLOAT(AS_MEAN_WIND_D, 0.0f);
 
 /**
  * Choose if you want to compute the alpha angle (angle with respect to the wind) using
  * a TWD (true wind direction) supplied by a moving average filter using the twd read by the
  * weather station (AS_USE_FIXED_TWD = 0), or if you want to use the value set
- * with @see AS_MEAN_WIND_D as constant value for twd (AS_USE_FIXED_TWD = 1).
+ * with @see ASP_MEAN_WIND_D as constant value for twd (AS_USE_FIXED_TWD = 1).
 */
 PARAM_DEFINE_INT32(AS_USE_FIXED_TWD, 0);
 

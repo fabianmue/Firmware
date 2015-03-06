@@ -93,6 +93,16 @@ PARAM_DEFINE_INT32(ASP_T_LON_E7, 85547940);
  */
 PARAM_DEFINE_INT32(ASP_T_ALT_E3, 406000);
 
+/**
+ * ASP_MEAN_WIND_D, specifies the mean wind direction [deg], in [-180, 180].
+ * Positive on the right (going from North to East),
+ * negative on the left (going from North to West).
+ *
+ * @min -180
+ * @max 180
+ */
+PARAM_DEFINE_FLOAT(ASP_MEAN_WIND_D, 0.0f);
+
 //------------------------- grid lines parameters
 #if USE_GRID_LINES == 1
 
@@ -255,7 +265,7 @@ void p_param_init(void){
     pointers_param_qgc.lon0_pointer    = param_find("ASP_R_LON0_E7");
     pointers_param_qgc.alt0_pointer    = param_find("ASP_R_ALT0_E3");
 
-    pointers_param_qgc.mean_wind_pointer = param_find("AP_MEAN_WIND_D");
+    pointers_param_qgc.mean_wind_pointer = param_find("ASP_MEAN_WIND_D");
 
     pointers_param_qgc.lat_tmark_pointer    = param_find("ASP_T_LAT_E7");
     pointers_param_qgc.lon_tmark_pointer    = param_find("ASP_T_LON_E7");
@@ -274,8 +284,8 @@ void p_param_init(void){
     pointers_param_qgc.do_maneuver_now = param_find("ASP_DO_MANEUV");
 
     //explicit alpha star from QGC
-    pointers_param_qgc.alpha_star_pointer    = param_find("AS_ALST_ANG_D");
-    pointers_param_qgc.use_alpha_star_pointer    = param_find("AS_ALST_SET");
+    pointers_param_qgc.alpha_star_pointer    = param_find("ASP_ALST_ANG_D");
+    pointers_param_qgc.use_alpha_star_pointer    = param_find("ASP_ALST_SET");
 
     #if SIMULATION_FLAG == 1
 

@@ -65,6 +65,9 @@ bool cb_do_maneuver(float new_alpha_star){
         //set new alpha_star
         cb_set_alpha_star(new_alpha_star);
 
+        //do_maneuver
+        pp.do_maneuver = true;
+
         //remember we have to send the meneuver command to autonomous_sailing app
         send_maneuver_cmd = true;
         pp_updated = true;
@@ -104,8 +107,12 @@ void cb_new_as_data(const struct structs_topics_s *strs_p){
     // If we sent a do_maneuver command, check if the maneuver is completed
     if(doing_maneuver == true && send_maneuver_cmd == false){
         //is the maneuver completed?
-        if(strs_p->boat_guidance_debug.maneuver_completed == 1)
+        if(strs_p->boat_guidance_debug.maneuver_completed == 1){
             doing_maneuver == false;
+
+            pp.do_maneuver = false;
+            pp_updated = true;
+        }
     }
 }
 
@@ -144,10 +151,13 @@ void cb_set_race_coordinates(float x_m, float y_m){
 
 /**
  * Set a new reference for alpha.
+ * Available only if the boat is not (or will not starting) doing a maneuver.
  *
  * @param new_alpha_star    new alpha star in Dumas' convention, [rad]
 */
-void cb_set_alpha_star(float new_alpha_star){
+bool cb_set_alpha_star(float new_alpha_star){
+
+    bool res = true;
 
     //make sure abs(alpha) <= pi
     if(new_alpha_star > M_PI_F)
@@ -155,10 +165,15 @@ void cb_set_alpha_star(float new_alpha_star){
     else if(new_alpha_star < -M_PI_F)
         new_alpha_star = -M_PI_F;
 
-    //set new alpha
-    pp.alpha_star = new_alpha_star;
+    //set new alpha if the boat is not maneuvering
+    if(cb_is_maneuver_completed() == true){
+        pp.alpha_star = new_alpha_star;
+        pp_updated = true;
+    }
+    else
+        res = false;
 
-    pp_updated = true;
+    return res;
 }
 
 /**

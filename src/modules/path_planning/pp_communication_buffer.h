@@ -62,7 +62,7 @@ void cb_publish_pp_if_updated(void);
 void cb_set_race_coordinates(float x_m, float y_m);
 
 /** @brief set a new value for alpha_star */
-void cb_set_alpha_star(float new_alpha_star);
+bool cb_set_alpha_star(float new_alpha_star);
 
 /** @brief init module */
 void cb_init(void);
