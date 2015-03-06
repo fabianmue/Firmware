@@ -137,7 +137,7 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
  * @param ObstSafetyRadius
  * @param ObstHorizon
 */
-void cm_set_onfiguration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float ObstSafetyRadius, float ObstHorizon) {
+void cm_set_onfiguration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float ObstSafetyRadius, float ObstHorizon, float WindowSize) {
 
 	Config.Gw = Gw;
 	Config.Go = Go;
@@ -147,6 +147,7 @@ void cm_set_onfiguration(float Gw, float Go, float Gm, float Gs, float Gt, float
 	Config.GLee = GLee;
 	Config.ObstSafetyRadius = ObstSafetyRadius;
 	Config.ObstHorizon = ObstHorizon;
+	Config.WindowSize = WindowSize;
 }
 
 

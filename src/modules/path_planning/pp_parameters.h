@@ -12,18 +12,13 @@
 
 #include <systemlib/param/param.h>
 
-#include "pp_parameters.h"
+
 
 /** @brief Initialize parameters*/
-void param_init(struct parameters_qgc *params_p,
-                struct structs_topics_s *strs_p,
-                const struct published_fd_s *pubs_p);
+void p_param_init(void);
 
 /** @brief Check if one or more parameters have been updated and perform appropriate actions*/
-void param_update(struct parameters_qgc *params_p,
-                  struct structs_topics_s *strs_p,
-                  bool update_path_param,
-                  const struct published_fd_s *pubs_p);
+void p_param_update(void);
 
 
 
