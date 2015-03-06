@@ -61,15 +61,15 @@ static struct {
 	uint64_t lastCall; 		    	//Timestamp of the last Functioncall (in [us])
 } State = {
 		.buffer = {0},				//Init the Buffer with all zeros
-		.meanSpeeds = {0},			//Init the Array with all zeros
-		.ds = {0},					//Init the Array with all zeros
+		.meanSpeeds = {0, 0},			//Init the Array with all zeros
+		.ds = {SAIL_INIT,SAIL_INIT,SAIL_INIT},	//Init the Array with all zeros
 		.ActDs = 0,
 		.lastCall = 0
 };
 
 
 /** Struct holding the Configuration Parameters for the Controller */
-struct {
+static struct {
 	float k;						//Stepsize in Degrees
 	unsigned int windowSize;		//Windowsize for building the mean over the speeds (window-averaging)
 	float period	;				//Timeinterval between two changes in the sail control value [us]
@@ -96,7 +96,7 @@ struct {
 void essc_init(void) {
 
 	/* Create the Speed-Buffer */
-	State.buffer = buffer_init(8);
+	State.buffer = buffer_init(Config.windowSize);
 
 }
 
@@ -256,23 +256,14 @@ int sign(float value) {
 */
 float mean_speed(void) {
 
-	/* Get the current number of elements currently available for Speed-Calculation. When starting the system or
-	 * flushing the buffer it can happen that the buffer does not contain the full number of elements. Therefore,
-	 * take the minimum of the current buffersize and the windowsize.
-	 */
-	uint8_t minSize = Config.windowSize;
-	if(Config.windowSize > State.buffer.buffersize) {
-		minSize = State.buffer.buffersize;
-	}
-
-
 	//Calculate the mean
 	float sum = 0;
-	for(uint8_t i = 0; i < minSize; i++) {
+	uint8_t i;
+	for(i = 0; i < State.buffer.buffersize; i++) {
 		sum += buffer_get_value(&(State.buffer),i);
 	}
 
-	return sum/minSize;
+	return sum/State.buffer.buffersize;
 
 } //End of meanSpeed
 
@@ -349,7 +340,7 @@ bool buffer_updateSize(CircularBuffer *buffer, uint8_t buffersize) {
 		//}
 
 		//Set the new maximum Buffersize
-		buffer->maxBuffersize = buffersize;
+		buffer->maxBuffersize = buffersize + 1;
 		buffer->buffersize = 0;
 		buffer->head = 0;
 		buffer->tail = 0;

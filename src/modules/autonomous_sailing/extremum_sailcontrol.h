@@ -26,6 +26,8 @@
 #define SAIL_CLOSED_DEG 0           //Sailangle when the sail is fully closed
 #define SAIL_OPEN_DEG   80          //Sailangle when the sail is fully open
 
+#define SAIL_INIT (SAIL_OPEN_DEG-SAIL_CLOSED_DEG)/2 //Initial Value for the Sail
+
 
 /** @brief Initialize the use of Extremum Seeking Sailcontrol (ESSC) */
 void essc_init(void);
