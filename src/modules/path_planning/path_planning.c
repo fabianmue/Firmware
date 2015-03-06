@@ -233,8 +233,12 @@ int pp_thread_main(int argc, char *argv[]) {
 
 
 					#if USE_GRIDLINES_PP != 1
-                    	//A new Alpha_star value is available => tell this value to the Navigator
+                    	/* A new Alpha or wind-value is available
+                    	 * => tell this value to the Navigator */
                     	nav_heading_wind_update(&strs);
+
+                    	/* A maneuver is completed */
+                    	nav_listen2helsman(&strs);
 					#endif
 
                 }

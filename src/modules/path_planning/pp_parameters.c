@@ -12,21 +12,6 @@
 #include "pp_cost_method.h"
 
 
-//static struct pointers_param_qgc_s{
-//
-//} pointers_param_qgc;
-
-
-	float Gw;          		//Weighting factor for sailing against the target while maximizing speed (was 0.5)
-    float Go;          		//Weighting factor for avoiding obstacles (was 0.8)
-	float Gm;          		//Weighting factor for avoiding maneuovres (was 0.5) (higher value <=> less maneuovres are allowed)
-	float Gs;         		//Weighting factor for prefering courses that need no change in course
-	float Gt;          		//Weighting factor for tactical considerations
-	float GLee;       		//Weighting factor for passing Obstacles in Lee. (higher value <=> force boat to pass in Lee)
-	float ObstSafetyRadius; //Safety Radius around an obstacle [m]
-	float ObstHorizon; 		//Obstacle Horizon <=> inside this horizon obstacles are recognized [m]
-	float WindowSize; 		//Size of the window for smoothing the Costfunction
-
 
 /**
  * pp_cost_method: Weighting factors for Cost Function Method

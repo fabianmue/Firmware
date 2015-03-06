@@ -16,8 +16,8 @@
 
 /* TODO:
  * - add Potentialfield Method
- * - average WindSpeed and average WindDirection
  * - speak to helsman => publish update in topic
+ * - decide when to call the function nav_navigate()
  */
 
 
@@ -133,11 +133,7 @@ void nav_navigate(void) {
  */
 void nav_listen2helsman(const struct structs_topics_s *strs_p) {
 
-	//Get the state of the tack
-    //state.tack = strs_p->path_planning.tack;
-
-	//Get the state of the gybe
-    //state.gybe = strs_p->path_planning.gybe;
+	//TODO: check the variable that informs the navigator that a maneuver is completed
 
 } //end of nav_listen2helsman
 
@@ -151,7 +147,6 @@ void nav_speak2helsman(void) {
 
 	//Communicate the new data to the Helsman
 	//TODO: The heading_reference must be converted to an alpha_star in Dumas' Frame!
-    //th_update_pathplanning(state.heading_ref, state.tack, state.gybe);
 }
 
 
