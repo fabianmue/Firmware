@@ -24,7 +24,7 @@
  * @param end:   Endpoint for the bearing measurement
  * @return Bearing from Start ot Endpoint in rad. A true bearing is returned (element of [0:2pi])
  */
-float nh_bearing(Point start, Point end) {
+float nh_geo_bearing(Point start, Point end) {
 
 	//Calculate the bearing
 	float dx = cos(start.lat)*sin(end.lat)-sin(start.lat)*cos(end.lat)*cos(end.lon-start.lon);
@@ -49,7 +49,7 @@ float nh_bearing(Point start, Point end) {
  * @param point2: Endpoint for the distance measurement
  * @return Distance between the point1 and point2 in meters
  */
-float nh_dist(Point point1, Point point2) {
+float nh_geo_dist(Point point1, Point point2) {
 
 	float a = sinf((point2.lat-point1.lat)/2) * sinf((point2.lat-point1.lat)/2) +
 	        cosf(point1.lat) * cosf(point2.lat) *
@@ -142,7 +142,7 @@ float nh_polardiagram(float AppWindDir, float AppWindSpeed) {
  * @param compass: Boat's heading in Compass-Frame [rad] element of [0...2pi]
  * @return Boat's heading in Dumas' Frame [rad]
  * */
-float compass2dumas(float compass) {
+float nh_compass2dumas(float compass) {
 
 	//1) Convert from Compass to Sensor Frame
 	if(compass > PI) {
@@ -150,7 +150,7 @@ float compass2dumas(float compass) {
 	}
 
 	//2) Convert from Sensor to Dumas' Frame
-	return sensor2dumas(compass);
+	return nh_sensor2dumas(compass);
 }
 
 
@@ -159,10 +159,10 @@ float compass2dumas(float compass) {
  * @param dumas: Boat's heading in Dumas'-Frame [rad] element of [pi...0...-pi]
  * @return Boat's heading in Compass Frame [rad]
  * */
-float dumas2compass(float dumas) {
+float nh_dumas2compass(float dumas) {
 
 	//1) Convert from Duma to Sensor
-	float sensor = dumas2sensor(dumas);
+	float sensor = nh_dumas2sensor(dumas);
 
 	//2) Convert from Sensor to Compass
     if(sensor < 0) {
@@ -178,7 +178,7 @@ float dumas2compass(float dumas) {
  * @param sensor: Boat's heading in Sensor-Frame [rad] element of [-pi...0...pi]
  * @return Boat's heading in Dumas' Frame
  */
-float sensor2dumas(float sensor) {
+float nh_sensor2dumas(float sensor) {
 	//Transformation is a simple switch of Signs.
 	return -sensor;
 }
@@ -189,7 +189,7 @@ float sensor2dumas(float sensor) {
  * @param dumas: Boat's heading in Dumas'-Frame [rad] element of [pi...0...-pi]
  * @return Boat's heading in Sensor Frame
  */
-float dumas2sensor(float dumas) {
+float nh_dumas2sensor(float dumas) {
 	//Transformation is a simple switch of Signs.
 	return -dumas;
 }

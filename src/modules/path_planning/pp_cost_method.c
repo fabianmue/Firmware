@@ -13,6 +13,8 @@
 
 #include "pp_cost_method.h"
 
+#include "pp_polardiagram.h"
+
 
 /**********************************************************************************************/
 /****************************  VARIABLES  *****************************************************/
@@ -207,7 +209,7 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 
 	float appWind= nh_appWindDir(seg,state->wind_dir);		//Current apparent Wind Direction
 
-	float targetDir = nh_bearing(state->position,field->targets[state->targetNum]); //Bearing to target
+	float targetDir = nh_geo_bearing(state->position,field->targets[state->targetNum]); //Bearing to target
 
 	float Tgx = cosf(targetDir);							//Create a vector pointing towards the target
 	float Tgy = sinf(targetDir);
@@ -355,7 +357,7 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 
 		/* Only obstacles within a certain Horizon are taken into account. This means that only obstacles in our range
 		 * affect the Pathplanning. We do not care about far away obstacles. */
-		float distance = nh_dist(state->position,field->obstacles[i]);
+		float distance = nh_geo_dist(state->position,field->obstacles[i]);
 		if(distance > Config.ObstHorizon) {
 			//Obstacle is too far away => continue with the next obstacle
 			continue;
@@ -364,7 +366,7 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 
 		/* Add the safety radius to the obstacle. An obstacle is modelled as a point on the map. To avoid the obstacle
 		 * and compensate for uncertainties (e.g. sudden changes in wind) the obstacle is made larger virtually */
-		float obst_bear = nh_bearing(state->position,field->obstacles[i]);
+		float obst_bear = nh_geo_bearing(state->position,field->obstacles[i]);
 
 		float ang_correction = atanf(Config.ObstSafetyRadius/distance);
 		//TODO: Be careful here, if distance is close to zero we have a DIVISION BY ZERO!!!

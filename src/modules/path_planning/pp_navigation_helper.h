@@ -20,11 +20,11 @@ typedef struct {		 	 //Contains the GPS-Coordinate of a point
 
 
 /* @brief Calculate the bearing from one point to another */
-float nh_bearing(Point start, Point end);
+float nh_geo_bearing(Point start, Point end);
 
 
 /* @brief Calculate the distance between two points */
-float nh_dist(Point point1, Point point2);
+float nh_geo_dist(Point point1, Point point2);
 
 
 /* @brief Calculate an approximated apparent Wind direction */
@@ -40,19 +40,19 @@ float nh_polardiagram(float AppWindDir, float AppWindSpeed);
 
 
 /* @brief Convert from Compass to Dumas' Frame */
-float compass2dumas(float compass);
+float nh_compass2dumas(float compass);
 
 
 /* @brief Convert from Dumas' to Compass Frame */
-float dumas2compass(float dumas);
+float nh_dumas2compass(float dumas);
 
 
 /* @brief Convert from Sensor to Dumas' Frame */
-float sensor2dumas(float sensor);
+float nh_sensor2dumas(float sensor);
 
 
 /* @brief Convert from Dumas' Frame to Sensor Frame */
-float duams2sensor(float dumas);
+float nh_dumas2sensor(float dumas);
 
 
 #endif /* NAVIGATION_HELPER_H_ */
