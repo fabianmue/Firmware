@@ -93,16 +93,16 @@ static struct pointers_param_qgc_s{
 void p_param_init(void) {
 
 	//**COST_METHOD
-	pointers_param_qgc.cm_weight_gw_pointer = find_param("PP_CM_WEIGHT_GW");
-	pointers_param_qgc.cm_weight_go_pointer = find_param("PP_CM_WEIGHT_GO");
-	pointers_param_qgc.cm_weight_gm_pointer = find_param("PP_CM_WEIGHT_GM");
-	pointers_param_qgc.cm_weight_gs_pointer = find_param("PP_CM_WEIGHT_GS");
-	pointers_param_qgc.cm_weight_gt_pointer = find_param("PP_CM_WEIGHT_GT");
-	pointers_param_qgc.cm_weight_glee_pointer = find_param("PP_CM_WEIGHT_GLEE");
+	pointers_param_qgc.cm_weight_gw_pointer = param_find("PP_CM_WEIGHT_GW");
+	pointers_param_qgc.cm_weight_go_pointer = param_find("PP_CM_WEIGHT_GO");
+	pointers_param_qgc.cm_weight_gm_pointer = param_find("PP_CM_WEIGHT_GM");
+	pointers_param_qgc.cm_weight_gs_pointer = param_find("PP_CM_WEIGHT_GS");
+	pointers_param_qgc.cm_weight_gt_pointer = param_find("PP_CM_WEIGHT_GT");
+	pointers_param_qgc.cm_weight_glee_pointer = param_find("PP_CM_WEIGHT_GLEE");
 
-	pointers_param_qgc.cm_obstsafetyradius_pointer = find_param("PP_CM_OBSTACLESAFETYRADIUS");
-	pointers_param_qgc.cm_obsthorizon_pointer = find_param("PP_CM_OBSTHORIZONT");
-	pointers_param_qgc.cm_windowsize_pointer = find_param("PP_CM_WINDOWSIZE");
+	pointers_param_qgc.cm_obstsafetyradius_pointer = param_find("PP_CM_OBSTACLESAFETYRADIUS");
+	pointers_param_qgc.cm_obsthorizon_pointer = param_find("PP_CM_OBSTHORIZONT");
+	pointers_param_qgc.cm_windowsize_pointer = param_find("PP_CM_WINDOWSIZE");
 
 }
 

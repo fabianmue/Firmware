@@ -15,7 +15,6 @@
  */
 
 /* TODO:
- * - add parameters from QGroundControl
  * - add Potentialfield Method
  * - average WindSpeed and average WindDirection
  * - speak to helsman => publish update in topic

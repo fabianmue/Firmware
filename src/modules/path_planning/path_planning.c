@@ -190,6 +190,8 @@ int pp_thread_main(int argc, char *argv[]) {
 		nav_init();	//Init a Navigator
 	#endif
 
+	p_param_init();		//Init the use of Parameters from QGround Control
+
 
 	//**SET THE THREAD-STATUS TO RUNNING
 	thread_running = true;
@@ -245,6 +247,9 @@ int pp_thread_main(int argc, char *argv[]) {
                     //copy new parameters from QGC
                     orb_copy(ORB_ID(parameter_update), subs.parameter_update,
                              &(strs.parameter_update));
+
+                    p_param_update();
+
                 }
 			}
 		}
