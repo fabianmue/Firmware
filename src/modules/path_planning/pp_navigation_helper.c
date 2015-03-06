@@ -140,21 +140,57 @@ float nh_polardiagram(float AppWindDir, float AppWindSpeed) {
  * Convert from Compass to Dumas' Frame
  *
  * @param compass: Boat's heading in Compass-Frame [rad] element of [0...2pi]
- * @return Boat's heading in Dumas' Frame
+ * @return Boat's heading in Dumas' Frame [rad]
  * */
 float compass2dumas(float compass) {
-	//TODO
-	return 0.0f;
+
+	//1) Convert from Compass to Sensor Frame
+	if(compass > PI) {
+		compass = compass - 2*PI;
+	}
+
+	//2) Convert from Sensor to Dumas' Frame
+	return sensor2dumas(compass);
 }
 
 
 /** Convert from Dumas' to Compass Frame
  *
  * @param dumas: Boat's heading in Dumas'-Frame [rad] element of [pi...0...-pi]
- * @return Boat's heading in Compass Frame*/
+ * @return Boat's heading in Compass Frame [rad]
+ * */
 float dumas2compass(float dumas) {
-	//TODO
-	return 0.0f;
 
+	//1) Convert from Duma to Sensor
+	float sensor = dumas2sensor(dumas);
+
+	//2) Convert from Sensor to Compass
+    if(sensor < 0) {
+    	return 2*PI+sensor;
+    } else {
+    	return sensor;
+    }
+}
+
+
+/** Convert from Sensor Frame to Dumas' Frame
+ *
+ * @param sensor: Boat's heading in Sensor-Frame [rad] element of [-pi...0...pi]
+ * @return Boat's heading in Dumas' Frame
+ */
+float sensor2dumas(float sensor) {
+	//Transformation is a simple switch of Signs.
+	return -sensor;
+}
+
+
+/** Convert from Dumas' Frame to Sensor Frame
+ *
+ * @param dumas: Boat's heading in Dumas'-Frame [rad] element of [pi...0...-pi]
+ * @return Boat's heading in Sensor Frame
+ */
+float dumas2sensor(float dumas) {
+	//Transformation is a simple switch of Signs.
+	return -dumas;
 }
 

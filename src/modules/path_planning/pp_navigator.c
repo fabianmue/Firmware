@@ -16,7 +16,6 @@
 
 /* TODO:
  * - add parameters from QGroundControl
- * - finish frame-conversion functions
  * - add Potentialfield Method
  * - Implement Polardiagram as a lookup table
  * - average WindSpeed and average WindDirection
@@ -174,6 +173,26 @@ void nav_heading_update(const struct structs_topics_s *strs_p) {
 
 	/* For the Pathplanning a compass-heading is needed (element of [0...2pi], with 0 = true North) */
 	state.heading_cur = dumas2compass(alpha_star + twd); //COG in Dumas' convention
+
+} //end of nav_heading_update
+
+
+
+/**
+ * New information about the wind is available.
+ *
+ * @param *strs_p: Pointer to the topics-struct
+ */
+void nav_heading_wind_update(const struct structs_topics_s *strs_p) {
+
+	/* Get the new alpha Value
+	 * alpha = yaw-twd;
+	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
+	float alpha_star = strs_p->boat_guidance_debug.alpha;
+	state.wind_dir = sensor2dumas(dumas2compass(strs_p->boat_guidance_debug.twd_mean));
+
+	/* For the Pathplanning a compass-heading is needed (element of [0...2pi], with 0 = true North) */
+	state.heading_cur = dumas2compass(alpha_star + state.wind_dir); //Boat Heading in Compass-Convention
 
 } //end of nav_heading_update
 

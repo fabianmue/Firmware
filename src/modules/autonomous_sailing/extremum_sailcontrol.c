@@ -10,6 +10,9 @@
  */
 
 
+#include <stdio.h>
+
+
 #include "extremum_sailcontrol.h"
 
 
@@ -324,6 +327,12 @@ CircularBuffer buffer_init(uint8_t buffersize) {
  */
 bool buffer_updateSize(CircularBuffer *buffer, uint8_t buffersize) {
 
+	//if(buffer == NULL) {
+	//  //For some reason the buffer does not exist => create it.
+	//	CircularBuffer newBuffer = buffer_init(Config.windowSize);
+	//	buffer = &newBuffer;
+	//}
+
 	if(buffersize != buffer->maxBuffersize) {
 		//The Size of the buffer has changed => initialize the new buffer
 
@@ -334,10 +343,10 @@ bool buffer_updateSize(CircularBuffer *buffer, uint8_t buffersize) {
 		buffer->bufferData_p = malloc(sizeof(float) * buffersize);	//Allocate memory for the new buffer
 
 		//Fill the new buffer with zeros
-		memset(buffer->bufferData_p, 0, buffer->buffersize);
-		//for(uint8_t i = 0; i < buffersize; i++) {
-		//        buffer->bufferData_p[i] = 0;
-		//}
+		//memset(buffer->bufferData_p, 0, buffer->buffersize);
+		for(uint8_t i = 0; i < buffersize; i++) {
+		        buffer->bufferData_p[i] = 0;
+		}
 
 		//Set the new maximum Buffersize
 		buffer->maxBuffersize = buffersize + 1;

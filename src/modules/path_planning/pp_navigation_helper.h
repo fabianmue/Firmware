@@ -47,4 +47,12 @@ float compass2dumas(float compass);
 float dumas2compass(float dumas);
 
 
+/* @brief Convert from Sensor to Dumas' Frame */
+float sensor2dumas(float sensor);
+
+
+/* @brief Convert from Dumas' Frame to Sensor Frame */
+float duams2sensor(float dumas);
+
+
 #endif /* NAVIGATION_HELPER_H_ */

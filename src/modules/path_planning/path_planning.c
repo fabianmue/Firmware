@@ -186,7 +186,9 @@ int pp_thread_main(int argc, char *argv[]) {
 
     //** INIT FUNCTIONS
 
-	//nav_init();	//Init a Navigator
+    #if USE_GRIDLINES_PP != 1
+		nav_init();	//Init a Navigator
+	#endif
 
 
 	//**SET THE THREAD-STATUS TO RUNNING
@@ -216,6 +218,11 @@ int pp_thread_main(int argc, char *argv[]) {
                     //copy new GPOS data
                     orb_copy(ORB_ID(vehicle_global_position), subs.vehicle_global_position,
                              &(strs.vehicle_global_position));
+
+					#if USE_GRIDLINES_PP != 1
+                    	nav_position_update(&strs);
+					#endif
+
                 }
                 if(fds[1].revents & POLLIN){
                     //copy new BGUD data
@@ -223,8 +230,10 @@ int pp_thread_main(int argc, char *argv[]) {
                              &(strs.boat_guidance_debug));
 
 
-                    //A new Alpha_star value is available => tell this value to the Navigator
-                    nav_heading_update(&strs);
+					#if USE_GRIDLINES_PP != 1
+                    	//A new Alpha_star value is available => tell this value to the Navigator
+                    	nav_heading_wind_update(&strs);
+					#endif
 
                 }
                 if(fds[2].revents & POLLIN){

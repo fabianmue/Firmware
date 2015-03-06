@@ -61,7 +61,7 @@ void nav_position_update(const struct structs_topics_s *strs_p);
 
 
 /** @brief New heading information is available */
-void nav_heading_update(const struct structs_topics_s *strs_p);
+void nav_heading_wind_update(const struct structs_topics_s *strs_p);
 
 
 /** @brief Set Obstacles */
