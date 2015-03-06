@@ -50,7 +50,8 @@ static bool pp_updated = false;//has pp been updated ?
 
 /**
  * Tell autonomous_sailing app to start a tack or jybe maneuver.
- * You shoul call this funcion only if the boat is not doing another maneuver.
+ * You should call this funcion only if the boat is not doing another maneuver.
+ * Use @see cb_is_maneuver_completed() to ask if the boat is doing a meneuver.
  *
  * @param  new_alpha_star   new alpha_star after the meneuver
  * @return                  true if the command was sent to autonomous_sailing app
@@ -58,14 +59,12 @@ static bool pp_updated = false;//has pp been updated ?
 bool cb_do_maneuver(float new_alpha_star){
     bool res;
 
-    //we can command a new maneuver only if the boat is not perfoming one yet
+    //we can command a new maneuver only if the boat is not perfoming another one yet
     if(doing_maneuver == false){
 
         //set new alpha_star
         cb_set_alpha_star(new_alpha_star);
 
-        //command maneuver
-        pp.do_maneuver = true;
         //remember we have to send the meneuver command to autonomous_sailing app
         send_maneuver_cmd = true;
         pp_updated = true;
@@ -80,10 +79,18 @@ bool cb_do_maneuver(float new_alpha_star){
 /**
  * Ask if an already started maneuver has been completed.
  *
- * @return      true if the boat is not doing any maneuver
+ * @return      true if the boat is not doing or has to do any maneuver
 */
 bool cb_is_maneuver_completed(void){
-    return !doing_maneuver;
+    /*
+     * Return true only if the boat is not doing a maneuver AND
+     * if we do not have to send a do_maneuver command to
+     * autonomous_sailing app.
+    */
+    if(doing_maneuver == false && send_maneuver_cmd == false)
+        return true;
+    else
+        return false;
 }
 
 /**
@@ -103,7 +110,8 @@ void cb_new_as_data(const struct structs_topics_s *strs_p){
 }
 
 /**
- * If at least a set function in this module has been called, publish path_planning topic.
+ * If either at least a set function in this module has been called,
+ * or the @see cd_do_maneuver() has been called, publish path_planning topic.
 */
 void cb_publish_pp_if_updated(void){
     //has pp struct been updated? If so, publish it

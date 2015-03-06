@@ -371,7 +371,8 @@ void n_set_pos_top_mark(const int32_t *lat_d_e7_p, const int32_t *lon_d_e7_p, co
 }
 
 /**
- * Compute from vehicle_global_position topic the boat's position in Race frame. Set up the next target position.
+ * Compute from vehicle_global_position topic the boat's position in Race frame.
+ * Set the new X and Y coordinates in the pp_communication_buffer module.
  *
 */
 void n_navigation_module(const struct structs_topics_s *strs_p){
