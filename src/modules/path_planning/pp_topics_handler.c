@@ -25,7 +25,6 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
 
 	//Subscribe to the topics
 	subs_p->vehicle_global_position = orb_subscribe(ORB_ID(vehicle_global_position));
-    subs_p->wind_sailing = orb_subscribe(ORB_ID(wind_sailing));
 	subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
     subs_p->boat_guidance_debug = orb_subscribe(ORB_ID(boat_guidance_debug));
 
@@ -33,11 +32,6 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
 	//Check correct subscription
     if(subs_p->vehicle_global_position == -1){
         warnx(" error on subscribing on vehicle_global_position Topic \n");
-        return false;
-    }
-
-    if(subs_p->wind_sailing == -1){
-        warnx(" error on subscribing on wind_sailing Topic \n");
         return false;
     }
 
@@ -59,7 +53,7 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
 
 
 /**
- * Advertise Topics
+ * Advertise Topics. Call this function only ones.
  *
  * @param *subs_p: Pointer to a struct of all File-Descriptors
  * @param *strs_p: Pointer to a struct of all interested Topics
@@ -68,12 +62,15 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
 bool th_advertise(struct structs_topics_s *strs_p) {
 
 	//Advertise the Pathplanning topic
-	memset(&(strs_p->path_planning), 0, sizeof(strs_p->path_planning));
-	pubs.path_planning = orb_advertise(ORB_ID(path_planning), &(strs_p->path_planning));
+    struct path_planning_s path_planning;
+
+    memset(&path_planning, 0, sizeof(path_planning));
+    pubs.path_planning = orb_advertise(ORB_ID(path_planning), &path_planning);
 
     //Advertise boat_qgc_param2 topic
-    memset(&(strs_p->boat_qgc_param2), 0, sizeof(strs_p->boat_qgc_param2));
-    pubs.boat_qgc_param2 = orb_advertise(ORB_ID(boat_qgc_param2), &(strs_p->boat_qgc_param2));
+    struct boat_qgc_param2_s boat_qgc_param2;
+    memset(&boat_qgc_param2, 0, sizeof(boat_qgc_param2));
+    pubs.boat_qgc_param2 = orb_advertise(ORB_ID(boat_qgc_param2), &boat_qgc_param2);
 
 	return true;
 }
@@ -82,23 +79,23 @@ bool th_advertise(struct structs_topics_s *strs_p) {
 /**
  * Publish path_planning topic.
  *
- * @param strs_p: Pointer to a struct containing path_planning_s struct
+ * @param path_planning_p: Pointer to a path_planning_s struct
  * @return return value from orb_publish()
  */
-int th_publish_path_planning(const struct structs_topics_s *strs_p) {
+int th_publish_path_planning(const struct path_planning_s *path_planning_p) {
 
-    return orb_publish(ORB_ID(path_planning), pubs.path_planning, &(strs_p->path_planning));
+    return orb_publish(ORB_ID(path_planning), pubs.path_planning, path_planning_p);
 }
 
 /**
  * Publish topic boat_qgc_param2.
  *
- * @param strs_p: Pointer to a struct containing boat_qgc_param2 struct
+ * @param boat_qgc_param2_p: Pointer to a boat_qgc_param2_s struct
  * @return return value from orb_publish()
 */
-int th_publish_qgc2(const struct structs_topics_s *strs_p){
+int th_publish_qgc2(const struct boat_qgc_param2_s *boat_qgc_param2_p){
 
-    return orb_publish(ORB_ID(boat_qgc_param2), pubs.boat_qgc_param2, &(strs_p->boat_qgc_param2));
+    return orb_publish(ORB_ID(boat_qgc_param2), pubs.boat_qgc_param2, boat_qgc_param2_p);
 }
 
 

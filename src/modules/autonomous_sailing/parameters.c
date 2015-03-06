@@ -778,7 +778,7 @@ void p_param_update(struct parameters_qgc *params_p,
 
 
     //set mean wind angle in navigation.h
-    //pass use_fixed_twd to controller_data module
+    //give use_fixed_twd to controller_data module
     cd_use_fixed_twd(use_fixed_twd);
 
     //----- moving windows

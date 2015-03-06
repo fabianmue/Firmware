@@ -14,6 +14,7 @@
 
 static const float deg2rad = 0.0174532925199433f; // pi / 180
 
+static struct boat_qgc_param2_s boat_qgc_param2;
 
 /**
  * Reference angle with respect to the wind, in degrees.
@@ -247,9 +248,7 @@ static struct pointers_param_qgc_s{
 * Initialize parameters.
 *
 */
-void p_param_init(struct parameters_qgc *params_p,
-                struct structs_topics_s *strs_p,
-                const struct published_fd_s *pubs_p){
+void p_param_init(void){
 
     //initialize pointer to parameters
     pointers_param_qgc.lat0_pointer    = param_find("ASP_R_LAT0_E7");
@@ -271,7 +270,7 @@ void p_param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.repeat_past_grids_pointer = param_find("ASP_REIN_GRS");
     #endif
 
-    //ecplicit tack now command from QGC
+    //explicit tack now command from QGC
     pointers_param_qgc.do_maneuver_now = param_find("ASP_DO_MANEUV");
 
     //explicit alpha star from QGC
@@ -294,16 +293,17 @@ void p_param_init(struct parameters_qgc *params_p,
 
     #endif
 
+    //clean boat_qgc_param2
+    memset(&boat_qgc_param2, 0, sizeof(boat_qgc_param2));
+
     //get parameters but do not add any grid lines at start up
-    p_param_update(params_p, strs_p, false, pubs_p);
+    p_param_update(false);
 }
 
 /** Update local copy of parameters.
  *
 */
-void p_param_update(struct parameters_qgc *params_p,
-                  struct structs_topics_s *strs_p, bool update_path_param,
-                  const struct published_fd_s *pubs_p){
+void p_param_update(bool update_path_param){
 
     //----- reference geo coordinate
     int32_t lat0;
@@ -396,32 +396,28 @@ void p_param_update(struct parameters_qgc *params_p,
 
     //set alpha_tmp as the new alpha star ONLY if set_alpha is not 0 AND we do not have to tack/jybe
     if(set_alpha != 0 && do_maneuver_now == 0){
-        strs_p->path_planning.alpha_star = alpha_tmp;
-        //force path_planning topic publication
-        strs_p->publish_path_planning = true;
+        cb_set_alpha_star(alpha_tmp);
     }
     //do we have to tack or jybe?
     if(update_path_param == true && do_maneuver_now != 0){
-        //do maneuver!
-        strs_p->path_planning.do_maneuver = true;
-        //force path_planning topic publication
-        strs_p->publish_path_planning = true;
+        //do maneuver and simply change the sign of alpha_star
+        cb_do_maneuver(-cb_get_alpha_star());
     }
 
     //save interested param in boat_qgc_param and publish this topic
     //qgc2
-    strs_p->boat_qgc_param2.timestamp = hrt_absolute_time();
+    boat_qgc_param2.timestamp = hrt_absolute_time();
 
-    strs_p->boat_qgc_param2.lat0 = lat0;
-    strs_p->boat_qgc_param2.lon0 = lon0;
-    strs_p->boat_qgc_param2.alt0 = alt0;
-    strs_p->boat_qgc_param2.latT = lat_tmark;
-    strs_p->boat_qgc_param2.lonT = lon_tmark;
-    strs_p->boat_qgc_param2.altT = alt_tmark;
-    strs_p->boat_qgc_param2.mean_wind_direction_r = mean_wind;
+    boat_qgc_param2.lat0 = lat0;
+    boat_qgc_param2.lon0 = lon0;
+    boat_qgc_param2.alt0 = alt0;
+    boat_qgc_param2.latT = lat_tmark;
+    boat_qgc_param2.lonT = lon_tmark;
+    boat_qgc_param2.altT = alt_tmark;
+    boat_qgc_param2.mean_wind_direction_r = mean_wind;
 
     //publish topic
-    th_publish_qgc2(strs_p);
+    th_publish_qgc2(&boat_qgc_param2);
 
     #if SIMULATION_FLAG == 1
 

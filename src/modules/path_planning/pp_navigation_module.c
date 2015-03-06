@@ -374,7 +374,7 @@ void n_set_pos_top_mark(const int32_t *lat_d_e7_p, const int32_t *lon_d_e7_p, co
  * Compute from vehicle_global_position topic the boat's position in Race frame. Set up the next target position.
  *
 */
-void n_navigation_module(struct structs_topics_s *strs_p){
+void n_navigation_module(const struct structs_topics_s *strs_p){
 
     int32_t x_dm;
     int32_t y_dm;
@@ -383,8 +383,7 @@ void n_navigation_module(struct structs_topics_s *strs_p){
     geo_to_race(&(strs_p->vehicle_global_position), &x_dm, &y_dm);
 
     //convert local position from decimeters to meters and save it in path_planning struct
-    strs_p->path_planning.x_race_m = (float)x_dm / E1;
-    strs_p->path_planning.y_race_m = (float)y_dm / E1;
+    cb_set_race_coordinates((float)x_dm / E1, (float)y_dm / E1);
 }
 
 /**

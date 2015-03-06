@@ -32,46 +32,41 @@
  *
  ****************************************************************************/
 /**
- * @file pp_navigation_module.h
+ * @file pp_communication_buffer.h
  *
- * Computes NED position from geodedical information.
+ * Use this module to update each field in path_planning topic and publish it.
  *
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#ifndef NAVIGATION_H_
-#define NAVIGATION_H_
+#ifndef PP_COMMUNICATION_BUFFER_H
+#define PP_COMMUNICATION_BUFFER_H
 
-
-#include <math.h>
-#include <stdint.h>
-
-//Include topics necessary
 #include "pp_topics_handler.h"
-#include "pp_communication_buffer.h"
+#include <stdio.h>
 
-/** @brief set origin of NED frame.*/
-void n_set_ref0(const int32_t  *_lat0_d_e7_p, const int32_t  *_lon0_d_e7_p, const int32_t  *_alt0_mm_p);
+/** @brief command a tack or a jybe */
+bool cb_do_maneuver(float new_alpha_star);
 
-/** @brief set the angle of the mean wind w.r.t. true North*/
-void n_set_mean_wind_angle(float mean_wind);
+/** @brief ask if an already started maneuver has been completed */
+bool cb_is_maneuver_completed(void);
 
-/** @brief set the origin of the top mark buoy*/
-void n_set_pos_top_mark(const int32_t  *lat_d_e7_p, const int32_t  *lon_d_e7_p, const int32_t  *alt_mm_p);
+/** @brief copy new data from autonomous_sailing app */
+void cb_new_as_data(const struct structs_topics_s *strs_p);
 
-/** @brief Convert GPS data in a position in the race frame system*/
-void n_navigation_module(const struct structs_topics_s *strs_p);
+/** @brief publish path_planning module if it has been updated */
+void cb_publish_pp_if_updated(void);
 
-/** @brief get the angle of the mean wind w.r.t. true North*/
-float n_get_mean_wind_angle(void);
+/** @brief set new X and Y coordinates in race frame */
+void cb_set_race_coordinates(float x_m, float y_m);
 
-/** @brief update rotation matrix body to world*/
-void n_update_r_ned_body(float R[3][3], bool valid_matrix);
+/** @brief set a new value for alpha_star */
+void cb_set_alpha_star(float new_alpha_star);
 
-/** @brief update volicities on the NED frame*/
-void n_update_ned_vel(float vn, float ve, float vd);
+/** @brief init module */
+void cb_init(void);
 
-/** @brief get longitudinal velocity in the body frame*/
-float n_get_u_vel(void);
+/** @brief get current alpha_star value */
+float cb_get_alpha_star(void);
 
-#endif /* NAVIGATION_H_ */
+#endif // PP_COMMUNICATION_BUFFER_H

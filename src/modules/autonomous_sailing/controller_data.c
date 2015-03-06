@@ -684,7 +684,7 @@ void cd_use_fixed_twd(int32_t use_fixed_twd){
  *
  * @param fixed_twd_r mean twd, [rad], in our sensor convention.
  */
-void cd_set_avg_twd(float fixed_twd_r){
+void cd_set_mean_twd(float fixed_twd_r){
 
     //make sure fixed_twd_r is in [-pi, pi]
     if(fixed_twd_r > M_PI_F)

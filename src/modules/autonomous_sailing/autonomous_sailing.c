@@ -394,7 +394,7 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
     subs_p->att = orb_subscribe(ORB_ID(vehicle_attitude));
     subs_p->rc_channels = orb_subscribe(ORB_ID(rc_channels));
-    subs_p->boat_qgc_param2 = orb_subscribe(ORD_ID(boat_qgc_param2));
+    subs_p->boat_qgc_param2 = orb_subscribe(ORB_ID(boat_qgc_param2));
 
     if(subs_p->gps_raw == -1){
         warnx(" error on subscribing on vehicle_gps_position Topic \n");

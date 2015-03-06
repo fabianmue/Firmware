@@ -74,9 +74,9 @@
 
 #include "pp_config.h"
 #include "pp_topics_handler.h"
-#include "pp_navigator.h"
 #include "pp_gridlines_handler.h"
 #include "pp_navigation_module.h"
+#include "pp_parameters.h"
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
@@ -185,9 +185,8 @@ int pp_thread_main(int argc, char *argv[]) {
 
 	//**POLL FOR CHANGES IN SUBSCRIBED TOPICS
     struct pollfd fds[] = {			 // Polling Management
+            { .fd = subs.boat_guidance_debug,       .events = POLLIN },//MUST BE THE FIRST ONE!
             { .fd = subs.vehicle_global_position,   .events = POLLIN },
-            { .fd = subs.boat_guidance_debug,       .events = POLLIN },
-            { .fd = subs.wind_sailing,              .events = POLLIN },
             { .fd = subs.parameter_update,          .events = POLLIN }
     };
 
@@ -197,7 +196,12 @@ int pp_thread_main(int argc, char *argv[]) {
     //** INIT FUNCTIONS
 
 	//nav_init();	//Init a Navigator
-    strs.publish_path_planning = false;
+
+    //init pp_paramters module
+    p_param_init();
+
+    //init communication_buffer module
+    cb_init();
 
     #if USE_GRID_LINES == 1
     gh_init_grids();
@@ -227,41 +231,33 @@ int pp_thread_main(int argc, char *argv[]) {
 			} else {
 				//Everything is OK and new Data is available
                 if(fds[0].revents & POLLIN){
+                    //copy new BGUD data
+                    orb_copy(ORB_ID(boat_guidance_debug), subs.boat_guidance_debug,
+                             &(strs.boat_guidance_debug));
+                    //update pp_communication_buffer with this informaion
+                    cb_new_as_data(&strs);
+                }
+                if(fds[1].revents & POLLIN){
                     //copy new GPOS data
                     orb_copy(ORB_ID(vehicle_global_position), subs.vehicle_global_position,
                              &(strs.vehicle_global_position));
                     //compute boat position in race frame using pp_navigation_module
                     n_navigation_module(&strs);
-                    //publish path_planning topic at the end of the loop
-                    strs.publish_path_planning = true;
-                }
-                if(fds[1].revents & POLLIN){
-                    //copy new BGUD data
-                    orb_copy(ORB_ID(boat_guidance_debug), subs.boat_guidance_debug,
-                             &(strs.boat_guidance_debug));
                 }
                 if(fds[2].revents & POLLIN){
-                    //copy new WSAI data
-                    orb_copy(ORB_ID(wind_sailing), subs.wind_sailing,
-                             &(strs.wind_sailing));
-                }
-                if(fds[3].revents & POLLIN){
                     //copy new parameters from QGC
                     orb_copy(ORB_ID(parameter_update), subs.parameter_update,
                              &(strs.parameter_update));
+                    //update param
+                    p_param_update(true);
                 }
 			}
 		}
 
-        /* Warning: path_planning module should be published only ONCE for every loop iteration.
-         * Use boolean variable strs.publish_path_planning and set it ONLY to true if you
-         * want to puglish path_planning in this loop.
+        /* Warning: path_planning topic should be published only ONCE for every loop iteration.
+         * Use pp_communication_buffer to change topic's values.
         */
-        if(strs.publish_path_planning){
-            th_publish_path_planning(&strs);
-            //get redy for next loop
-            strs.publish_path_planning = false;
-        }
+        cb_publish_pp_if_updated();
 
 
 	} //END OF MAIN THREAD-LOOP
