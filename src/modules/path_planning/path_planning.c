@@ -51,13 +51,6 @@
  */
 
 
-/* TODO:
- * - add logging of variables
- * - add parameters from QGroundControl
- * - add Potentialfield Method
- */
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -228,6 +221,11 @@ int pp_thread_main(int argc, char *argv[]) {
                     //copy new BGUD data
                     orb_copy(ORB_ID(boat_guidance_debug), subs.boat_guidance_debug,
                              &(strs.boat_guidance_debug));
+
+
+                    //A new Alpha_star value is available => tell this value to the Navigator
+                    nav_heading_update(&strs);
+
                 }
                 if(fds[2].revents & POLLIN){
                     //copy new WSAI data

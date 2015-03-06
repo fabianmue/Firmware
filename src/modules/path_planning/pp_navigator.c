@@ -5,14 +5,22 @@
  * In our case the helsman is the "autonomous_sailing module". The helsman polls the uORB topic "path_planning" for
  * changes and adjustes its control according to the orders.
  *
+ * Note: There are several Coordinate Systems:
+ * 		 - Sensor Frame:  [-pi...0...pi] = [South..West..North..East..South]
+ * 		 - Dumas' Frame:  [pi...0...-pi] = [South..West..North..East..South]
+ * 		 - Compass Frame: [0...2pi]      = [North..East..South..West..North]
+ *
  *  Created on: 04.03.2015
  *      Author: Jonas Wirz <wirzjo@student.ethz.ch>
  */
 
 /* TODO:
- * - add logging of variables
  * - add parameters from QGroundControl
+ * - finish frame-conversion functions
  * - add Potentialfield Method
+ * - Implement Polardiagram as a lookup table
+ * - average WindSpeed and average WindDirection
+ * - Test Extremum Seeking in a C-Program
  */
 
 
@@ -60,8 +68,7 @@ void nav_init(void) {
 	state.heading_cur = 0;
 	state.heading_ref = 0;
 	state.wind_dir = 0;
-	state.tack = false;
-	state.gybe = false;
+	state.maneuver = false;
 	state.targetNum = 0;
 }
 
@@ -73,7 +80,7 @@ void nav_init(void) {
 void nav_navigate(void) {
 
 	/** A new reference heading should only be calculated if the boat is not doing a maneuver */
-	if(!state.tack && !state.gybe) {
+	if(!state.maneuver) {
 
 
 		/****FIND A NEW REFERENCE HEADING
@@ -81,7 +88,7 @@ void nav_navigate(void) {
 		if(pp_algorithm == 1) {
 			//Use Cost-Function-Method
 
-			state.heading_ref = cm_NewReferenceHeading(&state,&field);
+			state.heading_ref = cm_NewHeadingReference(&state,&field);
 		}
 
 		if(pp_algorithm == 2) {
@@ -105,15 +112,7 @@ void nav_navigate(void) {
 		if(!((NewWind < 0 && OldWind < 0) || (NewWind > 0 && OldWind > 0))) {
 			//A Maneuver is Necessary
 
-			if(fabsf(OldWind) < PIHALF) {
-				//A tack is necessary to reach the new optimal heading
-				state.tack = true;
-
-			} else {
-				//A gybe is necessary to reach the new optimal heading
-				state.gybe = true;
-
-			}
+			state.maneuver = true;
 
 		} //if boat should do a maneuver
 
@@ -154,6 +153,7 @@ void nav_listen2helsman(const struct structs_topics_s *strs_p) {
 void nav_speak2helsman(void) {
 
 	//Communicate the new data to the Helsman
+	//TODO: The heading_reference must be converted to an alpha_star in Dumas' Frame!
     //th_update_pathplanning(state.heading_ref, state.tack, state.gybe);
 }
 
@@ -166,7 +166,14 @@ void nav_speak2helsman(void) {
  */
 void nav_heading_update(const struct structs_topics_s *strs_p) {
 
-	//TODO get the Heading Update and store it in the State-Struct
+	/* Get the new alpha Value
+	 * alpha = yaw-twd;
+	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
+	float alpha_star = strs_p->boat_guidance_debug.alpha;
+	float twd = strs_p->boat_guidance_debug.twd_mean;
+
+	/* For the Pathplanning a compass-heading is needed (element of [0...2pi], with 0 = true North) */
+	state.heading_cur = dumas2compass(alpha_star + twd); //COG in Dumas' convention
 
 } //end of nav_heading_update
 
@@ -184,7 +191,7 @@ void nav_position_update(const struct structs_topics_s *strs_p) {
 	newPos.lon = ((float)(strs_p->vehicle_global_position.lon)) * DEG2RAD;
 
 	//Check, if we reached a target
-	if(dist(newPos,field.targets[state.targetNum]) <= TARGETTOLERANCE) {
+	if(nh_dist(newPos,field.targets[state.targetNum]) <= TARGETTOLERANCE) {
 		//We are inside the tolerance => target is counted as reached
 
 		if(state.targetNum != (field.NumberOfTargets-1)) {

@@ -39,4 +39,12 @@ uint8_t nh_findMin(const float *array, uint8_t arraySize);
 float nh_polardiagram(float AppWindDir, float AppWindSpeed);
 
 
+/* @brief Convert from Compass to Dumas' Frame */
+float compass2dumas(float compass);
+
+
+/* @brief Convert from Dumas' to Compass Frame */
+float dumas2compass(float dumas);
+
+
 #endif /* NAVIGATION_HELPER_H_ */

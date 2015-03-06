@@ -136,3 +136,25 @@ float nh_polardiagram(float AppWindDir, float AppWindSpeed) {
 }
 
 
+/**
+ * Convert from Compass to Dumas' Frame
+ *
+ * @param compass: Boat's heading in Compass-Frame [rad] element of [0...2pi]
+ * @return Boat's heading in Dumas' Frame
+ * */
+float compass2dumas(float compass) {
+	//TODO
+	return 0.0f;
+}
+
+
+/** Convert from Dumas' to Compass Frame
+ *
+ * @param dumas: Boat's heading in Dumas'-Frame [rad] element of [pi...0...-pi]
+ * @return Boat's heading in Compass Frame*/
+float dumas2compass(float dumas) {
+	//TODO
+	return 0.0f;
+
+}
+

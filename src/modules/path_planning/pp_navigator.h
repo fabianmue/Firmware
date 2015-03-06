@@ -27,8 +27,7 @@ struct nav_state_s {
 	float wind_dir; 				//average direction of the wind (where the wind is blowing to) [rad]
 	float wind_speed; 				//average Wind Speed [m/s]
 	uint8_t targetNum; 				//Current number of target to be reached (limits number of targets to 256)
-	bool tack;						//true, iff Tack is in progress
-	bool gybe;						//true, iff Gybe is in progress
+	bool maneuver;					//true, iff a maneuver is in progress
 };
 
 /**Struct containing the Race-Field-Information */
