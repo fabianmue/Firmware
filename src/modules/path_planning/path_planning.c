@@ -75,6 +75,8 @@
 #include "pp_config.h"
 #include "pp_topics_handler.h"
 #include "pp_navigator.h"
+#include "pp_gridlines_handler.h"
+#include "pp_navigation_module.h"
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
@@ -195,7 +197,11 @@ int pp_thread_main(int argc, char *argv[]) {
     //** INIT FUNCTIONS
 
 	//nav_init();	//Init a Navigator
+    strs.publish_path_planning = false;
 
+    #if USE_GRID_LINES == 1
+    gh_init_grids();
+    #endif
 
 	//**SET THE THREAD-STATUS TO RUNNING
 	thread_running = true;
@@ -224,6 +230,10 @@ int pp_thread_main(int argc, char *argv[]) {
                     //copy new GPOS data
                     orb_copy(ORB_ID(vehicle_global_position), subs.vehicle_global_position,
                              &(strs.vehicle_global_position));
+                    //compute boat position in race frame using pp_navigation_module
+                    n_navigation_module(&strs);
+                    //publish path_planning topic at the end of the loop
+                    strs.publish_path_planning = true;
                 }
                 if(fds[1].revents & POLLIN){
                     //copy new BGUD data
@@ -243,7 +253,15 @@ int pp_thread_main(int argc, char *argv[]) {
 			}
 		}
 
-		//TODO: Add further repetitive tasks here
+        /* Warning: path_planning module should be published only ONCE for every loop iteration.
+         * Use boolean variable strs.publish_path_planning and set it ONLY to true if you
+         * want to puglish path_planning in this loop.
+        */
+        if(strs.publish_path_planning){
+            th_publish_path_planning(&strs);
+            //get redy for next loop
+            strs.publish_path_planning = false;
+        }
 
 
 	} //END OF MAIN THREAD-LOOP

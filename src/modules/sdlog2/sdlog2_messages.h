@@ -418,20 +418,6 @@ struct log_WSAI_s{
     float speed_true;
 };
 
-/* --- BOAT WEATHER STATION MEASUREMNTS ------------------------------------------- */
-/*#define LOG_BWES_MSG 56
-struct log_BWES_s{
-    float acc_x_g;
-    float acc_y_g;
-    float acc_z_g;
-    float roll_r;
-    float pitch_r;
-    float heading_tn;
-    float roll_rate_r_s;
-    float pitch_rate_r_s;
-    float yaw_rate_r_s;
-};*/
-
 /* --- BoOAT OPTIMAL CONTROL STATUS ------------------------------------------------*/
 #define LOG_OPTS_MSG 57
 struct log_OPTS_s{
@@ -452,16 +438,12 @@ struct log_OPTS_s{
 /* --- BOAT GUIDANCE MODULE DEBUG -------------------------------------------------*/
 #define LOG_BGUD_MSG 58
 struct log_BGUD_s{
-    float alpha_star;
     float alpha;
     float rudder_action;
     float sail_action;
-    float next_grid_line;
-    float x_race;
-    float y_race;
-    uint8_t should_tack;
     float twd_mean;
-    float app_mean;
+    float tws_mean;
+    uint16_t maneuver_completed;
 };
 
 /* --- BOAT PARAM1 FROM QGC -------------------------------------------------*/
@@ -473,20 +455,7 @@ struct log_QGC1_s{
     float rud_cp;
     float rud_ci;
     uint8_t rud_contr_type;
-    int32_t lat0;
-    int32_t lon0;
-    int32_t alt0;
-    int32_t latT;
-    int32_t lonT;
-    int32_t altT;
-    float mean_wind_direction_r;
-};
-
-/* --- BOAT PARAM2 FROM QGC -------------------------------------------------*/
-#define LOG_QGC2_MSG 60
-struct log_QGC2_s{
     uint16_t window_alpha;
-    uint16_t window_apparent;
     uint16_t window_twd;
     uint16_t type_of_tack;
     float delta1;
@@ -494,6 +463,18 @@ struct log_QGC2_s{
     uint16_t use_fixed_twd;
     float p_tack_kp;
     float p_tack_cp;
+};
+
+/* --- BOAT PARAM2 FROM QGC -------------------------------------------------*/
+#define LOG_QGC2_MSG 60
+struct log_QGC2_s{
+    int32_t lat0;
+    int32_t lon0;
+    int32_t alt0;
+    int32_t latT;
+    int32_t lonT;
+    int32_t altT;
+    float mean_wind_direction_r;
 };
 
 /* --- BOAT OPTIMAL CONTROL MATRICES ----------------------------------------*/
@@ -597,9 +578,9 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(WSAI, "ffff", "AngleApparent,SpeedApparent,AngleTrue,SpeedTrue"), //Added by Marco Tranzatto
     //LOG_FORMAT(BWES, "fffffffff", "AccX,AccY,AccZ,Roll,Pitch,Heading,RollRate,PitchRate,YawRate"), //Added by Marco Tranzatto
     LOG_FORMAT(OPTS, "ffffiiffffff", "X1,X2,X3,RudStr,TypeCtr,It,SolT,ResEq,Pob,Dob,Dga,Rdga"), //Added by Marco Tranzatto
-    LOG_FORMAT(BGUD, "fffffffBff", "AlphaStar,Alpha,Rudder,Sail,NextGrid,XRace,YRace,ShldTck,TwdAvg,AppAvg"), //Added by Marco Tranzatto
-    LOG_FORMAT(QGC1, "fffffBLLfLLff", "P,I,Kaw,Cp,Ci,RudType,Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
-    LOG_FORMAT(QGC2, "HHHHffHff", "WinAlp,WinApp,WinTWD,TypTck,D1,D2,FixTwd,TckP_k,TckP_c"), //Added by Marco Tranzatto
+    LOG_FORMAT(BGUD, "fffffH", "Alpha,Rudder,Sail,TwdAvg,TwsAvg,ManCompl"), //Added by Marco Tranzatto
+    LOG_FORMAT(QGC1, "fffffBHHHffHff", "P,I,Kaw,Cp,Ci,RudType,WinAlp,WinTWD,TypTck,D1,D2,FixTwd,TckP_k,TckP_c"), //Added by Marco Tranzatto
+    LOG_FORMAT(QGC2, "LLfLLff", "Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
     LOG_FORMAT(OPTM, "fffffffffff", "K1,K2,K3,H1,H2,H3,H4,Lb1,Lb2,Ub1,Ub2"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC3, "iiffffffHHH", "LqrTs,MpcTs,A11,A12,A21,A22,B1,B2,WinAlpTck,WinTwdTck, PredHor"), //Added by Marco Tranzatto
     /* system-level messages, ID >= 0x80 */

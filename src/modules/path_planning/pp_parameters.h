@@ -12,7 +12,9 @@
 
 #include <systemlib/param/param.h>
 
-#include "pp_parameters.h"
+#include "pp_topics_handler.h"
+#include "pp_config.h"
+#include "pp_navigation_module.h"
 
 /** @brief Initialize parameters*/
 void param_init(struct parameters_qgc *params_p,

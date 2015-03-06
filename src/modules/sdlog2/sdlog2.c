@@ -1774,16 +1774,12 @@ int sdlog2_thread_main(int argc, char *argv[])
         /* --- BOAT GUIDANCE MODULE DEBUG  */
         if (copy_if_updated(ORB_ID(boat_guidance_debug), subs.boat_guidance_sub, &buf.boat_guidance_debug)) {
             log_msg.msg_type = LOG_BGUD_MSG;
-            log_msg.body.log_BOAT_GUIDANCE.alpha_star = buf.boat_guidance_debug.alpha_star;
             log_msg.body.log_BOAT_GUIDANCE.alpha = buf.boat_guidance_debug.alpha;
             log_msg.body.log_BOAT_GUIDANCE.rudder_action = buf.boat_guidance_debug.rudder_action;
             log_msg.body.log_BOAT_GUIDANCE.sail_action = buf.boat_guidance_debug.sail_action;
-            log_msg.body.log_BOAT_GUIDANCE.next_grid_line = buf.boat_guidance_debug.next_grid_line;
-            log_msg.body.log_BOAT_GUIDANCE.x_race = buf.boat_guidance_debug.x_race;
-            log_msg.body.log_BOAT_GUIDANCE.y_race = buf.boat_guidance_debug.y_race;
-            log_msg.body.log_BOAT_GUIDANCE.should_tack = buf.boat_guidance_debug.should_tack;
             log_msg.body.log_BOAT_GUIDANCE.twd_mean = buf.boat_guidance_debug.twd_mean;
-            log_msg.body.log_BOAT_GUIDANCE.app_mean = buf.boat_guidance_debug.app_mean;
+            log_msg.body.log_BOAT_GUIDANCE.tws_mean = buf.boat_guidance_debug.tws_mean;
+            log_msg.body.log_BOAT_GUIDANCE.maneuver_completed = buf.boat_guidance_debug.maneuver_completed;
             LOGBUFFER_WRITE_AND_COUNT(BGUD);
         }
 
@@ -1795,29 +1791,28 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_QGC_PARAM1.rud_kaw = buf.boat_qgc_param1.rud_kaw;
             log_msg.body.log_BOAT_QGC_PARAM1.rud_cp = buf.boat_qgc_param1.rud_cp;
             log_msg.body.log_BOAT_QGC_PARAM1.rud_ci = buf.boat_qgc_param1.rud_ci;
-            log_msg.body.log_BOAT_QGC_PARAM1.rud_contr_type = buf.boat_qgc_param1.rud_contr_type;
-            log_msg.body.log_BOAT_QGC_PARAM1.lat0 = buf.boat_qgc_param1.lat0;
-            log_msg.body.log_BOAT_QGC_PARAM1.lon0 = buf.boat_qgc_param1.lon0;
-            log_msg.body.log_BOAT_QGC_PARAM1.alt0 = buf.boat_qgc_param1.alt0;
-            log_msg.body.log_BOAT_QGC_PARAM1.latT = buf.boat_qgc_param1.latT;
-            log_msg.body.log_BOAT_QGC_PARAM1.lonT = buf.boat_qgc_param1.lonT;
-            log_msg.body.log_BOAT_QGC_PARAM1.altT = buf.boat_qgc_param1.altT;
-            log_msg.body.log_BOAT_QGC_PARAM1.mean_wind_direction_r = buf.boat_qgc_param1.mean_wind_direction_r;
+            log_msg.body.log_BOAT_QGC_PARAM1.rud_contr_type = buf.boat_qgc_param1.rud_contr_type;           
+            log_msg.body.log_BOAT_QGC_PARAM1.window_alpha = buf.boat_qgc_param1.window_alpha;
+            log_msg.body.log_BOAT_QGC_PARAM1.window_twd = buf.boat_qgc_param1.window_twd;
+            log_msg.body.log_BOAT_QGC_PARAM1.type_of_tack = buf.boat_qgc_param1.type_of_tack;
+            log_msg.body.log_BOAT_QGC_PARAM1.delta1 = buf.boat_qgc_param1.delta1;
+            log_msg.body.log_BOAT_QGC_PARAM1.delta2 = buf.boat_qgc_param1.delta2;
+            log_msg.body.log_BOAT_QGC_PARAM1.use_fixed_twd = buf.boat_qgc_param1.use_fixed_twd;
+            log_msg.body.log_BOAT_QGC_PARAM1.p_tack_kp = buf.boat_qgc_param1.p_tack_kp;
+            log_msg.body.log_BOAT_QGC_PARAM1.p_tack_cp = buf.boat_qgc_param1.p_tack_cp;
             LOGBUFFER_WRITE_AND_COUNT(QGC1);
         }
 
         /* --- BOAT QGC PARAM 2 */
         if (copy_if_updated(ORB_ID(boat_qgc_param2), subs.boat_qgc_param2_sub, &buf.boat_qgc_param2)) {
             log_msg.msg_type = LOG_QGC2_MSG;
-            log_msg.body.log_BOAT_QGC_PARAM2.window_alpha = buf.boat_qgc_param2.window_alpha;
-            log_msg.body.log_BOAT_QGC_PARAM2.window_apparent = buf.boat_qgc_param2.window_apparent;
-            log_msg.body.log_BOAT_QGC_PARAM2.window_twd = buf.boat_qgc_param2.window_twd;
-            log_msg.body.log_BOAT_QGC_PARAM2.type_of_tack = buf.boat_qgc_param2.type_of_tack;
-            log_msg.body.log_BOAT_QGC_PARAM2.delta1 = buf.boat_qgc_param2.delta1;
-            log_msg.body.log_BOAT_QGC_PARAM2.delta2 = buf.boat_qgc_param2.delta2;
-            log_msg.body.log_BOAT_QGC_PARAM2.use_fixed_twd = buf.boat_qgc_param2.use_fixed_twd;
-            log_msg.body.log_BOAT_QGC_PARAM2.p_tack_kp = buf.boat_qgc_param2.p_tack_kp;
-            log_msg.body.log_BOAT_QGC_PARAM2.p_tack_cp = buf.boat_qgc_param2.p_tack_cp;
+            log_msg.body.log_BOAT_QGC_PARAM2.lat0 = buf.boat_qgc_param2.lat0;
+            log_msg.body.log_BOAT_QGC_PARAM2.lon0 = buf.boat_qgc_param2.lon0;
+            log_msg.body.log_BOAT_QGC_PARAM2.alt0 = buf.boat_qgc_param2.alt0;
+            log_msg.body.log_BOAT_QGC_PARAM2.latT = buf.boat_qgc_param2.latT;
+            log_msg.body.log_BOAT_QGC_PARAM2.lonT = buf.boat_qgc_param2.lonT;
+            log_msg.body.log_BOAT_QGC_PARAM2.altT = buf.boat_qgc_param2.altT;
+            log_msg.body.log_BOAT_QGC_PARAM2.mean_wind_direction_r = buf.boat_qgc_param2.mean_wind_direction_r;
             LOGBUFFER_WRITE_AND_COUNT(QGC2);
         }
 

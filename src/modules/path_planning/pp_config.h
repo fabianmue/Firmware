@@ -11,7 +11,7 @@
 #define CONFIG_H_
 
 //set if you want to use a path planning that uses grid lines
-#define USE_GRIDLINES_PP 1
+#define USE_GRID_LINES 1 ///1 if you want to use grid line system to tell the boat where to tack
 
 /*DEBUG FLAG
  * If this flag is enabled (set to 1) the module is in Debug-Mode

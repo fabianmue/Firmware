@@ -1,0 +1,4 @@
+#ifndef PP_COMMON_UTILITY_H
+#define PP_COMMON_UTILITY_H
+
+#endif // PP_COMMON_UTILITY_H

@@ -18,7 +18,6 @@
 #include "pp_topics_handler.h"
 #include "pp_navigation_helper.h"
 
-
 /**Struct containing the status of the Navigator */
 struct nav_state_s {
 	Point position; 				//Last known Position (lat/lon) [rad]

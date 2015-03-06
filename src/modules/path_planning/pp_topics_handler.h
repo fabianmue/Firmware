@@ -14,6 +14,7 @@
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/boat_guidance_debug.h>
 #include <uORB/topics/path_planning.h>
+#include <uORB/topics/boat_qgc_param.h>
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -26,7 +27,7 @@ struct subscribtion_fd_s{
     int vehicle_global_position;			//Contains the filtered GPS-Data
     int wind_sailing;						//Estimate of True Windspeed and Direction
     int parameter_update;					//Update of Parameters from QGroundControl
-    int boat_guidance_debug;                //values from guidance_module from autonomous_sailing app
+    int boat_guidance_debug;                //Values from guidance_module from autonomous_sailing app
 };
 
 
@@ -38,20 +39,25 @@ struct structs_topics_s{
     struct boat_guidance_debug_s boat_guidance_debug;
     //published topics
     struct path_planning_s path_planning;
+    struct boat_qgc_param2_s boat_qgc_param2;
+    //usefull variables
+    bool publish_path_planning;
 };
 
 
 
-/* @brief Subscribe to interested Topics*/
+/** @brief Subscribe to interested Topics*/
 bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *strs_p);
 
 
-/* @brief Advertise Topics */
+/** @brief Advertise Topics */
 bool th_advertise(struct structs_topics_s *strs_p);
 
 
-/* @brief Publish new data*/
-bool th_publish(const struct structs_topics_s *strs_p);
+/** @brief Publish new data*/
+int th_publish_path_planning(const struct structs_topics_s *strs_p);
 
+/** @brief publish qgc2 topic */
+int th_publish_qgc2(const struct structs_topics_s *strs_p);
 
 #endif /* TOPICS_HANDLER_H_ */

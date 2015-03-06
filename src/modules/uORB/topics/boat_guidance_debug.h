@@ -40,19 +40,16 @@
 #define BOAT_GUIDANCE_DEBUG_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 struct boat_guidance_debug_s {
     uint64_t timestamp;
-    float alpha_star;           ///reference true wind angle [rad], Dumas' convention
     float alpha;                ///actual measurements of alpha [rad], Dumas' convention
     float rudder_action;        ///input for rudder servo motor
     float sail_action;          ///input for sail servo motor
-    float next_grid_line;       ///value [m] of the next grid line in Race frame
-    float x_race;               ///current x-coordinate [m] in Race frame
-    float y_race;               ///current y-coordinate [m] in Race frame
-    uint8_t should_tack;         ///1 if boat should tack  as soon as possibile
-    float twd_mean;             /**< True wind diretion mean value*/
-    float app_mean;             /**< Apparent wind direction mean value*/
+    float twd_mean;             /// True wind diretion mean value
+    float tws_mean;             /// True wind speed mean value
+    uint16_t maneuver_completed;    /// last tack or jybe maneuver completed
 };
 
 ORB_DECLARE(boat_guidance_debug);

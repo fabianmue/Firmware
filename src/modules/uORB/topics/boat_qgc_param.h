@@ -52,19 +52,7 @@ struct boat_qgc_param1_s {
     float rud_cp;           /// CP constant of the PI controller of the rudder
     float rud_ci;           /// Ci constant of the PI controller of the rudder
     uint8_t rud_contr_type; /// Type of controller for the rudder
-    int32_t lat0;           /// Latitude in 1E-7 degrees of the NED system origin
-    int32_t lon0;           /// Longitude in 1E-7 degrees of the NED system origin
-    int32_t alt0;           /// Altitude in 1E-3 meters (millimeters) above MSL of the NED system origin
-    int32_t latT;           /// Latitude in 1E-7 degrees of the top mark buoy
-    int32_t lonT;           /// Longitude in 1E-7 degrees of the top mark buoy
-    int32_t altT;           /// Altitude in 1E-3 meters (millimeters) above MSL of the top mark buoy
-    float mean_wind_direction_r;    /// Mean wind direction used to set X-axis direction of the race frame
-};
-
-struct boat_qgc_param2_s {
-    uint64_t timestamp;
     uint16_t window_alpha;      /// Window size of moving average filter of alpha
-    uint16_t window_apparent;   /// Window size of moving average filter of apparent wind
     uint16_t window_twd;        /// Window size of moving average filter of twd
     uint16_t type_of_tack;      /// Type of tack set by AS_TY_TCK parameter
     float delta1;               /// Delta1 used to define the band in optimal tack maneuver
@@ -72,6 +60,17 @@ struct boat_qgc_param2_s {
     uint16_t use_fixed_twd;     /// True if a fixed twd is used to compute alpha angle
     float p_tack_kp;            /// kp value for P controller during tack
     float p_tack_cp;            /// cp value for P controller during tack
+};
+
+struct boat_qgc_param2_s {
+    uint64_t timestamp;
+    int32_t lat0;           /// Latitude in 1E-7 degrees of the NED system origin
+    int32_t lon0;           /// Longitude in 1E-7 degrees of the NED system origin
+    int32_t alt0;           /// Altitude in 1E-3 meters (millimeters) above MSL of the NED system origin
+    int32_t latT;           /// Latitude in 1E-7 degrees of the top mark buoy
+    int32_t lonT;           /// Longitude in 1E-7 degrees of the top mark buoy
+    int32_t altT;           /// Altitude in 1E-3 meters (millimeters) above MSL of the top mark buoy
+    float mean_wind_direction_r;    /// Mean wind direction used to set X-axis direction of the race frame
 };
 
 struct boat_qgc_param3_s{

@@ -10,7 +10,8 @@
 
 //Stuct of all topic-Advertisements
 static struct{
-    orb_advert_t path_planning;
+    orb_advert_t path_planning;        //output of path_planning topic
+    orb_advert_t boat_qgc_param2;      //QGC paramters for path_planning
 }pubs;
 
 /**
@@ -50,9 +51,6 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
         return false;
     }
 
-    //advertise path_planning topic
-
-
     //Subscription to all topics was successful
     warnx(" subscribed to all topics \n");
     return true;
@@ -73,22 +71,34 @@ bool th_advertise(struct structs_topics_s *strs_p) {
 	memset(&(strs_p->path_planning), 0, sizeof(strs_p->path_planning));
 	pubs.path_planning = orb_advertise(ORB_ID(path_planning), &(strs_p->path_planning));
 
+    //Advertise boat_qgc_param2 topic
+    memset(&(strs_p->boat_qgc_param2), 0, sizeof(strs_p->boat_qgc_param2));
+    pubs.boat_qgc_param2 = orb_advertise(ORB_ID(boat_qgc_param2), &(strs_p->boat_qgc_param2));
+
 	return true;
 }
 
 
 /**
- * Update Pathplanning Topic
+ * Publish path_planning topic.
  *
- *  @param pp_p: Pointer to a path_planning Struct
- *	@return true, if successfully updated
+ * @param strs_p: Pointer to a struct containing path_planning_s struct
+ * @return return value from orb_publish()
  */
-bool th_publish(const struct structs_topics_s *strs_p) {
+int th_publish_path_planning(const struct structs_topics_s *strs_p) {
 
-	//Publish the new values
-    orb_publish(ORB_ID(path_planning), pubs.path_planning, &(strs_p->path_planning));
+    return orb_publish(ORB_ID(path_planning), pubs.path_planning, &(strs_p->path_planning));
+}
 
-	return true;
+/**
+ * Publish topic boat_qgc_param2.
+ *
+ * @param strs_p: Pointer to a struct containing boat_qgc_param2 struct
+ * @return return value from orb_publish()
+*/
+int th_publish_qgc2(const struct structs_topics_s *strs_p){
+
+    return orb_publish(ORB_ID(boat_qgc_param2), pubs.boat_qgc_param2, &(strs_p->boat_qgc_param2));
 }
 
 

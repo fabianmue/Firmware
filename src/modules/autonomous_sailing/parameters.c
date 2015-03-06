@@ -45,34 +45,6 @@
 static const float deg2rad = 0.0174532925199433f; // pi / 180
 
 
-
-/**
- * Reference angle with respect to the wind, in degrees.
- *
- * Use Dumas'convention.
- *
- * @min -180
- * @max 180
- */
-PARAM_DEFINE_FLOAT(AS_ALST_ANG_D, 45.0f);
-
-/**
- * If AS_ALST_SET == 1, the value of AS_ALST_ANG_D will be used
- * as the new reference angle.
- *
- * @min 0
- * @max 1
- */
-PARAM_DEFINE_INT32(AS_ALST_SET, 1);
-
-/**
- * Swtich this value from 0 to 1 if you want to tack.
- * Then rememeber to switch it to 0 after the tack is completed.
- * Attention: if AS_TCK_NOW switches from 0 to 1, the parameter
- * AS_ALST_ANG_D will NOT be considered!
-*/
-PARAM_DEFINE_INT32(AS_TCK_NOW, 0);
-
 /**
  * Sails command.
  *
@@ -253,91 +225,6 @@ PARAM_DEFINE_FLOAT(AS_TCK_P_K, 0.73661977f);
  * @min 0
 */
 PARAM_DEFINE_FLOAT(AS_TCK_P_C, 0.1f);
-
-// --- coordinates variables
-
-/**
- * Latitude of the origin of the NED system, in degrees * E7.
- *
- * @min -900000000
- * @max 900000000
- */
-PARAM_DEFINE_INT32(ASC_R_LAT0_E7, 473494820);
-
-/**
- * Longitude of the origin of the NED system, in degrees * E7.
- *
- * @min -1800000000
- * @max 1800000000
- */
-PARAM_DEFINE_INT32(ASC_R_LON0_E7, 85605120);
-
-/**
- * Altitude of origin of NED system, in millimeters.
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_INT32(ASC_R_ALT0_E3, 406000);
-
-/**
- * Latitude of the top mark, in degrees * E7.
- *
- * @min -900000000
- * @max 900000000
- */
-PARAM_DEFINE_INT32(ASC_T_LAT_E7, 473459370);
-
-/**
- * Longitude of the top mark, in degrees * E7.
- *
- * @min -1800000000
- * @max 1800000000
- */
-PARAM_DEFINE_INT32(ASC_T_LON_E7, 85547940);
-
-/**
- * Altitude of the top mark, in millimeters.
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_INT32(ASC_T_ALT_E3, 406000);
-
-//------------------------- grid lines parameters
-#if USE_GRID_LINES == 1
-
-/**
- * Total numbers of grid lines.
- *
- * @min 1
- * @max ?
- */
-PARAM_DEFINE_INT32(ASC_P_TOT_G, 1);
-
-/**
- * X coordinate in Race frame of grid line of index AS_P_INDEX, in meters.
- *
- */
-PARAM_DEFINE_FLOAT(ASC_P_X_M, 0.0f);
-
-/**
- * 1 if you want to add a new grid line at x = ASC_P_X_M.
- *
- * @min 0
- * @max 1
- */
-PARAM_DEFINE_INT32(ASC_P_ADD, 0);
-
-/**
- * 1 if you want to re-insert the same grid lines you used before.
- *
- * @min 0
- * @max 1
- */
-PARAM_DEFINE_INT32(ASC_REIN_GRS, 0);
-
-#endif
 
 //------------------------------------- Parameters for optimal control ----
 
@@ -613,12 +500,7 @@ PARAM_DEFINE_FLOAT(ESSC_PERIOD,1.0f);
 
 
 
-
 static struct pointers_param_qgc_s{
-
-    param_t alpha_star_pointer;         /**< pointer to param AS_ALST_ANG_D*/
-    param_t use_alpha_star_pointer;         /**< pointer to param AS_ALST_SET*/
-    param_t tack_now;                   /**< pointer to param TEST_MPC */
 
     param_t sail_pointer;         /**< pointer to param AS_SAIL*/
 
@@ -640,24 +522,8 @@ static struct pointers_param_qgc_s{
     param_t moving_apparent_window_pointer;/**< pointer to param AS_WIN_APP*/
     param_t moving_twd_window_pointer;/**< pointer to param AS_WIN_TWD*/
 
-    param_t lat0_pointer;         /**< pointer to param ASC_R_LAT0_E7*/
-    param_t lon0_pointer;         /**< pointer to param ASC_R_LON0_E7*/
-    param_t alt0_pointer;         /**< pointer to param ASC_R_ALT0_E3*/
-
-    param_t mean_wind_pointer;/**< pointer to param AS_MEAN_WIND_D*/
     param_t use_fixed_twd_pointer; /**< pointer to AS_USE_FIXED_TWD */
 
-    param_t lat_tmark_pointer;         /**< pointer to param ASC_T_LAT_E7*/
-    param_t lon_tmark_pointer;         /**< pointer to param ASC_T_LON_E7*/
-    param_t alt_tmark_pointer;         /**< pointer to param ASC_T_ALT_E3*/
-
-    // --- grid lines system parameters
-    #if USE_GRID_LINES == 1
-    param_t grids_number_pointer;         /**< pointer to param ASC_P_TOT_G*/
-    param_t grid_x_pointer;         /**< pointer to param ASC_P_X_M*/
-    param_t grid_add_pointer;         /**< pointer to param ASC_P_ADD*/
-    param_t repeat_past_grids_pointer;    /**< pointer to param ASC_REIN_GRS */
-    #endif
     //-- params for LQR controller
     param_t lqr_k1_poniter; /**< pointer to  ASO_LQR_K1*/
     param_t lqr_k2_poniter; /**< pointer to  ASO_LQR_K2*/
@@ -726,20 +592,12 @@ static struct pointers_param_qgc_s{
 
     #if SIMULATION_FLAG == 1
 
-    #if USE_GRID_LINES == 1
-    param_t lat_sim_pointer; /**< pointer to param ASIM_LAT_E7*/
-    param_t lon_sim_pointer; /**< pointer to param ASIM_LON_E7*/
-    param_t alt_sim_pointer; /**< pointer to param ASIM_ALt_E3*/
-    #endif
-
     param_t twd_sim_pointer; /**< pointer to param ASIM_TWD_D*/
     param_t cog_sim_pointer; /**< pointer to param ASIM_COG_D*/
-
 
     param_t yaw_sim_pointer; /**< pointer to param ASIM_YAW_D*/
     param_t deva1_sim_pointer; /**< pointer to param ASIM_DEVA1 */
     #endif
-
 
     //-- Extremum Seeking Sail Control (ESSC) parameters (JW)
     param_t ESSC_k;				/**< pointer to param ESSC_K */
@@ -759,10 +617,6 @@ void p_param_init(struct parameters_qgc *params_p,
                 const struct published_fd_s *pubs_p){
 
     //initialize pointer to parameters
-    pointers_param_qgc.alpha_star_pointer    = param_find("AS_ALST_ANG_D");
-    pointers_param_qgc.use_alpha_star_pointer    = param_find("AS_ALST_SET");
-    pointers_param_qgc.tack_now = param_find("AS_TCK_NOW");
-
     pointers_param_qgc.sail_pointer    = param_find("AS_SAIL");
 
     pointers_param_qgc.tack_type_pointer  = param_find("AS_TY_TCK");
@@ -783,26 +637,7 @@ void p_param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.moving_apparent_window_pointer = param_find("AS_WIN_APP");
     pointers_param_qgc.moving_twd_window_pointer = param_find("AS_WIN_TWD");
 
-    pointers_param_qgc.lat0_pointer    = param_find("ASC_R_LAT0_E7");
-    pointers_param_qgc.lon0_pointer    = param_find("ASC_R_LON0_E7");
-    pointers_param_qgc.alt0_pointer    = param_find("ASC_R_ALT0_E3");
-
-    pointers_param_qgc.mean_wind_pointer = param_find("AS_MEAN_WIND_D");
     pointers_param_qgc.use_fixed_twd_pointer = param_find("AS_USE_FIXED_TWD");
-
-    pointers_param_qgc.lat_tmark_pointer    = param_find("ASC_T_LAT_E7");
-    pointers_param_qgc.lon_tmark_pointer    = param_find("ASC_T_LON_E7");
-    pointers_param_qgc.alt_tmark_pointer    = param_find("ASC_T_ALT_E3");
-
-    // --- grid lines system parameters
-    #if USE_GRID_LINES == 1
-    pointers_param_qgc.grids_number_pointer    = param_find("ASC_P_TOT_G");
-    pointers_param_qgc.grid_x_pointer    = param_find("ASC_P_X_M");
-
-    pointers_param_qgc.grid_add_pointer = param_find("ASC_P_ADD");
-    pointers_param_qgc.repeat_past_grids_pointer = param_find("ASC_REIN_GRS");
-
-    #endif
 
     //--- params for lqr controller
     pointers_param_qgc.lqr_k1_poniter = param_find("ASO_LQR_K1");
@@ -869,12 +704,6 @@ void p_param_init(struct parameters_qgc *params_p,
 
     #if SIMULATION_FLAG == 1
 
-    #if USE_GRID_LINES == 1
-    pointers_param_qgc.lat_sim_pointer = param_find("ASIM_LAT_E7");
-    pointers_param_qgc.lon_sim_pointer = param_find("ASIM_LON_E7");
-    pointers_param_qgc.alt_sim_pointer = param_find("ASIM_ALT_E3");
-    #endif
-
     pointers_param_qgc.cog_sim_pointer = param_find("ASIM_COG_D");
     pointers_param_qgc.twd_sim_pointer = param_find("ASIM_TWD_D");
 
@@ -883,17 +712,13 @@ void p_param_init(struct parameters_qgc *params_p,
 
     #endif
 
-
     //-- Extremum Seeking Sail Control (ESSC) parameters (JW)
     pointers_param_qgc.ESSC_k = param_find("ESSC_K");
     pointers_param_qgc.ESSC_windowSize = param_find("ESSC_WINDOWSIZE");
     pointers_param_qgc.ESSC_period = param_find("ESSC_PERIOD");
 
-
-
     //get parameters but do not add any grid lines at start up
     p_param_update(params_p, strs_p, false, pubs_p);
-
 }
 
 /** Update local copy of parameters.
@@ -902,34 +727,6 @@ void p_param_init(struct parameters_qgc *params_p,
 void p_param_update(struct parameters_qgc *params_p,
                   struct structs_topics_s *strs_p, bool update_path_param,
                   const struct published_fd_s *pubs_p){
-
-    //----- alpha star
-    float alpha_tmp;
-    int32_t set_alpha;
-    int32_t tack_now;
-
-    param_get(pointers_param_qgc.alpha_star_pointer, &alpha_tmp);
-    //convert alpha in rad
-    alpha_tmp = alpha_tmp * deg2rad;
-
-    //take set_alpha to see if alpha_tmp has to be set as the new alpha star value
-    param_get(pointers_param_qgc.use_alpha_star_pointer, &set_alpha);
-
-    //tack tack_now to see if the boat should tack now, if so, DO NOT set alpha_tmp as new alpha star
-    param_get(pointers_param_qgc.tack_now, &tack_now);
-
-    //set alpha_tmp as the new alpha star ONLY if set_alpha is not 0 AND tack_now is 0
-    if(set_alpha != 0 && tack_now == 0){
-        //pp_set_alpha_star(alpha_tmp);
-        #if PRINT_DEBUG_STR == 1
-        smq_send_log_info("pp_set_alpha_star");
-        #endif
-    }
-
-    //pass tack_now to path_planning module, only if update_path_param is true
-    if(update_path_param){
-       //pp_boat_should_tack(tack_now);
-    }
 
     //----- sail_servo
     param_get(pointers_param_qgc.sail_pointer, &(params_p->sail_servo));
@@ -974,78 +771,15 @@ void p_param_update(struct parameters_qgc *params_p,
 
     gm_set_sail_data(sail_closed_cmd, alpha_sail_closed_r, alpha_sail_opened_r);
 
-    //----- reference geo coordinate
-    int32_t lat0;
-    int32_t lon0;
-    int32_t alt0;
-    //lat0
-    param_get(pointers_param_qgc.lat0_pointer, &lat0);
 
-    //lon0
-    param_get(pointers_param_qgc.lon0_pointer, &lon0);
-
-    //alt0
-    param_get(pointers_param_qgc.alt0_pointer, &alt0);
-
-    //update NED origin using API in navigation.h
-    //n_set_ref0(&lat0, &lon0, &alt0);
-
-    //----- mean wind
-    float mean_wind;
+    //----- fixed twd
     int32_t use_fixed_twd;
-    param_get(pointers_param_qgc.mean_wind_pointer, &mean_wind);
     param_get(pointers_param_qgc.use_fixed_twd_pointer, &use_fixed_twd);
 
-    //convert mean_wind in rad
-    mean_wind = mean_wind * deg2rad;
 
     //set mean wind angle in navigation.h
-    //n_set_mean_wind_angle(mean_wind);
-    //pass mean_wind and use_fixed_twd to controller_data module
-    cd_use_fixed_twd(use_fixed_twd, mean_wind);
-
-    //----- top mark geo coordinate
-    int32_t lat_tmark;
-    int32_t lon_tmark;
-    int32_t alt_tmark;
-    //lat_tmark
-    param_get(pointers_param_qgc.lat_tmark_pointer, &lat_tmark);
-
-    //lon_tmark
-    param_get(pointers_param_qgc.lon_tmark_pointer, &lon_tmark);
-
-    //alt_tmark
-    param_get(pointers_param_qgc.alt_tmark_pointer, &alt_tmark);
-
-    //set top mark position
-    //n_set_pos_top_mark(&lat_tmark, &lon_tmark, &alt_tmark);
-
-    // --- grid lines system parameters
-    #if USE_GRID_LINES == 1
-    //----- number of grids
-    int32_t grids_number;
-    float grids_x_m;
-    param_get(pointers_param_qgc.grids_number_pointer, &grids_number);
-
-    //x coordinate of current grid line
-    param_get(pointers_param_qgc.grid_x_pointer, &grids_x_m);
-
-    //check if we have to add a new grid line
-    int32_t temp = 0;
-    param_get(pointers_param_qgc.grid_add_pointer, &temp);
-    if(temp > 0 && update_path_param){
-        //set x coordinate of a new grid line
-        set_grid_qgc(grids_x_m);
-    }
-
-    //set the new number of grid lines
-    set_grids_number_qgc(grids_number);
-
-    param_get(pointers_param_qgc.repeat_past_grids_pointer, &temp);
-    bool use_last_grids = (temp > 0) ? true : false;
-    reuse_last_grids(use_last_grids);
-
-    #endif
+    //pass use_fixed_twd to controller_data module
+    cd_use_fixed_twd(use_fixed_twd);
 
     //----- moving windows
     uint16_t window_alpha;
@@ -1192,29 +926,16 @@ void p_param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param1.rud_ci = rud_ci;
     strs_p->boat_qgc_param1.rud_contr_type = rudder_controller_type;
 
-    strs_p->boat_qgc_param1.lat0 = lat0;
-    strs_p->boat_qgc_param1.lon0 = lon0;
-    strs_p->boat_qgc_param1.alt0 = alt0;
-    strs_p->boat_qgc_param1.latT = lat_tmark;
-    strs_p->boat_qgc_param1.lonT = lon_tmark;
-    strs_p->boat_qgc_param1.altT = alt_tmark;
-    strs_p->boat_qgc_param1.mean_wind_direction_r = mean_wind;
+    strs_p->boat_qgc_param1.window_alpha = window_alpha;
+    strs_p->boat_qgc_param1.window_twd = window_twd;
+    strs_p->boat_qgc_param1.type_of_tack = (uint16_t)tack_type;
+    strs_p->boat_qgc_param1.delta1 = delta_vect[0];
+    strs_p->boat_qgc_param1.delta2 = delta_vect[1];
+    strs_p->boat_qgc_param1.use_fixed_twd = (uint16_t)use_fixed_twd;
+    strs_p->boat_qgc_param1.p_tack_kp = p_tack_kp;
+    strs_p->boat_qgc_param1.p_tack_cp = p_tack_cp;
 
     orb_publish(ORB_ID(boat_qgc_param1), pubs_p->boat_qgc_param1, &(strs_p->boat_qgc_param1));
-
-    //qgc2
-    strs_p->boat_qgc_param2.timestamp = hrt_absolute_time();
-    strs_p->boat_qgc_param2.window_alpha = window_alpha;
-    strs_p->boat_qgc_param2.window_apparent = window_apparent;
-    strs_p->boat_qgc_param2.window_twd = window_twd;
-    strs_p->boat_qgc_param2.type_of_tack = (uint16_t)tack_type;
-    strs_p->boat_qgc_param2.delta1 = delta_vect[0];
-    strs_p->boat_qgc_param2.delta2 = delta_vect[1];
-    strs_p->boat_qgc_param2.use_fixed_twd = (uint16_t)use_fixed_twd;
-    strs_p->boat_qgc_param2.p_tack_kp = p_tack_kp;
-    strs_p->boat_qgc_param2.p_tack_cp = p_tack_cp;
-
-    orb_publish(ORB_ID(boat_qgc_param2), pubs_p->boat_qgc_param2, &(strs_p->boat_qgc_param2));
 
     //qgc3
     strs_p->boat_qgc_param3.timestamp = hrt_absolute_time();
@@ -1235,26 +956,6 @@ void p_param_update(struct parameters_qgc *params_p,
 
     orb_publish(ORB_ID(boat_qgc_param3), pubs_p->boat_qgc_param3, &(strs_p->boat_qgc_param3));
     #if SIMULATION_FLAG == 1
-
-    #if USE_GRID_LINES == 1
-    //----- simulation coordinates
-    int32_t lat_sim;
-    int32_t lon_sim;
-    int32_t alt_sim;
-    //lat_sim
-    param_get(pointers_param_qgc.lat_sim_pointer, &lat_sim);
-
-    //lon_sim
-    param_get(pointers_param_qgc.lon_sim_pointer, &lon_sim);
-
-    //alt_sim
-    param_get(pointers_param_qgc.alt_sim_pointer, &alt_sim);
-
-    //set lat, lon and alt to gps_filtered struct to simulate
-    strs_p->gps_filtered.lat = ((double)lat_sim) / 1e7;
-    strs_p->gps_filtered.lon = ((double)lon_sim) / 1e7;
-    strs_p->gps_filtered.alt = alt_sim / 1e3;
-    #endif
 
     //cog_sim
     param_get(pointers_param_qgc.cog_sim_pointer, &(params_p->cog_sim));
@@ -1290,4 +991,3 @@ void p_param_update(struct parameters_qgc *params_p,
 //    essc_set_qground_values(ESSC_k,ESSC_windowSize,ESSC_period);
 
 }
-

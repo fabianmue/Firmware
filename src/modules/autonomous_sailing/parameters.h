@@ -48,11 +48,7 @@
 
 #include "controller_data.h"
 
-#include "navigation.h"
-
 #include "topics_handler.h"
-
-#include "path_planning.h"
 
 #include "guidance_module.h"
 

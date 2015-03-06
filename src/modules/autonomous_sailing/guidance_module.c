@@ -482,7 +482,7 @@ void gm_set_rudder_data(float p, float i, float cp,
         else{
             sprintf(txt_msg, "Error: select a rudder controller: 0 or 1.");
             smq_send_log_critical(txt_msg);
-            //use the old PI
+            //use the actual PI configuration
         }
     }
 
@@ -601,9 +601,6 @@ void maneuver_completed(int8_t error_code){
     */
     reference_actions.do_maneuver = false;
     tack_data.boat_is_tacking = false;
-
-    //notify to path_planning that we've completed the tack action
-    //pp_notify_tack_completed();
 
     //if we had used either LQR or MPC or P tack, notify tack completed to controller_data
     if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC
@@ -1210,7 +1207,7 @@ void gm_set_data_by_pp(const struct structs_topics_s *strs_p){
  * Main function to control the boat while sailing.
  *
  * If the remote control is in the manual mode, just copy the rudder and
- * sail commands. In this way they will be shown in QGC and logged in the sdCard.
+ * sail commands. In this way they will be showed in QGC and logged in the sdCard.
  * If the autonomous mode is selected, call autonomous sailing controllers.
 */
 void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
@@ -1233,7 +1230,7 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
     else{
         //Autonomous mode
 
-        //check if path_planning() told us to tack
+        //check if path_planning application told us to tack/jybe
         if(reference_actions.do_maneuver){
             //perform tack or jybe
             do_maneuver(&rudder_command, &sail_command, strs_p);
@@ -1277,13 +1274,17 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
     //update rudder_latest in any case, even if we are not tacking
     opc_data.rudder_latest = rudder_command;
 
-    //save first debug values for post-processing, other values set in path_planning()
-    strs_p->boat_guidance_debug.alpha = alpha;
-    strs_p->boat_guidance_debug.twd_mean = cd_get_twd_sns();
-    strs_p->boat_guidance_debug.app_mean = cd_get_app_wind_sns();
+    //save guidance_module main outputs
     strs_p->boat_guidance_debug.timestamp = hrt_absolute_time();
+
+    strs_p->boat_guidance_debug.alpha = alpha;
     strs_p->boat_guidance_debug.rudder_action = rudder_command;
     strs_p->boat_guidance_debug.sail_action = sail_command;
+    strs_p->boat_guidance_debug.twd_mean = cd_get_twd_sns();
+    strs_p->boat_guidance_debug.tws_mean = -1.0f;//TODO: add real value here
+    //maneuver is completed iff reference_actions.do_maneuver == false
+    strs_p->boat_guidance_debug.maneuver_completed = (reference_actions.do_maneuver == false) ?
+                                                      1 : 0;
 
     #if SIMULATION_FLAG == 1
     //strs_p->airspeed.true_airspeed_m_s = ref_act_p->alpha_star - get_alpha_dumas();

@@ -32,14 +32,14 @@
  *
  ****************************************************************************/
 /**
- * @file navigation.c
+ * @file pp_navigation_module.c
  *
  * Computes NED position from geodedical information.
  *
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#include "navigation.h"
+#include "pp_navigation_module.h"
 
 //WGS84 data
 
@@ -77,6 +77,9 @@ static float R_ned_body[3][3] = {{0.0f, 0.0f, 0.0f},
                                 {0.0f, 0.0f, 0.0f}};
 //velocities in NEd frame
 static float vel_ned[3] = {0.0f, 0.0f, 0.0f};
+
+//temp struct
+static struct vehicle_global_position_s vehicle_global_position;
 
 static struct{
     float sin_mwd;  ///sin(mean wind direction)
@@ -343,18 +346,15 @@ void n_set_pos_top_mark(const int32_t *lat_d_e7_p, const int32_t *lon_d_e7_p, co
     int32_t east_dm;
     int32_t down_dm;
 
-    //use a global position struct to call geo_to_ned function
-    struct vehicle_global_position_s temp_pos;
-
     /*set lat, lon and alt in temp_pos,
      * remember to save lon and lat in degrees! (not degrees * E7).
      * Save alt in meters.
     */
-    temp_pos.lat = ((double) *lat_d_e7_p) / (double)E7;
-    temp_pos.lon = ((double) *lon_d_e7_p) / (double)E7;
-    temp_pos.alt =  (*alt_mm_p) / E3;
+    vehicle_global_position.lat = ((double) *lat_d_e7_p) / (double)E7;
+    vehicle_global_position.lon = ((double) *lon_d_e7_p) / (double)E7;
+    vehicle_global_position.alt =  (*alt_mm_p) / E3;
 
-    geo_to_ned(&temp_pos, &north_dm, &east_dm, &down_dm);
+    geo_to_ned(&vehicle_global_position, &north_dm, &east_dm, &down_dm);
 
     /** Race frame has X-axis oriented as the wind direction,
      * Y-axis is defined so that the system is positively oriented.
@@ -374,18 +374,17 @@ void n_set_pos_top_mark(const int32_t *lat_d_e7_p, const int32_t *lon_d_e7_p, co
  * Compute from vehicle_global_position topic the boat's position in Race frame. Set up the next target position.
  *
 */
-void n_navigation_module(const struct structs_topics_s *strs_p,
-                       struct local_position_race_s *lp_p){
+void n_navigation_module(struct structs_topics_s *strs_p){
 
     int32_t x_dm;
     int32_t y_dm;
 
     //convert gps filtered position in race frame coordinates
-    geo_to_race(&(strs_p->gps_filtered), &x_dm, &y_dm);
+    geo_to_race(&(strs_p->vehicle_global_position), &x_dm, &y_dm);
 
-    //convert local position from decimeters to meters
-    lp_p->x_race_m = (float)x_dm / E1;
-    lp_p->y_race_m = (float)y_dm / E1;
+    //convert local position from decimeters to meters and save it in path_planning struct
+    strs_p->path_planning.x_race_m = (float)x_dm / E1;
+    strs_p->path_planning.y_race_m = (float)y_dm / E1;
 }
 
 /**

@@ -46,17 +46,11 @@
 #include <errno.h>
 #include <poll.h>
 
-//navigation module
-#include "navigation.h"
-
 //Include Extremum Seeking Sailcontrol (JW)
 #include "extremum_sailcontrol.h"
 
 //parameters from QGroundControl
 #include "parameters.h"
-
-//path planning data computed offline
-#include "path_planning.h"
 
 //guidance module
 #include "guidance_module.h"
@@ -197,24 +191,16 @@ int as_daemon_thread_main(int argc, char *argv[]){
     //local copy of parameters from QGroundControl
     struct parameters_qgc params;
 
-    //optimal path parameters
-    //struct reference_actions_s ref_act = {.alpha_star = 0.7853981f, .should_tack = false};
-
     warnx(" starting\n");
 
     //initialize controller data structures
     cd_init_controller_data();
 
-    //initialize grid lines in Race frame
-    //pp_init_grids();
-
     //init message module
     smq_init_msg_module();
 
-
     //init Extremum Seeking Sailcontrol (ESSC)
     //essc_init();
-
 
     //subscribe/advertise interested topics
     as_topics(&subs, &pubs, &strs);
@@ -241,7 +227,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
             { .fd = subs.wind_sailing,              .events = POLLIN },
             { .fd = subs.parameter_update,          .events = POLLIN },
             { .fd = subs.att,                       .events = POLLIN },
-            { .fd = subs.rc_channels,               .events = POLLIN }
+            { .fd = subs.rc_channels,               .events = POLLIN },
+            { .fd = subs.boat_qgc_param2,           .events = POLLIN }
     };
 
     thread_running = true;
@@ -281,7 +268,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // new path_planning data
                     orb_copy(ORB_ID(path_planning), subs.path_planning, &(strs.path_planning));
                     //pass these data to guidance_module
-
+                    gm_set_data_by_pp(&strs);
 
                     //copy GPOS data
                     /*orb_copy(ORB_ID(vehicle_global_position), subs.gps_filtered, &(strs.gps_filtered));
@@ -331,6 +318,12 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 if(fds[5].revents & POLLIN){
                     // commands from remote control
                     orb_copy(ORB_ID(rc_channels), subs.rc_channels, &(strs.rc_channels));
+                }
+                if(fds[6].revents & POLLIN){
+                    // boat_qgc_param2 topic
+                    orb_copy(ORB_ID(boat_qgc_param2), subs.boat_qgc_param2, &(strs.boat_qgc_param2));
+                    //pass meanwind direction to controller_data module
+                    cd_set_mean_twd(strs.boat_qgc_param2.mean_wind_direction_r);
                 }
             }
         }
@@ -401,6 +394,7 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
     subs_p->att = orb_subscribe(ORB_ID(vehicle_attitude));
     subs_p->rc_channels = orb_subscribe(ORB_ID(rc_channels));
+    subs_p->boat_qgc_param2 = orb_subscribe(ORD_ID(boat_qgc_param2));
 
     if(subs_p->gps_raw == -1){
         warnx(" error on subscribing on vehicle_gps_position Topic \n");
@@ -432,17 +426,20 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
         return false;
     }
 
+    if(subs_p->boat_qgc_param2 == -1){
+        warnx(" error on subscribing on boat_qgc_param2 Topic \n");
+        return false;
+    }
+
     warnx(" subscribed to all topics \n");
 
     //advertise topic boat_guidance_debug
     memset(&(strs_p->boat_guidance_debug), 0, sizeof(strs_p->boat_guidance_debug));
     pubs_p->boat_guidance_debug_pub = orb_advertise(ORB_ID(boat_guidance_debug), &(strs_p->boat_guidance_debug));
 
-    //advertise topic boat_qgc_param
+    //qgc1
     memset(&(strs_p->boat_qgc_param1), 0, sizeof(strs_p->boat_qgc_param1));
     pubs_p->boat_qgc_param1 = orb_advertise(ORB_ID(boat_qgc_param1), &(strs_p->boat_qgc_param1));
-    memset(&(strs_p->boat_qgc_param2), 0, sizeof(strs_p->boat_qgc_param2));
-    pubs_p->boat_qgc_param2 = orb_advertise(ORB_ID(boat_qgc_param2), &(strs_p->boat_qgc_param2));
 
     //adertise topic boat_opt_matrices
     memset(&(strs_p->boat_opt_mat), 0, sizeof(strs_p->boat_opt_mat));
