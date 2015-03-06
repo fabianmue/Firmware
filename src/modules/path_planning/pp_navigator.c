@@ -17,10 +17,12 @@
 /* TODO:
  * - add Potentialfield Method
  * - speak to helsman => publish update in topic
+ * - Windspeed
  * - decide when to call the function nav_navigate()
  */
 
 
+#include "pp_config.h"
 
 #include "pp_navigator.h"
 
@@ -67,6 +69,8 @@ void nav_init(void) {
 	state.wind_dir = 0;
 	state.maneuver = false;
 	state.targetNum = 0;
+	state.position.lat = HOMELAT;
+	state.position.lon = HOMELON;
 }
 
 
@@ -147,6 +151,10 @@ void nav_speak2helsman(void) {
 
 	//Communicate the new data to the Helsman
 	//TODO: The heading_reference must be converted to an alpha_star in Dumas' Frame!
+
+    #if C_DEBUG == 1
+		printf("New Heading Reference: %f",state.heading_ref);
+	#endif
 }
 
 
@@ -183,7 +191,7 @@ void nav_position_update(const struct structs_topics_s *strs_p) {
 	newPos.lon = ((float)(strs_p->vehicle_global_position.lon)) * DEG2RAD;
 
 	//Check, if we reached a target
-	if(nh_dist(newPos,field.targets[state.targetNum]) <= TARGETTOLERANCE) {
+	if(nh_geo_dist(newPos,field.targets[state.targetNum]) <= TARGETTOLERANCE) {
 		//We are inside the tolerance => target is counted as reached
 
 		if(state.targetNum != (field.NumberOfTargets-1)) {

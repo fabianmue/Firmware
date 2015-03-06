@@ -15,9 +15,11 @@
 #include <stdbool.h>
 
 #include "pp_config.h"
-#include "pp_topics_handler.h"
 #include "pp_navigation_helper.h"
 
+#if C_DEBUG != 1
+	#include "pp_topics_handler.h"
+#endif
 
 /**Struct containing the status of the Navigator */
 struct nav_state_s {

@@ -10,6 +10,17 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#include <stdint.h>
+
+
+/*DEBUG ON THE COMPUTER */
+#define C_DEBUG 1
+
+#if C_DEBUG == 1
+	#include "D:\Documents\ETH\MASTER\Masterthesis\F_FirmwarePixhawk\TestFirmwareComponents\pixhawk_variables.h"
+#endif
+
+
 //set if you want to use a path planning that uses grid lines
 #define USE_GRIDLINES_PP 1
 

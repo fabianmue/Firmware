@@ -13,6 +13,9 @@
 
 #include "pp_polardiagram.h"
 
+#include <stdint.h>
+#include <math.h>
+
 
 
 

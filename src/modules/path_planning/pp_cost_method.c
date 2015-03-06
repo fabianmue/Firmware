@@ -11,6 +11,8 @@
  *      Author: Jonas Wirz (wirzjo@student.ethz.ch)
  */
 
+
+#include <stdint.h>
 #include "pp_cost_method.h"
 
 #include "pp_polardiagram.h"
@@ -99,7 +101,8 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 
 	uint8_t ind = 0;	//Index for addressing costMat-Elements
 
-	for(float seg = seg_start; seg <= seg_end; seg += HEADRESOLUTION) {
+	float seg;
+	for(seg = seg_start; seg <= seg_end; seg += HEADRESOLUTION) {
 		seg = fmod(seg,(2*PI));
 
 		//Get the cost and save it in the matrix
@@ -352,7 +355,8 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 	float CLee = 0;
 
 	//Loop over all Obstacles
-	for (uint8_t i = 0; i < field->NumberOfObstacles; i++) {
+	uint8_t i;
+	for (i = 0; i < field->NumberOfObstacles; i++) {
 
 		float C = 0;	//Cost for this Obstacle
 
@@ -422,9 +426,11 @@ void smooth(float *array, uint8_t arraySize , uint8_t windowSize) {
 
 	float arrayCpy[arraySize];
 
-	for(uint8_t i = windowSize/2; i<arraySize-windowSize/2; i++) {
+	uint8_t i;
+	for(i = windowSize/2; i<arraySize-windowSize/2; i++) {
 		float sum = 0;
-		for(uint8_t j = -windowSize/2; j<windowSize/2; j++) {
+		uint8_t j;
+		for(j = -windowSize/2; j<windowSize/2; j++) {
 			sum += array[i+j];
 		} //for j
 

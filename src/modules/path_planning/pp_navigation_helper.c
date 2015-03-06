@@ -109,7 +109,8 @@ uint8_t nh_findMin(const float *array, uint8_t arraySize) {
 	uint8_t minInd = 0;
 	float minimum = array[0];
 
-	for(uint8_t i = 1; i < arraySize; i++) {
+	uint8_t i;
+	for(i = 1; i < arraySize; i++) {
 		if(array[i] < minimum) {
 			minimum = array[i];
 			minInd = i;
