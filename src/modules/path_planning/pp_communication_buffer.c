@@ -125,6 +125,7 @@ void cb_publish_pp_if_updated(void){
             //if so, the boat will starting maneuvering soon
             send_maneuver_cmd = false;
             doing_maneuver = true;
+            smq_send_log_info("Starting maneuver.");
         }
     }
 }

@@ -19,5 +19,10 @@ ekf_att_pos_estimator start
 #
 parser_200WX start
 
+#
+# start the path_planning.c script:
+#
+path_planning start
 
-# [commented out 13/10/2014]
+
+# [commented out 06/03/2015]

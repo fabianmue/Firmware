@@ -269,19 +269,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     orb_copy(ORB_ID(path_planning), subs.path_planning, &(strs.path_planning));
                     //pass these data to guidance_module
                     gm_set_data_by_pp(&strs);
-
-                    //copy GPOS data
-                    /*orb_copy(ORB_ID(vehicle_global_position), subs.gps_filtered, &(strs.gps_filtered));
-
-                    //look into optimal path planning maps for reference actions
-                    pp_path_planning(&ref_act, &strs);
-
-                    //Call the extremum Seeking Sail Control and hand over the new GPS-Speed-Values
-                    essc_speed_update(&strs);
-
-                    //update NED velocities in navigation module
-                    //update_ned_vel(strs.gps_filtered.vel_n, strs.gps_filtered.vel_e, strs.gps_filtered.vel_d);*/
-
                 }
                 if(fds[2].revents & POLLIN){
                     // new WSAI values, copy new data
@@ -340,9 +327,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 cd_update_raw_twd(params.twd_sim);
                 cd_update_raw_yaw_yaw_rate(params.yaw_sim, 0.0f);//dummy yawRate value
             #endif
-            //look into optimal path planning maps for reference actions
-            //pp_path_planning(&ref_act, &strs);
-            //fine cancella
         #endif
         //always perfrom guidance module to control the boat
         gm_guidance_module(&params, &strs);

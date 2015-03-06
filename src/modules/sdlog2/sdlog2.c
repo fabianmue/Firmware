@@ -103,6 +103,8 @@
 #include <uORB/topics/boat_qgc_param.h>
 //Added by Marco Tranzatto
 #include <uORB/topics/boat_optimal_control.h>
+//Added by Marco Tranzatto
+#include <uORB/topics/path_planning.h>
 
 #include <systemlib/systemlib.h>
 #include <systemlib/param/param.h>
@@ -975,6 +977,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         struct boat_qgc_param2_s boat_qgc_param2; //Added by Marco Tranzatto
         struct boat_opt_mat_s boat_opt_mat; //Added by Marco Tranzatto
         struct boat_qgc_param3_s boat_qgc_param3; //Added by Marco Tranzatto
+        struct path_planning_s path_planning; //Added by Marco Tranzatto
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1025,6 +1028,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             struct log_QGC2_s log_BOAT_QGC_PARAM2; //Added by Marco Tranzatto
             struct log_OPTM_s log_BOAT_OPT_MATRICES; //Added by Marco Tranzatto
             struct log_QGC3_s log_BOAT_QGC_PARAM3; //Added by Marco Tranzatto
+            struct log_PP_s log_PP; //Added by Marco Tranzatto
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1035,14 +1039,14 @@ int sdlog2_thread_main(int argc, char *argv[])
 	struct {
 		int cmd_sub;
 		int status_sub;
-		int sensor_sub;
+        //int sensor_sub;
 		int att_sub;
 		int att_sp_sub;
 		int rates_sp_sub;
 		int act_outputs_sub;
-		int act_controls_sub;
-		int local_pos_sub;
-		int local_pos_sp_sub;
+        //int act_controls_sub;
+        //int local_pos_sub;
+        //int local_pos_sp_sub;
 		int global_pos_sub;
 		int triplet_sub;
 		int gps_pos_sub;
@@ -1070,6 +1074,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         int boat_qgc_param2_sub; //Added by Marco Tranzatto
         int boat_opt_mat_sub; //Added by Marco Tranzatto
         int boat_qgc_param3_sub; //Added by Marco Tranzatto
+        int path_planning; //Added by Marco Tranzatto
 	} subs;
 
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
@@ -1123,6 +1128,8 @@ int sdlog2_thread_main(int argc, char *argv[])
     subs.boat_opt_mat_sub = orb_subscribe(ORB_ID(boat_opt_mat));
 
     subs.boat_qgc_param3_sub = orb_subscribe(ORB_ID(boat_qgc_param3));
+
+    subs.path_planning = orb_subscribe(ORB_ID(path_planning));
     //****************** End Add by Marco Tranzatto ************
 
 
@@ -1848,6 +1855,16 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_QGC_PARAM3.window_twd_tack = buf.boat_qgc_param3.window_twd_tack;
             log_msg.body.log_BOAT_QGC_PARAM3.pred_horizon_steps = buf.boat_qgc_param3.pred_horizon_steps;
             LOGBUFFER_WRITE_AND_COUNT(QGC3);
+        }
+
+        /* --- PATH PLANNING */
+        if (copy_if_updated(ORB_ID(path_planning), subs.path_planning, &buf.path_planning)) {
+            log_msg.msg_type = LOG_PP_MSG;
+            log_msg.body.log_PP.alpha_star = buf.path_planning.alpha_star;
+            log_msg.body.log_PP.do_maneuver = (buf.path_planning.do_maneuver == 0) ? false : true;
+            log_msg.body.log_PP.x_race_m = buf.path_planning.x_race_m;
+            log_msg.body.log_PP.y_race_m = buf.path_planning.y_race_m;
+            LOGBUFFER_WRITE_AND_COUNT(PP);
         }
         //********************** End add *******************************
 

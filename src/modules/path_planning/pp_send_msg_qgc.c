@@ -32,42 +32,36 @@
  *
  ****************************************************************************/
 /**
- * @file pp_communication_buffer.h
+ * @file pp_send_msg_qgc.c
  *
- * Use this module to update each field in path_planning topic and publish it.
+ * Send message to QGroundControl
  *
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-#ifndef PP_COMMUNICATION_BUFFER_H
-#define PP_COMMUNICATION_BUFFER_H
-
-#include "pp_topics_handler.h"
 #include "pp_send_msg_qgc.h"
-#include <stdio.h>
 
-/** @brief command a tack or a jybe */
-bool cb_do_maneuver(float new_alpha_star);
+static int mavlink_fd = -1;
 
-/** @brief ask if an already started maneuver has been completed */
-bool cb_is_maneuver_completed(void);
+/**
+ * Open MAVLINK_LOG_DEVICE
+*/
+void smq_init_msg_module(void){
+    mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
+}
 
-/** @brief copy new data from autonomous_sailing app */
-void cb_new_as_data(const struct structs_topics_s *strs_p);
+/**
+ * Send log info message
+ */
+void smq_send_log_info(const char *txt){
+    if(mavlink_fd > -1)
+        mavlink_log_info(mavlink_fd, txt);
+}
 
-/** @brief publish path_planning module if it has been updated */
-void cb_publish_pp_if_updated(void);
-
-/** @brief set new X and Y coordinates in race frame */
-void cb_set_race_coordinates(float x_m, float y_m);
-
-/** @brief set a new value for alpha_star */
-void cb_set_alpha_star(float new_alpha_star);
-
-/** @brief init module */
-void cb_init(void);
-
-/** @brief get current alpha_star value */
-float cb_get_alpha_star(void);
-
-#endif // PP_COMMUNICATION_BUFFER_H
+/**
+ * Send log critical message
+ */
+void smq_send_log_critical(const char *txt){
+    if(mavlink_fd > -1)
+        mavlink_log_critical(mavlink_fd, txt);
+}

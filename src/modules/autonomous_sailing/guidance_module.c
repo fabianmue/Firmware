@@ -189,14 +189,14 @@ struct forces_info_s{
     float solvetime;
 };
 
-//static data for tack action
+//static data for maneuver (tack or jybe)
 static struct{
-    bool boat_is_tacking;       ///true if boat is performing a tack maneuver
-    uint16_t tack_type;         ///type of tack action to perform
-}tack_data =    {
-                    .boat_is_tacking = false,//true if boat is performing a tack maneuver
-                    .tack_type = 0,
-                };
+    bool boat_is_maneuvering;       ///true if boat is performing a tack/jybe
+    uint16_t maneuver_type;         ///type of maneuver to perform
+}maneuver_data =    {
+                        .boat_is_maneuvering = false,//true if boat is performing a tack/jybe
+                        .maneuver_type = 0,
+                    };
 
  //static data for sails controller
 static struct{
@@ -341,30 +341,30 @@ void gm_set_sail_data(float sail_closed_cmd, float alpha_sail_closed_r, float al
  *
  * @param tack_type               type of tack to perform
 */
-void gm_set_tack_data(uint16_t tack_type){
-    uint16_t old_tack_type = tack_data.tack_type;
+void gm_set_maneuver_data(uint16_t tack_type){
+    uint16_t old_tack_type = maneuver_data.maneuver_type;
 
     //notify the changing to QGroundControl what kind of tack the boat will do
     if(old_tack_type != tack_type){
         if(tack_type == TACK_IMPLICIT){
             smq_send_log_info("Implicit (PI) Tack.");
             //save new value
-            tack_data.tack_type = tack_type;
+            maneuver_data.maneuver_type = tack_type;
         }
         else if(tack_type == TACK_LQR){
             smq_send_log_info("LQR Tack.");
             //save new value
-            tack_data.tack_type = tack_type;
+            maneuver_data.maneuver_type = tack_type;
         }
         else if(tack_type == TACK_MPC){
             smq_send_log_info("MPC Tack.");
             //save new value
-            tack_data.tack_type = tack_type;
+            maneuver_data.maneuver_type = tack_type;
         }
         else if(tack_type == TACK_P){
             smq_send_log_info("P Tack.");
             //save new value
-            tack_data.tack_type = tack_type;
+            maneuver_data.maneuver_type = tack_type;
         }
         else{
             //error: no valid type of tack selected
@@ -497,7 +497,7 @@ void gm_set_rudder_data(float p, float i, float cp,
     rudder_controller_data.abs_rud_saturation = abs_rudder_saturation;
 }
 
-/** Perform tack maneuver.
+/** Perform tack or jybe maneuver.
  *
  * Perform tack maneuver based on the type of tack set by QGroundControl.
  * There are two possibles type of tack, @see set_tack_data() .
@@ -511,7 +511,7 @@ void do_maneuver(float *p_rudder_cmd, float *p_sails_cmd,
                  struct structs_topics_s *strs_p){
 
     //check if we've already started tacking, or if this is the first time
-    if(tack_data.boat_is_tacking){
+    if(maneuver_data.boat_is_maneuvering){
         //we have already started the tack maneuver, check if it's completed
         int8_t error_code;
         if(is_maneuver_completed(&error_code)){
@@ -526,26 +526,27 @@ void do_maneuver(float *p_rudder_cmd, float *p_sails_cmd,
     }
     else{
         //we must start the tack maneuver now
-        tack_data.boat_is_tacking = true;
+        maneuver_data.boat_is_maneuvering = true;
 
          /*if we are using either LQR or MPC or P tack, save the time when we start tacking and
           * tell controller_data module that a tack has just been started
           */
-         if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC
-            || tack_data.tack_type == TACK_P){
+         if(maneuver_data.maneuver_type == TACK_LQR || maneuver_data.maneuver_type == TACK_MPC
+            || maneuver_data.maneuver_type == TACK_P){
 
              opc_data.time_started_tack_us = hrt_absolute_time();
              opc_data.time_started_valid = true;
 
              cd_optimal_tack_started();
          }
+
     }
 
     /*we are here beacuse ref_act_p->should_tack is true, so boat should tack.
      * Check which type of tack maneuver we should perform by checking
      * tack_data.tack_type
     */
-    if(tack_data.tack_type == TACK_IMPLICIT){
+    if(maneuver_data.maneuver_type == TACK_IMPLICIT){
         /*perform tack maneuver by simply returning the control of rudder
          * and sails to normal controller.
          *
@@ -562,19 +563,19 @@ void do_maneuver(float *p_rudder_cmd, float *p_sails_cmd,
         //no error can be happened, use erro_code = EVERYTHING_OK
         maneuver_completed(EVERYTHING_OK);
     }
-    else if(tack_data.tack_type == TACK_LQR){
+    else if(maneuver_data.maneuver_type == TACK_LQR){
         //LQR controller
         lqr_control_rudder(p_rudder_cmd, strs_p);
         //use standard sail controller
         *p_sails_cmd = sail_controller(cd_get_alpha_dumas());
     }
-    else if(tack_data.tack_type == TACK_MPC){
+    else if(maneuver_data.maneuver_type == TACK_MPC){
         //MPC controller
         mpc_control_rudder(p_rudder_cmd, strs_p);
         //use standard sail controller
         *p_sails_cmd = sail_controller(cd_get_alpha_dumas());
     }
-    else if(tack_data.tack_type == TACK_P){
+    else if(maneuver_data.maneuver_type == TACK_P){
         //P controller for p tack
         *p_rudder_cmd = p_maneuver_rudder();
         //use standard sail controller
@@ -600,21 +601,21 @@ void maneuver_completed(int8_t error_code){
      * can compute new values for rudder and sails.
     */
     reference_actions.do_maneuver = false;
-    tack_data.boat_is_tacking = false;
+    maneuver_data.boat_is_maneuvering = false;
 
     //if we had used either LQR or MPC or P tack, notify tack completed to controller_data
-    if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC
-       || tack_data.tack_type == TACK_P)
+    if(maneuver_data.maneuver_type == TACK_LQR || maneuver_data.maneuver_type == TACK_MPC
+       || maneuver_data.maneuver_type == TACK_P)
         cd_optimal_tack_completed();
 
     //check error_code to give a feedback to QGroundControl
     if(error_code == EVERYTHING_OK){
         //notify to QGC that we've completed the tack action
-        smq_send_log_info("Tack completed.");
+        smq_send_log_info("Maneuver completed.");
     }
     else if(error_code == FORCED_TACK_STOP){
-        //notify to QGC that we had to force stopping the tack
-        smq_send_log_critical("Tack forced to be completed.");
+        //notify to QGC that we had to force stopping the maneuver
+        smq_send_log_critical("Maneuver forced to be completed.");
     }
     else if(error_code == NO_MPC_SOLVE_FNC){
         //notify to QGC the error
@@ -647,11 +648,11 @@ bool is_maneuver_completed(int8_t *error_p){
     *error_p = EVERYTHING_OK; // let's hope we will not have any error
 
     //implicit tack
-    if(tack_data.tack_type == TACK_IMPLICIT){
+    if(maneuver_data.maneuver_type == TACK_IMPLICIT){
         completed = false;
     }
-    else if(tack_data.tack_type == TACK_LQR || tack_data.tack_type == TACK_MPC
-            || tack_data.tack_type == TACK_P){
+    else if(maneuver_data.maneuver_type == TACK_LQR || maneuver_data.maneuver_type == TACK_MPC
+            || maneuver_data.maneuver_type == TACK_P){
 
         //check if the extended state is in the tube near the origin
         compute_state_extended_model();
@@ -1224,8 +1225,6 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
         //read rudder and sails command from RC and save them
         rudder_command = strs_p->rc_channels.channels[RC_RUD_INDEX];
         sail_command = strs_p->rc_channels.channels[RC_SAIL_INDEX];
-        //tel to path planning what's the current alpha
-        //pp_set_current_alpha(alpha);
     }
     else{
         //Autonomous mode

@@ -86,8 +86,8 @@ void gm_set_rudder_data(float p, float i, float cp,
                      float ci, int32_t rudder_controller_type, float kaw,
                      float abs_rudder_saturation);
 
-/** @brief set which kind of tack maneuver should be performed */
-void gm_set_tack_data(uint16_t tack_type);
+/** @brief set which kind of maneuver should be performed */
+void gm_set_maneuver_data(uint16_t tack_type);
 
 /** @brief set data of the sail controller*/
 void gm_set_sail_data(float sail_closed_cmd, float alpha_sail_closed_r, float alpha_sail_opened_r);

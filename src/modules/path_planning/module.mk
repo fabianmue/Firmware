@@ -34,11 +34,13 @@
 # Daemon application
 #
 MODULE_COMMAND	= path_planning
+
 SRCS	= path_planning.c\
           pp_parameters.c\
           pp_topics_handler.c\
           pp_navigation_module.c\
           pp_gridlines_handler.c\
-          pp_communication_buffer.c
+          pp_communication_buffer.c\
+          pp_send_msg_qgc.c
 
 #add here all additional c-Files by using \ at the end of each line

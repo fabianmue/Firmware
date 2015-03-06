@@ -48,6 +48,7 @@
  * -------------------------------                                 --------------------------------
  *
  * @author Jonas Wirz <wirzjo@student.ethz.ch>
+ * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
 
@@ -135,7 +136,7 @@ int path_planning_main(int argc, char *argv[])
 		}
 
 		thread_should_exit = false;
-		daemon_task = task_spawn_cmd("daemon",
+        daemon_task = task_spawn_cmd("path_planning",
 					 SCHED_DEFAULT,
                      DAEMON_PRIORITY,
                      4096,
@@ -171,7 +172,7 @@ int path_planning_main(int argc, char *argv[])
 int pp_thread_main(int argc, char *argv[]) {
 
 	//**THREAD IS STARTING
-	warnx("[daemon] starting\n");
+    warnx("path_planning starting\n");
 
 
 	//**HANDLE TOPICS
@@ -202,6 +203,9 @@ int pp_thread_main(int argc, char *argv[]) {
 
     //init communication_buffer module
     cb_init();
+
+    //init pp_send_msg_qgc module
+    smq_init_msg_module();
 
     #if USE_GRID_LINES == 1
     gh_init_grids();
@@ -264,7 +268,7 @@ int pp_thread_main(int argc, char *argv[]) {
 
 
 	//**MANAGE THE KILLING OF THE THREAD
-	warnx("[daemon] exiting.\n");
+    warnx("path_planning exiting.\n");
 	thread_running = false;
 
 	return 0;

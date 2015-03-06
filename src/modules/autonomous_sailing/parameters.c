@@ -735,7 +735,7 @@ void p_param_update(struct parameters_qgc *params_p,
     int32_t tack_type;
 
     param_get(pointers_param_qgc.tack_type_pointer, &tack_type);
-    gm_set_tack_data((uint16_t)tack_type);
+    gm_set_maneuver_data((uint16_t)tack_type);
 
     //----- param for rudder controller
     float rud_p;
