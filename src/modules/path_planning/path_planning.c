@@ -188,7 +188,8 @@ int pp_thread_main(int argc, char *argv[]) {
     struct pollfd fds[] = {			 // Polling Management
             { .fd = subs.boat_guidance_debug,       .events = POLLIN },//MUST BE THE FIRST ONE!
             { .fd = subs.vehicle_global_position,   .events = POLLIN },
-            { .fd = subs.parameter_update,          .events = POLLIN }
+            { .fd = subs.parameter_update,          .events = POLLIN },
+            { .fd = subs.rc_channels,               .events = POLLIN }
     };
 
     int poll_return;				//Return Value of the polling.
@@ -254,6 +255,12 @@ int pp_thread_main(int argc, char *argv[]) {
                              &(strs.parameter_update));
                     //update param
                     p_param_update(true);
+                }
+                if(fds[3].revents & POLLIN){
+                    // copy commands from remote control
+                    orb_copy(ORB_ID(rc_channels), subs.rc_channels, &(strs.rc_channels));
+                    //update pp_communication_buffer with this informaion
+                    cb_new_rc_data(&strs);
                 }
 			}
 		}

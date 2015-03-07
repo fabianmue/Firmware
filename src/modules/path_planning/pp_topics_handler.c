@@ -27,7 +27,7 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
 	subs_p->vehicle_global_position = orb_subscribe(ORB_ID(vehicle_global_position));
 	subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
     subs_p->boat_guidance_debug = orb_subscribe(ORB_ID(boat_guidance_debug));
-
+    subs_p->rc_channels = orb_subscribe(ORB_ID(rc_channels));
 
 	//Check correct subscription
     if(subs_p->vehicle_global_position == -1){
@@ -42,6 +42,11 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
 
     if(subs_p->boat_guidance_debug == -1){
         warnx(" error on subscribing on boat_guidance_debug Topic \n");
+        return false;
+    }
+
+    if(subs_p->rc_channels == -1){
+        warnx(" error on subscribing on rc_channels Topic \n");
         return false;
     }
 

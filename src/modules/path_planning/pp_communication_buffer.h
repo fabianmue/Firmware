@@ -44,7 +44,9 @@
 
 #include "pp_topics_handler.h"
 #include "pp_send_msg_qgc.h"
+#include "pp_config.h"
 #include <stdio.h>
+#include <math.h>
 
 /** @brief command a tack or a jybe */
 bool cb_do_maneuver(float new_alpha_star);
@@ -69,5 +71,8 @@ void cb_init(void);
 
 /** @brief get current alpha_star value */
 float cb_get_alpha_star(void);
+
+/** @brief copy new data from remote controller*/
+void cb_new_rc_data(const struct structs_topics_s *strs_p);
 
 #endif // PP_COMMUNICATION_BUFFER_H

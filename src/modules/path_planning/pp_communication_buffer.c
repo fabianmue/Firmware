@@ -42,9 +42,10 @@
 
 #define M_PI_F 3.14159265358979323846f
 
+//state variables
 static struct path_planning_s pp;
-
 static bool pp_updated = false;//has pp been updated ?
+static bool manual_mode = false; //is remote control in manual mode?
 
 /**
  * Tell autonomous_sailing app to start a tack or jybe maneuver.
@@ -94,6 +95,9 @@ bool cb_is_maneuver_completed(void){
 /**
  * Based on the data publisehd by autonomous_sailing app see if an
  * already started maneuver has just been completed.
+ * If the remote control is set to manual mode, read the current haul
+ * and set alpha_star to have the same haul. The magnitude of
+ * alpha_star is not changed.
  *
  * @param strs_p    struct containing boat_guidance_debug_s struct
 */
@@ -108,6 +112,13 @@ void cb_new_as_data(const struct structs_topics_s *strs_p){
             pp.do_maneuver = 0;
             pp_updated = true;
         }
+    }
+    //if the remote control is in manual mode, set the sign of alpha_star based on the actual haul
+    if(manual_mode){
+        //if alpha is < 0, we are sailing at port haul
+        float temp_alpha_star = (strs_p->boat_guidance_debug.alpha < 0.0f) ?
+                                 -fabs(pp.alpha_star) : fabs(pp.alpha_star);
+        cb_set_alpha_star(temp_alpha_star);
     }
 }
 
@@ -151,10 +162,14 @@ bool cb_set_alpha_star(float new_alpha_star){
     else if(new_alpha_star < -M_PI_F)
         new_alpha_star = -M_PI_F;
 
-    //set new alpha if the boat is not maneuvering
+    /* set new alpha if the boat is not maneuvering and it is
+     * different from the actual one.
+    */
     if(cb_is_maneuver_completed() == true){
-        pp.alpha_star = new_alpha_star;
-        pp_updated = true;
+        if(pp.alpha_star != new_alpha_star){
+            pp.alpha_star = new_alpha_star;
+            pp_updated = true;
+        }
     }
     else
         res = false;
@@ -181,4 +196,15 @@ void cb_init(void){
 */
 float cb_get_alpha_star(void){
     return pp.alpha_star;
+}
+
+/**
+ * Check if the remote control is in manual mode.
+*/
+void cb_new_rc_data(const struct structs_topics_s *strs_p){
+
+    if(strs_p->rc_channels.channels[RC_MODE_INDEX] == RC_MANUAL_MODE)
+        manual_mode = true;
+    else
+        manual_mode = false;
 }

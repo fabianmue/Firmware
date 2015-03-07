@@ -14,6 +14,7 @@
 #include <uORB/topics/boat_guidance_debug.h>
 #include <uORB/topics/path_planning.h>
 #include <uORB/topics/boat_qgc_param.h>
+#include <uORB/topics/rc_channels.h>
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -26,6 +27,7 @@ struct subscribtion_fd_s{
     int vehicle_global_position;			//Contains the filtered GPS-Data
     int parameter_update;					//Update of Parameters from QGroundControl
     int boat_guidance_debug;                //Values from guidance_module from autonomous_sailing app
+    int rc_channels;                        //Remote Control commands
 };
 
 
@@ -34,6 +36,7 @@ struct structs_topics_s{
 	struct vehicle_global_position_s vehicle_global_position;
 	struct parameter_update_s parameter_update;
     struct boat_guidance_debug_s boat_guidance_debug;
+    struct rc_channels_s rc_channels;
 };
 
 
