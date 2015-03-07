@@ -106,9 +106,11 @@ float p_maneuver_rudder();
 static struct{
     float alpha_star; ///optimal sailing angle w.r.t. true wind direction
     bool do_maneuver; ///true if boat should tack/jybe as soon as possible
+    uint8_t id_maneuver; ///id last maneuver given by path_planning app
 }reference_actions = {
     .alpha_star = 0.7853981f,
-    .do_maneuver = false
+    .do_maneuver = false,
+    .id_maneuver = 255
 };
 
 /// Forces parameters
@@ -525,10 +527,10 @@ void do_maneuver(float *p_rudder_cmd, float *p_sails_cmd,
         }
     }
     else{
-        //we must start the tack maneuver now
+        //we must start steering now
         maneuver_data.boat_is_maneuvering = true;
 
-         /*if we are using either LQR or MPC or P tack, save the time when we start tacking and
+         /*if we are using either LQR or MPC or P maneuver, save the time when we start steering and
           * tell controller_data module that a tack has just been started
           */
          if(maneuver_data.maneuver_type == TACK_LQR || maneuver_data.maneuver_type == TACK_MPC
@@ -540,6 +542,8 @@ void do_maneuver(float *p_rudder_cmd, float *p_sails_cmd,
              cd_optimal_tack_started();
          }
 
+         //send a message to QGC
+         smq_send_log_info("Starting maneuver.");
     }
 
     /*we are here beacuse ref_act_p->should_tack is true, so boat should tack.
@@ -603,7 +607,7 @@ void maneuver_completed(int8_t error_code){
     reference_actions.do_maneuver = false;
     maneuver_data.boat_is_maneuvering = false;
 
-    //if we had used either LQR or MPC or P tack, notify tack completed to controller_data
+    //if we have used either LQR or MPC or P tack, notify tack completed to controller_data
     if(maneuver_data.maneuver_type == TACK_LQR || maneuver_data.maneuver_type == TACK_MPC
        || maneuver_data.maneuver_type == TACK_P)
         cd_optimal_tack_completed();
@@ -1201,7 +1205,18 @@ float p_maneuver_rudder(){
 */
 void gm_set_data_by_pp(const struct structs_topics_s *strs_p){
     reference_actions.alpha_star = strs_p->path_planning.alpha_star;
-    reference_actions.do_maneuver = strs_p->path_planning.do_maneuver;
+
+    /* We must start a new manuever IFF do_maneuver is true AND
+     * the last id_maneuver saved in guidance_module is not equal
+     * to the one sent by path_planning. In this way, we are sure that
+     * a new maneuver must be done.
+    */
+    if(strs_p->path_planning.do_maneuver == 1 &&
+       strs_p->path_planning.id_maneuver != reference_actions.id_maneuver){
+        //start a real new maneuver and save its id
+        reference_actions.do_maneuver = true;
+        reference_actions.id_maneuver = strs_p->path_planning.id_maneuver;
+    }
 }
 
 /**
@@ -1284,6 +1299,7 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
     //maneuver is completed iff reference_actions.do_maneuver == false
     strs_p->boat_guidance_debug.maneuver_completed = (reference_actions.do_maneuver == false) ?
                                                       1 : 0;
+    strs_p->boat_guidance_debug.id_maneuver = reference_actions.id_maneuver;
 
     #if SIMULATION_FLAG == 1
     //strs_p->airspeed.true_airspeed_m_s = ref_act_p->alpha_star - get_alpha_dumas();

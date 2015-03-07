@@ -44,8 +44,6 @@
 
 static struct path_planning_s pp;
 
-static bool doing_maneuver = false; //is boat doing a maneuver ?
-static bool send_maneuver_cmd = false;//do we have to send a do_maneuver command?
 static bool pp_updated = false;//has pp been updated ?
 
 /**
@@ -60,16 +58,21 @@ bool cb_do_maneuver(float new_alpha_star){
     bool res;
 
     //we can command a new maneuver only if the boat is not perfoming another one yet
-    if(doing_maneuver == false){
+    if(cb_is_maneuver_completed() == true){
 
         //set new alpha_star
         cb_set_alpha_star(new_alpha_star);
 
-        //do_maneuver
-        pp.do_maneuver = true;
+        //send do_maneuver command to autonomous_sailing app
+        pp.do_maneuver = 1;
+
+        //give a new Id for this new maneuver
+        if(pp.id_maneuver == 255)
+            pp.id_maneuver = 0;
+        else
+            pp.id_maneuver = pp.id_maneuver + 1;
 
         //remember we have to send the meneuver command to autonomous_sailing app
-        send_maneuver_cmd = true;
         pp_updated = true;
         res = true;
     }
@@ -85,15 +88,7 @@ bool cb_do_maneuver(float new_alpha_star){
  * @return      true if the boat is not doing or has to do any maneuver
 */
 bool cb_is_maneuver_completed(void){
-    /*
-     * Return true only if the boat is not doing a maneuver AND
-     * if we do not have to send a do_maneuver command to
-     * autonomous_sailing app.
-    */
-    if(doing_maneuver == false && send_maneuver_cmd == false)
-        return true;
-    else
-        return false;
+    return (pp.do_maneuver == 1) ? false : true;
 }
 
 /**
@@ -103,14 +98,14 @@ bool cb_is_maneuver_completed(void){
  * @param strs_p    struct containing boat_guidance_debug_s struct
 */
 void cb_new_as_data(const struct structs_topics_s *strs_p){
+    // check if we sent a do_maneuver command
+    if(cb_is_maneuver_completed() == false){
+        // check if the maneuver has the same id of the sent one and it is completed
+        if(strs_p->boat_guidance_debug.maneuver_completed == 1 &&
+           strs_p->boat_guidance_debug.id_maneuver == pp.id_maneuver){
 
-    // If we sent a do_maneuver command, check if the maneuver is completed
-    if(doing_maneuver == true && send_maneuver_cmd == false){
-        //is the maneuver completed?
-        if(strs_p->boat_guidance_debug.maneuver_completed == 1){
-            doing_maneuver == false;
-
-            pp.do_maneuver = false;
+            //maneuver is completed
+            pp.do_maneuver = 0;
             pp_updated = true;
         }
     }
@@ -123,17 +118,8 @@ void cb_new_as_data(const struct structs_topics_s *strs_p){
 void cb_publish_pp_if_updated(void){
     //has pp struct been updated? If so, publish it
     if(pp_updated == true){
-
         th_publish_path_planning(&pp);
         pp_updated = false;
-
-        //have we just sent a do_maneuver_command?
-        if(send_maneuver_cmd == true){
-            //if so, the boat will starting maneuvering soon
-            send_maneuver_cmd = false;
-            doing_maneuver = true;
-            smq_send_log_info("Starting maneuver.");
-        }
     }
 }
 
@@ -182,6 +168,8 @@ bool cb_set_alpha_star(float new_alpha_star){
 void cb_init(void){
     //clean memory
     memset(&pp, 0, sizeof(pp));
+    //default starting maneuver id = 255
+    pp.id_maneuver = 255;
     //default alpha_star = 45 deg
     cb_set_alpha_star(M_PI_F / 4.0f);
 }

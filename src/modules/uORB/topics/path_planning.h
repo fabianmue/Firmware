@@ -21,6 +21,7 @@ struct path_planning_s {
     bool     do_maneuver; /**< True, iff boat should either tack or jybe */
     float    x_race_m;    /**< X coordinate in race frame, [m]*/
     float    y_race_m;    /**< Y coordinate in race frame, [m]*/
+    uint8_t  id_maneuver; /**< ID last commanded maneuver */
 };
 
 

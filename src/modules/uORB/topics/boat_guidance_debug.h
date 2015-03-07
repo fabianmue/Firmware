@@ -50,6 +50,7 @@ struct boat_guidance_debug_s {
     float twd_mean;             /// True wind diretion mean value
     float tws_mean;             /// True wind speed mean value
     uint16_t maneuver_completed;    /// last tack or jybe maneuver completed
+    uint8_t  id_maneuver; /**< ID last commanded maneuver */
 };
 
 ORB_DECLARE(boat_guidance_debug);
