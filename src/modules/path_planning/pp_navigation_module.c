@@ -259,14 +259,14 @@ void geo_to_ecef(const int32_t  *lat_d_e7_p, const int32_t  *lon_d_e7_p, const i
                (1 + ((1 / squared_one_minus_flatness_m) - 1) * (pow(sin(lab_s_r), 2))));
 
     //compute x, y and z and convert them from meters to decimeters
-    *x_dm_p = (int32_t) ((r_s_m * (float)cos(lab_s_r) * (float)cos(l_r) +
-                          h_m * (float)cos(mu_r) * (float)cos(l_r)) * E1);
+    *x_dm_p = (int32_t) ((r_s_m * cosf(lab_s_r) * cosf(l_r) +
+                          h_m * cosf(mu_r) * cosf(l_r)) * E1);
 
-    *y_dm_p = (int32_t) ((r_s_m * (float)cos(lab_s_r) * (float)sin(l_r) +
-                          h_m * (float)cos(mu_r) * (float)sin(l_r)) * E1);
+    *y_dm_p = (int32_t) ((r_s_m * cosf(lab_s_r) * sinf(l_r) +
+                          h_m * cosf(mu_r) * sinf(l_r)) * E1);
 
-    *z_dm_p = (int32_t) ((r_s_m * (float)sin(lab_s_r) +
-                          h_m * (float)sin(mu_r)) * E1);
+    *z_dm_p = (int32_t) ((r_s_m * sinf(lab_s_r) +
+                          h_m * sinf(mu_r)) * E1);
 }
 
 /**
@@ -319,8 +319,8 @@ void n_set_mean_wind_angle(float mean_wind){
      * the angle mean_wind about the down axis of the NED frame.
     */
 
-    ned_to_race_s.cos_mwd = (float)cos(mean_wind);
-    ned_to_race_s.sin_mwd = (float)sin(mean_wind);
+    ned_to_race_s.cos_mwd = cosf(mean_wind);
+    ned_to_race_s.sin_mwd = sinf(mean_wind);
     ned_to_race_s.mean_wind_angle_r = mean_wind;
 
 }
@@ -423,4 +423,23 @@ float n_get_u_vel(void){
     u = R_ned_body[0][0] * vel_ned[0] + R_ned_body[1][0] * vel_ned[1] + R_ned_body[2][0] * vel_ned[2];
 
     return u;
+}
+
+/**
+ * Convert geodedical coordinates (latitude, longitude, altitude) in race frame coordinates.
+ *
+ * @param lat_deg   latitude in degrees
+ * @param lon_deg   longitude in degrees
+ * @param alt       altitude in meters
+ * @param x_dm_p    *x_dm_p <-- X coordinate in decimeters
+ * @param y_dm_p    *x_dm_p <-- Y coordinate in decimeters
+*/
+void n_geo_to_race(double lat_deg, double lon_deg, float alt_m,
+                   int32_t *x_dm_p, int32_t *y_dm_p){
+    //fill vehicle_global_position struct
+    vehicle_global_position.lat = lat_deg;
+    vehicle_global_position.lon = lon_deg;
+    vehicle_global_position.alt = alt_m;
+    //convert geo to race frame
+    geo_to_race(&vehicle_global_position, x_dm_p, y_dm_p);
 }
