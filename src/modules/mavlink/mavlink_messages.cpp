@@ -77,6 +77,7 @@
 
 #include <uORB/topics/wind_sailing.h>//Added by Marco Tranzatto
 #include <uORB/topics/boat_guidance_debug.h>//Added by Marco Tranzatto
+#include <uORB/topics/path_planning.h>//Added by Marco Tranzatto
 
 #include "mavlink_messages.h"
 #include "mavlink_main.h"
@@ -1929,7 +1930,7 @@ protected:
 };
 
 //--------------------------------- ADD WIND MSG ------------------
-
+// by Marco Tranzatto
 class MavlinkStreamWindSailing : public MavlinkStream
 {
 public:
@@ -1997,10 +1998,6 @@ protected:
         }
     }
 };
-
-
-
-//--------------------------------- End Add -----------------------------------
 
 //--------------------------------- ADD GUIDANCE DEBUG MSG ------------------
 
@@ -2096,6 +2093,66 @@ protected:
     }
 };
 
+//--------------------------------- ADD PATH PLANNING MSG ------------------
+class MavlinkStreamPathPlanning : public MavlinkStream
+{
+public:
+    const char *get_name() const
+    {
+        return MavlinkStreamPathPlanning::get_name_static();
+    }
+
+    static const char *get_name_static()
+    {
+        return "PATH_PLAN_MSG";
+    }
+
+    uint8_t get_id()
+    {
+        return 0;
+    }
+
+    static MavlinkStream *new_instance(Mavlink *mavlink)
+    {
+        return new MavlinkStreamPathPlanning(mavlink);
+    }
+
+    unsigned get_size()
+    {
+        return 1 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+    }
+
+private:
+    MavlinkOrbSubscription *_path_planning_sub;
+    uint64_t _path_planning_time;
+
+    /* do not allow top copying this class */
+    MavlinkStreamPathPlanning(MavlinkStreamPathPlanning &);
+    MavlinkStreamPathPlanning& operator = (const MavlinkStreamPathPlanning &);
+
+protected:
+    explicit MavlinkStreamPathPlanning(Mavlink *mavlink) : MavlinkStream(mavlink),
+        _path_planning_sub(_mavlink->add_orb_subscription(ORB_ID(path_planning))),
+        _path_planning_time(0)
+    {}
+
+    void send(const hrt_abstime t)
+    {
+        struct path_planning_s path_planning;
+
+        if (_path_planning_sub->update(&_path_planning_time, &path_planning)) {
+            /* send, add spaces so that string buffer is at least 10 chars long */
+            mavlink_named_value_float_t msg;
+
+            msg.time_boot_ms = path_planning.timestamp / 1000;
+
+            snprintf(msg.name, sizeof(msg.name), "pp_x");
+            msg.value = path_planning.x_race_m;
+
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+        }
+    }
+};
 
 
 //--------------------------------- End Add -----------------------------------
@@ -2334,5 +2391,6 @@ StreamListItem *streams_list[] = {
 	new StreamListItem(&MavlinkStreamDistanceSensor::new_instance, &MavlinkStreamDistanceSensor::get_name_static),
     new StreamListItem(&MavlinkStreamWindSailing::new_instance, &MavlinkStreamWindSailing::get_name_static),//Added by Marco Tranzatto
     new StreamListItem(&MavlinkStreamGuidanceDebug::new_instance, &MavlinkStreamGuidanceDebug::get_name_static),//Added by Marco Tranzatto
+    new StreamListItem(&MavlinkStreamPathPlanning::new_instance, &MavlinkStreamPathPlanning::get_name_static),//Added by Marco Tranzatto
 	nullptr
 };
