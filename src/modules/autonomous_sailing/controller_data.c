@@ -69,9 +69,6 @@ float compute_instant_alpha_sns(float angle);
 /** @brief fill a float vector with a constant value*/
 void fill_fvector(float* vector, uint16_t vector_size, float value);
 
-/** @brief print on QGC information if using fixed true wind */
-void print_fixed_twd_info(void);
-
 //actual raw measurements from parser_200WX and other usefull data
 static struct{
     float cog_sns;///last cog value supplied by the gps
@@ -674,7 +671,14 @@ void cd_use_fixed_twd(int32_t use_fixed_twd){
 
         //update and print info on QGC
         user_params.use_fixed_twd = (use_fixed_twd == 0) ? false : true;
-        print_fixed_twd_info();
+
+        if(use_fixed_twd == 0)
+            smq_send_log_info("Use TWD from moving avg filt.");
+        else{
+            sprintf(txt_msg, "Use fixed TWD = %0.1f [deg]", (double)(user_params.fixed_twd_r * rad2deg));
+            smq_send_log_info(txt_msg);
+        }
+        //print_fixed_twd_info();
     }
 }
 
@@ -698,24 +702,10 @@ void cd_set_mean_twd(float fixed_twd_r){
 
         //update and print info on QGC
         user_params.fixed_twd_r = fixed_twd_r;
-        print_fixed_twd_info();
-    }
-}
-
-/**
- * Print on QGC usefull info if the user has just decided to use or not to use a fixed true wind
- * direction to compute alpha.
- */
-void print_fixed_twd_info(void){
-
-
-    if(user_params.use_fixed_twd == false){
         //new value for user_params.use_fixed_twd, send a msg to QGC
-        smq_send_log_info("Use TWD from moving avg filt.");
-    }
-    else if(user_params.use_fixed_twd == true){
-        //new value for user_params.use_fixed_twd, send a msg to QGC
-        sprintf(txt_msg, "Use fixed TWD = %0.1f [deg]", (double)(user_params.fixed_twd_r * rad2deg));
+        sprintf(txt_msg, "Fixed TWD = %0.1f [deg]", (double)(user_params.fixed_twd_r * rad2deg));
         smq_send_log_info(txt_msg);
+        //print_fixed_twd_info();
     }
 }
+

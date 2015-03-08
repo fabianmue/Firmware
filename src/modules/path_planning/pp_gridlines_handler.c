@@ -277,7 +277,7 @@ bool gh_get_next_gridline(float *next_grid_p){
  * When the last inserted grid line is reached, the boat should turn
  * and start sailing downwind.
 */
-void gh_path_planning(void){
+void gh_gridlines_handler(void){
 
     //check if we have a valid grid line
     if(current_grid_valid){
