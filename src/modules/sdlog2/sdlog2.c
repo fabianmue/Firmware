@@ -1861,7 +1861,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         if (copy_if_updated(ORB_ID(path_planning), subs.path_planning, &buf.path_planning)) {
             log_msg.msg_type = LOG_PP_MSG;
             log_msg.body.log_PP.alpha_star = buf.path_planning.alpha_star;
-            log_msg.body.log_PP.do_maneuver = (buf.path_planning.do_maneuver == 0) ? false : true;
+            log_msg.body.log_PP.do_maneuver = buf.path_planning.do_maneuver;
             log_msg.body.log_PP.x_race_m = buf.path_planning.x_race_m;
             log_msg.body.log_PP.y_race_m = buf.path_planning.y_race_m;
             LOGBUFFER_WRITE_AND_COUNT(PP);
