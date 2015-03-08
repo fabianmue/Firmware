@@ -48,6 +48,8 @@ static bool pp_updated = false;//has pp been updated ?
 static bool manual_mode = false; //is remote control in manual mode?
 static uint8_t haul_current = HAUL_PORT;//dummy initial guess
 
+static char txt_msg[70]; ///used to send messages to QGC
+
 /**
  * Tell autonomous_sailing app to start a tack or jybe maneuver.
  * You should call this funcion only if the boat is not doing another maneuver.
@@ -213,8 +215,27 @@ void cb_new_rc_data(const struct structs_topics_s *strs_p){
 
     if(strs_p->rc_channels.channels[RC_MODE_INDEX] == RC_MANUAL_MODE)
         manual_mode = true;
-    else
+    else{
+
+        #if USE_GRID_LINES == 1
+        /* if we have just switched from manual to autonomous,
+         * print the next grid line we want to reach, if there is at
+         * least one.
+         * Remember: if we have just switched, manual_mode is not
+         * yet updated to false, but since we are here, the mode is
+         * set to autonomous.
+        */
+        float next_grid;
+        if(manual_mode == true && gh_get_next_gridline(&next_grid)){
+            //send a message to QGC
+            sprintf(txt_msg, "Next grid: 0.1%f [m]", (double) next_grid);
+            smq_send_log_info(txt_msg);
+        }
+        #endif
+
+        //update manual_mode variable
         manual_mode = false;
+    }
 }
 
 /**
@@ -224,4 +245,21 @@ void cb_new_rc_data(const struct structs_topics_s *strs_p){
 */
 uint8_t cb_get_haul(void){
     return haul_current;
+}
+
+/**
+ * Get the last computed X coordinate of the boat in the race frame.
+ *
+ * @return X coordinate in meters
+*/
+float cb_get_x_race_m(void){
+    return pp.x_race_m;
+}
+
+/**
+ * Tell the boat to tack as soon as possibile.
+ * Change the sign of alpha_star, but not it's magnitude.
+*/
+void cb_tack_now(void){
+    cb_do_maneuver(-cb_get_alpha_star());
 }

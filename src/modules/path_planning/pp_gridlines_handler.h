@@ -44,7 +44,8 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "pp_topics_handler.h"
+#include "pp_send_msg_qgc.h"
+#include "pp_communication_buffer.h"
 
 /** @brief Initialize the grid lines struct.*/
 void gh_init_grids(void);
@@ -56,21 +57,15 @@ void gh_set_grids_number_qgc(int16_t size);
 void gh_set_grid_qgc(float x_m);
 
 /** @brief based on gps position decide reference actions*/
-void gh_path_planning(struct structs_topics_s *strs_p);
-
-/** @brief set a new value for reference alpha star*/
-void gh_set_alpha_star(float val);
-
-/** @brief notify that the tack maneuver is completed*/
-void gh_notify_tack_completed(void);
+void gh_gridlines_handler(void);
 
 /** @brief re-insert the grid lines used before*/
 void gh_reuse_last_grids(bool use);
 
-/** @brief tell to the boat if it should tack or not*/
-void gh_boat_should_tack(int32_t tack_now);
-
 /** @brief tell to path planning which is the current alpha*/
 void gh_set_current_alpha(float alpha_dumas);
+
+/** @brief get the next grid line to reach, if any*/
+bool gh_get_next_gridline(float *next_grid_p);
 
 #endif // PP_GRIDLINES_HANDLER_H

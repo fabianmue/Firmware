@@ -408,10 +408,10 @@ void p_param_update(bool update_path_param){
     if(set_alpha != 0 && do_maneuver_now == 0){
         cb_set_alpha_star(alpha_tmp);
     }
-    //do we have to tack or jybe?
+    //do we have to tack?
     if(update_path_param == true && do_maneuver_now != 0){
-        //do maneuver and simply change the sign of alpha_star
-        cb_do_maneuver(-cb_get_alpha_star());
+        //tack now!
+        cb_tack_now();
     }
 
     //save interested param in boat_qgc_param and publish this topic

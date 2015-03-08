@@ -45,6 +45,7 @@
 #include "pp_topics_handler.h"
 #include "pp_send_msg_qgc.h"
 #include "pp_config.h"
+#include "pp_gridlines_handler.h"
 #include <stdio.h>
 #include <math.h>
 #include <stdint.h>
@@ -82,5 +83,11 @@ void cb_new_rc_data(const struct structs_topics_s *strs_p);
 
 /** @brief get the current haul of the boat */
 uint8_t cb_get_haul(void);
+
+/** @brief get last X coordinate in race frame */
+float cb_get_x_race_m(void);
+
+/** @brief tell the boat to tack */
+void cb_tack_now(void);
 
 #endif // PP_COMMUNICATION_BUFFER_H

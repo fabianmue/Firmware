@@ -239,7 +239,7 @@ int pp_thread_main(int argc, char *argv[]) {
                     //copy new BGUD data
                     orb_copy(ORB_ID(boat_guidance_debug), subs.boat_guidance_debug,
                              &(strs.boat_guidance_debug));
-                    //update pp_communication_buffer with this informaion
+                    //update pp_communication_buffer with this information
                     cb_new_as_data(&strs);
                 }
                 if(fds[1].revents & POLLIN){
@@ -248,6 +248,9 @@ int pp_thread_main(int argc, char *argv[]) {
                              &(strs.vehicle_global_position));
                     //compute boat position in race frame using pp_navigation_module
                     n_navigation_module(&strs);
+                    #if USE_GRID_LINES == 1
+                    gh_gridlines_handler();
+                    #endif
                 }
                 if(fds[2].revents & POLLIN){
                     //copy new parameters from QGC

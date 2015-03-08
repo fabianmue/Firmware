@@ -48,7 +48,7 @@
 
 #define M_PI_F 3.14159265358979323846f
 
-//static char txt_msg[150]; ///used to send messages to QGC
+static char txt_msg[150]; ///used to send messages to QGC
 
 //grid lines data
 static struct{
@@ -59,18 +59,15 @@ static struct{
     int16_t grids_inserted; /// number of grid lines inserted
 }grid_lines;
 
-
-//static struct reference_actions_s ref_act = {.alpha_star = 0.7853981f, .should_tack = false};
-
-//static float current_grid_goal_x_m = 0.0f;//current x coordinate of grid line to reach [m]
-//static bool current_grid_valid = false;
+static float current_grid_goal_x_m = 0.0f;//current x coordinate of grid line to reach [m]
+static bool current_grid_valid = false;
 
 //static bool make_boat_tack = false; //true if the boat should tack now
 
 /** @brief read next grid line to reach*/
 bool read_nex_grid(float *next_grid_p);
 
-/** @brief advise that current goal grid line has been reached*/
+/** @brief advise that the current goal grid line has been reached*/
 void reached_current_grid(void);
 
 /** @brief set number of grid lines*/
@@ -100,36 +97,35 @@ void gh_init_grids(void){
 */
 void set_grids_number(int16_t size){
 
-//    if(grid_lines.size == size || size <= 0)
-//        return; //nothing to do
+    if(grid_lines.size == size || size <= 0)
+        return; //nothing to do
 
-//    if(grid_lines.x_m_p != NULL)
-//        free(grid_lines.x_m_p);//delete old data
+    if(grid_lines.x_m_p != NULL)
+        free(grid_lines.x_m_p);//delete old data
 
-//    //update grid_lines
-//    grid_lines.x_m_p = malloc(sizeof(float) * size);
-//    grid_lines.size = size;
+    //update grid_lines
+    grid_lines.x_m_p = malloc(sizeof(float) * size);
+    grid_lines.size = size;
 
-//    //set to 0, default
-//    for(int16_t i = 0; i < size; i++)
-//        grid_lines.x_m_p[i] = 0.0f;
+    //set to 0, default
+    for(int16_t i = 0; i < size; i++)
+        grid_lines.x_m_p[i] = 0.0f;
 
-//    //we still do not have a valid next grid line to reach
-//    grid_lines.current_goal = -1;
-//    grid_lines.last_goal = -1;
-//    current_grid_goal_x_m = 0;
-//    current_grid_valid = false;
-//    grid_lines.grids_inserted = 0;
+    //we still do not have a valid next grid line to reach
+    grid_lines.current_goal = -1;
+    grid_lines.last_goal = -1;
+    current_grid_goal_x_m = 0;
+    current_grid_valid = false;
+    grid_lines.grids_inserted = 0;
 
-//    //send a message to QGC to tell that grid lines queue has been reset
-//    sprintf(txt_msg, "Grid lines queue reset, new dim: %d.", size);
-//    smq_send_log_info(txt_msg);
-
+    //send a message to QGC to tell that grid lines queue has been reset
+    sprintf(txt_msg, "Grid lines queue reset, new dim: %d.", size);
+    smq_send_log_info(txt_msg);
 }
 
 /**
  * Set the new number of total grid lines. Calling this function you will delete
- * all the previous grid lines. Next grid line to be reach is that one with index = 0
+ * all the previous grid lines. Next grid line to be reach is the one with index = 0
  * Grid line number can be set by QGroundControl.
  *
  * @param size  total number of new grid lines
@@ -146,31 +142,31 @@ void gh_set_grids_number_qgc(int16_t size){
 */
 void set_grid(float x_m){
 
-//    //if last_goal != -1, it is the position of the last grid line inserted
-//    if((grid_lines.last_goal + 1) >= grid_lines.size){
-//        //send msg to QGC via mavlink
-//        strcpy(txt_msg, "Not enough space to add a grid line.");
-//        smq_send_log_info(txt_msg);
+    //if last_goal != -1, it is the position of the last grid line inserted
+    if((grid_lines.last_goal + 1) >= grid_lines.size){
+        //send msg to QGC via mavlink
+        strcpy(txt_msg, "Not enough space to add a grid line.");
+        smq_send_log_info(txt_msg);
 
-//        return; //not enough space to add a new grid line
-//    }
+        return; //not enough space to add a new grid line
+    }
 
-//    //enough space, add the new grid line
-//    grid_lines.last_goal = grid_lines.last_goal + 1;
-//    grid_lines.x_m_p[grid_lines.last_goal] = x_m;
+    //enough space, add the new grid line
+    grid_lines.last_goal = grid_lines.last_goal + 1;
+    grid_lines.x_m_p[grid_lines.last_goal] = x_m;
 
-//    //if this is the first grid line inserted, it's the current goal grid line
-//    if(grid_lines.last_goal == 0){
-//        grid_lines.current_goal = grid_lines.last_goal;
-//        current_grid_goal_x_m = x_m;
-//        current_grid_valid = true;
-//    }
+    //if this is the first grid line inserted, it's the current goal grid line
+    if(grid_lines.last_goal == 0){
+        grid_lines.current_goal = grid_lines.last_goal;
+        current_grid_goal_x_m = x_m;
+        current_grid_valid = true;
+    }
 
-//    grid_lines.grids_inserted++;
+    grid_lines.grids_inserted++;
 
-//    //send a message to QGC to tell that a new grid line has been added
-//    sprintf(txt_msg, "Added grid number %d at %3.2f meters.", grid_lines.last_goal, (double)x_m);
-//    smq_send_log_info(txt_msg);
+    //send a message to QGC to tell that a new grid line has been added
+    sprintf(txt_msg, "Added grid number %d at %3.2f meters.", grid_lines.last_goal, (double)x_m);
+    smq_send_log_info(txt_msg);
 }
 
 /**
@@ -180,7 +176,7 @@ void set_grid(float x_m){
  * @param x_m       x coordinate [m] in Race frame of the new grid line
 */
 void gh_set_grid_qgc(float x_m){
-//        set_grid(x_m);
+        set_grid(x_m);
 }
 
 /**
@@ -191,192 +187,123 @@ void gh_set_grid_qgc(float x_m){
 */
 bool read_nex_grid(float *next_grid_p){
 
-//    //if there are others grid lines to reach, return the first one of them
-//    if(grid_lines.current_goal != -1){
-//        *next_grid_p = grid_lines.x_m_p[grid_lines.current_goal];
-//        return true;
-//    }
+    //if there are others grid lines to reach, return the first one of them
+    if(grid_lines.current_goal != -1){
+        *next_grid_p = grid_lines.x_m_p[grid_lines.current_goal];
+        return true;
+    }
 
-//    //if every grid lines has been reached, return false
-//    *next_grid_p = 0.0f;
-//    return false;
+    //if every grid lines has been reached, return false
+    *next_grid_p = 0.0f;
+    return false;
 }
 
 /**
  * Notify that the current grid line has been reached
 */
 void reached_current_grid(void){
-//    //update current_goal index if there is at least one new grid line to reach
-//    if(grid_lines.current_goal < grid_lines.last_goal){
-//        //we have other grid lines to reach
-//        grid_lines.current_goal++;
-//    }
-//    else{
-//        //we have reached the last grid line, empty the buffer
-//        grid_lines.current_goal = -1;
-//        grid_lines.last_goal = -1;
-//    }
+    //update current_goal index if there is at least one new grid line to reach
+    if(grid_lines.current_goal < grid_lines.last_goal){
+        //we have other grid lines to reach
+        grid_lines.current_goal++;
+    }
+    else{
+        //we have reached the last grid line, empty the buffer
+        grid_lines.current_goal = -1;
+        grid_lines.last_goal = -1;
+    }
 
-//    /*send a message to QGC to tell that a new grid line has been reached
-//    */
-//    sprintf(txt_msg, "Grid line reached.");
-//    smq_send_log_info(txt_msg);
+    /*send a message to QGC to tell that a new grid line has been reached
+    */
+    sprintf(txt_msg, "Grid line reached.");
+    smq_send_log_info(txt_msg);
 }
-
-/**
- * Set new value for reference alpha.
-*/
-void gh_set_alpha_star(float val){
-
-//    ref_act.alpha_star = val;
-}
-
-/**
- * Notify the end of the tack maneuver.
- * Only guidance_module should use this function when a tack action has been completed.
-*/
-void gh_notify_tack_completed(void){
-//    ref_act.should_tack = false;
-}
-
 
 void gh_reuse_last_grids(bool use){
-//    if(use){
-//        //copy all the grid lines inserted
-//        float *old_grids = malloc(sizeof(float) * grid_lines.grids_inserted);
-//        int16_t old_real_size = grid_lines.grids_inserted;
+    //TODO: change this!!!
+    if(use){
+        //copy all the grid lines inserted
+        float *old_grids = malloc(sizeof(float) * grid_lines.grids_inserted);
+        int16_t old_real_size = grid_lines.grids_inserted;
 
-//        for(int16_t i = 0; i < old_real_size; i++)
-//            old_grids[i] = grid_lines.x_m_p[i];
+        for(int16_t i = 0; i < old_real_size; i++)
+            old_grids[i] = grid_lines.x_m_p[i];
 
-//        /*reset grid lines number to grid_lines.size + 1
-//         * (so you are sure that current and last goal will be reset),
-//         * then allocate a proper size of grid lines and insert them
-//        */
-//        set_grids_number(grid_lines.size + 1);
-//        set_grids_number(old_real_size);
+        /*reset grid lines number to grid_lines.size + 1
+         * (so you are sure that current and last goal will be reset),
+         * then allocate a proper size of grid lines and insert them
+        */
+        set_grids_number(grid_lines.size + 1);
+        set_grids_number(old_real_size);
 
-//        for(int16_t i = 0; i < old_real_size; i++)
-//            set_grid(old_grids[i]);
+        for(int16_t i = 0; i < old_real_size; i++)
+            set_grid(old_grids[i]);
 
-//        //delete old_grids
-//        free(old_grids);
+        //delete old_grids
+        free(old_grids);
 
-//        //send a message to QGC
-//        sprintf(txt_msg, "Reinserted previous grid lines.");
-//        smq_send_log_info(txt_msg);
-//    }
+        //send a message to QGC
+        sprintf(txt_msg, "Reinserted previous grid lines.");
+        smq_send_log_info(txt_msg);
+    }
 }
 
 /**
- * Specify if the boat should tack as soon as possibile.
+ * Get the next grid line the boat should reach, if there is at least one.
  *
- * This function can be used to make the boat tack if you wish not to use
- * grid lines.
- * If the boat should tack now, the value of alpha star will be changed
- * auotnomously by the path_planning module.
- *
- * @param tack_now: true if the boat should tack now, false otherwise.
+ * @param next_grid_p   *next_grid_p <-- next grid line [m]
+ * @return  true if there is at least one grid line to reach
 */
-void gh_boat_should_tack(int32_t tack_now){
-//    //update make_boat_tack only if we are not taking
-//    if(ref_act.should_tack == false)
-//        make_boat_tack = (tack_now == 0) ? false : true;
+bool gh_get_next_gridline(float *next_grid_p){
+
+    bool valid_grid;
+
+    if(current_grid_valid){
+        *next_grid_p = current_grid_goal_x_m;
+        valid_grid = true;
+    }
+    else
+        valid_grid = false;
+
+    return valid_grid;
 }
 
 /**
- * When sailing in manual mode, use this function to tell path planning what's the current
- * alpha angle. Path planning module will figure at at which hail we are sailing at,
- * in this way when you will switch to autonomous sailing, the current haul will be the
- * starting haul.
- * The magnitude of the alpha star angle (the reference) is set by QGC using
- * @see pp_set_alpha_star() .
+ * Set what should be the next reference actions if we are using grid lines.
  *
- * @param alpha_dumas   alpha angle in Dumas' convention.
+ * Grid lines are used to tell the boat when to tack. When the boat
+ * reaches a valid grid line (that is not the last one),
+ * it should tack as soon as possibile and start sailing with the new haul.
+ * When the last inserted grid line is reached, the boat should turn
+ * and start sailing downwind.
 */
-void gh_set_current_alpha(float alpha_dumas){
+void gh_path_planning(void){
 
-//    float abs_alpha_str = fabsf(ref_act.alpha_star);
+    //check if we have a valid grid line
+    if(current_grid_valid){
+        //see if we have reached or exceeded our goal
+        if(cb_get_x_race_m() <= current_grid_goal_x_m){
 
-//    ref_act.alpha_star = (alpha_dumas < 0.0f) ? -abs_alpha_str : abs_alpha_str;
-}
+            //Advise we have reached the current target grid line
+            reached_current_grid();
 
-/**
- * Based on a new global position estimate, see if there is a new reference action to perform.
- *
- * If we are using the grid lines to specify where a boat should tack:
- * convert the global position coordinate in a coordinate in Race frame.
- * Check if we've passed a grid line, if so, see which is the next reference action
- * to pass to guidance_module.
- *
- * In any case, look if the user told us to tack from QGC.
- *
- * @param ref_act_p     pointer to struct which will contain next reference action to perform
- * @param strs_p        pointer to struct with data
-*/
-void gh_path_planning(struct structs_topics_s *strs_p){
+            //take the new grid line, if any
+            float tmp_grid;
+            if(read_nex_grid(&tmp_grid)){
+                // there is at least another grid line to reach, tack now
+                cb_tack_now();
+                //update the next goal
+                current_grid_goal_x_m = tmp_grid;
+                current_grid_valid = true;
+            }
+            else{
+                //this was the last grid line to reach
+                //TODO add here commands to sail downwind
 
-//    struct local_position_race_s local_pos;
-//    //convert geodedical coordinate into Race frame coordinate
-//    n_navigation_module(strs_p, &local_pos);
-
-//    #if USE_GRID_LINES == 1
-//    //check if we are using grid lines to tell the boat where to tack
-//    //if the next grid line to reach is valid
-//    if(current_grid_valid){
-//        //see if we have reached or exceeded our goal
-//        if(local_pos.x_race_m <= current_grid_goal_x_m){
-
-//            //reached grid line, tack now!
-//            ref_act.should_tack = true;
-//            //change alpha to change haul
-//            ref_act.alpha_star = -ref_act.alpha_star;
-
-//            //Advise we have reached the current target grid line
-//            reached_current_grid();
-
-//            //take the new grid line, if any
-//            float tmp_grid;
-//            if(read_nex_grid(&tmp_grid)){
-//                //there is at least another grid line to reach
-//                current_grid_goal_x_m = tmp_grid;
-//                current_grid_valid = true;
-//            }
-//            else{
-//                //no new grid line to reach
-//                current_grid_valid = false;
-//            }
-//        }
-//    }
-//    else{
-//    #endif
-//        /* if we are not using grind lines, check if the function
-//         * boat_should_tack told us to tack as soon as possibile.*/
-//        if(make_boat_tack){
-//            //tack now!
-//            ref_act.should_tack = true;
-//            //change alpha to change haul
-//            ref_act.alpha_star = -ref_act.alpha_star;
-//            //set make_boat_tack to flase
-//            make_boat_tack = false;
-//            //send a message to QGC
-//            smq_send_log_info("Tacking now.");
-//        }
-//    #if USE_GRID_LINES == 1
-//    }
-//    #endif
-
-//    //copy local reference action to the output struct
-//    memcpy(ref_act_p, &ref_act, sizeof(ref_act));
-
-//    //save second debug values for post-processing, other values set in guidance_module()
-//    #if USE_GRID_LINES == 1
-//    strs_p->boat_guidance_debug.next_grid_line = current_grid_goal_x_m;
-//    #endif
-//    strs_p->boat_guidance_debug.x_race = local_pos.x_race_m;
-//    strs_p->boat_guidance_debug.y_race = local_pos.y_race_m;
-//    strs_p->boat_guidance_debug.alpha_star = ref_act_p->alpha_star;
-//    strs_p->boat_guidance_debug.should_tack = (ref_act_p->should_tack == true) ? 1 : 0;
-
+                //no new grid line to reach
+                current_grid_valid = false;
+            }
+        }
+    }
 }
 
