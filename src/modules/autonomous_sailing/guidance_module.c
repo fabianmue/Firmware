@@ -63,8 +63,11 @@
 static char txt_msg[150]; ///used to send messages to QGC
 static const float deg2rad = 0.0174532925199433f; // pi / 180
 
-/** @brief PI controller with conditional integration*/
-float pi_controller(float meas);
+#define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
+#define SGN(X) ((X) < (0.0f) ? (-1.0f) : (1.0f))
+
+/** @brief PI controller */
+float pi_controller();
 
 /** @brief Perform tack or jybe maneuver*/
 void do_maneuver(float *p_rudder_cmd, float *p_sails_cmd,
@@ -101,6 +104,9 @@ void compute_minusAExt_times_x0(float* minusAExt_times_x0);
 
 /** @brief compute rudder action for P tack/jybe*/
 float p_maneuver_rudder();
+
+/** @brief compute the "right" error between alpha_star and alpha */
+float compute_error(void);
 
 // reference actions for the guidance_module
 static struct{
@@ -384,19 +390,16 @@ void gm_set_maneuver_data(uint16_t tack_type){
  * Otherwise use a normal digital PI: ret(t) = P * error(t) + I * sum_{k = 0}^{t}(error(k))
  * P and I are qcg parameters.
  *
- * @param meas        measurement value
- * @param param_qgc_p   pointer to struct containing parameters from qgc
- *
  * @return input value for actuator of rudder
 */
-float pi_controller(float meas){
+float pi_controller(){
 
     float error;
     float integral_part = 0.0f;
     float proportional_part = 0.0f;
     float action;
 
-    error = reference_actions.alpha_star - meas;
+    error = compute_error();//reference_actions.alpha_star - meas;
 
     if(rudder_controller_data.rudder_controller_type == SAILING_RUD_COND_PI){
         //Conditional PI
@@ -1045,7 +1048,7 @@ void compute_state_extended_model(){
      * will be constant and there will be no drift (in general these
      * two assumptions are not true, but it is the best we can do).
     */
-    opc_data.state_extended_model[1] = reference_actions.alpha_star - cd_get_alpha_dumas();
+    opc_data.state_extended_model[1] = compute_error();//reference_actions.alpha_star - cd_get_alpha_dumas();
 
     //latest command given to the rudder
     opc_data.state_extended_model[2] = opc_data.rudder_latest;
@@ -1185,10 +1188,12 @@ void gm_set_p_tack_data(float kp, float cp){
 }
 
 /**
+ * P controller for tack/jybe.
  *
+ * @return rudder command
 */
 float p_maneuver_rudder(){
-    float error = reference_actions.alpha_star - cd_get_alpha_dumas();
+    float error = compute_error();
     float gain;
 
     //conditional P: rud = k(e) * e, where k(e) = kp / (1 + cp * abs(e))
@@ -1214,6 +1219,25 @@ void gm_set_data_by_pp(const struct structs_topics_s *strs_p){
         reference_actions.do_maneuver = true;
         reference_actions.id_maneuver = strs_p->path_planning.id_maneuver;
     }
+}
+
+/**
+ * Compute the "right" error between alpha_star reference set by
+ * path_planning app and the actual alpha.
+ *
+ * The "right" error is the smallest angle between alpha_star and
+ * alpha.
+ *
+ * @return error value
+*/
+float compute_error(void){
+    float error = reference_actions.alpha_star - cd_get_alpha_dumas();
+
+    //constraint error to be the closest angle between alpha and alpha_star
+    if(fabsf(error) > M_PI_F)
+        error = error - 1.0f * SGN(error) * TWO_M_PI_F;
+
+    return error;
 }
 
 /**
@@ -1249,7 +1273,7 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
         if(!reference_actions.do_maneuver){
             //compute rudder and sails actions to follow reference alpha
             //PI controller for rudder
-            rudder_command = pi_controller(alpha);
+            rudder_command = pi_controller();
 
             //sails control only if AS_SAIL param from QGC is negative
             if(param_qgc_p->sail_servo < 0.0f)
@@ -1299,7 +1323,7 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
     strs_p->boat_guidance_debug.id_maneuver = reference_actions.id_maneuver;
 
     #if SIMULATION_FLAG == 1
-    //strs_p->airspeed.true_airspeed_m_s = ref_act_p->alpha_star - get_alpha_dumas();
+    //strs_p->airspeed.true_airspeed_m_s = compute_error();
     #endif
 }
 
