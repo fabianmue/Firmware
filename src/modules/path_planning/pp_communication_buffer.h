@@ -47,6 +47,11 @@
 #include "pp_config.h"
 #include <stdio.h>
 #include <math.h>
+#include <stdint.h>
+
+//definition of haul
+#define HAUL_PORT 0
+#define HAUL_STARBOARD 1
 
 /** @brief command a tack or a jybe */
 bool cb_do_maneuver(float new_alpha_star);
@@ -74,5 +79,8 @@ float cb_get_alpha_star(void);
 
 /** @brief copy new data from remote controller*/
 void cb_new_rc_data(const struct structs_topics_s *strs_p);
+
+/** @brief get the current haul of the boat */
+uint8_t cb_get_haul(void);
 
 #endif // PP_COMMUNICATION_BUFFER_H

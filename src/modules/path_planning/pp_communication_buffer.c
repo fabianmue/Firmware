@@ -46,6 +46,7 @@
 static struct path_planning_s pp;
 static bool pp_updated = false;//has pp been updated ?
 static bool manual_mode = false; //is remote control in manual mode?
+static uint8_t haul_current = HAUL_PORT;//dummy initial guess
 
 /**
  * Tell autonomous_sailing app to start a tack or jybe maneuver.
@@ -102,6 +103,7 @@ bool cb_is_maneuver_completed(void){
  * @param strs_p    struct containing boat_guidance_debug_s struct
 */
 void cb_new_as_data(const struct structs_topics_s *strs_p){
+
     // check if we sent a do_maneuver command
     if(cb_is_maneuver_completed() == false){
         // check if the maneuver has the same id of the sent one and it is completed
@@ -115,11 +117,21 @@ void cb_new_as_data(const struct structs_topics_s *strs_p){
     }
     //if the remote control is in manual mode, set the sign of alpha_star based on the actual haul
     if(manual_mode){
-        //if alpha is < 0, we are sailing at port haul
-        float temp_alpha_star = (strs_p->boat_guidance_debug.alpha < 0.0f) ?
-                                 -fabs(pp.alpha_star) : fabs(pp.alpha_star);
-        cb_set_alpha_star(temp_alpha_star);
+        //get the most updated haul from data provided by autonomous_sailing app
+        uint8_t haul_tmp = (strs_p->boat_guidance_debug.alpha < 0.0f) ?
+                            HAUL_PORT : HAUL_STARBOARD;
+        //if we have changed haul since the last time, update alpha_star
+        if(haul_tmp != haul_current){
+            float temp_alpha_star = (haul_tmp == HAUL_PORT) ?
+                                     -fabsf(pp.alpha_star) : fabsf(pp.alpha_star);
+            //set the new alpha_star
+            cb_set_alpha_star(temp_alpha_star);
+        }
     }
+
+    //save the current haul
+    haul_current = (strs_p->boat_guidance_debug.alpha < 0.0f) ?
+                    HAUL_PORT : HAUL_STARBOARD;
 }
 
 /**
@@ -162,14 +174,10 @@ bool cb_set_alpha_star(float new_alpha_star){
     else if(new_alpha_star < -M_PI_F)
         new_alpha_star = -M_PI_F;
 
-    /* set new alpha if the boat is not maneuvering and it is
-     * different from the actual one.
-    */
+    // set new alpha if the boat is not maneuvering
     if(cb_is_maneuver_completed() == true){
-        if(pp.alpha_star != new_alpha_star){
-            pp.alpha_star = new_alpha_star;
-            pp_updated = true;
-        }
+        pp.alpha_star = new_alpha_star;
+        pp_updated = true;
     }
     else
         res = false;
@@ -207,4 +215,13 @@ void cb_new_rc_data(const struct structs_topics_s *strs_p){
         manual_mode = true;
     else
         manual_mode = false;
+}
+
+/**
+ * Get the current haul of the boat
+ *
+ * @return HAUL_PORT if sailing at port haul, HAUL_STARBOARD otherwise
+*/
+uint8_t cb_get_haul(void){
+    return haul_current;
 }
