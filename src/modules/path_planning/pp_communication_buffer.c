@@ -47,6 +47,7 @@ static struct path_planning_s pp;
 static bool pp_updated = false;//has pp been updated ?
 static bool manual_mode = false; //is remote control in manual mode?
 static uint8_t haul_current = HAUL_PORT;//dummy initial guess
+static float alpha_star_vel_r_s = 0.2f;//velocity of changing alpha_star when reached last grid line
 
 static char txt_msg[70]; ///used to send messages to QGC
 
@@ -264,4 +265,14 @@ float cb_get_x_race_m(void){
 */
 bool cb_tack_now(void){
     return cb_do_maneuver(-cb_get_alpha_star());
+}
+
+/**
+ * Set the velocity that should be used to change alpha_star when the boat
+ * has reached the last grid line.
+ *
+ * @param  vel_r_s  positive velocity in rad/s
+*/
+void cb_set_alpha_star_vel(float vel_r_s){
+    alpha_star_vel_r_s = vel_r_s;
 }

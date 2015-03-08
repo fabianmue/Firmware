@@ -136,6 +136,14 @@ PARAM_DEFINE_INT32(ASP_P_ADD, 0);
  */
 PARAM_DEFINE_INT32(ASP_REIN_GRS, 0);
 
+/**
+ * How fast (deg/s) alpha_star should change after the boat has reached
+ * the last grid line.
+ *
+ * @min 0
+ */
+PARAM_DEFINE_FLOAT(ASP_ALPST_V_DS, 12.0f);
+
 #endif //USE_GRID_LINES == 1
 
 #if SIMULATION_FLAG == 1
@@ -197,6 +205,7 @@ static struct pointers_param_qgc_s{
     param_t grid_x_pointer;         /**< pointer to param ASP_P_X_M*/
     param_t grid_add_pointer;         /**< pointer to param ASP_P_ADD*/
     param_t repeat_past_grids_pointer;    /**< pointer to param ASP_REIN_GRS */
+    param_t alpha_star_vel_pointer; /**< pointer to param ASP_ALPST_V_DS */
     #endif //USE_GRID_LINES == 1
 
     // --- explicit tak now command from QGC
@@ -243,6 +252,8 @@ void p_param_init(void){
 
     pointers_param_qgc.grid_add_pointer = param_find("ASP_P_ADD");
     pointers_param_qgc.repeat_past_grids_pointer = param_find("ASP_REIN_GRS");
+
+    pointers_param_qgc.alpha_star_vel_pointer = param_find("ASP_ALPST_V_DS");
     #endif //USE_GRID_LINES == 1
 
     //explicit tack now command from QGC
@@ -340,6 +351,18 @@ void p_param_update(bool update_path_param){
     param_get(pointers_param_qgc.repeat_past_grids_pointer, &temp);
     bool use_last_grids = (temp > 0) ? true : false;
     gh_reuse_last_grids(use_last_grids);
+
+    //velocity of alpha star
+    float alpha_star_vel_r;
+
+    param_get(pointers_param_qgc.alpha_star_vel_pointer, &alpha_star_vel_r);
+
+    //convert alpha_star_vel_r from deg/s to rad/s
+    alpha_star_vel_r = alpha_star_vel_r * deg2rad;
+    //make sure alpha_star_vel_r is positive
+    alpha_star_vel_r = (alpha_star_vel_r < 0.0f) ? -alpha_star_vel_r : alpha_star_vel_r;
+    //send alpha_star_vel_r to pp_communication_buffer module
+    cb_set_alpha_star_vel(alpha_star_vel_r);
 
     #endif //USE_GRID_LINES == 1
 

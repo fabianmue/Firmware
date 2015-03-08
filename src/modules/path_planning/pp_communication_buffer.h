@@ -90,4 +90,7 @@ float cb_get_x_race_m(void);
 /** @brief tell the boat to tack */
 bool cb_tack_now(void);
 
+/** @brief set alpha_star velocity if using grid lines*/
+void cb_set_alpha_star_vel(float vel_r_s);
+
 #endif // PP_COMMUNICATION_BUFFER_H
