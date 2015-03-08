@@ -48,7 +48,9 @@
 
 #define M_PI_F 3.14159265358979323846f
 
-static char txt_msg[150]; ///used to send messages to QGC
+static float next_grid;
+
+static char txt_msg[150]; //used to send messages to QGC
 
 //grid lines data
 static struct{
@@ -56,16 +58,14 @@ static struct{
     int16_t size;           ///size of array x_m_p
     int16_t current_goal;   ///index of current grid line to reach
     int16_t last_goal;      ///index of the last grid line to reach
-    int16_t grids_inserted; /// number of grid lines inserted
-}grid_lines;
-
-static float current_grid_goal_x_m = 0.0f;//current x coordinate of grid line to reach [m]
-static bool current_grid_valid = false;
-
-//static bool make_boat_tack = false; //true if the boat should tack now
-
-/** @brief read next grid line to reach*/
-bool read_nex_grid(float *next_grid_p);
+    int16_t grid_counter;      ///number of grid lines inserted
+}grid_lines =   {
+                    .x_m_p = NULL,
+                    .size = 0,
+                    .current_goal = -1,
+                    .last_goal = -1,
+                    .grid_counter = 0
+                };
 
 /** @brief advise that the current goal grid line has been reached*/
 void reached_current_grid(void);
@@ -76,6 +76,9 @@ void set_grids_number(int16_t size);
 /** @brief set the x coordinate of a grid line*/
 void set_grid(float x_m);
 
+/** @brief check if there is at least one valid grid line to reach */
+bool is_there_grid_line(void);
+
 /**
  * Initialize the grid lines struct. Delete all the old grid lines (if any).
 */
@@ -83,7 +86,7 @@ void gh_init_grids(void){
 
     grid_lines.x_m_p = NULL;
     grid_lines.size = 0;
-    grid_lines.grids_inserted = 0;
+    grid_lines.grid_counter = 0;
 
     //set to 1 the number of grid lines before a real number is used
     set_grids_number(1);
@@ -91,7 +94,7 @@ void gh_init_grids(void){
 
 /**
  * Set the new number of total grid lines. Calling this function you will delete
- * all the previous grid lines. Next grid line to be reach is that one with index = 0
+ * all the previous grid lines. Next grid line to be reach is the one with index = 0
  *
  * @param size  total number of new grid lines
 */
@@ -114,9 +117,6 @@ void set_grids_number(int16_t size){
     //we still do not have a valid next grid line to reach
     grid_lines.current_goal = -1;
     grid_lines.last_goal = -1;
-    current_grid_goal_x_m = 0;
-    current_grid_valid = false;
-    grid_lines.grids_inserted = 0;
 
     //send a message to QGC to tell that grid lines queue has been reset
     sprintf(txt_msg, "Grid lines queue reset, new dim: %d.", size);
@@ -125,7 +125,10 @@ void set_grids_number(int16_t size){
 
 /**
  * Set the new number of total grid lines. Calling this function you will delete
- * all the previous grid lines. Next grid line to be reach is the one with index = 0
+ * all the previous grid lines if the the new size is different from the previous one.
+ * Attention: if the size is equal to the actual size of the grid lines array, NO action
+ * will be performed!
+ * The next grid line to be reach is the one with index = 0
  * Grid line number can be set by QGroundControl.
  *
  * @param size  total number of new grid lines
@@ -138,7 +141,7 @@ void gh_set_grids_number_qgc(int16_t size){
  * Set the x coordinate in Race frame of a grid line.
  * Grid lines are inserted with a FIFO policy.
  *
- * @param x_m       x coordinate [m] in Race frame of the new grid line
+ * @param x_m       X coordinate [m] in the race frame of the new grid line
 */
 void set_grid(float x_m){
 
@@ -154,15 +157,12 @@ void set_grid(float x_m){
     //enough space, add the new grid line
     grid_lines.last_goal = grid_lines.last_goal + 1;
     grid_lines.x_m_p[grid_lines.last_goal] = x_m;
+    grid_lines.grid_counter++;
 
-    //if this is the first grid line inserted, it's the current goal grid line
+    //if this is the first grid line inserted, it's even the current goal grid line
     if(grid_lines.last_goal == 0){
-        grid_lines.current_goal = grid_lines.last_goal;
-        current_grid_goal_x_m = x_m;
-        current_grid_valid = true;
+        grid_lines.current_goal = 0;
     }
-
-    grid_lines.grids_inserted++;
 
     //send a message to QGC to tell that a new grid line has been added
     sprintf(txt_msg, "Added grid number %d at %3.2f meters.", grid_lines.last_goal, (double)x_m);
@@ -171,7 +171,7 @@ void set_grid(float x_m){
 
 /**
  * Set the x coordinate in Race frame of a grid line.
- * Grid lines are inserted with a FIFO policy.
+ * Grid lines are inserted with a FIFO policy, if there is enough space.
  *
  * @param x_m       x coordinate [m] in Race frame of the new grid line
 */
@@ -180,31 +180,23 @@ void gh_set_grid_qgc(float x_m){
 }
 
 /**
- * Read next grid line to reach, if any.
+ * Check if there is at least one grid line to reach
  *
- * @param next_grid_p   pointer to x coordinate in Race frame of the next grid line to reach
- * @return              true if there is a new grid line to reach, false otherwise.
+ * @return true if there is at least one grid line to reach
 */
-bool read_nex_grid(float *next_grid_p){
+bool is_there_grid_line(void){
 
-    //if there are others grid lines to reach, return the first one of them
-    if(grid_lines.current_goal != -1){
-        *next_grid_p = grid_lines.x_m_p[grid_lines.current_goal];
-        return true;
-    }
-
-    //if every grid lines has been reached, return false
-    *next_grid_p = 0.0f;
-    return false;
+    return (grid_lines.current_goal != -1) ? true : false;
 }
 
+
 /**
- * Notify that the current grid line has been reached
+ * Notify that the current grid line has been reached.
 */
 void reached_current_grid(void){
     //update current_goal index if there is at least one new grid line to reach
     if(grid_lines.current_goal < grid_lines.last_goal){
-        //we have other grid lines to reach
+        //we have other grid line to reach
         grid_lines.current_goal++;
     }
     else{
@@ -213,37 +205,27 @@ void reached_current_grid(void){
         grid_lines.last_goal = -1;
     }
 
-    /*send a message to QGC to tell that a new grid line has been reached
-    */
+    // send a message to QGC to tell that a new grid line has been reached
     sprintf(txt_msg, "Grid line reached.");
     smq_send_log_info(txt_msg);
 }
 
+/**
+ * Use all the grid lines set in the past.
+ *
+ * @param use   true if you want to use all the grid lines stored in the buffer.
+*/
 void gh_reuse_last_grids(bool use){
-    //TODO: change this!!!
+
     if(use){
-        //copy all the grid lines inserted
-        float *old_grids = malloc(sizeof(float) * grid_lines.grids_inserted);
-        int16_t old_real_size = grid_lines.grids_inserted;
-
-        for(int16_t i = 0; i < old_real_size; i++)
-            old_grids[i] = grid_lines.x_m_p[i];
-
-        /*reset grid lines number to grid_lines.size + 1
-         * (so you are sure that current and last goal will be reset),
-         * then allocate a proper size of grid lines and insert them
-        */
-        set_grids_number(grid_lines.size + 1);
-        set_grids_number(old_real_size);
-
-        for(int16_t i = 0; i < old_real_size; i++)
-            set_grid(old_grids[i]);
-
-        //delete old_grids
-        free(old_grids);
+        //use all the grid lines set previously
+        grid_lines.current_goal = 0;
+        grid_lines.last_goal = grid_lines.grid_counter - 1;
 
         //send a message to QGC
-        sprintf(txt_msg, "Reinserted previous grid lines.");
+        sprintf(txt_msg, "Reinserted previous grid lines, first at %0.1f [m]",
+                (double) grid_lines.x_m_p[grid_lines.current_goal]);
+
         smq_send_log_info(txt_msg);
     }
 }
@@ -258,8 +240,8 @@ bool gh_get_next_gridline(float *next_grid_p){
 
     bool valid_grid;
 
-    if(current_grid_valid){
-        *next_grid_p = current_grid_goal_x_m;
+    if(is_there_grid_line()){
+        *next_grid_p = grid_lines.x_m_p[grid_lines.current_goal];
         valid_grid = true;
     }
     else
@@ -279,29 +261,24 @@ bool gh_get_next_gridline(float *next_grid_p){
 */
 void gh_gridlines_handler(void){
 
-    //check if we have a valid grid line
-    if(current_grid_valid){
+    //check if we have a valid grid line to reach, if so, take it
+    if(gh_get_next_gridline(&next_grid)){
         //see if we have reached or exceeded our goal
-        if(cb_get_x_race_m() <= current_grid_goal_x_m){
+        if(cb_get_x_race_m() <= next_grid){
 
             //Advise we have reached the current target grid line
             reached_current_grid();
 
             //take the new grid line, if any
             float tmp_grid;
-            if(read_nex_grid(&tmp_grid)){
+            if(gh_get_next_gridline(&tmp_grid)){
                 // there is at least another grid line to reach, tack now
                 cb_tack_now();
-                //update the next goal
-                current_grid_goal_x_m = tmp_grid;
-                current_grid_valid = true;
             }
             else{
-                //this was the last grid line to reach
+                //this was the last grid line we had to reach
                 //TODO add here commands to sail downwind
 
-                //no new grid line to reach
-                current_grid_valid = false;
             }
         }
     }

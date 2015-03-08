@@ -88,6 +88,6 @@ uint8_t cb_get_haul(void);
 float cb_get_x_race_m(void);
 
 /** @brief tell the boat to tack */
-void cb_tack_now(void);
+bool cb_tack_now(void);
 
 #endif // PP_COMMUNICATION_BUFFER_H

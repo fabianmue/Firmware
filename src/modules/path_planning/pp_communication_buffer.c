@@ -262,6 +262,6 @@ float cb_get_x_race_m(void){
  * Tell the boat to tack as soon as possibile.
  * Change the sign of alpha_star, but not it's magnitude.
 */
-void cb_tack_now(void){
-    cb_do_maneuver(-cb_get_alpha_star());
+bool cb_tack_now(void){
+    return cb_do_maneuver(-cb_get_alpha_star());
 }

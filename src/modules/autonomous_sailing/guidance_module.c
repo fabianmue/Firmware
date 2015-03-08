@@ -541,9 +541,6 @@ void do_maneuver(float *p_rudder_cmd, float *p_sails_cmd,
 
              cd_optimal_tack_started();
          }
-
-         //send a message to QGC
-         smq_send_log_info("Starting maneuver.");
     }
 
     /*we are here beacuse ref_act_p->should_tack is true, so boat should tack.

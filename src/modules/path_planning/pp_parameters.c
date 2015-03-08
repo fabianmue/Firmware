@@ -369,8 +369,9 @@ void p_param_update(bool update_path_param){
     }
     //do we have to tack?
     if(update_path_param == true && do_maneuver_now != 0){
-        //tack now!
-        cb_tack_now();
+        //if we can tack, do it now and send a message to QGC
+        if(cb_tack_now())
+            smq_send_log_info("Tack now.");
     }
 
     //save interested param in boat_qgc_param and publish this topic

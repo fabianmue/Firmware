@@ -678,7 +678,6 @@ void cd_use_fixed_twd(int32_t use_fixed_twd){
             sprintf(txt_msg, "Use fixed TWD = %0.1f [deg]", (double)(user_params.fixed_twd_r * rad2deg));
             smq_send_log_info(txt_msg);
         }
-        //print_fixed_twd_info();
     }
 }
 
@@ -705,7 +704,6 @@ void cd_set_mean_twd(float fixed_twd_r){
         //new value for user_params.use_fixed_twd, send a msg to QGC
         sprintf(txt_msg, "Fixed TWD = %0.1f [deg]", (double)(user_params.fixed_twd_r * rad2deg));
         smq_send_log_info(txt_msg);
-        //print_fixed_twd_info();
     }
 }
 
