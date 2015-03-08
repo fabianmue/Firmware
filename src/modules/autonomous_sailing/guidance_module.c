@@ -1323,7 +1323,7 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
     strs_p->boat_guidance_debug.id_maneuver = reference_actions.id_maneuver;
 
     #if SIMULATION_FLAG == 1
-    //strs_p->airspeed.true_airspeed_m_s = compute_error();
+    strs_p->airspeed.true_airspeed_m_s = reference_actions.alpha_star;
     #endif
 }
 

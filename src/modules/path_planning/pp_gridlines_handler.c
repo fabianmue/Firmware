@@ -277,8 +277,7 @@ void gh_gridlines_handler(void){
             }
             else{
                 //this was the last grid line we had to reach
-                //TODO add here commands to sail downwind
-
+                cb_reached_last_griline();
             }
         }
     }

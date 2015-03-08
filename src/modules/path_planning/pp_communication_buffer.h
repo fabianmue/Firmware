@@ -90,7 +90,14 @@ float cb_get_x_race_m(void);
 /** @brief tell the boat to tack */
 bool cb_tack_now(void);
 
+#if USE_GRID_LINES == 1
+
 /** @brief set alpha_star velocity if using grid lines*/
 void cb_set_alpha_star_vel(float vel_r_s);
+
+/** @brief notify to communication_buffer to start sailing downwind*/
+void cb_reached_last_griline(void);
+
+#endif //USE_GRID_LINES == 1
 
 #endif // PP_COMMUNICATION_BUFFER_H

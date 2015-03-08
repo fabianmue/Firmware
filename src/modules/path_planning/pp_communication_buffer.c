@@ -42,12 +42,17 @@
 
 #define M_PI_F 3.14159265358979323846f
 
+#define SGN(X) ((X) < (0.0f) ? (-1.0f) : (1.0f))
+
 //state variables
 static struct path_planning_s pp;
 static bool pp_updated = false;//has pp been updated ?
 static bool manual_mode = false; //is remote control in manual mode?
 static uint8_t haul_current = HAUL_PORT;//dummy initial guess
 static float alpha_star_vel_r_s = 0.2f;//velocity of changing alpha_star when reached last grid line
+static bool change_alpha_star = false;//use it only after reaced last grid line
+static uint64_t last_change_alpha_star = 0;
+static uint64_t now = 0;
 
 static char txt_msg[70]; ///used to send messages to QGC
 
@@ -138,12 +143,17 @@ void cb_new_as_data(const struct structs_topics_s *strs_p){
 }
 
 /**
- * If either at least a set function in this module has been called,
- * or the @see cd_do_maneuver() has been called, publish path_planning topic.
+ * If either at least one parameter in path-planning topic
+ * has been changed, publish it.
 */
 void cb_publish_pp_if_updated(void){
-    //has pp struct been updated? If so, publish it
-    if(pp_updated == true){
+    //has pp struct been updated or must alpha_star be changed?
+    if(pp_updated == true || change_alpha_star){
+
+        if(change_alpha_star){
+            go_downwind();
+        }
+
         th_publish_path_planning(&pp);
         pp_updated = false;
     }
@@ -267,6 +277,31 @@ bool cb_tack_now(void){
     return cb_do_maneuver(-cb_get_alpha_star());
 }
 
+
+#if USE_GRID_LINES == 1
+
+/**
+ * Change alpha_star in order to sail downwind.
+*/
+void go_downwind(){
+    //update alpha_star based on the current haul and alpha_star velocity
+    now = hrt_absolute_time();//time in micro seconds
+    //TODO FIX THIS PROBLEM, OTHERWISE THE SYSTEN WILL ALWAYS CRUSH!!
+    double delta_alpha = (double)alpha_star_vel_r_s * ((now - last_change_alpha_star) / 1e6);
+    last_change_alpha_star = now;
+
+    float new_alpha_star;
+
+    new_alpha_star = pp.alpha_star + SGN(pp.alpha_star) * (float)delta_alpha;
+
+    cb_set_alpha_star(new_alpha_star);
+
+    //check if we don't have to increase alpha_star anymore
+    if(fabsf(new_alpha_star) >= M_PI_F){
+        change_alpha_star = false;
+    }
+}
+
 /**
  * Set the velocity that should be used to change alpha_star when the boat
  * has reached the last grid line.
@@ -276,3 +311,19 @@ bool cb_tack_now(void){
 void cb_set_alpha_star_vel(float vel_r_s){
     alpha_star_vel_r_s = vel_r_s;
 }
+
+
+/**
+ * If the last grid line has been reached, calling this function will
+ * make autonomous_sailing app sailing downwind
+*/
+void cb_reached_last_griline(void){
+
+    //start changing alpha_star
+    change_alpha_star = true;
+    last_change_alpha_star = hrt_absolute_time();
+
+    //TODO send special command first time!
+}
+
+#endif //USE_GRID_LINES == 1
