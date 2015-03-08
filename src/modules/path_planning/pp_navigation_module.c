@@ -375,13 +375,13 @@ void n_set_pos_top_mark(const int32_t *lat_d_e7_p, const int32_t *lon_d_e7_p, co
  * Set the new X and Y coordinates in the pp_communication_buffer module.
  *
 */
-void n_navigation_module(const struct structs_topics_s *strs_p){
+void n_navigation_module(const struct vehicle_global_position_s *vgp_p){
 
     int32_t x_dm;
     int32_t y_dm;
 
     //convert gps filtered position in race frame coordinates
-    geo_to_race(&(strs_p->vehicle_global_position), &x_dm, &y_dm);
+    geo_to_race(vgp_p, &x_dm, &y_dm);
 
     //convert local position from decimeters to meters and save it in path_planning struct
     cb_set_race_coordinates((float)x_dm / E1, (float)y_dm / E1);

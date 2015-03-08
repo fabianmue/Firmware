@@ -398,36 +398,6 @@ PARAM_DEFINE_INT32(ASO_PRED_HOR, 10);
 
 //---------------------------------------- Simulation variables --------------------
 
-#if USE_GRID_LINES == 1
-/**
- * Simulated Latitude, in degrees * E7.
- *
- *
- * @min -900000000
- * @max 900000000
- */
-PARAM_DEFINE_INT32(ASIM_LAT_E7, 473494820);
-
-/**
- * Simulated Longitude, in degrees * E7.
- *
- *
- * @min -1800000000
- * @max 1800000000
- */
-PARAM_DEFINE_INT32(ASIM_LON_E7, 85605120);
-
-/**
- * Simulated Altitude, in millimeters.
- *
- *
- * @min 0
- * @max ?
- */
-PARAM_DEFINE_INT32(ASIM_ALT_E3, 406000);
-
-#endif
-
 /**
  * Simulated Course over ground, in deg, sign opposite to Dumas convention.
  *

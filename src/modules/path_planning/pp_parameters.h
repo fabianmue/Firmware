@@ -17,6 +17,7 @@
 #include "pp_config.h"
 #include "pp_navigation_module.h"
 #include "pp_communication_buffer.h"
+#include "pp_gridlines_handler.h"
 
 /** @brief Initialize parameters*/
 void p_param_init(void);

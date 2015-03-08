@@ -210,7 +210,7 @@ int pp_thread_main(int argc, char *argv[]) {
 
     #if USE_GRID_LINES == 1
     gh_init_grids();
-    #endif
+    #endif //USE_GRID_LINES == 1
 
 	//**SET THE THREAD-STATUS TO RUNNING
 	thread_running = true;
@@ -247,10 +247,10 @@ int pp_thread_main(int argc, char *argv[]) {
                     orb_copy(ORB_ID(vehicle_global_position), subs.vehicle_global_position,
                              &(strs.vehicle_global_position));
                     //compute boat position in race frame using pp_navigation_module
-                    n_navigation_module(&strs);
+                    n_navigation_module(&(strs.vehicle_global_position));
                     #if USE_GRID_LINES == 1
                     gh_gridlines_handler();
-                    #endif
+                    #endif //USE_GRID_LINES == 1
                 }
                 if(fds[2].revents & POLLIN){
                     //copy new parameters from QGC

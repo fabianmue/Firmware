@@ -136,11 +136,15 @@ PARAM_DEFINE_INT32(ASP_P_ADD, 0);
  */
 PARAM_DEFINE_INT32(ASP_REIN_GRS, 0);
 
-#endif
+#endif //USE_GRID_LINES == 1
 
 #if SIMULATION_FLAG == 1
 
 //---------------------------------------- Simulation variables --------------------
+struct vehicle_global_position_s vgp;
+int32_t lat_sim;
+int32_t lon_sim;
+int32_t alt_sim;
 
 #if USE_GRID_LINES == 1
 /**
@@ -150,7 +154,7 @@ PARAM_DEFINE_INT32(ASP_REIN_GRS, 0);
  * @min -900000000
  * @max 900000000
  */
-PARAM_DEFINE_INT32(ASIM_LAT_E7, 473494820);
+PARAM_DEFINE_INT32(ASPS_LAT_E7, 473494820);
 
 /**
  * Simulated Longitude, in degrees * E7.
@@ -159,7 +163,7 @@ PARAM_DEFINE_INT32(ASIM_LAT_E7, 473494820);
  * @min -1800000000
  * @max 1800000000
  */
-PARAM_DEFINE_INT32(ASIM_LON_E7, 85605120);
+PARAM_DEFINE_INT32(ASPS_LON_E7, 85605120);
 
 /**
  * Simulated Altitude, in millimeters.
@@ -168,43 +172,10 @@ PARAM_DEFINE_INT32(ASIM_LON_E7, 85605120);
  * @min 0
  * @max ?
  */
-PARAM_DEFINE_INT32(ASIM_ALT_E3, 406000);
+PARAM_DEFINE_INT32(ASPS_ALT_E3, 406000);
 
-#endif
-
-/**
- * Simulated Course over ground, in deg, sign opposite to Dumas convention.
- *
- *
- * @min -180
- * @max 180
- */
-PARAM_DEFINE_FLOAT(ASIM_COG_D, 0.0f);
-
-/**
- * Simulated true wind direction, in deg, sign opposite to Dumas convention.
- *
- *
- * @min -180
- * @max 180
- */
-PARAM_DEFINE_FLOAT(ASIM_TWD_D, 0.0f);
-
-/**
- * Simulated yaw, in deg, sign opposite to Dumas convention.
- *
- *
- * @min -180
- * @max 180
- */
-PARAM_DEFINE_FLOAT(ASIM_YAW_D, 0.0f);
-
-/**
- * Temporary value for debug porpuses.
- */
-PARAM_DEFINE_FLOAT(ASIM_DEVA1, 0.0f);
-
-#endif
+#endif //USE_GRID_LINES == 1
+#endif //SIMULATION_FLAG == 1
 
 
 static struct pointers_param_qgc_s{
@@ -226,7 +197,7 @@ static struct pointers_param_qgc_s{
     param_t grid_x_pointer;         /**< pointer to param ASP_P_X_M*/
     param_t grid_add_pointer;         /**< pointer to param ASP_P_ADD*/
     param_t repeat_past_grids_pointer;    /**< pointer to param ASP_REIN_GRS */
-    #endif
+    #endif //USE_GRID_LINES == 1
 
     // --- explicit tak now command from QGC
     param_t do_maneuver_now;                   /**< pointer to param ASP_DO_MANEUV */
@@ -239,18 +210,12 @@ static struct pointers_param_qgc_s{
     #if SIMULATION_FLAG == 1
 
     #if USE_GRID_LINES == 1
-    param_t lat_sim_pointer; /**< pointer to param ASIM_LAT_E7*/
-    param_t lon_sim_pointer; /**< pointer to param ASIM_LON_E7*/
-    param_t alt_sim_pointer; /**< pointer to param ASIM_ALt_E3*/
-    #endif
+    param_t lat_sim_pointer; /**< pointer to param ASPS_LAT_E7*/
+    param_t lon_sim_pointer; /**< pointer to param ASPS_LON_E7*/
+    param_t alt_sim_pointer; /**< pointer to param ASPS_ALt_E3*/
+    #endif //USE_GRID_LINES == 1
 
-    param_t twd_sim_pointer; /**< pointer to param ASIM_TWD_D*/
-    param_t cog_sim_pointer; /**< pointer to param ASIM_COG_D*/
-
-
-    param_t yaw_sim_pointer; /**< pointer to param ASIM_YAW_D*/
-    param_t deva1_sim_pointer; /**< pointer to param ASIM_DEVA1 */
-    #endif
+    #endif //SIMULATION_FLAG == 1
 }pointers_param_qgc;
 
 
@@ -278,7 +243,7 @@ void p_param_init(void){
 
     pointers_param_qgc.grid_add_pointer = param_find("ASP_P_ADD");
     pointers_param_qgc.repeat_past_grids_pointer = param_find("ASP_REIN_GRS");
-    #endif
+    #endif //USE_GRID_LINES == 1
 
     //explicit tack now command from QGC
     pointers_param_qgc.do_maneuver_now = param_find("ASP_DO_MANEUV");
@@ -290,18 +255,12 @@ void p_param_init(void){
     #if SIMULATION_FLAG == 1
 
     #if USE_GRID_LINES == 1
-    pointers_param_qgc.lat_sim_pointer = param_find("ASIM_LAT_E7");
-    pointers_param_qgc.lon_sim_pointer = param_find("ASIM_LON_E7");
-    pointers_param_qgc.alt_sim_pointer = param_find("ASIM_ALT_E3");
-    #endif
+    pointers_param_qgc.lat_sim_pointer = param_find("ASPS_LAT_E7");
+    pointers_param_qgc.lon_sim_pointer = param_find("ASPS_LON_E7");
+    pointers_param_qgc.alt_sim_pointer = param_find("ASPS_ALT_E3");
+    #endif //USE_GRID_LINES == 1
 
-    pointers_param_qgc.cog_sim_pointer = param_find("ASIM_COG_D");
-    pointers_param_qgc.twd_sim_pointer = param_find("ASIM_TWD_D");
-
-    pointers_param_qgc.yaw_sim_pointer = param_find("ASIM_YAW_D");
-    pointers_param_qgc.deva1_sim_pointer = param_find("ASIM_DEVA1");
-
-    #endif
+    #endif //SIMULATION_FLAG == 1
 
     //clean boat_qgc_param2
     memset(&boat_qgc_param2, 0, sizeof(boat_qgc_param2));
@@ -372,17 +331,17 @@ void p_param_update(bool update_path_param){
     param_get(pointers_param_qgc.grid_add_pointer, &temp);
     if(temp > 0 && update_path_param){
         //set x coordinate of a new grid line
-        //set_grid_qgc(grids_x_m);
+        gh_set_grid_qgc(grids_x_m);
     }
 
     //set the new number of grid lines
-    //set_grids_number_qgc(grids_number);
+    gh_set_grids_number_qgc(grids_number);
 
     param_get(pointers_param_qgc.repeat_past_grids_pointer, &temp);
-    //bool use_last_grids = (temp > 0) ? true : false;
-    //reuse_last_grids(use_last_grids);
+    bool use_last_grids = (temp > 0) ? true : false;
+    gh_reuse_last_grids(use_last_grids);
 
-    #endif
+    #endif //USE_GRID_LINES == 1
 
 
     //----- explicit tack now command and alpha star value from QGC
@@ -433,9 +392,6 @@ void p_param_update(bool update_path_param){
 
     #if USE_GRID_LINES == 1
     //----- simulation coordinates
-    int32_t lat_sim;
-    int32_t lon_sim;
-    int32_t alt_sim;
     //lat_sim
     param_get(pointers_param_qgc.lat_sim_pointer, &lat_sim);
 
@@ -446,31 +402,15 @@ void p_param_update(bool update_path_param){
     param_get(pointers_param_qgc.alt_sim_pointer, &alt_sim);
 
     //set lat, lon and alt to gps_filtered struct to simulate
-    strs_p->gps_filtered.lat = ((double)lat_sim) / 1e7;
-    strs_p->gps_filtered.lon = ((double)lon_sim) / 1e7;
-    strs_p->gps_filtered.alt = alt_sim / 1e3;
-    #endif
+    vgp.lat = ((double)lat_sim) / 1e7;
+    vgp.lon = ((double)lon_sim) / 1e7;
+    vgp.alt = alt_sim / 1e3;
 
-    //cog_sim
-    param_get(pointers_param_qgc.cog_sim_pointer, &(params_p->cog_sim));
-    //convert cog in rad
-    params_p->cog_sim = params_p->cog_sim * deg2rad;
+    //compute fake boat position in race frame using pp_navigation_module
+    n_navigation_module(&vgp);
+    gh_gridlines_handler();
 
-    //twd_sim
-    param_get(pointers_param_qgc.twd_sim_pointer, &(params_p->twd_sim));
-    //convert twd_sim in rad
-    params_p->twd_sim = params_p->twd_sim * deg2rad;
+    #endif //USE_GRID_LINES == 1
 
-    //yaw_sim
-    param_get(pointers_param_qgc.yaw_sim_pointer, &(params_p->yaw_sim));
-    //convert yaw_sim in rad
-    params_p->yaw_sim = params_p->yaw_sim * deg2rad;
-
-    //set them in the appropriate struct to simulate heading changing
-    strs_p->att.yaw = params_p->yaw_sim;
-
-    //deva1
-    param_get(pointers_param_qgc.deva1_sim_pointer, &(params_p->deva1));
-
-    #endif
+    #endif //SIMULATION_FLAG == 1
 }

@@ -60,7 +60,7 @@ void n_set_mean_wind_angle(float mean_wind);
 void n_set_pos_top_mark(const int32_t  *lat_d_e7_p, const int32_t  *lon_d_e7_p, const int32_t  *alt_mm_p);
 
 /** @brief Convert GPS data in a position in the race frame system*/
-void n_navigation_module(const struct structs_topics_s *strs_p);
+void n_navigation_module(const struct vehicle_global_position_s *vgp_p);
 
 /** @brief get the angle of the mean wind w.r.t. true North*/
 float n_get_mean_wind_angle(void);
