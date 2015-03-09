@@ -22,7 +22,7 @@ struct path_planning_s {
     float    x_race_m;    /**< X coordinate in race frame, [m]*/
     float    y_race_m;    /**< Y coordinate in race frame, [m]*/
     uint8_t  id_maneuver; /**< ID last commanded maneuver */
-    uint8_t  special_cmd; /**< ID special command for autonomous_sailing app */
+    uint8_t  id_cmd; /**< ID command for autonomous_sailing app */
 };
 
 

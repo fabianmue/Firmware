@@ -516,6 +516,7 @@ struct log_PP_s{
     uint16_t do_maneuver;
     float    x_race_m;
     float    y_race_m;
+    uint8_t  id_cmd;
 };
 
 //********************** End add *******************************
@@ -592,7 +593,7 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(QGC2, "LLiLLif", "Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
     LOG_FORMAT(OPTM, "fffffffffff", "K1,K2,K3,H1,H2,H3,H4,Lb1,Lb2,Ub1,Ub2"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC3, "iiffffffHHH", "LqrTs,MpcTs,A11,A12,A21,A22,B1,B2,WinAlpTck,WinTwdTck, PredHor"), //Added by Marco Tranzatto
-    LOG_FORMAT(PP, "fHff", "AlphaStr,DoMan,XRace,YRace"), //Added by Marco Tranzatto
+    LOG_FORMAT(PP, "fHffB", "AlphaStr,DoMan,XRace,YRace,IdCmd"), //Added by Marco Tranzatto
     /* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),

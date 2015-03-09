@@ -53,6 +53,7 @@
 #include "simulation_utility.h"
 #include "mpcForces/mpc_boatTack_h20.h"
 #include "mpcForces/mpc_boatTack_h30.h"
+#include "pp_special_cmd_as.h"
 
 //log messages to QGroundControl
 #include "send_msg_qgc.h"

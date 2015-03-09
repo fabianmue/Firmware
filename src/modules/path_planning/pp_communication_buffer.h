@@ -46,6 +46,7 @@
 #include "pp_send_msg_qgc.h"
 #include "pp_config.h"
 #include "pp_gridlines_handler.h"
+#include "pp_special_cmd_as.h"
 #include <stdio.h>
 #include <math.h>
 #include <stdint.h>

@@ -144,7 +144,8 @@ void cb_new_as_data(const struct structs_topics_s *strs_p){
 
 /**
  * If either at least one parameter in path-planning topic
- * has been changed, publish it.
+ * has been changed or when have to reach "sail downwind" position,
+ * publish it.
 */
 void cb_publish_pp_if_updated(void){
     //has pp struct been updated or must alpha_star be changed?
@@ -208,6 +209,7 @@ void cb_init(void){
     pp.id_maneuver = 255;
     //default alpha_star = 45 deg
     cb_set_alpha_star(M_PI_F / 4.0f);
+    pp.id_cmd = PP_NORMAL_CMD;
 }
 
 /**
@@ -224,8 +226,11 @@ float cb_get_alpha_star(void){
 */
 void cb_new_rc_data(const struct structs_topics_s *strs_p){
 
-    if(strs_p->rc_channels.channels[RC_MODE_INDEX] == RC_MANUAL_MODE)
+    if(strs_p->rc_channels.channels[RC_MODE_INDEX] == RC_MANUAL_MODE){
         manual_mode = true;
+        //make sure that when we will switch to autonomous, we'll use standard cmd
+        pp.id_cmd = PP_NORMAL_CMD;
+    }
     else{
 
         #if USE_GRID_LINES == 1
@@ -287,12 +292,17 @@ void go_downwind(){
     //update alpha_star based on the current haul and alpha_star velocity
     now = hrt_absolute_time();//time in micro seconds
     //TODO FIX THIS PROBLEM, OTHERWISE THE SYSTEN WILL ALWAYS CRUSH!!
-    double delta_alpha = (double)alpha_star_vel_r_s * ((now - last_change_alpha_star) / 1e6);
+    //double delta_alpha = (double)alpha_star_vel_r_s * ((now - last_change_alpha_star) / 1e6);
     last_change_alpha_star = now;
 
     float new_alpha_star;
 
-    new_alpha_star = pp.alpha_star + SGN(pp.alpha_star) * (float)delta_alpha;
+    //TODO fix this!
+    //new_alpha_star = pp.alpha_star + SGN(pp.alpha_star) * (float)delta_alpha;
+
+    //debug delete this!
+    new_alpha_star = M_PI_F + 0.5f;
+    //debug
 
     cb_set_alpha_star(new_alpha_star);
 
@@ -322,8 +332,8 @@ void cb_reached_last_griline(void){
     //start changing alpha_star
     change_alpha_star = true;
     last_change_alpha_star = hrt_absolute_time();
-
-    //TODO send special command first time!
+    //tell autonomous_sailing app we want to sail downwind
+    pp.id_cmd = PP_SAIL_DOWNWIND_CMD;
 }
 
 #endif //USE_GRID_LINES == 1

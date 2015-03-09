@@ -62,6 +62,7 @@
 
 static char txt_msg[150]; ///used to send messages to QGC
 static const float deg2rad = 0.0174532925199433f; // pi / 180
+static uint16_t error_counter = 0;
 
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 #define SGN(X) ((X) < (0.0f) ? (-1.0f) : (1.0f))
@@ -113,10 +114,12 @@ static struct{
     float alpha_star; ///optimal sailing angle w.r.t. true wind direction
     bool do_maneuver; ///true if boat should tack/jybe as soon as possible
     uint8_t id_maneuver; ///id last maneuver given by path_planning app
+    uint8_t  id_cmd; /**< ID of the last CMD received and executed */
 }reference_actions = {
     .alpha_star = 0.7853981f,
     .do_maneuver = false,
-    .id_maneuver = 255
+    .id_maneuver = 255,
+    .id_cmd = PP_NORMAL_CMD
 };
 
 /// Forces parameters
@@ -1218,6 +1221,30 @@ void gm_set_data_by_pp(const struct structs_topics_s *strs_p){
         //start a real new maneuver and save its id
         reference_actions.do_maneuver = true;
         reference_actions.id_maneuver = strs_p->path_planning.id_maneuver;
+    }
+    //check if have a received a new and different id of command
+    if(strs_p->path_planning.id_cmd != reference_actions.id_cmd){
+        switch(strs_p->path_planning.id_cmd){
+        case PP_NORMAL_CMD:
+            //we were not in normal mode, simply switch id_cmd to this value
+            reference_actions.id_cmd = PP_NORMAL_CMD;
+            //make sure we use the twd from moving average filter
+            cd_use_fixed_twd(0);
+            break;
+        case PP_SAIL_DOWNWIND_CMD:
+            //we must start sailing downwind using a fixed true wind direction
+            reference_actions.id_cmd = PP_SAIL_DOWNWIND_CMD;
+            cd_set_mean_twd(cd_get_twd_sns());
+            cd_use_fixed_twd(1);
+            break;
+        default:
+            //error: no valid cmd, keep using the last cmd received
+            error_counter++;
+            if(error_counter == 10){
+                smq_send_log_critical("Warning: 10 unvalid cmd from  PP.");
+                error_counter = 0;
+            }
+        }
     }
 }
 

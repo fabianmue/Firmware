@@ -1864,6 +1864,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_PP.do_maneuver = buf.path_planning.do_maneuver;
             log_msg.body.log_PP.x_race_m = buf.path_planning.x_race_m;
             log_msg.body.log_PP.y_race_m = buf.path_planning.y_race_m;
+            log_msg.body.log_PP.id_cmd = buf.path_planning.id_cmd;
             LOGBUFFER_WRITE_AND_COUNT(PP);
         }
         //********************** End add *******************************
