@@ -34,10 +34,10 @@ struct nav_state_s {
 
 /**Struct containing the Race-Field-Information */
 struct nav_field_s {
-	Point targets[MAXTARGETNUMBER];
-	uint8_t NumberOfTargets;
-	Point obstacles[MAXOBSTACLENUMBER];
-	uint8_t NumberOfObstacles;
+	Point targets[MAXTARGETNUMBER];	//Matrix holding all targets (waypoints) (in NED-Frame)
+	uint8_t NumberOfTargets;		//Number of waypoints currently in the Matrix
+	Point obstacles[MAXOBSTACLENUMBER];	//Matrix holding the obstacles (in NED-Frame)
+	uint8_t NumberOfObstacles;		//Number of obstacles currently in the Matrix
 };
 
 

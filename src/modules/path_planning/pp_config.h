@@ -21,8 +21,8 @@
  * Note: With C_DEBUG = 1 it is NOT possible to compile for the Pixhawk!*/
 #define C_DEBUG 1
 
-#if C_DEBUG == 1
-	#include "D:\Documents\ETH\MASTER\Masterthesis\F_FirmwarePixhawk\TestFirmwareComponents\pixhawk_variables.h"
+#if C_DEBUG == 1 //Include some h-files for Computer Simulation (PC-Debugging)
+	#include "PCDebug/pixhawk_variables.h"
 #endif
 
 

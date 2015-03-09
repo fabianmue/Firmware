@@ -66,6 +66,40 @@ float nh_geo_dist(Point point1, Point point2) {
 
 
 /**
+ * Calculate the distance between two points (NED-Frame)
+ *
+ *
+ * @param point1: Startpoint for the distance measurement
+ * @param point2: Endpoint for the distance measurement
+ * @return Distance between the point1 and point2 in meters
+ */
+float nh_ned_dist(NEDpoint point1, NEDpoint point2) {
+
+	return sqrtf(point1.northx*point1.northx + point1.easty*point1.easty);
+
+}
+
+
+
+/**
+ * Calculate the bearing from one point to another point (NED-Frame)
+ *
+ * @param start: Startpoint for the bearing measurement
+ * @param end: Endpoint for the bearing measurement
+ * @return bearing from point start to point end [rad]
+ */
+float nh_ned_bearing(NEDpoint start, NEDpoint end) {
+
+	float dx = end.northx - start.northx;
+	float dy = end.easty - end.easty;
+
+	return atan2f(dy,dx);
+}
+
+
+
+
+/**
  * Calculate the apparent Wind Direction
  * This is not the real apparent Wind Direction. It is the direction the boat would measure if it is NOT moving.
  *
@@ -185,4 +219,7 @@ float nh_dumas2sensor(float dumas) {
 	//Transformation is a simple switch of Signs.
 	return -dumas;
 }
+
+
+
 
