@@ -23,6 +23,8 @@
  * @param start: Startpoint for the bearing measurement
  * @param end:   Endpoint for the bearing measurement
  * @return Bearing from Start ot Endpoint in rad. A true bearing is returned (element of [0:2pi])
+ *
+ * Debug State: Function tested in PC-Test-Environment => working
  */
 float nh_geo_bearing(Point start, Point end) {
 
@@ -48,6 +50,8 @@ float nh_geo_bearing(Point start, Point end) {
  * @param point1: Startpoint for the distance measurement
  * @param point2: Endpoint for the distance measurement
  * @return Distance between the point1 and point2 in meters
+ *
+ *  * Debug State: Function tested in PC-Test-Environment => needs to be validated, but seems to be OK
  */
 float nh_geo_dist(Point point1, Point point2) {
 
@@ -67,6 +71,8 @@ float nh_geo_dist(Point point1, Point point2) {
  *
  * @param heading: True heading of the boat
  * @return apparent Wind angle. If positive, the wind comes from Portside, else from Starboard-side
+ *
+ * Debug State: Function tested in PC-Test-Environment => working
  */
 float nh_appWindDir(float heading, float windDir) {
 
@@ -120,21 +126,6 @@ uint8_t nh_findMin(const float *array, uint8_t arraySize) {
 	return minInd;
 }
 
-
-
-/**
- * Returns the speed to be expected from a Polardiagram
- * Note: only forward Speed is returned
- *
- * @param AppWindDir: Apparent Wind Direction [rad]
- * @param AppWindSpeed: Apparent Wind Speed [m/s]
- */
-float nh_polardiagram(float AppWindDir, float AppWindSpeed) {
-
-	//TODO: Add the boats Polardiagram as a lookup table for different Windspeeds.
-
-	return 1.0f;
-}
 
 
 /**

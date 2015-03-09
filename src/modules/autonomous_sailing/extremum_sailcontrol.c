@@ -123,10 +123,6 @@ void essc_speed_update(const struct structs_topics_s *strs_p) {
 
     buffer_add(&(State.buffer), uVel);
 
-    //Update the meanSpeeds-Matrix (not nice, but should be fine here...)
-	State.meanSpeeds[0] = State.meanSpeeds[1];
-	State.meanSpeeds[1] = mean_speed();
-
 } //End of ESSC_SpeedUpdate
 
 
@@ -175,6 +171,10 @@ float essc_sail_control_value() {
         State.ds[0] = State.ds[1];
         State.ds[1] = State.ds[2];
         State.ds[2] = newDs;
+
+        //Update the meanSpeeds-History (not nice, but should be fine here...)
+    	State.meanSpeeds[0] = State.meanSpeeds[1];
+    	State.meanSpeeds[1] = mean_speed();
 
         //Set the new Control-Value
         State.ActDs = deg2pwm(newDs);

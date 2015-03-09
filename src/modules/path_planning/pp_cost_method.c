@@ -221,7 +221,7 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 	Tgx = Tgx/norm;											//Create the unity-Vector
 	Tgy = Tgy/norm;
 
-	float boatspeed = nh_polardiagram(fabsf(appWind), state->wind_speed); //Create a vector representing the boat movement
+	float boatspeed = pol_polardiagram(fabsf(appWind), state->wind_speed); //Create a vector representing the boat movement
 	float Vhx = cosf(seg);
 	float Vhy = sinf(seg);
 	norm = sqrtf(Vhx*Vhx + Vhy*Vhy);

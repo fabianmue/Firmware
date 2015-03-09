@@ -35,9 +35,6 @@ float nh_appWindDir(float heading, float windDir);
 uint8_t nh_findMin(const float *array, uint8_t arraySize);
 
 
-/* @brief Polardiagram (get the boatspeed at a given angle) */
-float nh_polardiagram(float AppWindDir, float AppWindSpeed);
-
 
 /* @brief Convert from Compass to Dumas' Frame */
 float nh_compass2dumas(float compass);
