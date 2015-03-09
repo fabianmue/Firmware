@@ -11,6 +11,8 @@
 
 #include "pp_cost_method.h"
 
+#include "pp_navigator.h"
+
 
 
 /**
@@ -48,6 +50,13 @@ PARAM_DEFINE_FLOAT(PP_CM_OBSTHORIZON, 100.0f);
 PARAM_DEFINE_INT32(PP_CM_WINDOWSIZE, 5);
 
 
+/**
+ * pp_navigator: Time between two calls of Path Planning [us]
+ *
+ * @min 0
+ */
+PARAM_DEFINE_INT32(PP_NAV_PERIOD, 1000);
+
 
 
 
@@ -66,6 +75,11 @@ static struct pointers_param_qgc_s{
 	param_t cm_obstsafetyradius_pointer;
 	param_t cm_obsthorizon_pointer;
 	param_t cm_windowsize_pointer;
+
+
+	//**NAVIGATION
+	param_t nav_period;
+
 } pointers_param_qgc;
 
 
@@ -88,6 +102,11 @@ void p_param_init(void) {
 	pointers_param_qgc.cm_obstsafetyradius_pointer = param_find("PP_CM_OBSTACLESAFETYRADIUS");
 	pointers_param_qgc.cm_obsthorizon_pointer = param_find("PP_CM_OBSTHORIZONT");
 	pointers_param_qgc.cm_windowsize_pointer = param_find("PP_CM_WINDOWSIZE");
+
+
+	//**NAVIGATION
+	pointers_param_qgc.nav_period = param_find("PP_NAV_PERIOD");
+
 
 }
 
@@ -112,8 +131,14 @@ void p_param_update(void) {
 	param_get(pointers_param_qgc.cm_obsthorizon_pointer, &obsthorizon);
 	param_get(pointers_param_qgc.cm_windowsize_pointer, &windowsize);
 
-	cm_set_onfiguration(gw, go, gm, gs, gt, glee, obstsafetyradius, obsthorizon, windowsize);
+	cm_set_configuration(gw, go, gm, gs, gt, glee, obstsafetyradius, obsthorizon, windowsize);
 
+
+	//**NAVIGATOR
+	uint32_t period;
+	param_get(pointers_param_qgc.nav_period, &period);
+
+	nav_set_configuration(period);
 
 }
 

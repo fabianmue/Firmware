@@ -30,6 +30,7 @@ struct nav_state_s {
 	float wind_speed; 				//average Wind Speed [m/s]
 	uint8_t targetNum; 				//Current number of target to be reached (limits number of targets to 256)
 	bool maneuver;					//true, iff a maneuver is in progress
+	uint64_t last_call; 			//Systemtime, when the Pathplanning was done the last time [us]
 };
 
 /**Struct containing the Race-Field-Information */
@@ -72,6 +73,21 @@ void nav_setObstacle(uint8_t ObstNumber, Point ObstPos);
 
 /** @brief Set Targets */
 void nav_setTarget(uint8_t TargetNumber, Point TargetPos);
+
+
+/** @brief Set Configuration Parameters for the Navigator */
+void nav_set_configuration(uint64_t period);
+
+
+
+/* FUNCTIONS FOR DEBUGGING */
+#if C_DEBUG == 1
+	/* @brief Set a fake-state for debugging */
+	void DEBUG_nav_set_fake_state(NEDpoint pos, float heading);
+
+	/* @brief Set a fake-field for debugging */
+	void DEBUG_nav_set_fake_field(NEDpoint target, NEDpoint obstacle);
+#endif
 
 
 #endif /* PP_NAVIGATOR_H_ */

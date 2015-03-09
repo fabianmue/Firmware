@@ -81,11 +81,4 @@ float nh_sensor2compass(float sensor);
 float nh_compass2sensor(float compass);
 
 
-/* FUNCTIONS FOR DEBUGGING */
-#if C_DEBUG == 1
-	/* @brief Set a fake-state for debugging */
-	void DEBUG_nav_set_fake_state(NEDpoint pos, float heading);
-#endif
-
-
 #endif /* NAVIGATION_HELPER_H_ */

@@ -258,7 +258,11 @@ int pp_thread_main(int argc, char *argv[]) {
 			}
 		}
 
-		//TODO: Add further repetitive tasks here
+		#if USE_GRIDLINES_PP != 1
+			/* Call the navigator for a new reference Heading */
+
+			nav_navigate();
+		#endif
 
 
 	} //END OF MAIN THREAD-LOOP
