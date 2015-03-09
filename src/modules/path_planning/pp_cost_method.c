@@ -36,17 +36,17 @@ static struct {
 	float GLee;       		//Weighting factor for passing Obstacles in Lee. (higher value <=> force boat to pass in Lee)
 	float ObstSafetyRadius; //Safety Radius around an obstacle [m]
 	float ObstHorizon; 		//Obstacle Horizon <=> inside this horizon obstacles are recognized [m]
-	float WindowSize; 		//Size of the window for smoothing the Costfunction
+	uint8_t WindowSize; 		//Size of the window for smoothing the Costfunction
 } Config = {
-		.Gw = 0.9,
-		.Go = 0.8,
-		.Gm = 0.4,
-		.Gs = 0.05,
-		.Gt = 0.1,
-		.GLee = 0.15,
-		.ObstSafetyRadius = 10,
-		.ObstHorizon = 100,
-		.WindowSize = 5
+		.Gw = 0.9f, //0.9
+		.Go = 0.8f, //0.8
+		.Gm = 0.0f, //0.4
+		.Gs = 0.0f,//0.05
+		.Gt = 0.0f, //0.1
+		.GLee = 0.0f,//0.15
+		.ObstSafetyRadius = 10.0f, //10
+		.ObstHorizon = 100.0f, //100
+		.WindowSize = 5 //5
 };
 
 
@@ -110,12 +110,23 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 		costMat[ind] = total_cost(seg,state,field);
 		headMat[ind] = seg;
 
+
+		printf("Total Cost: %f, %f\n",seg*RAD2DEG,costMat[ind]);
+
+
 		//Update Index
 		ind++;
 	}
 
 	//Smooth Cost-Matrix
 	smooth(costMat,probeNum,5);
+
+	//DEBUG:
+	uint8_t i;
+	for(i=0; i < probeNum; i++) {
+		printf("%f\n",costMat[i]);
+	}
+
 
 	//Find minimum Index
 	uint8_t minIndex = nh_findMin(costMat,probeNum);
@@ -198,7 +209,7 @@ float total_cost(float seg, struct nav_state_s *state, struct nav_field_s *field
 	/*** OBSTACLE COST ***/
 	float Co = cost_ostacle(seg,state,field);
 
-	printf("Obstacle Cost: %f, %f\n",seg*RAD2DEG,Co);
+	//printf("Obstacle Cost: %f, %f\n",seg*RAD2DEG,Co);
 
 
 	/*** TOTAL COST ***/
@@ -469,7 +480,7 @@ void smooth(float *array, uint8_t arraySize , uint8_t windowSize) {
 	float arrayCpy[arraySize];
 
 	uint8_t i;
-	for(i = windowSize/2; i<arraySize-windowSize/2; i++) {
+	for(i = windowSize/2; i<(arraySize-windowSize/2); i++) {
 		float sum = 0;
 		uint8_t j;
 		for(j = -windowSize/2; j<windowSize/2; j++) {
