@@ -72,11 +72,15 @@ float nh_geo_dist(Point point1, Point point2) {
  * @param point1: Startpoint for the distance measurement
  * @param point2: Endpoint for the distance measurement
  * @return Distance between the point1 and point2 in meters
+ *
+ * Debug State: Function tested in PC-Test-Environment. => working
  */
 float nh_ned_dist(NEDpoint point1, NEDpoint point2) {
 
-	return sqrtf(point1.northx*point1.northx + point1.easty*point1.easty);
+	float dx = point2.northx - point1.northx;
+	float dy = point2.easty - point1.easty;
 
+	return sqrtf(dx * dx + dy * dy);
 }
 
 
@@ -87,13 +91,16 @@ float nh_ned_dist(NEDpoint point1, NEDpoint point2) {
  * @param start: Startpoint for the bearing measurement
  * @param end: Endpoint for the bearing measurement
  * @return bearing from point start to point end [rad]
+ *
+ * Debug State: Function tested in PC-Test-Environment. => working
  */
 float nh_ned_bearing(NEDpoint start, NEDpoint end) {
 
 	float dx = end.northx - start.northx;
-	float dy = end.easty - end.easty;
+	float dy = end.easty - start.easty;
 
-	return atan2f(dy,dx);
+	/* atan2f() returns a result in Sensor-Convention => Convert to Compass-Convention */
+	return nh_sensor2compass(atan2f(dy,dx));
 }
 
 
@@ -135,6 +142,23 @@ float nh_appWindDir(float heading, float windDir) {
 }
 
 
+/*
+ * Convert a point in geo-frame to NED-Frame
+ *
+ * @param geo: Point in geo-frame
+ * @return Point in NED-Frame
+ */
+NEDpoint nh_geo2ned(Point geo) {
+	NEDpoint result;
+	result.northx = 0;
+	result.easty = 0;
+
+	//TODO: Implement this function
+
+	return result;
+}
+
+
 
 /**
  * Search for the minimum element in an array
@@ -171,9 +195,7 @@ uint8_t nh_findMin(const float *array, uint8_t arraySize) {
 float nh_compass2dumas(float compass) {
 
 	//1) Convert from Compass to Sensor Frame
-	if(compass > PI) {
-		compass = compass - 2*PI;
-	}
+	compass = nh_compass2sensor(compass);
 
 	//2) Convert from Sensor to Dumas' Frame
 	return nh_sensor2dumas(compass);
@@ -188,14 +210,10 @@ float nh_compass2dumas(float compass) {
 float nh_dumas2compass(float dumas) {
 
 	//1) Convert from Duma to Sensor
-	float sensor = nh_dumas2sensor(dumas);
+	dumas = nh_dumas2sensor(dumas);
 
 	//2) Convert from Sensor to Compass
-    if(sensor < 0) {
-    	return 2*PI+sensor;
-    } else {
-    	return sensor;
-    }
+    return nh_sensor2compass(dumas);
 }
 
 
@@ -218,6 +236,39 @@ float nh_sensor2dumas(float sensor) {
 float nh_dumas2sensor(float dumas) {
 	//Transformation is a simple switch of Signs.
 	return -dumas;
+}
+
+
+
+/** Convert from Sensor Frame to Compass Frame
+ *
+ * @param sensor: Boat's heading in Sensor-Frame [rad] element of [-pi...0...pi]
+ * @return Boat's heading in Compass Frame
+ */
+float nh_sensor2compass(float sensor) {
+
+	if(sensor < 0) {
+	   	return 2*PI+sensor;
+	} else {
+	   	return sensor;
+	}
+
+}
+
+
+
+/** Convert from Compass Frame to Sensor Frame
+ *
+ * @param compass: Boat's heading in Compass-Frame [rad] element of [0...2pi]
+ * @return Boat's heading in Sensor Frame
+ */
+float nh_compass2sensor(float compass) {
+
+	if(compass > PI) {
+		return compass - 2*PI;
+	} else {
+		return compass;
+	}
 }
 
 

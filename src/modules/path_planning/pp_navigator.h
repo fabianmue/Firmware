@@ -23,7 +23,7 @@
 
 /**Struct containing the status of the Navigator */
 struct nav_state_s {
-	Point position; 				//Last known Position (lat/lon) [rad]
+	NEDpoint position; 				//Last known Position (x,y in NED-Frame) [m]
 	float heading_cur;				//Current Heading of the boat [rad]
 	float heading_ref;				//Heading Reference for optimal path [rad]
 	float wind_dir; 				//average direction of the wind (where the wind is blowing to) [rad]
@@ -34,9 +34,9 @@ struct nav_state_s {
 
 /**Struct containing the Race-Field-Information */
 struct nav_field_s {
-	Point targets[MAXTARGETNUMBER];	//Matrix holding all targets (waypoints) (in NED-Frame)
+	NEDpoint targets[MAXTARGETNUMBER];	//Matrix holding all targets (waypoints) (in NED-Frame)
 	uint8_t NumberOfTargets;		//Number of waypoints currently in the Matrix
-	Point obstacles[MAXOBSTACLENUMBER];	//Matrix holding the obstacles (in NED-Frame)
+	NEDpoint obstacles[MAXOBSTACLENUMBER];	//Matrix holding the obstacles (in NED-Frame)
 	uint8_t NumberOfObstacles;		//Number of obstacles currently in the Matrix
 };
 

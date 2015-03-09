@@ -53,6 +53,9 @@ float nh_appWindDir(float heading, float windDir);
 uint8_t nh_findMin(const float *array, uint8_t arraySize);
 
 
+/* @brief Convert a Point in the geo-Frame to the NED-Frame */
+NEDpoint nh_geo2ned(Point geo);
+
 
 /* @brief Convert from Compass to Dumas' Frame */
 float nh_compass2dumas(float compass);
@@ -68,6 +71,21 @@ float nh_sensor2dumas(float sensor);
 
 /* @brief Convert from Dumas' Frame to Sensor Frame */
 float nh_dumas2sensor(float dumas);
+
+
+/* @brief Convert from Sensor Frame to Compass Frame */
+float nh_sensor2compass(float sensor);
+
+
+/* @brief Convert from Compass Frame to Sensor Frame */
+float nh_compass2sensor(float compass);
+
+
+/* FUNCTIONS FOR DEBUGGING */
+#if C_DEBUG == 1
+	/* @brief Set a fake-state for debugging */
+	void DEBUG_nav_set_fake_state(NEDpoint pos, float heading);
+#endif
 
 
 #endif /* NAVIGATION_HELPER_H_ */

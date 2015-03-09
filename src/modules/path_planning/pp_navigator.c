@@ -56,12 +56,12 @@ void nav_init(void) {
 	field.NumberOfObstacles = 1;
 
 	//Set the initial Target-Position
-	field.targets[0].lat = HOMELAT;
-	field.targets[0].lat = HOMELON;
+	field.targets[0].northx = 0;
+	field.targets[0].easty = 0;
 
 	//Set the initial Obstacle-Position
-	field.obstacles[0].lat = 0;
-	field.obstacles[0].lon = 0;
+	field.obstacles[0].northx = 0;
+	field.obstacles[0].easty = 0;
 
 	//Set the initial values for the State
 	state.heading_cur = 0;
@@ -69,8 +69,10 @@ void nav_init(void) {
 	state.wind_dir = 0;
 	state.maneuver = false;
 	state.targetNum = 0;
-	state.position.lat = HOMELAT;
-	state.position.lon = HOMELON;
+	Point home;
+	home.lat = HOMELAT;
+	home.lon = HOMELON;
+	state.position = nh_geo2ned(home);
 }
 
 
@@ -186,12 +188,16 @@ void nav_heading_wind_update(const struct structs_topics_s *strs_p) {
  */
 void nav_position_update(const struct structs_topics_s *strs_p) {
 
-	Point newPos;
-	newPos.lat = ((float)(strs_p->vehicle_global_position.lat)) * DEG2RAD;
-	newPos.lon = ((float)(strs_p->vehicle_global_position.lon)) * DEG2RAD;
+	Point GEOPos;
+	GEOPos.lat = ((float)(strs_p->vehicle_global_position.lat)) * DEG2RAD;
+	GEOPos.lon = ((float)(strs_p->vehicle_global_position.lon)) * DEG2RAD;
+
+	//Convert from GEO to NED
+	NEDpoint newPos;
+	newPos = nh_geo2ned(GEOPos);
 
 	//Check, if we reached a target
-	if(nh_geo_dist(newPos,field.targets[state.targetNum]) <= TARGETTOLERANCE) {
+	if(nh_ned_dist(newPos,field.targets[state.targetNum]) <= TARGETTOLERANCE) {
 		//We are inside the tolerance => target is counted as reached
 
 		if(state.targetNum != (field.NumberOfTargets-1)) {
@@ -222,8 +228,9 @@ void nav_position_update(const struct structs_topics_s *strs_p) {
  * @param ObstPos: The GPS-Position of the obstacle represented as a Point
  */
 void nav_setObstacle(uint8_t ObstNumber, Point ObstPos) {
-	field.obstacles[ObstNumber].lat = ObstPos.lat;
-	field.obstacles[ObstNumber].lon = ObstPos.lon;
+
+	/* Convert to NED-Frame */
+	field.obstacles[ObstNumber] = nh_geo2ned(ObstPos);
 
 	field.NumberOfObstacles = ObstNumber;
 }
@@ -237,11 +244,29 @@ void nav_setObstacle(uint8_t ObstNumber, Point ObstPos) {
  * @param TargetPos: The GPS-Position of the target represented as a Point
  */
 void nav_setTarget(uint8_t TargetNumber, Point TargetPos) {
-	field.targets[TargetNumber].lat = TargetPos.lat;
-	field.targets[TargetNumber].lon = TargetPos.lon;
+
+	field.targets[TargetNumber] = nh_geo2ned(TargetPos);
 
 	field.NumberOfTargets = TargetNumber;
 }
+
+
+/* FUNCTIONS FOR DEBUGGING */
+#if C_DEBUG == 1
+
+	/*
+	 * Set a fake State for the navigator
+	 *
+	 * @param pos: Position in NED-Frame
+	 * @param heading: heading of the boat in Compass-Frame in Degrees
+	 */
+	void DEBUG_nav_set_fake_state(NEDpoint pos, float heading) {
+
+		state.heading_cur = DEG2RAD*heading;
+
+	}
+
+#endif
 
 
 
