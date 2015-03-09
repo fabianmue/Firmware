@@ -18,7 +18,7 @@
  * - add Potentialfield Method
  * - speak to helsman => publish update in topic
  * - Windspeed
- * - decide when to call the function nav_navigate()
+ * - smoothing of costfunction
  */
 
 
@@ -182,7 +182,7 @@ void nav_speak2helsman(void) {
 	//TODO: The heading_reference must be converted to an alpha_star in Dumas' Frame!
 
     #if C_DEBUG == 1
-		printf("New Heading Reference: %f",state.heading_ref);
+		printf("New Heading Reference: %f",state.heading_ref*RAD2DEG);
 	#endif
 }
 
@@ -310,7 +310,7 @@ void nav_set_configuration(uint64_t period) {
 		state.wind_speed = 3;
 
 		//Always take the first Target
-		state.targetNum = 1;
+		state.targetNum = 0;
 
 	}
 

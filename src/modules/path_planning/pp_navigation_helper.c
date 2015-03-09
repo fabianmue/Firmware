@@ -80,6 +80,14 @@ float nh_ned_dist(NEDpoint point1, NEDpoint point2) {
 	float dx = point2.northx - point1.northx;
 	float dy = point2.easty - point1.easty;
 
+	float dist = sqrtf(dx * dx + dy * dy);
+
+	/* Check distance for zero
+	 * Otherwise, this could lead to a devision by zero! */
+	if(dist == 0) {
+		dist = 0.0000000001f;
+	}
+
 	return sqrtf(dx * dx + dy * dy);
 }
 

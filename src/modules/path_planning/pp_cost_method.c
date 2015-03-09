@@ -174,22 +174,31 @@ float total_cost(float seg, struct nav_state_s *state, struct nav_field_s *field
 	/*** TARGET/WIND COST ***/
 	float Cw = cost_target_wind(seg,state,field);
 
-	printf("Target/Wind-Cost: %f\n",Cw);
+	//printf("Target/Wind-Cost: %f, %f\n",seg*RAD2DEG,Cw);
+
 
 	/*** MANEUVER COST ***/
 	float Cm = cost_maneuver(seg,state);
+
+	//printf("Maneuver Cost: %f, %f\n",seg*RAD2DEG,Cm);
 
 
 	/*** TACTICAL COST ***/
 	float Ct = cost_tactical(seg,state,field);
 
+	//printf("Tactical Cost: %f, %f\n",seg*RAD2DEG,Ct);
+
 
 	/*** SMALL HEADING CHANGE COST ***/
 	float Cs = cost_heading_change(seg,state);
 
+	//printf("Small Heading Cost: %f, %f\n",seg*RAD2DEG,Cs);
+
 
 	/*** OBSTACLE COST ***/
 	float Co = cost_ostacle(seg,state,field);
+
+	printf("Obstacle Cost: %f, %f\n",seg*RAD2DEG,Co);
 
 
 	/*** TOTAL COST ***/
@@ -213,26 +222,32 @@ float total_cost(float seg, struct nav_state_s *state, struct nav_field_s *field
  */
 float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s *field) {
 
-	float appWind= nh_appWindDir(seg,state->wind_dir);		//Current apparent Wind Direction
+	//Apparent Wind Direction
+	float appWind = nh_appWindDir(state->heading_cur,state->wind_dir);
 
-	float targetDir = nh_ned_bearing(state->position,field->targets[state->targetNum]); //Bearing to target
+	//Calcualte x and y Differences
+	float dx = state->position.northx-field->targets[state->targetNum].northx;
+	float dy = state->position.easty-field->targets[state->targetNum].easty;
 
-	float Tgx = cosf(targetDir);							//Create a vector pointing towards the target
-	float Tgy = sinf(targetDir);
-	float norm = sqrtf(Tgx*Tgx + Tgy*Tgy);
-	Tgx = Tgx/norm;											//Create the unity-Vector
-	Tgy = Tgy/norm;
+	//Distance to target
+	float distToTarget = nh_ned_dist(state->position,field->targets[state->targetNum]);
 
-	float boatspeed = pol_polardiagram(fabsf(appWind), state->wind_speed); //Create a vector representing the boat movement
-	float Vhx = cosf(seg);
-	float Vhy = sinf(seg);
-	norm = sqrtf(Vhx*Vhx + Vhy*Vhy);
-	Vhx = Vhx/norm * boatspeed;
-	Vhy = Vhy/norm * boatspeed;
+	float tgx = dx/distToTarget;			//Vector pointing towards the target
+	float tgy = dy/distToTarget;
 
-	float Vg = Vhx*Tgx + Vhy*Tgy;							//Scalar-Product of Boatmovement and Target Vector
+	//Get the Boatspeed from the Polardiagram
+	float boatspeed = pol_polardiagram(appWind,state->wind_dir);
 
-	return (Vg*Config.Gw);									//Wind/Target Cost (weighted)
+	//Calcualte Direction and Speed of the Boat
+	float vhx = cosf(seg)*boatspeed;
+	float vhy = sinf(seg)*boatspeed;
+
+	//Calculate Dot-Product of Boatspeed and TargetVector
+	float vg = vhx * tgx + vhy * tgy;
+
+
+	//Return the weighted cost
+	return (vg*Config.Gw);
 
 } //end of cost_target_wind
 
@@ -247,6 +262,8 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
  *  @param seg: Simulated heading [rad]
  *  @param *state: Pointer to the State-Struct
  *  @return Cost for the given simulated Heading
+ *
+ *  Debug State: Tested with PC-Environment => working
  */
 float cost_maneuver(float seg, struct nav_state_s *state) {
 
@@ -332,6 +349,8 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
  *  @param *state: Pointer to the State-Struct
  *  @param *field: Pointer to the Field-Struct
  *  @return Cost for the given simulated Heading
+ *
+ *  Debug State: Validated on PC-Test => working
  */
 float cost_heading_change(float seg,struct nav_state_s *state) {
 
@@ -360,11 +379,16 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 	uint8_t i;
 	for (i = 0; i < field->NumberOfObstacles; i++) {
 
+		//printf("  Obstacle Positon: %f/%f\n",field->obstacles[i].northx,field->obstacles[i].easty);
+		//printf("  Current  Positon: %f/%f\n",state->position.northx,state->position.easty);
+
 		float C = 0;	//Cost for this Obstacle
 
 		/* Only obstacles within a certain Horizon are taken into account. This means that only obstacles in our range
 		 * affect the Pathplanning. We do not care about far away obstacles. */
 		float distance = nh_ned_dist(state->position,field->obstacles[i]);
+		/*Note: the distance to the Obstacle is never zero, since this would lead to a division by zero and therefore
+		 *      an unpredictable behaviour of the Pixhawk. */
 		if(distance > Config.ObstHorizon) {
 			//Obstacle is too far away => continue with the next obstacle
 			continue;
@@ -376,10 +400,12 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 		float obst_bear = nh_ned_bearing(state->position,field->obstacles[i]);
 
 		float ang_correction = atanf(Config.ObstSafetyRadius/distance);
-		//TODO: Be careful here, if distance is close to zero we have a DIVISION BY ZERO!!!
 
 		float max_obst_bear = fmod(ang_correction+obst_bear,2*PI);
 		float min_obst_bear = fmod(obst_bear-ang_correction,2*PI);
+
+		//printf("  Distance to Obstacle: %f\n",distance);
+		//printf("  Max./Min. Obstacle bearing: %f/%f\n",max_obst_bear*RAD2DEG,min_obst_bear*RAD2DEG);
 
 
 		/* Check, if the boat is on collision course with an obstacle. It is on collision course,
@@ -405,7 +431,21 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 		 * and compensating other uncertainties. This is especially important when sailing upwind, because windshifts could
 		 * force the boat to do another tack, what slows down the boat and therefore has to be avoided.*/
 
-		//TODO: add this here
+		float appWind= nh_appWindDir(obst_bear,state->wind_dir);
+
+		if(appWind < 0) { //Prefere Sailing on min_obst_head
+			if(seg < min_obst_bear) { //The Boat will pass in Lee of the Obstacle => GOOD
+				CLee = 0;
+			} else { //The Boat will pass in Luv of the Obstacle => BAD
+		        CLee = Config.GLee * 1;
+			}
+		} else {          //Prefere Sailing on max_obst_head
+			if(seg > max_obst_bear) { //The Boat will pass in Lee of the Obstacle => GOOD
+				CLee = 0;
+		    } else {  //The Boat will pass in Luv of the Obstacle => BAD
+		        CLee = Config.GLee * 1;
+		    }
+		}
 
 	} //for
 
