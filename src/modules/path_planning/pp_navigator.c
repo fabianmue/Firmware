@@ -16,8 +16,6 @@
 
 /* TODO:
  * - add Potentialfield Method
- * - speak to helsman => publish update in topic
- * - Windspeed
  * - Winddirection => how's the definition? Where wind is coming from or where wind is blowing to?
  */
 
@@ -95,7 +93,7 @@ void nav_init(void) {
 /**
  * Calculate a new optimal reference Heading
  */
-void nav_navigate(void) {
+void nav_navigate(struct structs_topics_s *strs_p) {
 
 
 	/** Pathplanning is only done with a certain frequency
@@ -148,7 +146,7 @@ void nav_navigate(void) {
 
 			/****COMMUNICATION
 			* A new Reference Heading is generated => send this data to the Helsman (autonomous_sailing module) */
-			nav_speak2helsman();
+			nav_speak2helsman(strs_p);
 
 		} //if no tack or gybe is in progress
 
@@ -175,10 +173,14 @@ void nav_listen2helsman(const struct structs_topics_s *strs_p) {
 /**
  * A new heading reference is available. Communicate this new information to the "autonomous_sailing module".
  * Therefore, speak to the Helsman.
+ *
+ * @param strs_p: Pointer to the topics struct.
  */
-void nav_speak2helsman(void) {
+void nav_speak2helsman(struct structs_topics_s *strs_p) {
 
-	float alpha_star = nh_compass2dumas(state.heading_ref)+state.wind_dir; //TODO: Check this!
+	/* Set the corresponding values in the shared memory */
+	strs_p->path_planning.alpha_star = nh_compass2dumas(state.heading_ref)+state.wind_dir; //TODO: Check this!
+	strs_p->path_planning.do_maneuver = state.maneuver;
 
 
     #if C_DEBUG == 1
@@ -190,7 +192,7 @@ void nav_speak2helsman(void) {
 			printf("Error opening file!\n");
 		}
 
-		state.maneuver = false;
+		//state.maneuver = false;
 		fprintf(f,"%f, %d, ",state.heading_ref,state.maneuver);
 		fclose(f);
 
@@ -214,6 +216,21 @@ void nav_heading_wind_update(const struct structs_topics_s *strs_p) {
 
 	/* For the Pathplanning a compass-heading is needed (element of [0...2pi], with 0 = true North) */
 	state.heading_cur = nh_dumas2compass(alpha + twd); //COG in Dumas' convention
+
+} //end of nav_heading_update
+
+
+
+/**
+ * New information about the windspeed is available. Tell these values to the navigator.
+ *
+ * @param *strs_p: Pointer to the topics-struct
+ */
+void nav_windspeed_update(const struct structs_topics_s *strs_p) {
+
+	/* Get the new Windspeed Value
+	 * Note: The Wind is measured in Sensor-Frame! */
+	state.wind_speed = strs_p->wind_sailing.speed_true;
 
 } //end of nav_heading_update
 

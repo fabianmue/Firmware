@@ -48,7 +48,7 @@ void nav_init(void);
 
 
 /** @brief Calculate a new optimal heading reference */
-void nav_navigate(void);
+void nav_navigate(struct structs_topics_s *strs_p);
 
 
 /** @brief Listen to the helsman */
@@ -56,11 +56,15 @@ void nav_listen2helsman(const struct structs_topics_s *strs_p);
 
 
 /** @brief Speak to the helsman */
-void nav_speak2helsman(void);
+void nav_speak2helsman(struct structs_topics_s *strs_p);
 
 
 /** @brief New position information is available */
 void nav_position_update(const struct structs_topics_s *strs_p);
+
+
+/** @brief New wind-information is available */
+void nav_windspeed_update(const struct structs_topics_s *strs_p);
 
 
 /** @brief New heading information is available */

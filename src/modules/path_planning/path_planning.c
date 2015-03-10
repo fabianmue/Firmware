@@ -247,12 +247,19 @@ int pp_thread_main(int argc, char *argv[]) {
                     //copy new WSAI data
                     orb_copy(ORB_ID(wind_sailing), subs.wind_sailing,
                              &(strs.wind_sailing));
+
+					#if USE_GRIDLINES_PP != 1
+                    	/* A new value for the windspeed is available
+                    	 * => tell this value to the Navigator */
+                    nav_windspeed_update(&strs);
+					#endif
                 }
                 if(fds[3].revents & POLLIN){
                     //copy new parameters from QGC
                     orb_copy(ORB_ID(parameter_update), subs.parameter_update,
                              &(strs.parameter_update));
 
+                    /* Parameters have been changed by QGround Control */
                     p_param_update();
 
                 }
@@ -261,8 +268,7 @@ int pp_thread_main(int argc, char *argv[]) {
 
 		#if USE_GRIDLINES_PP != 1
 			/* Call the navigator for a new reference Heading */
-
-			nav_navigate();
+			nav_navigate(&strs);
 		#endif
 
 
