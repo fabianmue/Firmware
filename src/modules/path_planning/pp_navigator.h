@@ -72,11 +72,11 @@ void nav_heading_wind_update(const struct structs_topics_s *strs_p);
 
 
 /** @brief Set Obstacles */
-void nav_setObstacle(uint8_t ObstNumber, Point ObstPos);
+void nav_set_obstacle(uint8_t ObstNumber, Point ObstPos);
 
 
 /** @brief Set Targets */
-void nav_setTarget(uint8_t TargetNumber, Point TargetPos);
+void nav_set_target(uint8_t TargetNumber, Point TargetPos);
 
 
 /** @brief Set Configuration Parameters for the Navigator */

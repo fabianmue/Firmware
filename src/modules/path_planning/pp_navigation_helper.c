@@ -84,7 +84,7 @@ float nh_ned_dist(NEDpoint point1, NEDpoint point2) {
 
 	/* Check distance for zero
 	 * Otherwise, this could lead to a devision by zero! */
-	if(dist == 0) {
+	if(dist <= 0.0000000001f) {
 		dist = 0.0000000001f;
 	}
 

@@ -19,7 +19,7 @@
  * is possible checking the algorithms and the inputs/outputs of the
  * different functions.
  * Note: With C_DEBUG = 1 it is NOT possible to compile for the Pixhawk!*/
-#define C_DEBUG 1
+#define C_DEBUG 0
 
 #if C_DEBUG == 1 //Include some h-files for Computer Simulation (PC-Debugging)
 	#include "PCDebug/pixhawk_variables.h"
@@ -59,7 +59,7 @@
 
 /* DEFINE MAXIMUM NUMBER OF TARGETS
  * Maximum number of targets (waypoints) */
-#define MAXTARGETNUMBER 5
+#define MAXTARGETNUMBER 3
 
 
 /* DEFINE MAXIMUM NUMBER OF OBSTACLES

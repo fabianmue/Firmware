@@ -58,6 +58,36 @@ PARAM_DEFINE_INT32(PP_CM_WINDOWSIZE, 5);
 PARAM_DEFINE_INT32(PP_NAV_PERIOD, 1000);
 
 
+/**
+ * pp_navigator: Target Position (GEO-Coordinate Frame)
+ */
+PARAM_DEFINE_FLOAT(PP_NAV_TARGET1_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_TARGET1_LON, HOMELON);
+
+PARAM_DEFINE_FLOAT(PP_NAV_TARGET2_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_TARGET2_LON, HOMELON);
+
+PARAM_DEFINE_FLOAT(PP_NAV_TARGET3_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_TARGET3_LON, HOMELON);
+
+PARAM_DEFINE_INT32(PP_NAV_TARGET_NUMBER, 1);	//Number of Targets currently set
+
+
+/**
+ * pp_navigator: Target Position (GEO-Coordinate Frame)
+ */
+PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE1_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE1_LON, HOMELON);
+
+PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE2_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE2_LON, HOMELON);
+
+PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE3_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE3_LON, HOMELON);
+
+PARAM_DEFINE_INT32(PP_NAV_OBSTACLE_NUMBER, 1);	//Number of Obstacles currently set
+
+
 
 
 
@@ -79,6 +109,20 @@ static struct pointers_param_qgc_s{
 
 	//**NAVIGATION
 	param_t nav_period;
+	param_t nav_target1_lat;
+	param_t nav_target1_lon;
+	param_t nav_target2_lat;
+	param_t nav_target2_lon;
+	param_t nav_target3_lat;
+	param_t nav_target3_lon;
+	param_t nav_target_number;
+	param_t nav_obstacle1_lat;
+	param_t nav_obstacle1_lon;
+	param_t nav_obstacle2_lat;
+	param_t nav_obstacle2_lon;
+	param_t nav_obstacle3_lat;
+	param_t nav_obstacle3_lon;
+	param_t nav_obstacle_number;
 
 } pointers_param_qgc;
 
@@ -106,8 +150,20 @@ void p_param_init(void) {
 
 	//**NAVIGATION
 	pointers_param_qgc.nav_period = param_find("PP_NAV_PERIOD");
-
-
+	pointers_param_qgc.nav_target1_lat = param_find("PP_NAV_TARGET1_LAT");
+	pointers_param_qgc.nav_target1_lon = param_find("PP_NAV_TARGET1_LON");
+	pointers_param_qgc.nav_target2_lat = param_find("PP_NAV_TARGET2_LAT");
+	pointers_param_qgc.nav_target2_lon = param_find("PP_NAV_TARGET2_LON");
+	pointers_param_qgc.nav_target3_lat = param_find("PP_NAV_TARGET3_LAT");
+	pointers_param_qgc.nav_target3_lon = param_find("PP_NAV_TARGET3_LON");
+	pointers_param_qgc.nav_target_number = param_find("PP_NAV_TARGET_NUMBER");
+	pointers_param_qgc.nav_obstacle1_lat = param_find("PP_NAV_TARGET1_LAT");
+	pointers_param_qgc.nav_obstacle1_lon = param_find("PP_NAV_TARGET1_LON");
+	pointers_param_qgc.nav_obstacle2_lat = param_find("PP_NAV_TARGET2_LAT");
+	pointers_param_qgc.nav_obstacle2_lon = param_find("PP_NAV_TARGET2_LON");
+	pointers_param_qgc.nav_obstacle3_lat = param_find("PP_NAV_TARGET3_LAT");
+	pointers_param_qgc.nav_obstacle3_lon = param_find("PP_NAV_TARGET3_LON");
+	pointers_param_qgc.nav_obstacle_number = param_find("PP_NAV_OBSTACLE_NUMBER");
 }
 
 
@@ -137,8 +193,37 @@ void p_param_update(void) {
 	//**NAVIGATOR
 	uint32_t period;
 	param_get(pointers_param_qgc.nav_period, &period);
-
 	nav_set_configuration(period);
+
+	Point target[MAXTARGETNUMBER];
+	Point obstacle[MAXOBSTACLENUMBER];
+	uint8_t t_num, o_num;
+
+	param_get(pointers_param_qgc.nav_target1_lat,&(target[0].lat));
+	param_get(pointers_param_qgc.nav_target1_lon,&(target[0].lon));
+	param_get(pointers_param_qgc.nav_target2_lat,&(target[1].lat));
+	param_get(pointers_param_qgc.nav_target2_lon,&(target[1].lon));
+	param_get(pointers_param_qgc.nav_target3_lat,&(target[2].lat));
+	param_get(pointers_param_qgc.nav_target3_lon,&(target[2].lon));
+	param_get(pointers_param_qgc.nav_target_number,&t_num);
+	param_get(pointers_param_qgc.nav_obstacle1_lat,&(obstacle[0].lat));
+	param_get(pointers_param_qgc.nav_obstacle1_lon,&(obstacle[0].lon));
+	param_get(pointers_param_qgc.nav_obstacle2_lat,&(obstacle[1].lat));
+	param_get(pointers_param_qgc.nav_obstacle2_lon,&(obstacle[1].lon));
+	param_get(pointers_param_qgc.nav_obstacle3_lat,&(obstacle[2].lat));
+	param_get(pointers_param_qgc.nav_obstacle3_lon,&(obstacle[2].lon));
+	param_get(pointers_param_qgc.nav_obstacle_number,&o_num);
+
+	uint8_t t;
+	for(t = 0; t < t_num; t++) {
+		nav_set_target(t,target[t]);
+	}
+
+	for(t = 0; t < o_num; t++) {
+		nav_set_obstacle(t,obstacle[t]);
+	}
+
+
 
 }
 

@@ -282,7 +282,7 @@ void nav_position_update(const struct structs_topics_s *strs_p) {
  * @param ObstNumber: The position of the obstacle in the Array of all Obstacles
  * @param ObstPos: The GPS-Position of the obstacle represented as a Point
  */
-void nav_setObstacle(uint8_t ObstNumber, Point ObstPos) {
+void nav_set_obstacle(uint8_t ObstNumber, Point ObstPos) {
 
 	/* Convert to NED-Frame */
 	field.obstacles[ObstNumber] = nh_geo2ned(ObstPos);
@@ -298,7 +298,7 @@ void nav_setObstacle(uint8_t ObstNumber, Point ObstPos) {
  * @param TargetNumber: The position of the target in the Array of all Targets
  * @param TargetPos: The GPS-Position of the target represented as a Point
  */
-void nav_setTarget(uint8_t TargetNumber, Point TargetPos) {
+void nav_set_target(uint8_t TargetNumber, Point TargetPos) {
 
 	field.targets[TargetNumber] = nh_geo2ned(TargetPos);
 
