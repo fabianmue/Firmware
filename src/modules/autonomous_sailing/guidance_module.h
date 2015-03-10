@@ -46,11 +46,9 @@
 #include <math.h>
 #include <stdint.h>
 
-//#include "path_planning.h"
 #include "parameters.h"
 #include "topics_handler.h"
 #include "controller_data.h"
-#include "simulation_utility.h"
 #include "mpcForces/mpc_boatTack_h20.h"
 #include "mpcForces/mpc_boatTack_h30.h"
 #include "pp_special_cmd_as.h"

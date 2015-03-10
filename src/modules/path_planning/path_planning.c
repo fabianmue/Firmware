@@ -52,14 +52,6 @@
  */
 
 
-/* TODO:
- * - add logging of variables
- * - add parameters from QGroundControl
- * - add Potentialfield Method
- * - solve missing Reference Problem to PRIORITY VARIABLES
- */
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -183,7 +175,6 @@ int pp_thread_main(int argc, char *argv[]) {
     th_subscribe(&subs,&strs);       //Subscribe to interested Topics
     th_advertise(&strs);	 		 //Advertise Topics
 
-
 	//**POLL FOR CHANGES IN SUBSCRIBED TOPICS
     struct pollfd fds[] = {			 // Polling Management
             { .fd = subs.boat_guidance_debug,       .events = POLLIN },//MUST BE THE FIRST ONE!
@@ -196,8 +187,6 @@ int pp_thread_main(int argc, char *argv[]) {
 
 
     //** INIT FUNCTIONS
-
-	//nav_init();	//Init a Navigator
 
     //init pp_paramters module
     p_param_init();

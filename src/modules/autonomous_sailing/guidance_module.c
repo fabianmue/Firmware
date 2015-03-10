@@ -1309,7 +1309,6 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
                 sail_command = param_qgc_p->sail_servo;
         }
 
-
         //saturation for safety reason
         rudder_command = rudder_saturation(rudder_command);
         sail_command = sail_saturation(sail_command);

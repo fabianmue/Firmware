@@ -3,8 +3,6 @@ SRCS				= autonomous_sailing.c \
                                         parameters.c \
                                         controller_data.c \
                                         guidance_module.c \
-                                        hil_simulation.c \
-                                        simulation_utility.c \
                                         send_msg_qgc.c  \
                                         mpcForces/mpc_boatTack_h20.c\
                                         mpcForces/mpc_boatTack_h30.c\

@@ -46,9 +46,6 @@
 #include <errno.h>
 #include <poll.h>
 
-//Include Extremum Seeking Sailcontrol (JW)
-#include "extremum_sailcontrol.h"
-
 //parameters from QGroundControl
 #include "parameters.h"
 
@@ -60,9 +57,6 @@
 
 //controller data functions
 #include "controller_data.h"
-
-//hardware in the loop simulation
-#include "hil_simulation.h"
 
 //settings
 #include "settings.h"
@@ -198,9 +192,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
     //init message module
     smq_init_msg_module();
-
-    //init Extremum Seeking Sailcontrol (ESSC)
-    //essc_init();
 
     //subscribe/advertise interested topics
     as_topics(&subs, &pubs, &strs);
