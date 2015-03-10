@@ -81,11 +81,11 @@ static struct{
 //filtered measurements & other usefull data to filter them
 static struct{
     float *alpha_p; ///poniter to vector of last K values of true wind angle, [rad], according to Dumas angle definition (Chap 1.3)
-    float *app_wind_p;///pointer to vector of last k_app values of apparent wind read by weather station
+    float *tws_p;///pointer to vector of last k_tws values of true wind speed read by weather station
     float *twd_p; ///pointer to vector of last k_twd values of true wind read by weather station
 
     uint16_t k;         ///total number of elements in alpha_p
-    uint16_t k_app;     ///total number of elements in app_wind_p
+    uint16_t k_tws;     ///total number of elements in tws_p
     uint16_t k_twd;     ///totla number of elements in twd_p
 
     uint16_t opt_tack_alpha_win; ///window size of alpha filter when tacking either with LQR or MPC
@@ -97,11 +97,11 @@ static struct{
     bool opt_tack_going; ///true if the boat is tacking using either LQR or MPC
 
     int16_t oldestValue; ///index of oldest value in alpha_p
-    int16_t oldestValueApp; ///index of oldest value in app_wind_p
+    int16_t oldestValueTws; ///index of oldest value in tws_p
     int16_t oldestValueTwd; ///index of oldest value in twd_p
 
     float alpha_sns;    ///moving average value from alpha_p
-    float apparent_wind_sns;///average from app_wind_p
+    float tws_sns;///average from tws_p
     float twd_sns;///average from twd_p
 }measurements_filtered;
 
@@ -145,9 +145,9 @@ void cd_init_controller_data(void){
     measurements_filtered.opt_tack_alpha_win = 0;
     measurements_filtered.alpha_window_length = 0;
 
-    measurements_filtered.app_wind_p = NULL;
-    measurements_filtered.apparent_wind_sns = 0.0f;
-    measurements_filtered.k_app = 0;
+    measurements_filtered.tws_p = NULL;
+    measurements_filtered.tws_sns = 0.0f;
+    measurements_filtered.k_tws = 0;
 
     measurements_filtered.twd_p = NULL;
     measurements_filtered.k_twd = 0;
@@ -162,8 +162,8 @@ void cd_init_controller_data(void){
     //set k to 1 since real values are not provided
     cd_update_k(1, 1);
 
-    //set k_app to 1 since a real value is not provided
-    cd_update_k_app(1);
+    //set k_tws to 1 since a real value is not provided
+    cd_update_k_tws(1);
 
     //set k_twd to 1 since real values are not provided
     cd_update_k_twd(1, 1);
@@ -171,29 +171,29 @@ void cd_init_controller_data(void){
 
 /** Free memory and allocate new space for new dimension
  *
- * @param k new dimension of the moving window for apparent wind
+ * @param k new dimension of the moving window for true wind speed
 */
-void cd_update_k_app(const uint16_t k){
+void cd_update_k_tws(const uint16_t k){
 
     //some controls before freeing memory
-    if(k == measurements_filtered.k_app || k == 0)
+    if(k == measurements_filtered.k_tws || k == 0)
         return; //nothing to do
 
-    if(measurements_filtered.app_wind_p != NULL)
-        free(measurements_filtered.app_wind_p); //free memory
+    if(measurements_filtered.tws_p != NULL)
+        free(measurements_filtered.tws_p); //free memory
 
-    measurements_filtered.app_wind_p = malloc(sizeof(float) * k);
+    measurements_filtered.tws_p = malloc(sizeof(float) * k);
 
-    measurements_filtered.k_app = k;
+    measurements_filtered.k_tws = k;
 
-    //initialize all the elements of alpha_p to 0
-    for(uint16_t i = 0; i < measurements_filtered.k_app; i++){
-        measurements_filtered.app_wind_p[i] = 0.0f;
+    //initialize all the elements of tws_p to 0
+    for(uint16_t i = 0; i < measurements_filtered.k_tws; i++){
+        measurements_filtered.tws_p[i] = 0.0f;
     }
 
-    measurements_filtered.oldestValueApp = 0;
+    measurements_filtered.oldestValueTws = 0;
 
-    measurements_filtered.apparent_wind_sns = 0.0f;
+    measurements_filtered.tws_sns = 0.0f;
 }
 
 /** Free memory and allocate new space for new dimension
@@ -334,32 +334,14 @@ void cd_update_raw_cog(const float cog_r){
     }
 }
 
-/** Update apparent direction with a new value supplied by weather station
+/** Update true wind (estimated) direction and speed with new values supplied by weather station.
  *
- * @param app_r apparent wind direction [rad], positive on the right, negative on the left (Opposite to Dumas' convention)
+ * @param twd_r true wind direction [rad], in our sensor convention
+ * @param tws_r true wind speed [m/s]
 */
-void cd_update_raw_app_wind(const float app_r){
+void cd_update_raw_tw_info(float twd_r, float tws_m_s){
 
-    //delete oldest value in app_wind_p to save app_r
-    measurements_filtered.app_wind_p[measurements_filtered.oldestValueApp] = app_r;
-
-    //update oldest value index
-    measurements_filtered.oldestValueApp++;
-
-    if(measurements_filtered.oldestValueApp >= measurements_filtered.k_app)
-        measurements_filtered.oldestValueApp = 0;
-
-    //update apparent wind mean using a robust mean
-    measurements_filtered.apparent_wind_sns = robust_avg_sns(measurements_filtered.app_wind_p,
-                                                             measurements_filtered.k_app);
-
-}
-
-/** Update true wind (estimated) direction with a new value supplied by weather station
- *
- * @param twd_r true wind direction [rad], positive on the right, negative on the left (Opposite to Dumas' convention)
-*/
-void cd_update_raw_twd(const float twd_r){
+    // ----- update twd info and mean value -----
 
     //delete oldest value in twd_p to save twd_r
     measurements_filtered.twd_p[measurements_filtered.oldestValueTwd] = twd_r;
@@ -373,6 +355,24 @@ void cd_update_raw_twd(const float twd_r){
     //update twd mean using a robust mean
     measurements_filtered.twd_sns = robust_avg_sns(measurements_filtered.twd_p,
                                                    measurements_filtered.twd_window_length);
+
+    // ----- update twd info and mean value -----
+
+    //delete oldest value in app_wind_p to save app_r
+    measurements_filtered.tws_p[measurements_filtered.oldestValueTws] = tws_m_s;
+
+    //update oldest value index
+    measurements_filtered.oldestValueTws++;
+
+    if(measurements_filtered.oldestValueTws >= measurements_filtered.k_tws)
+        measurements_filtered.oldestValueTws = 0;
+
+    //update true wind speed mean using a simple mean
+    float sum = 0.0f;
+    for(uint16_t i = 0; i < measurements_filtered.k_tws; i++)
+        sum = sum + measurements_filtered.tws_p[i];
+
+    measurements_filtered.tws_sns = sum / measurements_filtered.k_tws;
 }
 
 
@@ -422,13 +422,13 @@ float cd_get_alpha_dumas(void){
     return -measurements_filtered.alpha_sns;
 }
 
-/** Return the average value of apparent wind direction computed from the last k_app values
+/** Return the average value of the true wind speed.
  *
- * @return moving average value of apparent wind direction in sensor frame
+ * @return moving average value, in [m/s]
 */
-float cd_get_app_wind_sns(void){
+float cd_get_tws(void){
 
-    return measurements_filtered.apparent_wind_sns;
+    return measurements_filtered.tws_sns;
 }
 
 /** Return the average value of true wind direction computed from the last k_twd values

@@ -57,8 +57,8 @@ void cd_init_controller_data(void);
 /** @brief modify size of the moving window for alpha angle*/
 void cd_update_k(const uint16_t k, uint16_t opt_tack_alpha_win);
 
-/** @brief modify size of the moving window for apparent angle*/
-void cd_update_k_app(const uint16_t k);
+/** @brief modify size of the moving window for true wind speed*/
+void cd_update_k_tws(const uint16_t k);
 
 /** @brief modify size of the moving window for true wind angle*/
 void cd_update_k_twd(const uint16_t k, uint16_t opt_tack_twd_win);
@@ -66,17 +66,14 @@ void cd_update_k_twd(const uint16_t k, uint16_t opt_tack_twd_win);
 /** @brief update course over ground with a new raw value from the GPS*/
 void cd_update_raw_cog(const float cog_r);
 
-/** @brief update true wind (estimated) raw direction with a new value*/
-void cd_update_raw_twd(const float twd_r);
-
-/** @brief update apparent wind raw direction with a new value*/
-void cd_update_raw_app_wind(const float app_r);
+/** @brief update true wind (estimated) raw direction and speed*/
+void cd_update_raw_tw_info(float twd_r, float tws_m_s);
 
 /** @brief get the average value of alpha*/
 float cd_get_alpha_dumas(void);
 
-/** @brief get the average value of apparent wind in sensor frame*/
-float cd_get_app_wind_sns(void);
+/** @brief get the average value of the true wind speed*/
+float cd_get_tws(void);
 
 /** @brief get the average value of true wind direction in sensor frame*/
 float cd_get_twd_sns(void);

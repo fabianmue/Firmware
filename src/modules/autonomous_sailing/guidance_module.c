@@ -1343,7 +1343,7 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
     strs_p->boat_guidance_debug.rudder_action = rudder_command;
     strs_p->boat_guidance_debug.sail_action = sail_command;
     strs_p->boat_guidance_debug.twd_mean = cd_get_twd_sns();
-    strs_p->boat_guidance_debug.tws_mean = -1.0f;//TODO: add real value here
+    strs_p->boat_guidance_debug.tws_mean = cd_get_tws();
     //maneuver is completed iff reference_actions.do_maneuver == false
     strs_p->boat_guidance_debug.maneuver_completed = (reference_actions.do_maneuver == false) ?
                                                       1 : 0;

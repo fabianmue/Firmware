@@ -176,12 +176,12 @@ PARAM_DEFINE_INT32(AS_WIN_AL, 10);
 
 /**
  * Specifies the number of samples for the moving average filt of
- * the apparant wind direction.
+ * the true wind speed.
  *
  * @min 1
  * @max ?
  */
-PARAM_DEFINE_INT32(AS_WIN_APP, 10);
+PARAM_DEFINE_INT32(AS_WIN_TWS, 10);
 
 /**
  * Specifies the number of samples for the moving average filt of
@@ -371,7 +371,7 @@ PARAM_DEFINE_FLOAT(ASO_MPC_B2, -0.0229457259f);
 /**
  * ASO_WIN_AL, specifies the number of samples for the moving average of
  * true wind angle (alpha) DURING tack.
- * Must be <= @see AS_WIN_APP.
+ * Must be <= @see AS_WIN_TWD.
  *
  * @min 1
  * @max ?
@@ -480,7 +480,7 @@ static struct pointers_param_qgc_s{
     param_t sails_opened_alpha;     /**< pointer to param AS_SAI_X2_AL*/
 
     param_t moving_alpha_window_pointer;/**< pointer to param AS_WIN_AL*/
-    param_t moving_apparent_window_pointer;/**< pointer to param AS_WIN_APP*/
+    param_t moving_tws_window_pointer;/**< pointer to param AS_WIN_TWS*/
     param_t moving_twd_window_pointer;/**< pointer to param AS_WIN_TWD*/
 
     param_t use_fixed_twd_pointer; /**< pointer to AS_USE_FIXED_TWD */
@@ -595,7 +595,7 @@ void p_param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.sails_opened_alpha = param_find("AS_SAI_X2_AL");
 
     pointers_param_qgc.moving_alpha_window_pointer = param_find("AS_WIN_AL");
-    pointers_param_qgc.moving_apparent_window_pointer = param_find("AS_WIN_APP");
+    pointers_param_qgc.moving_tws_window_pointer = param_find("AS_WIN_TWS");
     pointers_param_qgc.moving_twd_window_pointer = param_find("AS_WIN_TWD");
 
     pointers_param_qgc.use_fixed_twd_pointer = param_find("AS_USE_FIXED_TWD");
@@ -744,7 +744,7 @@ void p_param_update(struct parameters_qgc *params_p,
 
     //----- moving windows
     uint16_t window_alpha;
-    uint16_t window_apparent;
+    uint16_t window_tws;
     uint16_t window_twd;
 
     int32_t alpha_window_during_tack;
@@ -755,9 +755,9 @@ void p_param_update(struct parameters_qgc *params_p,
     //update window size using API in controller_data.h
     cd_update_k(window_alpha, alpha_window_during_tack);
 
-    param_get(pointers_param_qgc.moving_apparent_window_pointer, &window_apparent);
+    param_get(pointers_param_qgc.moving_tws_window_pointer, &window_tws);
     //update window size using API in controller_data.h
-    cd_update_k_app(window_apparent);
+    cd_update_k_tws(window_tws);
 
     param_get(pointers_param_qgc.moving_twd_window_pointer, &window_twd);
     param_get(pointers_param_qgc.twd_window_tack_pointer, &twd_window_during_tack);

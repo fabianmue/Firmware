@@ -274,12 +274,9 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     // new WSAI values, copy new data
                     orb_copy(ORB_ID(wind_sailing), subs.wind_sailing, &(strs.wind_sailing));
 
-                    //update apparent wind direction in control data
-                    cd_update_raw_app_wind(strs.wind_sailing.angle_apparent);
-
                     #if SIMULATION_FLAG == 0
                     //update true wind direction in control data
-                    cd_update_raw_twd(strs.wind_sailing.angle_true);
+                    cd_update_raw_tw_info(strs.wind_sailing.angle_true, strs.wind_sailing.speed_true);
                     #endif
                 }
                 if(fds[3].revents & POLLIN){
@@ -324,7 +321,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
                 update_raw_twd(twd);
             #else
                 cd_update_raw_cog(params.cog_sim);
-                cd_update_raw_twd(params.twd_sim);
+                cd_update_raw_tw_info(params.twd_sim, 0.0f);//dummy wind velocity, set a value here for debug
                 cd_update_raw_yaw_yaw_rate(params.yaw_sim, 0.0f);//dummy yawRate value
             #endif
         #endif
