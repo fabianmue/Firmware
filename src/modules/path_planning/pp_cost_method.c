@@ -39,7 +39,7 @@ static struct {
 	uint8_t WindowSize; 		//Size of the window for smoothing the Costfunction
 } Config = {
 		.Gw = 0.9f, //0.9
-		.Go = 0.8f, //0.8
+		.Go = 0.0f, //0.8
 		.Gm = 0.0f, //0.4
 		.Gs = 0.0f,//0.05
 		.Gt = 0.0f, //0.1
@@ -69,7 +69,11 @@ float cost_heading_change(float seg,struct nav_state_s *state);
 float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *field);
 
 /* @brief Smooth an Array of variable size and with a variable windowSize */
-void smooth(float *array, uint8_t arraySize , uint8_t windowSize);
+void smooth(const float signal[], int SignalLen, int KernelLen,float result[]);
+
+#if C_DEBUG == 1
+	void print_array(float array[], size_t length);
+#endif
 
 
 
@@ -110,8 +114,9 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 		costMat[ind] = total_cost(seg,state,field);
 		headMat[ind] = seg;
 
-
-		printf("Total Cost: %f, %f\n",seg*RAD2DEG,costMat[ind]);
+		#if C_DEBUG == 1
+			printf("Total Cost: %f, %f\n",seg*RAD2DEG,costMat[ind]);
+		#endif
 
 
 		//Update Index
@@ -119,13 +124,14 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 	}
 
 	//Smooth Cost-Matrix
-	smooth(costMat,probeNum,5);
+	float mat[probeNum];
+	smooth(costMat,probeNum,Config.WindowSize,mat);
 
-	//DEBUG:
-	uint8_t i;
-	for(i=0; i < probeNum; i++) {
-		printf("%f\n",costMat[i]);
-	}
+	//Print the two arrays
+	#if C_DEBUG == 1
+	print_array(costMat,probeNum);
+	print_array(mat,probeNum);
+	#endif
 
 
 	//Find minimum Index
@@ -152,7 +158,7 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
  * @param ObstSafetyRadius
  * @param ObstHorizon
 */
-void cm_set_onfiguration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float ObstSafetyRadius, float ObstHorizon, float WindowSize) {
+void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float ObstSafetyRadius, float ObstHorizon, float WindowSize) {
 
 	Config.Gw = Gw;
 	Config.Go = Go;
@@ -185,35 +191,41 @@ float total_cost(float seg, struct nav_state_s *state, struct nav_field_s *field
 	/*** TARGET/WIND COST ***/
 	float Cw = cost_target_wind(seg,state,field);
 
-	//printf("Target/Wind-Cost: %f, %f\n",seg*RAD2DEG,Cw);
-
+	#if C_DEBUG == 1
+	printf("  Target/Wind-Cost: %f, %f\n",seg*RAD2DEG,Cw);
+	#endif
 
 	/*** MANEUVER COST ***/
 	float Cm = cost_maneuver(seg,state);
 
-	//printf("Maneuver Cost: %f, %f\n",seg*RAD2DEG,Cm);
-
+	#if C_DEBUG == 1
+	printf("  Maneuver Cost: %f, %f\n",seg*RAD2DEG,Cm);
+	#endif
 
 	/*** TACTICAL COST ***/
 	float Ct = cost_tactical(seg,state,field);
 
-	//printf("Tactical Cost: %f, %f\n",seg*RAD2DEG,Ct);
+	#if C_DEBUG == 1
+	printf("  Tactical Cost: %f, %f\n",seg*RAD2DEG,Ct);
+	#endif
 
 
 	/*** SMALL HEADING CHANGE COST ***/
 	float Cs = cost_heading_change(seg,state);
 
-	//printf("Small Heading Cost: %f, %f\n",seg*RAD2DEG,Cs);
-
+	#if C_DEBUG == 1
+	printf("  Small Heading Cost: %f, %f\n",seg*RAD2DEG,Cs);
+	#endif
 
 	/*** OBSTACLE COST ***/
 	float Co = cost_ostacle(seg,state,field);
 
-	//printf("Obstacle Cost: %f, %f\n",seg*RAD2DEG,Co);
-
+	#if C_DEBUG == 1
+	printf("  Obstacle Cost: %f, %f\n",seg*RAD2DEG,Co);
+	#endif
 
 	/*** TOTAL COST ***/
-	return (Cw + Co + Cm + Cs + Ct + Co);
+	return (Cw + Cm + Ct + Cs + Co);
 }
 
 
@@ -243,11 +255,13 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 	//Distance to target
 	float distToTarget = nh_ned_dist(state->position,field->targets[state->targetNum]);
 
-	float tgx = dx/distToTarget;			//Vector pointing towards the target
-	float tgy = dy/distToTarget;
+	//TODO: Here a flip of signs is necessary, if the wind-direction is defined the opposite way!
+	float tgx = -dx/distToTarget;			//Vector pointing towards the target
+	float tgy = -dy/distToTarget;
 
 	//Get the Boatspeed from the Polardiagram
 	float boatspeed = pol_polardiagram(appWind,state->wind_dir);
+
 
 	//Calcualte Direction and Speed of the Boat
 	float vhx = cosf(seg)*boatspeed;
@@ -390,6 +404,8 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 	uint8_t i;
 	for (i = 0; i < field->NumberOfObstacles; i++) {
 
+		//printf("  Number of Obstacles: %d\n",field->NumberOfObstacles);
+
 		//printf("  Obstacle Positon: %f/%f\n",field->obstacles[i].northx,field->obstacles[i].easty);
 		//printf("  Current  Positon: %f/%f\n",state->position.northx,state->position.easty);
 
@@ -470,32 +486,69 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 /**
  * Smooths an array of variable size using a moving averaging window of variable size
  *
- * @param *array: Pointer to an array. Note this array is directly modified!
+ * @param signal: Pointer to an array. Note this array is directly modified!
  * @param windowSize: Size of the moving averaging window
  */
-void smooth(float *array, uint8_t arraySize , uint8_t windowSize) {
+void smooth(const float signal[], int SignalLen, int KernelLen,
+            float result[]) {
 
-	//TODO: Make this faster. The method used here is extremly slow and computationally inefficient!
-	// For an example see this: http://stackoverflow.com/questions/8424170/1d-linear-convolution-in-ansi-c-code
+	printf("Signal Length: %d\n",SignalLen);
 
-	float arrayCpy[arraySize];
 
-	uint8_t i;
-	for(i = windowSize/2; i<(arraySize-windowSize/2); i++) {
+	int n;
+	for(n = 0; n < SignalLen; n++) {
+		//Iterate over all elements in the signal
+
+		result[n] = 0;		//Init the output
+
+		int kmin = n-KernelLen/2;
+		int kmax = n+KernelLen/2+1;
+
+		if(kmin<0) {
+			kmin = 0;
+		}
+
+		if(kmax > SignalLen) {
+			kmax = SignalLen;
+		}
+
+		//printf("kmin/kmax: %d/%d\n",kmin,kmax);
+
 		float sum = 0;
-		uint8_t j;
-		for(j = -windowSize/2; j<windowSize/2; j++) {
-			sum += array[i+j];
-		} //for j
+		int i;
+		for(i = kmin; i < kmax; i++) {
+			sum += signal[i];
+		}
 
-		arrayCpy[i] = sum/windowSize;
-	} //for i
+		result[n] = sum/(kmax-kmin);
 
+		//printf("kmax-kmin: %d %d    %f/%f\n",kmax,kmin,result[n],signal[n]);
 
-	//Copy the array *THIS IS VERY BAD*
-	array = arrayCpy;
+	}
+
 
 } //end of smooth
+
+
+#if C_DEBUG == 1
+	void print_array(float array[], size_t length) {
+		FILE *f = fopen("output.txt", "a");
+		if (f == NULL)
+		{
+
+
+		    printf("Error opening file!\n");
+		}
+
+		fprintf(f,"[");
+
+		uint8_t i;
+		for(i=0; i<length-1; i++) {
+			fprintf(f,"%f, ",array[i]);
+		}
+		fprintf(f,"%f]\n",array[length]);
+	}
+#endif
 
 
 

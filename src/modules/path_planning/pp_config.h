@@ -19,7 +19,7 @@
  * is possible checking the algorithms and the inputs/outputs of the
  * different functions.
  * Note: With C_DEBUG = 1 it is NOT possible to compile for the Pixhawk!*/
-#define C_DEBUG 1
+#define C_DEBUG 0
 
 #if C_DEBUG == 1 //Include some h-files for Computer Simulation (PC-Debugging)
 	#include "PCDebug/pixhawk_variables.h"
@@ -44,6 +44,7 @@
 /* CONVERT FROM DEGREES TO RADIANS
  * pi/180 <=> conversion from Degrees to Radians */
 #define DEG2RAD      0.0174532925199433f 	//pi/180
+#define RAD2DEG     57.2957795131f			//180/pi
 
 
 /* DEFINITION FOR PI
