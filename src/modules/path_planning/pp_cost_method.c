@@ -476,6 +476,7 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 void smooth(float *array, uint8_t arraySize , uint8_t windowSize) {
 
 	//TODO: Make this faster. The method used here is extremly slow and computationally inefficient!
+	// For an example see this: http://stackoverflow.com/questions/8424170/1d-linear-convolution-in-ansi-c-code
 
 	float arrayCpy[arraySize];
 
