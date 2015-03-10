@@ -88,7 +88,7 @@ float nh_ned_dist(NEDpoint point1, NEDpoint point2) {
 		dist = 0.0000000001f;
 	}
 
-	return sqrtf(dx * dx + dy * dy);
+	return dist;
 }
 
 

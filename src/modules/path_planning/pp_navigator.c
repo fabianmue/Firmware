@@ -183,6 +183,17 @@ void nav_speak2helsman(void) {
 
     #if C_DEBUG == 1
 		printf("New Heading Reference: %f",state.heading_ref*RAD2DEG);
+
+		//Write a file with the shared-Memory Content for Matlab
+		FILE *f = fopen("sharedMemory.txt", "a");
+		if (f == NULL) {
+			printf("Error opening file!\n");
+		}
+
+		state.maneuver = false;
+		fprintf(f,"%f, %d, ",state.heading_ref,state.maneuver);
+		fclose(f);
+
 	#endif
 }
 
@@ -325,6 +336,10 @@ void nav_set_configuration(uint64_t period) {
 
 			field.targets[0] = target;
 			field.obstacles[0] = obstacle;
+
+			//printf("Target: %f/%f",field.targets[0].northx,field.targets[0].easty);
+			//printf("Obstac: %f/%f",field.obstacles[0].northx,field.obstacles[0].easty);
+
 
 			//Only one Target/Obstacle
 			field.NumberOfTargets = 1;

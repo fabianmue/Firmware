@@ -39,7 +39,7 @@ static struct {
 	uint8_t WindowSize; 		//Size of the window for smoothing the Costfunction
 } Config = {
 		.Gw = 0.9f, //0.9
-		.Go = 0.0f, //0.8
+		.Go = 0.8f, //0.8
 		.Gm = 0.0f, //0.4
 		.Gs = 0.0f,//0.05
 		.Gt = 0.0f, //0.1
@@ -100,7 +100,7 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 	float seg_start = (state->heading_cur-HEADRANGE);
 	float seg_end = (state->heading_cur+HEADRANGE);
 
-	uint8_t probeNum = 2*HEADRANGE/HEADRESOLUTION;	//Number of Probe-Headings
+	uint8_t probeNum = 2*HEADRANGE/HEADRESOLUTION+1;	//Number of Probe-Headings
 	float costMat[(int)(probeNum)];
 	float headMat[(int)(probeNum)];
 
@@ -108,14 +108,14 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 
 	float seg;
 	for(seg = seg_start; seg <= seg_end; seg += HEADRESOLUTION) {
-		seg = fmod(seg,(2*PI));
+		float seg_compass = fmod(seg,(2*PI));
 
 		//Get the cost and save it in the matrix
-		costMat[ind] = total_cost(seg,state,field);
-		headMat[ind] = seg;
+		costMat[ind] = total_cost(seg_compass,state,field);
+		headMat[ind] = seg_compass;
 
 		#if C_DEBUG == 1
-			printf("Total Cost: %f, %f\n",seg*RAD2DEG,costMat[ind]);
+			printf("Total Cost: %f, %f\n",seg_compass*RAD2DEG,costMat[ind]);
 		#endif
 
 
@@ -192,21 +192,21 @@ float total_cost(float seg, struct nav_state_s *state, struct nav_field_s *field
 	float Cw = cost_target_wind(seg,state,field);
 
 	#if C_DEBUG == 1
-	printf("  Target/Wind-Cost: %f, %f\n",seg*RAD2DEG,Cw);
+	//printf("  Target/Wind-Cost: %f, %f\n",seg*RAD2DEG,Cw);
 	#endif
 
 	/*** MANEUVER COST ***/
 	float Cm = cost_maneuver(seg,state);
 
 	#if C_DEBUG == 1
-	printf("  Maneuver Cost: %f, %f\n",seg*RAD2DEG,Cm);
+	//printf("  Maneuver Cost: %f, %f\n",seg*RAD2DEG,Cm);
 	#endif
 
 	/*** TACTICAL COST ***/
 	float Ct = cost_tactical(seg,state,field);
 
 	#if C_DEBUG == 1
-	printf("  Tactical Cost: %f, %f\n",seg*RAD2DEG,Ct);
+	//printf("  Tactical Cost: %f, %f\n",seg*RAD2DEG,Ct);
 	#endif
 
 
@@ -214,14 +214,14 @@ float total_cost(float seg, struct nav_state_s *state, struct nav_field_s *field
 	float Cs = cost_heading_change(seg,state);
 
 	#if C_DEBUG == 1
-	printf("  Small Heading Cost: %f, %f\n",seg*RAD2DEG,Cs);
+	//printf("  Small Heading Cost: %f, %f\n",seg*RAD2DEG,Cs);
 	#endif
 
 	/*** OBSTACLE COST ***/
 	float Co = cost_ostacle(seg,state,field);
 
 	#if C_DEBUG == 1
-	printf("  Obstacle Cost: %f, %f\n",seg*RAD2DEG,Co);
+	//printf("  Obstacle Cost: %f, %f\n",seg*RAD2DEG,Co);
 	#endif
 
 	/*** TOTAL COST ***/
@@ -255,7 +255,6 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 	//Distance to target
 	float distToTarget = nh_ned_dist(state->position,field->targets[state->targetNum]);
 
-	//TODO: Here a flip of signs is necessary, if the wind-direction is defined the opposite way!
 	float tgx = -dx/distToTarget;			//Vector pointing towards the target
 	float tgy = -dy/distToTarget;
 
@@ -379,7 +378,7 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
  */
 float cost_heading_change(float seg,struct nav_state_s *state) {
 
-	return Config.Gs * fabsf(seg-state->heading_cur)/720.0f;
+	return Config.Gs * fabsf(seg-state->heading_cur)/12.57f;
 
 } //end of cost_heading_change
 
@@ -492,40 +491,34 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 void smooth(const float signal[], int SignalLen, int KernelLen,
             float result[]) {
 
-	printf("Signal Length: %d\n",SignalLen);
-
+	uint8_t kernSize = KernelLen/2;	//Look half of the kernel to the left and to the right
+	//printf("Kernel Half: %d\n",kernSize);
 
 	int n;
 	for(n = 0; n < SignalLen; n++) {
 		//Iterate over all elements in the signal
 
-		result[n] = 0;		//Init the output
+		//Let the endpoints of the Array untouched
+		if(n<kernSize) {
+			//Endpoints at the beginning of the Array
+			result[n] = signal[n];
+		} else if(n>(SignalLen-kernSize-1)) {
+			//Endpoints at the end of the Array
+			result[n] = signal[n];
+		} else {
+			float sum = 0;
+			int i;
+			for(i = (n-kernSize); i <= n+kernSize; i++) {
+				sum += signal[i];
+				//printf("%d ",i);
+			}
 
-		int kmin = n-KernelLen/2;
-		int kmax = n+KernelLen/2+1;
-
-		if(kmin<0) {
-			kmin = 0;
+			result[n] = sum/KernelLen;
 		}
 
-		if(kmax > SignalLen) {
-			kmax = SignalLen;
-		}
-
-		//printf("kmin/kmax: %d/%d\n",kmin,kmax);
-
-		float sum = 0;
-		int i;
-		for(i = kmin; i < kmax; i++) {
-			sum += signal[i];
-		}
-
-		result[n] = sum/(kmax-kmin);
-
-		//printf("kmax-kmin: %d %d    %f/%f\n",kmax,kmin,result[n],signal[n]);
+		//printf(" Step: %d       %f/%f\n",n,result[n],signal[n]);
 
 	}
-
 
 } //end of smooth
 
@@ -540,13 +533,13 @@ void smooth(const float signal[], int SignalLen, int KernelLen,
 		    printf("Error opening file!\n");
 		}
 
-		fprintf(f,"[");
 
 		uint8_t i;
 		for(i=0; i<length-1; i++) {
 			fprintf(f,"%f, ",array[i]);
 		}
-		fprintf(f,"%f]\n",array[length]);
+		fprintf(f,"%f, //\n",array[length-1]);
+		fclose(f);
 	}
 #endif
 
