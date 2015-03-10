@@ -44,6 +44,8 @@
 
 #define SGN(X) ((X) < (0.0f) ? (-1.0f) : (1.0f))
 
+#define MIN_TS_GO_DOWNWIND_US 150000 //150 milliseconds
+
 //state variables
 static struct path_planning_s pp;
 static bool pp_updated = false;//has pp been updated ?
@@ -148,13 +150,16 @@ void cb_new_as_data(const struct structs_topics_s *strs_p){
  * publish it.
 */
 void cb_publish_pp_if_updated(void){
-    //has pp struct been updated or must alpha_star be changed?
-    if(pp_updated == true || change_alpha_star){
 
-        if(change_alpha_star){
-            go_downwind();
-        }
+    //do we need to go in the "downwind position" by changing alpha_star ?
+    #if USE_GRID_LINES == 1
+    if(change_alpha_star){
+        go_downwind();
+    }
+    #endif //USE_GRID_LINES == 1
 
+    //if path_planning topic has been updated, publish it
+    if(pp_updated == true){
         th_publish_path_planning(&pp);
         pp_updated = false;
     }
@@ -182,7 +187,7 @@ bool cb_set_alpha_star(float new_alpha_star){
 
     bool res = true;
 
-    //make sure abs(alpha) <= pi
+    //make sure -pi <= alpha <= pi
     if(new_alpha_star > M_PI_F)
         new_alpha_star = M_PI_F;
     else if(new_alpha_star < -M_PI_F)
@@ -230,6 +235,7 @@ void cb_new_rc_data(const struct structs_topics_s *strs_p){
         manual_mode = true;
         //make sure that when we will switch to autonomous, we'll use standard cmd
         pp.id_cmd = PP_NORMAL_CMD;
+        change_alpha_star = false;
     }
     else{
 
@@ -249,7 +255,7 @@ void cb_new_rc_data(const struct structs_topics_s *strs_p){
                 smq_send_log_info(txt_msg);
             }
         }
-        #endif
+        #endif //USE_GRID_LINES == 1
 
         //update manual_mode variable
         manual_mode = false;
@@ -287,28 +293,35 @@ bool cb_tack_now(void){
 
 /**
  * Change alpha_star in order to sail downwind.
+ * In order to not overload the communication between path_planning
+ * and autonomous_sailing app, alpha_star is changed with a min
+ * priod of MIN_TS_GO_DOWNWIND_US.
 */
 void go_downwind(){
-    //update alpha_star based on the current haul and alpha_star velocity
-    now = hrt_absolute_time();//time in micro seconds
-    //TODO FIX THIS PROBLEM, OTHERWISE THE SYSTEN WILL ALWAYS CRUSH!!
-    //double delta_alpha = (double)alpha_star_vel_r_s * ((now - last_change_alpha_star) / 1e6);
-    last_change_alpha_star = now;
+    uint64_t time_elapsed;
 
-    float new_alpha_star;
+    now = hrt_absolute_time();
+    time_elapsed = now - last_change_alpha_star;
 
-    //TODO fix this!
-    //new_alpha_star = pp.alpha_star + SGN(pp.alpha_star) * (float)delta_alpha;
+    //check if we can update alpha_star
+    if(time_elapsed >= MIN_TS_GO_DOWNWIND_US){
 
-    //debug delete this!
-    new_alpha_star = M_PI_F + 0.5f;
-    //debug
+        float delta_alpha;
+        float new_alpha_star;
 
-    cb_set_alpha_star(new_alpha_star);
+        //update alpha_star based on the current haul and alpha_star velocity
+        delta_alpha = alpha_star_vel_r_s * (time_elapsed / 1e6f);
 
-    //check if we don't have to increase alpha_star anymore
-    if(fabsf(new_alpha_star) >= M_PI_F){
-        change_alpha_star = false;
+        new_alpha_star = pp.alpha_star + SGN(pp.alpha_star) * delta_alpha;
+
+        cb_set_alpha_star(new_alpha_star);
+
+        //check if we don't have to increase alpha_star anymore
+        if(fabsf(new_alpha_star) >= M_PI_F){
+            change_alpha_star = false;
+        }
+
+        last_change_alpha_star = now;
     }
 }
 
