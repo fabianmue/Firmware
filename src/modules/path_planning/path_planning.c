@@ -67,6 +67,7 @@
 #include "pp_config.h"
 #include "pp_topics_handler.h"
 #include "pp_navigator.h"
+#include "pp_parameters.h"
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */

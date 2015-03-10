@@ -18,7 +18,7 @@
  * - add Potentialfield Method
  * - speak to helsman => publish update in topic
  * - Windspeed
- * - smoothing of costfunction
+ * - Winddirection => how's the definition? Where wind is coming from or where wind is blowing to?
  */
 
 
@@ -178,8 +178,8 @@ void nav_listen2helsman(const struct structs_topics_s *strs_p) {
  */
 void nav_speak2helsman(void) {
 
-	//Communicate the new data to the Helsman
-	//TODO: The heading_reference must be converted to an alpha_star in Dumas' Frame!
+	float alpha_star = nh_compass2dumas(state.heading_ref)+state.wind_dir; //TODO: Check this!
+
 
     #if C_DEBUG == 1
 		printf("New Heading Reference: %f",state.heading_ref*RAD2DEG);
