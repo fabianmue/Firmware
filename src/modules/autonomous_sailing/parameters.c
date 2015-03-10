@@ -394,6 +394,12 @@ PARAM_DEFINE_INT32(ASO_WIN_TWD, 1);
  */
 PARAM_DEFINE_INT32(ASO_PRED_HOR, 10);
 
+// ----- extremum seeking parameters
+/**
+ * 1 = use extremum seeking control for sails.
+ */
+PARAM_DEFINE_INT32(AS_USE_ESSC, 0);
+
 #if SIMULATION_FLAG == 1
 
 //---------------------------------------- Simulation variables --------------------
@@ -520,16 +526,17 @@ static struct pointers_param_qgc_s{
     param_t tack_p_kp_pointer; /**< pointer to param AS_TCK_P_K*/
     param_t tack_p_cp_pointer; /**< pointer to param AS_TCK_P_C*/
 
+    // --- eesc params
+    param_t use_essc_pointer; /**< pointer to AS_USE_ESSC */
+
     //-- simulation params
-
     #if SIMULATION_FLAG == 1
-
     param_t twd_sim_pointer; /**< pointer to param ASIM_TWD_D*/
     param_t cog_sim_pointer; /**< pointer to param ASIM_COG_D*/
 
     param_t yaw_sim_pointer; /**< pointer to param ASIM_YAW_D*/
     param_t deva1_sim_pointer; /**< pointer to param ASIM_DEVA1 */
-    #endif
+    #endif //SIMULATION_FLAG == 1
 
 }pointers_param_qgc;
 
@@ -628,15 +635,17 @@ void p_param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.tack_p_kp_pointer = param_find("AS_TCK_P_K");
     pointers_param_qgc.tack_p_cp_pointer = param_find("AS_TCK_P_C");
 
-    #if SIMULATION_FLAG == 1
+    // --- eesc params
+    pointers_param_qgc.use_essc_pointer = param_find("AS_USE_ESSC");
 
+    // simulation paramter
+    #if SIMULATION_FLAG == 1
     pointers_param_qgc.cog_sim_pointer = param_find("ASIM_COG_D");
     pointers_param_qgc.twd_sim_pointer = param_find("ASIM_TWD_D");
 
     pointers_param_qgc.yaw_sim_pointer = param_find("ASIM_YAW_D");
     pointers_param_qgc.deva1_sim_pointer = param_find("ASIM_DEVA1");
-
-    #endif
+    #endif //SIMULATION_FLAG == 1
 
     //get parameters but do not add any grid lines at start up
     p_param_update(params_p, strs_p, false, pubs_p);
@@ -816,7 +825,15 @@ void p_param_update(struct parameters_qgc *params_p,
     //give these two values to guidance module
     gm_set_p_tack_data(p_tack_kp, p_tack_cp);
 
-    //save boat_opt_matrices
+    // --- essc
+    int use_essc;
+    param_get(pointers_param_qgc.use_essc_pointer, &use_essc);
+
+    gm_use_essc(use_essc);
+
+    // -------------------------- save params -----------------------
+
+    // save boat_opt_matrices
     strs_p->boat_opt_mat.timestamp = hrt_absolute_time();
 
     strs_p->boat_opt_mat.lqr_k1 = lqr_k1;
@@ -877,6 +894,7 @@ void p_param_update(struct parameters_qgc *params_p,
 
     orb_publish(ORB_ID(boat_qgc_param3), pubs_p->boat_qgc_param3, &(strs_p->boat_qgc_param3));
 
+    // --- simulation
     #if SIMULATION_FLAG == 1
     //cog_sim
     param_get(pointers_param_qgc.cog_sim_pointer, &(params_p->cog_sim));

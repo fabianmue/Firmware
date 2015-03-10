@@ -305,16 +305,9 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
         #if SIMULATION_FLAG == 1
             //we're simulating the gps position, cog and twd with parameters from QGroundControl
-            #if HIL_SIM == 1
-                float cog, twd;
-                get_data_hil(&cog, &twd);
-                update_raw_cog(cog);
-                update_raw_twd(twd);
-            #else
-                cd_update_raw_cog(params.cog_sim);
-                cd_update_raw_tw_info(params.twd_sim, 0.0f);//dummy wind velocity, set a value here for debug
-                cd_update_raw_yaw_yaw_rate(params.yaw_sim, 0.0f);//dummy yawRate value
-            #endif
+            cd_update_raw_cog(params.cog_sim);
+            cd_update_raw_tw_info(params.twd_sim, 0.0f);//dummy wind velocity, set a value here for debug
+            cd_update_raw_yaw_yaw_rate(params.yaw_sim, 0.0f);//dummy yawRate value
         #endif
         //always perfrom guidance module to control the boat
         gm_guidance_module(&params, &strs);
@@ -332,7 +325,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
         }
 
         #if SIMULATION_FLAG == 1
-        //strs.airspeed.true_airspeed_m_s = ref_act.should_tack;
+        //strs.airspeed.true_airspeed_m_s = debug value;
         orb_publish(ORB_ID(airspeed), pubs.airspeed, &(strs.airspeed));
         //fine cancella
         #endif
@@ -348,7 +341,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
 	thread_running = false;
 
 	return 0;
-
 }
 
 /**
@@ -466,7 +458,6 @@ bool actuators_init(struct published_fd_s *pubs_p,
 	//check if everything was ok
     if(armed_pub == ERROR || armed_pub == -1 || pubs_p->actuator_pub == ERROR || pubs_p->actuator_pub == -1)
 		right_init = false; //something went wrong
-
 
 	return right_init;
 }

@@ -63,6 +63,7 @@
 static char txt_msg[150]; ///used to send messages to QGC
 static const float deg2rad = 0.0174532925199433f; // pi / 180
 static uint16_t error_counter = 0;
+static bool use_essc = false;
 
 #define MIN(X,Y) ((X) < (Y) ? (X) : (Y))
 #define SGN(X) ((X) < (0.0f) ? (-1.0f) : (1.0f))
@@ -1268,6 +1269,25 @@ float compute_error(void){
 }
 
 /**
+ * Set if you want to use essc control law for sails.
+ * If you use this controller, when you are in autonomous mode the
+ * sails are controlled by essc BUT the rudder will be controlled by the RC.
+ *
+ * @param _use_essc 0 if you do not want to use essc
+*/
+void gm_use_essc(int _use_essc){
+    //check if we have to tell QGC
+    if((_use_essc != 0 && use_essc == false))
+        smq_send_log_info("Use ESSC when in autonomous mode.");
+
+    if((_use_essc == 0 && use_essc == true))
+        smq_send_log_info("Do NOT use ESSC when in autonomous mode.");
+
+    //save new setting
+    use_essc = (_use_essc == 0) ? false : true;
+}
+
+/**
  * Main function to control the boat while sailing.
  *
  * If the remote control is in the manual mode, just copy the rudder and
@@ -1292,21 +1312,29 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
     else{
         //Autonomous mode
 
-        //check if path_planning application told us to tack/jybe
-        if(reference_actions.do_maneuver){
-            //perform tack or jybe
-            do_maneuver(&rudder_command, &sail_command, strs_p);
-        }
-        if(!reference_actions.do_maneuver){
-            //compute rudder and sails actions to follow reference alpha
-            //PI controller for rudder
-            rudder_command = pi_controller();
+        if(use_essc){
+            //TODO: add here essc function
 
-            //sails control only if AS_SAIL param from QGC is negative
-            if(param_qgc_p->sail_servo < 0.0f)
-                sail_command = sail_controller(alpha);
-            else
-                sail_command = param_qgc_p->sail_servo;
+            //rudder controlled by RC, even if in autonomous mode
+            rudder_command = strs_p->rc_channels.channels[RC_RUD_INDEX];
+        }
+        else{
+            //check if path_planning application told us to tack/jybe
+            if(reference_actions.do_maneuver){
+                //perform tack or jybe
+                do_maneuver(&rudder_command, &sail_command, strs_p);
+            }
+            if(!reference_actions.do_maneuver){
+                //compute rudder and sails actions to follow reference alpha
+                //PI controller for rudder
+                rudder_command = pi_controller();
+
+                //sails control only if AS_SAIL param from QGC is negative
+                if(param_qgc_p->sail_servo < 0.0f)
+                    sail_command = sail_controller(alpha);
+                else
+                    sail_command = param_qgc_p->sail_servo;
+            }
         }
 
         //saturation for safety reason

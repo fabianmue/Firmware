@@ -108,4 +108,7 @@ void gm_set_p_tack_data(float kp, float cp);
 /** @brief set new data published by path_planning app*/
 void gm_set_data_by_pp(const struct structs_topics_s *strs_p);
 
+/** @brief set if you want to use essc for sails control */
+void gm_use_essc(int _use_essc);
+
 #endif //GUIDANCE_MODULE_H
