@@ -77,7 +77,7 @@ void nav_init(void) {
 	field.obstacles[0].easty = 0;
 
 	//Set the initial values for the State
-	state.heading_cur = 0;
+	state.heading_cur = PI/2;
 	state.heading_ref = 0;
 	state.wind_dir = 0;
 	state.maneuver = false;

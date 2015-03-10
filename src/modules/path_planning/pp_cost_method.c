@@ -40,10 +40,10 @@ static struct {
 } Config = {
 		.Gw = 0.9f, //0.9
 		.Go = 0.8f, //0.8
-		.Gm = 0.0f, //0.4
-		.Gs = 0.0f,//0.05
+		.Gm = 0.4f, //0.4
+		.Gs = 0.05f,//0.05
 		.Gt = 0.0f, //0.1
-		.GLee = 0.0f,//0.15
+		.GLee = 0.15f,//0.15
 		.ObstSafetyRadius = 10.0f, //10
 		.ObstHorizon = 100.0f, //100
 		.WindowSize = 5 //5
@@ -425,7 +425,7 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 		 * and compensate for uncertainties (e.g. sudden changes in wind) the obstacle is made larger virtually */
 		float obst_bear = nh_ned_bearing(state->position,field->obstacles[i]);
 
-		float ang_correction = atanf(Config.ObstSafetyRadius/distance);
+		float ang_correction = atanf((Config.ObstSafetyRadius*1.5f)/distance);
 
 		float max_obst_bear = fmod(ang_correction+obst_bear,2*PI);
 		float min_obst_bear = fmod(obst_bear-ang_correction,2*PI);
