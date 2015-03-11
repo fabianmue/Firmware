@@ -257,7 +257,7 @@ void cb_new_rc_data(const struct structs_topics_s *strs_p){
             float next_grid;
             if(gh_get_next_gridline(&next_grid)){
                 //send a message to QGC
-                sprintf(txt_msg, "Next grid: 0.1%f [m]", (double) next_grid);
+                sprintf(txt_msg, "Next grid: %0.1f [m]", (double) next_grid);
                 smq_send_log_info(txt_msg);
             }
         }
