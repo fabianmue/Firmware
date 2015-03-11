@@ -196,15 +196,26 @@ void nav_listen2helsman(void) {
  * A new heading reference is available. Communicate this new information to the "autonomous_sailing module".
  * Therefore, speak to the Helsman.
  *
- * @param strs_p: Pointer to the topics struct.
+ * TODO: Check if the transformation from true heading to alpha is correct...
  */
 void nav_speak2helsman() {
 
-	//TODO: Speak to helsman
+	/* Get the new alpha Value
+	 * alpha = yaw-twd;
+	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
+	float alpha_star = nh_sensor2dumas(nh_compass2sensor(state.heading_ref) - nh_compass2sensor(state.wind_dir));
+
+	cb_set_alpha_star(alpha_star);
 
 
+	/* Tell the Helsman to tack as soon as possible, if pathplanning wants to tack */
+	if(state.maneuver) {
+		//A maneuver is necessary => tell the helsman to tack
 
+		cb_tack_now();
 
+		//TODO: Check this, does it explicitly say the boat should tack, or does it a gybe???
+	}
 
     #if C_DEBUG == 1
 		printf("New Heading Reference: %f",state.heading_ref*RAD2DEG);
@@ -234,23 +245,9 @@ void nav_heading_update(void) {
 	/* Get the new alpha Value
 	 * alpha = yaw-twd;
 	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
-	//TODO: This changes with the new Version
+	float alpha =  cb_get_alpha();
 
-	/* For the Pathplanning a compass-heading is needed (element of [0...2pi], with 0 = true North) */
-	//state.heading_cur = nh_dumas2compass(alpha + twd); //COG in Dumas' convention
-
-
-	/* Update the Centerline
-	 * The Centerline always has the same direction as the mean wind. And starts at the next target.*/
-	/*float dx = sinf(twd);
-	float dy = cosf(twd);
-	float norm = sqrtf(dx*dx+dy*dy);
-
-	field.centerline.northx = dx/norm;
-	field.centerline.easty = dy/norm;*/
-
-
-
+	state.heading_cur = nh_dumas2compass(alpha + state.wind_dir);
 
 } //end of nav_heading_update
 
@@ -267,6 +264,18 @@ void nav_wind_update(void) {
 	 * Note: The Wind is measured in Sensor-Frame! => convert it to Compass-Frame! */
 	cb_get_tw_info(&(state.wind_dir),&(state.wind_speed));
 
+	state.wind_dir = nh_sensor2compass(state.wind_dir);
+
+
+	/* Update the Centerline
+	 * The Centerline always has the same direction as the mean wind. And starts at the next target.*/
+	float dx = sinf(state.wind_dir);
+	float dy = cosf(state.wind_dir);
+	float norm = sqrtf(dx*dx+dy*dy);
+
+	field.centerline.northx = dx/norm;
+	field.centerline.easty = dy/norm;
+
 } //end of nav_heading_update
 
 
@@ -274,7 +283,9 @@ void nav_wind_update(void) {
 /**
  * New Information about the position is available. Therefore, the state-struct must be updated.
  *
- * @param *strs_p: Pointer to the topics-struct
+ * Meanwhile it is checked if the boat already reached one of its target positions and the new
+ * waypoint (target) is set accordingly.
+ *
  */
 void nav_position_update(void) {
 
@@ -304,7 +315,6 @@ void nav_position_update(void) {
 
 		}
 	}
-
 
 	//Update the state to the new Position
 	state.position = newPos;

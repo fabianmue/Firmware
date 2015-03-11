@@ -24,9 +24,9 @@
 /**Struct containing the status of the Navigator */
 struct nav_state_s {
 	NEDpoint position; 				//Last known Position (x,y in NED-Frame) [m]
-	float heading_cur;				//Current Heading of the boat [rad]
-	float heading_ref;				//Heading Reference for optimal path [rad]
-	float wind_dir; 				//average direction of the wind (where the wind is coming from) [rad]
+	float heading_cur;				//Current Heading of the boat [rad]	(Compass-Frame)
+	float heading_ref;				//Heading Reference for optimal path [rad] (Compass-Frame)
+	float wind_dir; 				//average direction of the wind (where the wind is coming from) [rad] (Compass-Frame)
 	float wind_speed; 				//average Wind Speed [m/s]
 	uint8_t targetNum; 				//Current number of target to be reached (limits number of targets to 256)
 	bool maneuver;					//true, iff a maneuver is in progress
