@@ -438,6 +438,35 @@ PARAM_DEFINE_FLOAT(ASIM_DEVA1, 0.0f);
 
 #endif
 
+/* PARAMETERS for Extremum Seeking Sailcontrol (ESSC) */
+
+/**
+ * Stepsize for ESSC in degrees
+ *
+ * @min 0
+ * @max 90
+ */
+PARAM_DEFINE_FLOAT(ESSC_K,2.0f);
+
+/**
+ * Size of the Buffer for ESSC
+ *
+ * @min 2
+ * @max 20
+ */
+PARAM_DEFINE_INT32(ESSC_WINDOWSIZE,8);
+
+/**
+ * Time between two changes of the Sailangle [s]
+ *
+ * @min 0
+ * @max 100
+ */
+PARAM_DEFINE_FLOAT(ESSC_PERIOD,1.0f);
+
+
+
+
 static struct pointers_param_qgc_s{
 
     param_t sail_pointer;         /**< pointer to param AS_SAIL*/
@@ -537,6 +566,13 @@ static struct pointers_param_qgc_s{
     param_t yaw_sim_pointer; /**< pointer to param ASIM_YAW_D*/
     param_t deva1_sim_pointer; /**< pointer to param ASIM_DEVA1 */
     #endif //SIMULATION_FLAG == 1
+
+
+    //-- Extremum Seeking Sail Control (ESSC) parameters (JW)
+    param_t ESSC_k;				/**< pointer to param ESSC_K */
+    param_t ESSC_windowSize; 	/**< pointer to param ESSC_buffersize */
+    param_t ESSC_period;     /**< pointer to param ESSC_frequency */
+
 
 }pointers_param_qgc;
 
@@ -647,8 +683,17 @@ void p_param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.deva1_sim_pointer = param_find("ASIM_DEVA1");
     #endif //SIMULATION_FLAG == 1
 
+
+    //-- Extremum Seeking Sail Control (ESSC) parameters (JW)
+    pointers_param_qgc.ESSC_k = param_find("ESSC_K");
+    pointers_param_qgc.ESSC_windowSize = param_find("ESSC_WINDOWSIZE");
+    pointers_param_qgc.ESSC_period = param_find("ESSC_PERIOD");
+
+
+
     //get parameters but do not add any grid lines at start up
     p_param_update(params_p, strs_p, false, pubs_p);
+
 }
 
 /** Update local copy of parameters.
@@ -917,4 +962,14 @@ void p_param_update(struct parameters_qgc *params_p,
     //deva1
     param_get(pointers_param_qgc.deva1_sim_pointer, &(params_p->deva1));
     #endif //SIMULATION_FLAG == 1
+
+    //Set Parameters for Extremum Seeking Sail Control ESSC (JW)
+    float ESSC_k = 0.0f;
+    int32_t ESSC_windowSize = 0;
+    float ESSC_period = 0.0f;
+    param_get(pointers_param_qgc.ESSC_k, &ESSC_k);
+    param_get(pointers_param_qgc.ESSC_windowSize, &ESSC_windowSize);
+    param_get(pointers_param_qgc.ESSC_period, &ESSC_period);
+    essc_set_qground_values(ESSC_k,ESSC_windowSize,ESSC_period);
+
 }

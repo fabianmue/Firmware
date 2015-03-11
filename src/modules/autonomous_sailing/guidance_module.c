@@ -42,6 +42,8 @@
 
 #include "guidance_module.h"
 
+#include "extremum_sailcontrol.h"
+
 //constant for tack_type
 #define TACK_IMPLICIT     0
 #define TACK_LQR    1
@@ -1313,7 +1315,9 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
         //Autonomous mode
 
         if(use_essc){
-            //TODO: add here essc function
+
+        	//Get sail command
+        	sail_command = essc_sail_control_value();
 
             //rudder controlled by RC, even if in autonomous mode
             rudder_command = strs_p->rc_channels.channels[RC_RUD_INDEX];

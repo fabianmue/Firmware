@@ -58,6 +58,9 @@
 //controller data functions
 #include "controller_data.h"
 
+//ESSC
+#include "extremum_sailcontrol.h"
+
 //settings
 #include "settings.h"
 

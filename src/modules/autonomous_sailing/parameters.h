@@ -59,6 +59,8 @@
 #include "send_msg_qgc.h"
 #endif
 
+#include "extremum_sailcontrol.h"
+
 //struct for local copy of parameter from QGroundControl
 struct parameters_qgc{
     float sail_servo;
