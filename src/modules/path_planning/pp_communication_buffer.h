@@ -51,9 +51,11 @@
 #include <math.h>
 #include <stdint.h>
 
-//definition of haul
+//definition of hauls
 #define HAUL_PORT 0
 #define HAUL_STARBOARD 1
+
+// ----- usefull functions to control the boat
 
 /** @brief command a tack or a jybe */
 bool cb_do_maneuver(float new_alpha_star);
@@ -61,26 +63,11 @@ bool cb_do_maneuver(float new_alpha_star);
 /** @brief ask if an already started maneuver has been completed */
 bool cb_is_maneuver_completed(void);
 
-/** @brief copy new data from autonomous_sailing app */
-void cb_new_as_data(const struct structs_topics_s *strs_p);
-
-/** @brief publish path_planning module if it has been updated */
-void cb_publish_pp_if_updated(void);
-
-/** @brief set new X and Y coordinates in race frame */
-void cb_set_race_coordinates(float x_m, float y_m);
-
 /** @brief set a new value for alpha_star */
 bool cb_set_alpha_star(float new_alpha_star);
 
-/** @brief init module */
-void cb_init(void);
-
 /** @brief get current alpha_star value */
 float cb_get_alpha_star(void);
-
-/** @brief copy new data from remote controller*/
-void cb_new_rc_data(const struct structs_topics_s *strs_p);
 
 /** @brief get the current haul of the boat */
 uint8_t cb_get_haul(void);
@@ -88,8 +75,45 @@ uint8_t cb_get_haul(void);
 /** @brief get last X coordinate in race frame */
 float cb_get_x_race_m(void);
 
+/** @brief get last Y coordinate in race frame */
+float cb_get_y_race_m(void);
+
+/** @brief get alpha angle sent by autonomous_sailing app */
+float cb_get_alpha(void);
+
+/** @brief get true wind information */
+void cb_get_tw_info(float *twd_p, float *tws_p);
+
 /** @brief tell the boat to tack */
 bool cb_tack_now(void);
+
+/** @brief set if you want to use a fixed TWD or the TWD by a moving average filter */
+void cb_use_fixed_twd(bool use_fixed_twd);
+
+/** @brief get the most updated NEd coordinates of the boat */
+void cb_get_boat_ned(int32_t ned[3]);
+
+// ----- end usefull functions
+
+// ----- functions used by other modules, do not change or use them
+
+/** @brief copy new data from autonomous_sailing app */
+void cb_new_as_data(int boat_guidance_debug_sub);
+
+/** @brief publish path_planning module if it has been updated */
+void cb_publish_pp_if_updated(void);
+
+/** @brief set new X and Y coordinates in race frame */
+void cb_set_race_coordinates(float x_m, float y_m);
+
+/** @brief init module */
+void cb_init(void);
+
+/** @brief copy new data from remote controller*/
+void cb_new_rc_data(const struct structs_topics_s *strs_p);
+
+/** @vrief set most updated boat NED coordinates */
+void cb_set_ned_coordinates(int32_t n, int32_t e, int32_t d);
 
 #if USE_GRID_LINES == 1
 

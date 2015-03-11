@@ -35,7 +35,6 @@ struct subscribtion_fd_s{
 struct structs_topics_s{
 	struct vehicle_global_position_s vehicle_global_position;
 	struct parameter_update_s parameter_update;
-    struct boat_guidance_debug_s boat_guidance_debug;
     struct rc_channels_s rc_channels;
 };
 

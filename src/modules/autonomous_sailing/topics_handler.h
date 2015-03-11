@@ -8,6 +8,7 @@
 #include <uORB/topics/wind_sailing.h>
 #include <uORB/topics/path_planning.h>
 #include <uORB/topics/vehicle_gps_position.h>
+#include <uORB/topics/vehicle_global_position.h>
 #include <uORB/topics/boat_guidance_debug.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/vehicle_attitude.h>
@@ -28,6 +29,7 @@ struct subscribtion_fd_s{
     int boat_weather_station;
     int rc_channels;
     int boat_qgc_param2;
+    int vehicle_global_position;
 };
 
 struct published_fd_s{
@@ -56,6 +58,7 @@ struct structs_topics_s{
    struct boat_qgc_param3_s boat_qgc_param3;
    struct boat_opt_mat_s boat_opt_mat;
    bool boat_opt_status_updated;
+   struct vehicle_global_position_s vehicle_global_position;
 
    //only for debug on qGC
    struct airspeed_s airspeed;

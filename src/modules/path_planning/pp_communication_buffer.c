@@ -50,12 +50,15 @@
 static struct path_planning_s pp;
 static bool pp_updated = false;//has pp been updated ?
 static bool manual_mode = false; //is remote control in manual mode?
-static uint8_t haul_current = HAUL_PORT;//dummy initial guess
+static uint8_t last_haul = HAUL_PORT;//dummy initial guess
 static float alpha_star_vel_r_s = 0.2f;//velocity of changing alpha_star when reached last grid line
 static bool change_alpha_star = false;//use it only after reaced last grid line
 static uint64_t last_change_alpha_star = 0;
 static uint64_t now = 0;
-float downwind_alpha_star_abs = 2.7925268f;
+static float downwind_alpha_star_abs = 2.7925268f;
+int32_t boat_ned[3];//boat NED coordinates
+//data from autonomous_sailing app
+static struct boat_guidance_debug_s boat_guidance_debug;
 
 static char txt_msg[70]; ///used to send messages to QGC
 
@@ -111,15 +114,19 @@ bool cb_is_maneuver_completed(void){
  * and set alpha_star to have the same haul. The magnitude of
  * alpha_star is not changed.
  *
- * @param strs_p    struct containing boat_guidance_debug_s struct
+ * @param boat_guidance_debug_sub subscription to boat_guidance_debug
 */
-void cb_new_as_data(const struct structs_topics_s *strs_p){
+void cb_new_as_data(int boat_guidance_debug_sub){
+
+    //copy new BGUD data
+    orb_copy(ORB_ID(boat_guidance_debug), boat_guidance_debug_sub,
+             &boat_guidance_debug);
 
     // check if we sent a do_maneuver command
     if(cb_is_maneuver_completed() == false){
         // check if the maneuver has the same id of the sent one and it is completed
-        if(strs_p->boat_guidance_debug.maneuver_completed == 1 &&
-           strs_p->boat_guidance_debug.id_maneuver == pp.id_maneuver){
+        if(boat_guidance_debug.maneuver_completed == 1 &&
+           boat_guidance_debug.id_maneuver == pp.id_maneuver){
 
             //maneuver is completed
             pp.do_maneuver = 0;
@@ -129,20 +136,17 @@ void cb_new_as_data(const struct structs_topics_s *strs_p){
     //if the remote control is in manual mode, set the sign of alpha_star based on the actual haul
     if(manual_mode){
         //get the most updated haul from data provided by autonomous_sailing app
-        uint8_t haul_tmp = (strs_p->boat_guidance_debug.alpha < 0.0f) ?
-                            HAUL_PORT : HAUL_STARBOARD;
+        uint8_t haul_tmp = cb_get_haul();
         //if we have changed haul since the last time, update alpha_star
-        if(haul_tmp != haul_current){
+        if(haul_tmp != last_haul){
             float temp_alpha_star = (haul_tmp == HAUL_PORT) ?
                                      -fabsf(pp.alpha_star) : fabsf(pp.alpha_star);
             //set the new alpha_star
             cb_set_alpha_star(temp_alpha_star);
         }
+        //update last_haul
+        last_haul = haul_tmp;
     }
-
-    //save the current haul
-    haul_current = (strs_p->boat_guidance_debug.alpha < 0.0f) ?
-                    HAUL_PORT : HAUL_STARBOARD;
 }
 
 /**
@@ -211,6 +215,7 @@ bool cb_set_alpha_star(float new_alpha_star){
 void cb_init(void){
     //clean memory
     memset(&pp, 0, sizeof(pp));
+    memset(&boat_guidance_debug, 0, sizeof(boat_guidance_debug));
     //default starting maneuver id = 255
     pp.id_maneuver = 255;
     //default alpha_star = 45 deg
@@ -234,8 +239,8 @@ void cb_new_rc_data(const struct structs_topics_s *strs_p){
 
     if(strs_p->rc_channels.channels[RC_MODE_INDEX] == RC_MANUAL_MODE){
         manual_mode = true;
-        //make sure that when we will switch to autonomous, we'll use standard cmd
-        pp.id_cmd = PP_NORMAL_CMD;
+        //make sure that when we will switch to autonomous, we'll use a TWD from moving filter
+        cb_use_fixed_twd(false);
         change_alpha_star = false;
     }
     else{
@@ -269,7 +274,8 @@ void cb_new_rc_data(const struct structs_topics_s *strs_p){
  * @return HAUL_PORT if sailing at port haul, HAUL_STARBOARD otherwise
 */
 uint8_t cb_get_haul(void){
-    return haul_current;
+    return (boat_guidance_debug.alpha < 0.0f) ?
+            HAUL_PORT : HAUL_STARBOARD;
 }
 
 /**
@@ -282,11 +288,86 @@ float cb_get_x_race_m(void){
 }
 
 /**
+ * Get the last computed Y coordinate of the boat in the race frame.
+ *
+ * @return Y coordinate in meters
+*/
+float cb_get_y_race_m(void){
+    return pp.y_race_m;
+}
+
+/**
+ * Get the last alpha angle provided by autonomous_sailing app.
+ *
+ * @return alpha angle in rads, range [-pi, pi]
+*/
+float cb_get_alpha(void){
+    return boat_guidance_debug.alpha;
+}
+
+/**
+ * Get the last true wind direction (TWD) and speed (TWS) provided
+ * by autonomous_sailing app.
+ *
+ * @param  *twd_p <-- true wind direction [rad] in our sensor convention
+ * @param  *tws_p <-- true wind speed [m/s]
+*/
+void cb_get_tw_info(float *twd_p, float *tws_p){
+    *twd_p = boat_guidance_debug.twd_mean;
+    *tws_p = boat_guidance_debug.tws_mean;
+}
+
+
+/**
  * Tell the boat to tack as soon as possibile.
  * Change the sign of alpha_star, but not it's magnitude.
 */
 bool cb_tack_now(void){
     return cb_do_maneuver(-cb_get_alpha_star());
+}
+
+/**
+ * Tell autonomous_sailing app to use (or not to use) a fixed
+ * true wind direction to compute alpha.
+ * The fixed true wind direction used is the last true wind direction mean
+ * read.
+ *
+ * @param use_fixed_wind    true if as app has to use a fixed TWD
+*/
+void cb_use_fixed_twd(bool use_fixed_twd){
+
+    if(use_fixed_twd == true && pp.id_cmd != PP_SAIL_DOWNWIND_CMD){
+        pp.id_cmd = PP_SAIL_DOWNWIND_CMD;
+        pp_updated = true;
+    }
+    else if(use_fixed_twd == false && pp.id_cmd == PP_SAIL_DOWNWIND_CMD){
+        pp.id_cmd = PP_NORMAL_CMD;
+        pp_updated = true;
+    }
+}
+
+/**
+ * Set the most updated NED coordinate of the boat.
+ *
+ * @param n North coordinate in decimeters
+ * @param e East coordinate in decimeters
+ * @param d Down coordinate in decimeters
+*/
+void cb_set_ned_coordinates(int32_t n, int32_t e, int32_t d){
+    boat_ned[0] = n;
+    boat_ned[1] = e;
+    boat_ned[2] = d;
+}
+
+/**
+ * Get the most updated NED coordinate of the boat.
+ *
+ * @param ned   ned <-- [North, East, Down] in decimeters.
+*/
+void cb_get_boat_ned(int32_t ned[3]){
+    ned[0] = boat_ned[0];
+    ned[1] = boat_ned[1];
+    ned[2] = boat_ned[2];
 }
 
 
@@ -347,8 +428,8 @@ void cb_reached_last_griline(void){
     //start changing alpha_star
     change_alpha_star = true;
     last_change_alpha_star = hrt_absolute_time();
-    //tell autonomous_sailing app we want to sail downwind
-    pp.id_cmd = PP_SAIL_DOWNWIND_CMD;
+    //tell autonomous_sailing app we want to sail downwind using a fixed wind direction
+    cb_use_fixed_twd(true);
 }
 
 /**

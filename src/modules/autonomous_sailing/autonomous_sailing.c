@@ -222,7 +222,8 @@ int as_daemon_thread_main(int argc, char *argv[]){
             { .fd = subs.parameter_update,          .events = POLLIN },
             { .fd = subs.att,                       .events = POLLIN },
             { .fd = subs.rc_channels,               .events = POLLIN },
-            { .fd = subs.boat_qgc_param2,           .events = POLLIN }
+            { .fd = subs.boat_qgc_param2,           .events = POLLIN },
+            { .fd = subs.vehicle_global_position,   .events = POLLIN }
     };
 
     thread_running = true;
@@ -303,6 +304,14 @@ int as_daemon_thread_main(int argc, char *argv[]){
                     //pass meanwind direction to controller_data module
                     cd_set_mean_twd(strs.boat_qgc_param2.mean_wind_direction_r);
                 }
+                if(fds[7].revents & POLLIN){
+                    // vehicle_global_position topic
+                    orb_copy(ORB_ID(vehicle_global_position),
+                             subs.vehicle_global_position, &(strs.vehicle_global_position));
+
+                    //pass vehicle_global_position to extremum_sailing
+                    essc_speed_update(&strs);
+                }
             }
         }
 
@@ -362,6 +371,7 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     subs_p->att = orb_subscribe(ORB_ID(vehicle_attitude));
     subs_p->rc_channels = orb_subscribe(ORB_ID(rc_channels));
     subs_p->boat_qgc_param2 = orb_subscribe(ORB_ID(boat_qgc_param2));
+    subs_p->vehicle_global_position = orb_subscribe(ORB_ID(vehicle_global_position));
 
     if(subs_p->gps_raw == -1){
         warnx(" error on subscribing on vehicle_gps_position Topic \n");
@@ -395,6 +405,11 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
 
     if(subs_p->boat_qgc_param2 == -1){
         warnx(" error on subscribing on boat_qgc_param2 Topic \n");
+        return false;
+    }
+
+    if(subs_p->vehicle_global_position == -1){
+        warnx(" error on subscribing on vehicle_global_position Topic \n");
         return false;
     }
 

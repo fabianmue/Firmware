@@ -116,8 +116,8 @@ void essc_speed_update(const struct structs_topics_s *strs_p) {
 	/* Get the boatspeed from the Kalman-Filtered values and calculate the forward
 	 * u-Velocity
 	 */
-    float NorthVel = strs_p->gps_filtered.vel_n;
-    float EastVel = strs_p->gps_filtered.vel_e;
+    float NorthVel = strs_p->vehicle_global_position.vel_n;
+    float EastVel = strs_p->vehicle_global_position.vel_e;
 
     float uVel = sqrtf(NorthVel * NorthVel + EastVel * EastVel);
 

@@ -50,6 +50,20 @@
 #include "pp_topics_handler.h"
 #include "pp_communication_buffer.h"
 
+// ----- usefull functions
+
+/** @brief get the angle of the mean wind w.r.t. true North*/
+float n_get_mean_wind_angle(void);
+
+/** @brief transform geodedical coordinate in race frame coordinate*/
+void n_geo_to_race(double lat_deg, double lon_deg, float alt_m,
+                   int32_t *x_dm_p, int32_t *y_dm_p);
+
+// ----- end usefull functions
+
+
+// ----- functions used by other modules, do not change or use them
+
 /** @brief set origin of NED frame.*/
 void n_set_ref0(const int32_t  *_lat0_d_e7_p, const int32_t  *_lon0_d_e7_p, const int32_t  *_alt0_mm_p);
 
@@ -62,9 +76,6 @@ void n_set_pos_top_mark(const int32_t  *lat_d_e7_p, const int32_t  *lon_d_e7_p, 
 /** @brief Convert GPS data in a position in the race frame system*/
 void n_navigation_module(const struct vehicle_global_position_s *vgp_p);
 
-/** @brief get the angle of the mean wind w.r.t. true North*/
-float n_get_mean_wind_angle(void);
-
 /** @brief update rotation matrix body to world*/
 void n_update_r_ned_body(float R[3][3], bool valid_matrix);
 
@@ -73,9 +84,5 @@ void n_update_ned_vel(float vn, float ve, float vd);
 
 /** @brief get longitudinal velocity in the body frame*/
 float n_get_u_vel(void);
-
-/** @brief transform geodedical coordinate in race frame coordinate*/
-void n_geo_to_race(double lat_deg, double lon_deg, float alt_m,
-                   int32_t *x_dm_p, int32_t *y_dm_p);
 
 #endif /* NAVIGATION_H_ */

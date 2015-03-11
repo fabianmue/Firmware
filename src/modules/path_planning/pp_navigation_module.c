@@ -225,6 +225,9 @@ void geo_to_ned(const struct vehicle_global_position_s *gps_p,
 
     //compute NED position from ECEF coordinate
     ecef_to_ned(&x_dm, &y_dm, &z_dm, north_dm_p, east_dm_p, down_dm_p);
+
+    //save NED coordinates in communication_buffer
+    cb_set_ned_coordinates(*north_dm_p, *east_dm_p, *down_dm_p);
 }
 
 /**

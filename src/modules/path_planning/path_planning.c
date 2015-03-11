@@ -225,11 +225,8 @@ int pp_thread_main(int argc, char *argv[]) {
 			} else {
 				//Everything is OK and new Data is available
                 if(fds[0].revents & POLLIN){
-                    //copy new BGUD data
-                    orb_copy(ORB_ID(boat_guidance_debug), subs.boat_guidance_debug,
-                             &(strs.boat_guidance_debug));
                     //update pp_communication_buffer with this information
-                    cb_new_as_data(&strs);
+                    cb_new_as_data(subs.boat_guidance_debug);
                 }
                 if(fds[1].revents & POLLIN){
                     //copy new GPOS data
