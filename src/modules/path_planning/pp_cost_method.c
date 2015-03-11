@@ -236,8 +236,6 @@ float total_cost(float seg, struct nav_state_s *state, struct nav_field_s *field
  * This cost takes the winddirection and the boats expected velocities at different relative angles towards
  * the wind into account. Meanwhile it minimizes the distance towards the target.
  *
- *  TODO: Potential Error-Source: Eventually check the implementation of the target-vector!
- *
  *  @param seg: Simulated heading [rad]
  *  @param *state: Pointer to the State-Struct
  *  @param *field: Pointer to the Field-Struct
@@ -403,11 +401,6 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 	uint8_t i;
 	for (i = 0; i < field->NumberOfObstacles; i++) {
 
-		//printf("  Number of Obstacles: %d\n",field->NumberOfObstacles);
-
-		//printf("  Obstacle Positon: %f/%f\n",field->obstacles[i].northx,field->obstacles[i].easty);
-		//printf("  Current  Positon: %f/%f\n",state->position.northx,state->position.easty);
-
 		float C = 0;	//Cost for this Obstacle
 
 		/* Only obstacles within a certain Horizon are taken into account. This means that only obstacles in our range
@@ -429,9 +422,6 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 
 		float max_obst_bear = fmod(ang_correction+obst_bear,2*PI);
 		float min_obst_bear = fmod(obst_bear-ang_correction,2*PI);
-
-		//printf("  Distance to Obstacle: %f\n",distance);
-		//printf("  Max./Min. Obstacle bearing: %f/%f\n",max_obst_bear*RAD2DEG,min_obst_bear*RAD2DEG);
 
 
 		/* Check, if the boat is on collision course with an obstacle. It is on collision course,
@@ -492,7 +482,6 @@ void smooth(const float signal[], int SignalLen, int KernelLen,
             float result[]) {
 
 	uint8_t kernSize = KernelLen/2;	//Look half of the kernel to the left and to the right
-	//printf("Kernel Half: %d\n",kernSize);
 
 	int n;
 	for(n = 0; n < SignalLen; n++) {
@@ -515,8 +504,6 @@ void smooth(const float signal[], int SignalLen, int KernelLen,
 
 			result[n] = sum/KernelLen;
 		}
-
-		//printf(" Step: %d       %f/%f\n",n,result[n],signal[n]);
 
 	}
 
