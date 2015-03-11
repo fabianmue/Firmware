@@ -118,7 +118,6 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 			printf("Total Cost: %f, %f\n",seg_compass*RAD2DEG,costMat[ind]);
 		#endif
 
-
 		//Update Index
 		ind++;
 	}
@@ -352,6 +351,59 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
 
     /* Case 2) */
     //TODO
+    float target_bearing = nh_ned_bearing(state->position,state->heading_cur);
+
+    if((state->heading_cur >= target_bearing*0.9f) && (state->heading_ref <= 1.1f*target_bearing)) {
+    	//The boat is on the last leg.
+
+    } else {
+    	//The boat is not on the last leg. => push the boat away from the laylines <=> stay close to the center-line
+
+    	//The meeting-point of the center-line and the boat-heading
+    	float tcl = (field->centerline*(position(2)-target(2))-cl(2)*(position(1)-target(1)))/
+    				(head_vect(1)*cl(2)-head_vect(2)*cl(1));
+    	mcl = [position(1)+tcl * head_vect(1),position(2)+tcl*head_vect(2)];   %Meeting-Point
+
+
+
+
+    } //if we are on the last leg
+
+
+
+          /*      %Vector for centerline
+                cl = simData.raceField.start-target;
+                cl = cl./norm(cl);
+
+                %Vector for heading
+                head_vect(1) = cos(deg2rad(seg));
+                head_vect(2) = sin(deg2rad(seg));
+                head_vect = head_vect./norm(head_vect);
+
+                %Calculate the meeting-point of the heading and the center-line
+                %by intersecting the heading and the centerline
+                %The parametrization "line = startpoint + t * unitvector" is used
+                tcl = (cl(1)*(position(2)-target(2))-cl(2)*(position(1)-target(1)))/(head_vect(1)*cl(2)-head_vect(2)*cl(1));
+                mcl = [position(1)+tcl * head_vect(1),position(2)+tcl*head_vect(2)];   %Meeting-Point
+
+                if(tcl < 0)
+                    %The Meeting Point lays behind the boat => actually the
+                    %lines do not intersect <=> meeting point lays in infinity
+                    mcl = [inf,inf];
+                end %if
+
+                %Set the tactical Cost
+                dist = distance(position,target);  %The closer the boat gets to the target, the smaller is the cone-opening
+                Ct = min(distance(position,mcl),dist)/dist;
+
+                if(Ct ~= 1)    %Give a rectangular shape to the cost
+                    Ct = 0;
+                end %if
+
+                Ct = Gt * Ct;           %Weight and save the cost
+
+            end %if */
+
 
 
     return Ct;

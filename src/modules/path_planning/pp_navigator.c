@@ -17,6 +17,8 @@
 /* TODO:
  * - add Potentialfield Method
  * - Winddirection => how's the definition? Where wind is coming from or where wind is blowing to?
+ * - Calculate the distance to target and bearing to target only once!!!
+ * - Calculate the apparent_wind only once!!! => introduce new variables in the state
  */
 
 
@@ -73,6 +75,12 @@ void nav_init(void) {
 	//Set the initial Obstacle-Position
 	field.obstacles[0].northx = 0;
 	field.obstacles[0].easty = 0;
+
+	//Set the initial Start-Line
+	field.startline[0].northx = 0;	//Buoy1
+	field.startline[0].easty = 0;
+	field.startline[1].northx = 1;  //Buoy2
+	field.startline[1].easty = 1;
 
 	//Set the initial values for the State
 	state.heading_cur = PI/2;
@@ -211,11 +219,25 @@ void nav_heading_wind_update(const struct structs_topics_s *strs_p) {
 	/* Get the new alpha Value
 	 * alpha = yaw-twd;
 	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
+	//TODO: This changes with the new Version
 	float alpha = strs_p->boat_guidance_debug.alpha;
 	float twd = strs_p->boat_guidance_debug.twd_mean;
 
 	/* For the Pathplanning a compass-heading is needed (element of [0...2pi], with 0 = true North) */
 	state.heading_cur = nh_dumas2compass(alpha + twd); //COG in Dumas' convention
+
+
+	/* Update the Centerline
+	 * The Centerline always has the same direction as the mean wind. And starts at the next target.*/
+	float dx = sinf(twd);
+	float dy = cosf(twd);
+	float norm = sqrtf(dx*dx+dy*dy);
+
+	field.centerline.northx = dx/norm;
+	field.centerline.easty = dy/norm;
+
+
+
 
 } //end of nav_heading_update
 
@@ -243,6 +265,7 @@ void nav_windspeed_update(const struct structs_topics_s *strs_p) {
  */
 void nav_position_update(const struct structs_topics_s *strs_p) {
 
+	//TODO: Change this, if i get a position in RACE-Frame or NED-Frame directly
 	Point GEOPos;
 	GEOPos.lat = ((float)(strs_p->vehicle_global_position.lat)) * DEG2RAD;
 	GEOPos.lon = ((float)(strs_p->vehicle_global_position.lon)) * DEG2RAD;
@@ -272,6 +295,20 @@ void nav_position_update(const struct structs_topics_s *strs_p) {
 	state.position = newPos;
 
 } //end of nav_heading_update
+
+
+
+/**
+ * The start-line is defined by two buoys. Set the two buoys in GEO-Frame and
+ * convert it to NED.
+ *
+ * @param buoy1: left buoy in GEO-Coordinates
+ * @param buoy2: right buoy in GEO-Coordinates
+ */
+void nav_set_startline(Point buoy1, Point buoy2) {
+	field.startline[0] = nh_geo2ned(buoy1);
+	field.startline[1] = nh_geo2ned(buoy2);
+}
 
 
 
