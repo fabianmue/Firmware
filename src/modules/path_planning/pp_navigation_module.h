@@ -59,6 +59,10 @@ float n_get_mean_wind_angle(void);
 void n_geo_to_race(double lat_deg, double lon_deg, float alt_m,
                    int32_t *x_dm_p, int32_t *y_dm_p);
 
+/** @brief transform geodedical coordinate in NED frame coordinate*/
+void n_geo_to_ned(double lat_deg, double lon_deg, float alt_m,
+                   int32_t *x_dm_p, int32_t *y_dm_p, int32_t *z_dm_p);
+
 // ----- end usefull functions
 
 

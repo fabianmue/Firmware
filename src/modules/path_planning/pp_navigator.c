@@ -16,17 +16,19 @@
 
 /* TODO:
  * - add Potentialfield Method
- * - Winddirection => how's the definition? Where wind is coming from or where wind is blowing to?
+ * - Winddirection => how's the definition? Wind from Nort = 0°/ Wind from South = 180° (Sensor-Frame)
  * - Calculate the distance to target and bearing to target only once!!!
  * - Calculate the apparent_wind only once!!! => introduce new variables in the state
+ * - Add the center-line for Tactical cost
  */
 
 
 #include "pp_config.h"
-
 #include "pp_navigator.h"
-
 #include "pp_cost_method.h"
+#include "pp_communication_buffer.h"
+
+
 
 #if C_DEBUG == 0
 	#include <drivers/drv_hrt.h>
@@ -101,7 +103,12 @@ void nav_init(void) {
 /**
  * Calculate a new optimal reference Heading
  */
-void nav_navigate(struct structs_topics_s *strs_p) {
+void nav_navigator(void) {
+
+	/** Check if the Helsman has new Information and update the state
+	 * accordingly. */
+	nav_listen2helsman();
+
 
 
 	/** Pathplanning is only done with a certain frequency
@@ -115,7 +122,6 @@ void nav_navigate(struct structs_topics_s *strs_p) {
 
 		/** A new reference heading should only be calculated if the boat is not doing a maneuver */
 		if(!state.maneuver) {
-
 
 			/****FIND A NEW REFERENCE HEADING
 			 * Different algorithms can be used. */
@@ -151,10 +157,9 @@ void nav_navigate(struct structs_topics_s *strs_p) {
 			} //if boat should do a maneuver
 
 
-
 			/****COMMUNICATION
 			* A new Reference Heading is generated => send this data to the Helsman (autonomous_sailing module) */
-			nav_speak2helsman(strs_p);
+			nav_speak2helsman();
 
 		} //if no tack or gybe is in progress
 
@@ -170,9 +175,18 @@ void nav_navigate(struct structs_topics_s *strs_p) {
  *
  * @param *strs_p: Pointer to the topics-struct
  */
-void nav_listen2helsman(const struct structs_topics_s *strs_p) {
+void nav_listen2helsman(void) {
 
-	//TODO: check the variable that informs the navigator that a maneuver is completed
+	/* Check if Helsman has completed the maneuver */
+	if(state.maneuver) {
+		if(cb_is_maneuver_completed()) {
+			//The ongoing maneuver is completed and therefore the state can be reseted.
+
+			state.maneuver = false;
+		}
+
+	}
+
 
 } //end of nav_listen2helsman
 
@@ -184,9 +198,12 @@ void nav_listen2helsman(const struct structs_topics_s *strs_p) {
  *
  * @param strs_p: Pointer to the topics struct.
  */
-void nav_speak2helsman(struct structs_topics_s *strs_p) {
+void nav_speak2helsman() {
 
 	//TODO: Speak to helsman
+
+
+
 
 
     #if C_DEBUG == 1
@@ -212,7 +229,7 @@ void nav_speak2helsman(struct structs_topics_s *strs_p) {
  *
  * @param *strs_p: Pointer to the topics-struct
  */
-void nav_heading_wind_update(const struct structs_topics_s *strs_p) {
+void nav_heading_update(void) {
 
 	/* Get the new alpha Value
 	 * alpha = yaw-twd;
@@ -240,16 +257,15 @@ void nav_heading_wind_update(const struct structs_topics_s *strs_p) {
 
 
 /**
- * New information about the windspeed is available. Tell these values to the navigator.
+ * New information about the wind is available. Tell these values to the navigator.
  *
- * @param *strs_p: Pointer to the topics-struct
+ * Note: This function updates the internal navigator-state
  */
-void nav_windspeed_update(const struct structs_topics_s *strs_p) {
+void nav_wind_update(void) {
 
 	/* Get the new Windspeed Value
-	 * Note: The Wind is measured in Sensor-Frame! */
-	//TODO Get the new Wind-Value
-	//state.wind_speed = strs_p->wind_sailing.speed_true;
+	 * Note: The Wind is measured in Sensor-Frame! => convert it to Compass-Frame! */
+	cb_get_tw_info(&(state.wind_dir),&(state.wind_speed));
 
 } //end of nav_heading_update
 
@@ -260,16 +276,18 @@ void nav_windspeed_update(const struct structs_topics_s *strs_p) {
  *
  * @param *strs_p: Pointer to the topics-struct
  */
-void nav_position_update(const struct structs_topics_s *strs_p) {
+void nav_position_update(void) {
 
-	//TODO: Change this, if i get a position in RACE-Frame or NED-Frame directly
-	Point GEOPos;
-	GEOPos.lat = ((float)(strs_p->vehicle_global_position.lat)) * DEG2RAD;
-	GEOPos.lon = ((float)(strs_p->vehicle_global_position.lon)) * DEG2RAD;
+	/*Get the new NED-Position of the boat from the communication buffer
+	 * Note: The NED-Position is in decimeters => convert to meters */
+	int32_t ned[3];
+	cb_get_boat_ned(ned);
 
-	//Convert from GEO to NED
 	NEDpoint newPos;
-	newPos = nh_geo2ned(GEOPos);
+	newPos.northx = ned[0]/10.0f;
+	newPos.easty = ned[1]/10.0f;
+	newPos.downz = ned[2]; 			//Pathplanning does not need the down-value
+
 
 	//Check, if we reached a target
 	if(nh_ned_dist(newPos,field.targets[state.targetNum]) <= TARGETTOLERANCE) {
@@ -282,7 +300,7 @@ void nav_position_update(const struct structs_topics_s *strs_p) {
 		} else {
 			//This was the last target
 
-			//TODO: Report to QGround Control
+			//Don't know what to do here...just be happy?... maybe report to QGround Control?
 
 		}
 	}

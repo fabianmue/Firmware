@@ -253,6 +253,15 @@ PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE3_LON, HOMELON);
 PARAM_DEFINE_INT32(PP_NAV_OBSTACLE_NUMBER, 1);	//Number of Obstacles currently set
 
 
+/**
+ * pp_navigator: Start-Line defined by two buoys
+ */
+PARAM_DEFINE_FLOAT(PP_NAV_START1_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_START1_LON, HOMELON);
+PARAM_DEFINE_FLOAT(PP_NAV_START2_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_START2_LON, HOMELON);
+
+PARAM_DEFINE_FLOAT(PP_NAV_ALTITUDE, HOMEALT);		//Note: The altitude value is in Millimeters
 
 
 
@@ -328,9 +337,13 @@ static struct pointers_param_qgc_s{
 	param_t nav_obstacle3_lat;
 	param_t nav_obstacle3_lon;
 	param_t nav_obstacle_number;
+	param_t nav_start1_lat;
+	param_t nav_start1_lon;
+	param_t nav_start2_lat;
+	param_t nav_start2_lon;
+	param_t nav_altitude;
 
-
-}pointers_param_qgc;
+} pointers_param_qgc;
 
 
 /**
@@ -414,6 +427,11 @@ void p_param_init(void){
 	pointers_param_qgc.nav_obstacle3_lon = param_find("PP_NAV_TARGET3_LON");
 	pointers_param_qgc.nav_obstacle_number = param_find("PP_NAV_OBSTACLE_NUMBER");
 
+	pointers_param_qgc.nav_start1_lat = param_find("PP_NAV_START1_LAT, HOMELAT");
+	pointers_param_qgc.nav_start1_lon = param_find("PP_NAV_START1_LON, HOMELON");
+	pointers_param_qgc.nav_start2_lat = param_find("PP_NAV_START2_LAT, HOMELAT");
+	pointers_param_qgc.nav_start2_lon = param_find("PP_NAV_START2_LON, HOMELON");
+	pointers_param_qgc.nav_altitude = param_find("PP_NAV_ALTITUDE, HOMEALT");
 
 
     //get parameters but do not add any grid lines at start up
@@ -613,6 +631,9 @@ void p_param_update(bool update_path_param){
 	Point target[MAXTARGETNUMBER];
 	Point obstacle[MAXOBSTACLENUMBER];
 	uint8_t t_num, o_num;
+	int32_t altitude;
+
+	param_get(pointers_param_qgc.nav_altitude, &altitude);
 
 	param_get(pointers_param_qgc.nav_target1_lat,&(target[0].lat));
 	param_get(pointers_param_qgc.nav_target1_lon,&(target[0].lon));
@@ -629,6 +650,15 @@ void p_param_update(bool update_path_param){
 	param_get(pointers_param_qgc.nav_obstacle3_lon,&(obstacle[2].lon));
 	param_get(pointers_param_qgc.nav_obstacle_number,&o_num);
 
+	target[0].alt = altitude;
+	target[1].alt = altitude;
+	target[2].alt = altitude;
+	obstacle[0].alt = altitude;
+	obstacle[1].alt = altitude;
+	obstacle[2].alt = altitude;
+
+
+
 	uint8_t t;
 	for(t = 0; t < t_num; t++) {
 		nav_set_target(t,target[t]);
@@ -637,5 +667,16 @@ void p_param_update(bool update_path_param){
 	for(t = 0; t < o_num; t++) {
 		nav_set_obstacle(t,obstacle[t]);
 	}
+
+	Point start[2];
+	param_get(pointers_param_qgc.nav_start1_lat, &(start[0].lat));
+	param_get(pointers_param_qgc.nav_start1_lon, &(start[0].lon));
+	param_get(pointers_param_qgc.nav_start2_lat, &(start[1].lat));
+	param_get(pointers_param_qgc.nav_start2_lon, &(start[1].lon));
+
+	start[0].alt = altitude;
+	start[1].alt = altitude;
+
+	nav_set_startline(start[0],start[1]);
 
 }

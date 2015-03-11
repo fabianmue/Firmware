@@ -13,9 +13,10 @@
 
 
 /* Type Definition for a GPS-Point defined by the Latitude and Longitude */
-typedef struct Point_s{		 	 //Contains the GPS-Coordinate of a point
-	float lat;				 //Latitude of a point [rad]
-	float lon;				 //Longitude of a point [rad]
+typedef struct Point_s{		 //Contains the GPS-Coordinate of a point
+	float lat;				 //Latitude of a point [deg]
+	float lon;				 //Longitude of a point [deg]
+	float alt;				 //Altitude [m]
 
 	float debug;
 } Point;

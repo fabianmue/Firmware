@@ -112,7 +112,7 @@ void cb_init(void);
 /** @brief copy new data from remote controller*/
 void cb_new_rc_data(const struct structs_topics_s *strs_p);
 
-/** @vrief set most updated boat NED coordinates */
+/** @brief set most updated boat NED coordinates */
 void cb_set_ned_coordinates(int32_t n, int32_t e, int32_t d);
 
 #if USE_GRID_LINES == 1

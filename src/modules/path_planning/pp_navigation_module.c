@@ -446,3 +446,26 @@ void n_geo_to_race(double lat_deg, double lon_deg, float alt_m,
     //convert geo to race frame
     geo_to_race(&vehicle_global_position, x_dm_p, y_dm_p);
 }
+
+
+/**
+ * Convert geodedical coordinates (latitude, longitude, altitude) in ned frame coordinates.
+ *
+ * @param lat_deg   latitude in degrees
+ * @param lon_deg   longitude in degrees
+ * @param alt_m     altitude in meters
+ * @param x_dm_p    *x_dm_p <-- X coordinate in decimeters
+ * @param y_dm_p    *x_dm_p <-- Y coordinate in decimeters
+ */
+void n_geo_to_ned(double lat_deg, double lon_deg, float alt_m,
+                   int32_t *x_dm_p, int32_t *y_dm_p, int32_t *z_dm_p) {
+
+	//fill vehicle_global_position struct
+    vehicle_global_position.lat = lat_deg;
+    vehicle_global_position.lon = lon_deg;
+    vehicle_global_position.alt = alt_m;
+
+	//compute boat position in NED frame w.r.t. lat0 lon0 alt0 set by set_ref0()
+	geo_to_ned(&vehicle_global_position, x_dm_p, y_dm_p, z_dm_p);
+
+}

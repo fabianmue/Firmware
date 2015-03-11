@@ -70,6 +70,7 @@
 #include "pp_gridlines_handler.h"
 #include "pp_navigation_module.h"
 #include "pp_parameters.h"
+#include "pp_navigator.h"
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
@@ -227,6 +228,11 @@ int pp_thread_main(int argc, char *argv[]) {
                 if(fds[0].revents & POLLIN){
                     //update pp_communication_buffer with this information
                     cb_new_as_data(subs.boat_guidance_debug);
+
+					#if USE_GRID_LINES == 0
+                    /*  */
+                    nav_position_update();
+					#endif
                 }
                 if(fds[1].revents & POLLIN){
                     //copy new GPOS data
@@ -237,6 +243,12 @@ int pp_thread_main(int argc, char *argv[]) {
                     #if USE_GRID_LINES == 1
                     gh_gridlines_handler();
                     #endif //USE_GRID_LINES == 1
+
+					#if USE_GRID_LINES == 0
+                    /* Tell the new position to the Navigator (Note: the position is preprocesses by the
+                       Communication-buffer */
+                    nav_position_update();
+					#endif
                 }
                 if(fds[2].revents & POLLIN){
                     //copy new parameters from QGC
@@ -258,6 +270,13 @@ int pp_thread_main(int argc, char *argv[]) {
          * Use pp_communication_buffer to change topic's values.
         */
         cb_publish_pp_if_updated();
+
+
+        /* Call the navigator for a new Reference Heading
+         * Note: The navigator is called in every loop, but it will publish a new alpha star in the shared
+         *       memory only within a predefined period of time.*/
+        nav_navigator();
+
 
 
 	} //END OF MAIN THREAD-LOOP

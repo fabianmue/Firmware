@@ -10,6 +10,7 @@
 
 #include "pp_navigation_helper.h"
 #include "pp_config.h"
+#include "pp_navigation_module.h"
 
 
 #define EARTHRADIUS  6371000.0f				//Earth Radius [m]
@@ -119,6 +120,7 @@ float nh_ned_bearing(NEDpoint start, NEDpoint end) {
  * This is not the real apparent Wind Direction. It is the direction the boat would measure if it is NOT moving.
  *
  * @param heading: True heading of the boat
+ * @param windDir: Direction of where the wind is coming from [rad] (Sensor-Frame)
  * @return apparent Wind angle. If positive, the wind comes from Portside, else from Starboard-side
  *
  * Debug State: Function tested in PC-Test-Environment => working
@@ -158,10 +160,16 @@ float nh_appWindDir(float heading, float windDir) {
  */
 NEDpoint nh_geo2ned(Point geo) {
 	NEDpoint result;
-	result.northx = 0;
-	result.easty = 0;
 
-	//TODO: Implement this function
+	int32_t north_dm;
+	int32_t east_dm;
+	int32_t down_dm;
+
+	n_geo_to_ned(geo.lat,geo.lon,geo.alt,&north_dm,&east_dm,&down_dm);
+
+	result.northx = north_dm/10.0f;
+	result.easty = east_dm/10.0f;
+	result.downz = down_dm/10.0f;
 
 	return result;
 }

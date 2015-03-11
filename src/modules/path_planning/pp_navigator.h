@@ -26,7 +26,7 @@ struct nav_state_s {
 	NEDpoint position; 				//Last known Position (x,y in NED-Frame) [m]
 	float heading_cur;				//Current Heading of the boat [rad]
 	float heading_ref;				//Heading Reference for optimal path [rad]
-	float wind_dir; 				//average direction of the wind (where the wind is blowing to) [rad]
+	float wind_dir; 				//average direction of the wind (where the wind is coming from) [rad]
 	float wind_speed; 				//average Wind Speed [m/s]
 	uint8_t targetNum; 				//Current number of target to be reached (limits number of targets to 256)
 	bool maneuver;					//true, iff a maneuver is in progress
@@ -52,27 +52,27 @@ void nav_init(void);
 
 
 /** @brief Calculate a new optimal heading reference */
-void nav_navigate(struct structs_topics_s *strs_p);
+void nav_navigator(void);
 
 
 /** @brief Listen to the helsman */
-void nav_listen2helsman(const struct structs_topics_s *strs_p);
+void nav_listen2helsman(void);
 
 
 /** @brief Speak to the helsman */
-void nav_speak2helsman(struct structs_topics_s *strs_p);
+void nav_speak2helsman(void);
 
 
 /** @brief New position information is available */
-void nav_position_update(const struct structs_topics_s *strs_p);
+void nav_position_update(void);
 
 
 /** @brief New wind-information is available */
-void nav_windspeed_update(const struct structs_topics_s *strs_p);
+void nav_wind_update(void);
 
 
 /** @brief New heading information is available */
-void nav_heading_wind_update(const struct structs_topics_s *strs_p);
+void nav_heading_update(void);
 
 
 /** @brief Set Obstacles */
