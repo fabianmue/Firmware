@@ -186,9 +186,7 @@ void nav_listen2helsman(const struct structs_topics_s *strs_p) {
  */
 void nav_speak2helsman(struct structs_topics_s *strs_p) {
 
-	/* Set the corresponding values in the shared memory */
-	strs_p->path_planning.alpha_star = nh_compass2dumas(state.heading_ref)+state.wind_dir; //TODO: Check this!
-	strs_p->path_planning.do_maneuver = state.maneuver;
+	//TODO: Speak to helsman
 
 
     #if C_DEBUG == 1
@@ -220,21 +218,19 @@ void nav_heading_wind_update(const struct structs_topics_s *strs_p) {
 	 * alpha = yaw-twd;
 	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
 	//TODO: This changes with the new Version
-	float alpha = strs_p->boat_guidance_debug.alpha;
-	float twd = strs_p->boat_guidance_debug.twd_mean;
 
 	/* For the Pathplanning a compass-heading is needed (element of [0...2pi], with 0 = true North) */
-	state.heading_cur = nh_dumas2compass(alpha + twd); //COG in Dumas' convention
+	//state.heading_cur = nh_dumas2compass(alpha + twd); //COG in Dumas' convention
 
 
 	/* Update the Centerline
 	 * The Centerline always has the same direction as the mean wind. And starts at the next target.*/
-	float dx = sinf(twd);
+	/*float dx = sinf(twd);
 	float dy = cosf(twd);
 	float norm = sqrtf(dx*dx+dy*dy);
 
 	field.centerline.northx = dx/norm;
-	field.centerline.easty = dy/norm;
+	field.centerline.easty = dy/norm;*/
 
 
 
@@ -252,7 +248,8 @@ void nav_windspeed_update(const struct structs_topics_s *strs_p) {
 
 	/* Get the new Windspeed Value
 	 * Note: The Wind is measured in Sensor-Frame! */
-	state.wind_speed = strs_p->wind_sailing.speed_true;
+	//TODO Get the new Wind-Value
+	//state.wind_speed = strs_p->wind_sailing.speed_true;
 
 } //end of nav_heading_update
 

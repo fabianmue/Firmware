@@ -379,7 +379,7 @@ void cb_get_boat_ned(int32_t ned[3]){
  * and autonomous_sailing app, alpha_star is changed with a min
  * priod of MIN_TS_GO_DOWNWIND_US.
 */
-void go_downwind(){
+void go_downwind(void){
     uint64_t time_elapsed;
 
     now = hrt_absolute_time();

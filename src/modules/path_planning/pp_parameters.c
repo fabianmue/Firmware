@@ -192,6 +192,70 @@ PARAM_DEFINE_INT32(ASPS_ALT_E3, 406000);
 #endif //SIMULATION_FLAG == 1
 
 
+
+/**
+ * pp_cost_method: Saftey Radius around Obstacles
+ *
+ * @min 0
+ */
+PARAM_DEFINE_FLOAT(PP_CM_OBSTSAFETYRADIUS, 10.0f);
+
+/**
+ * pp_cost_method: Radius inside which obstacles are detected
+ *
+ * @min 0
+ */
+PARAM_DEFINE_FLOAT(PP_CM_OBSTHORIZON, 100.0f);
+
+/**
+ * pp_cost_method: Size of the window for smoothing the total cost
+ *
+ * @min 0
+ */
+PARAM_DEFINE_INT32(PP_CM_WINDOWSIZE, 5);
+
+
+/**
+ * pp_navigator: Time between two calls of Path Planning [us]
+ *
+ * @min 0
+ */
+PARAM_DEFINE_INT32(PP_NAV_PERIOD, 1000);
+
+
+/**
+ * pp_navigator: Target Position (GEO-Coordinate Frame)
+ */
+PARAM_DEFINE_FLOAT(PP_NAV_TARGET1_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_TARGET1_LON, HOMELON);
+
+PARAM_DEFINE_FLOAT(PP_NAV_TARGET2_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_TARGET2_LON, HOMELON);
+
+PARAM_DEFINE_FLOAT(PP_NAV_TARGET3_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_TARGET3_LON, HOMELON);
+
+PARAM_DEFINE_INT32(PP_NAV_TARGET_NUMBER, 1);	//Number of Targets currently set
+
+
+/**
+ * pp_navigator: Target Position (GEO-Coordinate Frame)
+ */
+PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE1_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE1_LON, HOMELON);
+
+PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE2_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE2_LON, HOMELON);
+
+PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE3_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE3_LON, HOMELON);
+
+PARAM_DEFINE_INT32(PP_NAV_OBSTACLE_NUMBER, 1);	//Number of Obstacles currently set
+
+
+
+
+
 static struct pointers_param_qgc_s{
 
 
@@ -231,6 +295,41 @@ static struct pointers_param_qgc_s{
     #endif //USE_GRID_LINES == 1
 
     #endif //SIMULATION_FLAG == 1
+
+
+
+
+	//**COST_METHOD
+	param_t cm_weight_gw_pointer;
+	param_t cm_weight_go_pointer;
+	param_t cm_weight_gm_pointer;
+	param_t cm_weight_gs_pointer;
+	param_t cm_weight_gt_pointer;
+	param_t cm_weight_glee_pointer;
+
+	param_t cm_obstsafetyradius_pointer;
+	param_t cm_obsthorizon_pointer;
+	param_t cm_windowsize_pointer;
+
+
+	//**NAVIGATION
+	param_t nav_period;
+	param_t nav_target1_lat;
+	param_t nav_target1_lon;
+	param_t nav_target2_lat;
+	param_t nav_target2_lon;
+	param_t nav_target3_lat;
+	param_t nav_target3_lon;
+	param_t nav_target_number;
+	param_t nav_obstacle1_lat;
+	param_t nav_obstacle1_lon;
+	param_t nav_obstacle2_lat;
+	param_t nav_obstacle2_lon;
+	param_t nav_obstacle3_lat;
+	param_t nav_obstacle3_lon;
+	param_t nav_obstacle_number;
+
+
 }pointers_param_qgc;
 
 
@@ -282,6 +381,40 @@ void p_param_init(void){
 
     //clean boat_qgc_param2
     memset(&boat_qgc_param2, 0, sizeof(boat_qgc_param2));
+
+
+
+	//**COST_METHOD
+	pointers_param_qgc.cm_weight_gw_pointer = param_find("PP_CM_WEIGHT_GW");
+	pointers_param_qgc.cm_weight_go_pointer = param_find("PP_CM_WEIGHT_GO");
+	pointers_param_qgc.cm_weight_gm_pointer = param_find("PP_CM_WEIGHT_GM");
+	pointers_param_qgc.cm_weight_gs_pointer = param_find("PP_CM_WEIGHT_GS");
+	pointers_param_qgc.cm_weight_gt_pointer = param_find("PP_CM_WEIGHT_GT");
+	pointers_param_qgc.cm_weight_glee_pointer = param_find("PP_CM_WEIGHT_GLEE");
+
+	pointers_param_qgc.cm_obstsafetyradius_pointer = param_find("PP_CM_OBSTACLESAFETYRADIUS");
+	pointers_param_qgc.cm_obsthorizon_pointer = param_find("PP_CM_OBSTHORIZONT");
+	pointers_param_qgc.cm_windowsize_pointer = param_find("PP_CM_WINDOWSIZE");
+
+
+	//**NAVIGATION
+	pointers_param_qgc.nav_period = param_find("PP_NAV_PERIOD");
+	pointers_param_qgc.nav_target1_lat = param_find("PP_NAV_TARGET1_LAT");
+	pointers_param_qgc.nav_target1_lon = param_find("PP_NAV_TARGET1_LON");
+	pointers_param_qgc.nav_target2_lat = param_find("PP_NAV_TARGET2_LAT");
+	pointers_param_qgc.nav_target2_lon = param_find("PP_NAV_TARGET2_LON");
+	pointers_param_qgc.nav_target3_lat = param_find("PP_NAV_TARGET3_LAT");
+	pointers_param_qgc.nav_target3_lon = param_find("PP_NAV_TARGET3_LON");
+	pointers_param_qgc.nav_target_number = param_find("PP_NAV_TARGET_NUMBER");
+	pointers_param_qgc.nav_obstacle1_lat = param_find("PP_NAV_TARGET1_LAT");
+	pointers_param_qgc.nav_obstacle1_lon = param_find("PP_NAV_TARGET1_LON");
+	pointers_param_qgc.nav_obstacle2_lat = param_find("PP_NAV_TARGET2_LAT");
+	pointers_param_qgc.nav_obstacle2_lon = param_find("PP_NAV_TARGET2_LON");
+	pointers_param_qgc.nav_obstacle3_lat = param_find("PP_NAV_TARGET3_LAT");
+	pointers_param_qgc.nav_obstacle3_lon = param_find("PP_NAV_TARGET3_LON");
+	pointers_param_qgc.nav_obstacle_number = param_find("PP_NAV_OBSTACLE_NUMBER");
+
+
 
     //get parameters but do not add any grid lines at start up
     p_param_update(false);
@@ -453,4 +586,56 @@ void p_param_update(bool update_path_param){
     #endif //USE_GRID_LINES == 1
 
     #endif //SIMULATION_FLAG == 1
+
+
+
+	//**COST METHOD
+	float gw, go, gm, gs, gt, glee, obstsafetyradius, obsthorizon, windowsize;
+	param_get(pointers_param_qgc.cm_weight_gw_pointer, &gw);
+	param_get(pointers_param_qgc.cm_weight_go_pointer, &go);
+	param_get(pointers_param_qgc.cm_weight_gm_pointer, &gm);
+	param_get(pointers_param_qgc.cm_weight_gs_pointer, &gs);
+	param_get(pointers_param_qgc.cm_weight_gt_pointer, &gt);
+	param_get(pointers_param_qgc.cm_weight_glee_pointer, &glee);
+
+	param_get(pointers_param_qgc.cm_obstsafetyradius_pointer, &obstsafetyradius);
+	param_get(pointers_param_qgc.cm_obsthorizon_pointer, &obsthorizon);
+	param_get(pointers_param_qgc.cm_windowsize_pointer, &windowsize);
+
+	cm_set_configuration(gw, go, gm, gs, gt, glee, obstsafetyradius, obsthorizon, windowsize);
+
+
+	//**NAVIGATOR
+	uint32_t period;
+	param_get(pointers_param_qgc.nav_period, &period);
+	nav_set_configuration(period);
+
+	Point target[MAXTARGETNUMBER];
+	Point obstacle[MAXOBSTACLENUMBER];
+	uint8_t t_num, o_num;
+
+	param_get(pointers_param_qgc.nav_target1_lat,&(target[0].lat));
+	param_get(pointers_param_qgc.nav_target1_lon,&(target[0].lon));
+	param_get(pointers_param_qgc.nav_target2_lat,&(target[1].lat));
+	param_get(pointers_param_qgc.nav_target2_lon,&(target[1].lon));
+	param_get(pointers_param_qgc.nav_target3_lat,&(target[2].lat));
+	param_get(pointers_param_qgc.nav_target3_lon,&(target[2].lon));
+	param_get(pointers_param_qgc.nav_target_number,&t_num);
+	param_get(pointers_param_qgc.nav_obstacle1_lat,&(obstacle[0].lat));
+	param_get(pointers_param_qgc.nav_obstacle1_lon,&(obstacle[0].lon));
+	param_get(pointers_param_qgc.nav_obstacle2_lat,&(obstacle[1].lat));
+	param_get(pointers_param_qgc.nav_obstacle2_lon,&(obstacle[1].lon));
+	param_get(pointers_param_qgc.nav_obstacle3_lat,&(obstacle[2].lat));
+	param_get(pointers_param_qgc.nav_obstacle3_lon,&(obstacle[2].lon));
+	param_get(pointers_param_qgc.nav_obstacle_number,&o_num);
+
+	uint8_t t;
+	for(t = 0; t < t_num; t++) {
+		nav_set_target(t,target[t]);
+	}
+
+	for(t = 0; t < o_num; t++) {
+		nav_set_obstacle(t,obstacle[t]);
+	}
+
 }

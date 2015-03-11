@@ -12,12 +12,15 @@
 #define PP_PARAMETERS_H_
 
 #include <systemlib/param/param.h>
+#include <stdio.h>
 
 #include "pp_topics_handler.h"
 #include "pp_config.h"
 #include "pp_navigation_module.h"
 #include "pp_communication_buffer.h"
 #include "pp_gridlines_handler.h"
+#include "pp_navigator.h"
+#include "pp_cost_method.h"
 
 /** @brief Initialize parameters*/
 void p_param_init(void);

@@ -351,12 +351,12 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
 
     /* Case 2) */
     //TODO
-    float target_bearing = nh_ned_bearing(state->position,state->heading_cur);
+    /*float target_bearing = nh_ned_bearing(state->position,state->heading_cur);
 
-    if((state->heading_cur >= target_bearing*0.9f) && (state->heading_ref <= 1.1f*target_bearing)) {
+    //if((state->heading_cur >= target_bearing*0.9f) && (state->heading_ref <= 1.1f*target_bearing)) {
     	//The boat is on the last leg.
 
-    } else {
+    //} else {
     	//The boat is not on the last leg. => push the boat away from the laylines <=> stay close to the center-line
 
     	//The meeting-point of the center-line and the boat-heading
@@ -369,7 +369,7 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
 
     } //if we are on the last leg
 
-
+ */
 
           /*      %Vector for centerline
                 cl = simData.raceField.start-target;

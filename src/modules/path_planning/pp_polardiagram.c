@@ -78,7 +78,7 @@ float pol_polardiagram(float wind_dir, float wind_speed) {
 		//Get the index of the angle in the Lookup table
 		uint8_t ind = 0;
 
-		wind_dir = round(wind_dir / INTERVAL)*INTERVAL;
+		wind_dir = roundf(wind_dir / INTERVAL)*INTERVAL;
 		ind = (uint8_t)((wind_dir-STARTANG)/INTERVAL);
 
 		//Check if the requested Index exists
