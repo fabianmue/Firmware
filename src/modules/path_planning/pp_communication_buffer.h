@@ -99,6 +99,9 @@ void cb_set_alpha_star_vel(float vel_r_s);
 /** @brief notify to communication_buffer to start sailing downwind*/
 void cb_reached_last_griline(void);
 
+/** @brief set alpha_star during downwind course after last grid line*/
+void cb_set_downwind_alpha_star(float alpha_star);
+
 #endif //USE_GRID_LINES == 1
 
 #endif // PP_COMMUNICATION_BUFFER_H

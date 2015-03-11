@@ -144,6 +144,12 @@ PARAM_DEFINE_INT32(ASP_REIN_GRS, 0);
  */
 PARAM_DEFINE_FLOAT(ASP_ALPST_V_DS, 12.0f);
 
+/**
+ * Alpha star value when sailing downwind after reached last grid line.
+ *
+ */
+PARAM_DEFINE_FLOAT(ASP_DWN_ALPST_D, 160.0f);
+
 #endif //USE_GRID_LINES == 1
 
 #if SIMULATION_FLAG == 1
@@ -213,7 +219,7 @@ static struct pointers_param_qgc_s{
     // --- explicit alpha reference from QGC
     param_t alpha_star_pointer;         /**< pointer to param ASP_ALST_ANG_D*/
     param_t use_alpha_star_pointer;         /**< pointer to param ASP_ALST_SET*/
-
+    param_t downwind_alpha_star_pointer; /**< pointer to ASP_DWN_ALPST_D */
     //-- simulation params
 
     #if SIMULATION_FLAG == 1
@@ -269,6 +275,7 @@ void p_param_init(void){
     pointers_param_qgc.lat_sim_pointer = param_find("ASPS_LAT_E7");
     pointers_param_qgc.lon_sim_pointer = param_find("ASPS_LON_E7");
     pointers_param_qgc.alt_sim_pointer = param_find("ASPS_ALT_E3");
+    pointers_param_qgc.downwind_alpha_star_pointer = param_find("ASP_DWN_ALPST_D");
     #endif //USE_GRID_LINES == 1
 
     #endif //SIMULATION_FLAG == 1
@@ -363,6 +370,15 @@ void p_param_update(bool update_path_param){
     alpha_star_vel_r = (alpha_star_vel_r < 0.0f) ? -alpha_star_vel_r : alpha_star_vel_r;
     //send alpha_star_vel_r to pp_communication_buffer module
     cb_set_alpha_star_vel(alpha_star_vel_r);
+
+    //alpha_star in downwind course
+    float downwind_alpha_star;
+
+    param_get(pointers_param_qgc.downwind_alpha_star_pointer, &downwind_alpha_star);
+
+    downwind_alpha_star = downwind_alpha_star * deg2rad;
+
+    cb_set_downwind_alpha_star(downwind_alpha_star);
 
     #endif //USE_GRID_LINES == 1
 

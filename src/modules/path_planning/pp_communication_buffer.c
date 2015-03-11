@@ -55,6 +55,7 @@ static float alpha_star_vel_r_s = 0.2f;//velocity of changing alpha_star when re
 static bool change_alpha_star = false;//use it only after reaced last grid line
 static uint64_t last_change_alpha_star = 0;
 static uint64_t now = 0;
+float downwind_alpha_star_abs = 2.7925268f;
 
 static char txt_msg[70]; ///used to send messages to QGC
 
@@ -314,12 +315,13 @@ void go_downwind(){
 
         new_alpha_star = pp.alpha_star + SGN(pp.alpha_star) * delta_alpha;
 
-        cb_set_alpha_star(new_alpha_star);
-
         //check if we don't have to increase alpha_star anymore
-        if(fabsf(new_alpha_star) >= M_PI_F){
+        if(fabsf(new_alpha_star) >= downwind_alpha_star_abs){
+            new_alpha_star = SGN(new_alpha_star) * downwind_alpha_star_abs;
             change_alpha_star = false;
         }
+
+        cb_set_alpha_star(new_alpha_star);
 
         last_change_alpha_star = now;
     }
@@ -347,6 +349,22 @@ void cb_reached_last_griline(void){
     last_change_alpha_star = hrt_absolute_time();
     //tell autonomous_sailing app we want to sail downwind
     pp.id_cmd = PP_SAIL_DOWNWIND_CMD;
+}
+
+/**
+ * Set what should be the alpha_star value when sailing downwind after
+ * the last grid line has been reached.
+ *
+ * @param  alpha_star   alpha star value [rad]
+*/
+void cb_set_downwind_alpha_star(float alpha_star){
+    //safety check
+    if(alpha_star > M_PI_F)
+        alpha_star = M_PI_F;
+    else if(alpha_star < -M_PI_F)
+        alpha_star = -M_PI_F;
+
+    downwind_alpha_star_abs = fabsf(alpha_star);
 }
 
 #endif //USE_GRID_LINES == 1
