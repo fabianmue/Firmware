@@ -18,7 +18,6 @@
  * - add Potentialfield Method
  * - Winddirection => how's the definition? Wind from Nort = 0°/ Wind from South = 180° (Sensor-Frame)
  * - Calculate the distance to target and bearing to target only once!!!
- * - Calculate the apparent_wind only once!!! => introduce new variables in the state
  * - Add the center-line for Tactical cost
  */
 
@@ -26,12 +25,10 @@
 #include "pp_config.h"
 #include "pp_navigator.h"
 #include "pp_cost_method.h"
-#include "pp_communication_buffer.h"
-
-
 
 #if C_DEBUG == 0
-	#include <drivers/drv_hrt.h>
+#include "pp_communication_buffer.h"
+#include <drivers/drv_hrt.h>
 #endif
 
 
@@ -105,9 +102,11 @@ void nav_init(void) {
  */
 void nav_navigator(void) {
 
-	/** Check if the Helsman has new Information and update the state
-	 * accordingly. */
-	nav_listen2helsman();
+	/** Check if new Inforamtion is available and update the state accordingly. */
+	nav_listen2helsman();	//Check, if a maneuver is completed
+	nav_heading_update();	//Check for a new Heading (alpha)
+	nav_position_update();  //Check for a new Position update
+	nav_wind_update();		//Check for new Wind measurements
 
 
 
@@ -177,6 +176,7 @@ void nav_navigator(void) {
  */
 void nav_listen2helsman(void) {
 
+	#if C_DEBUG == 0
 	/* Check if Helsman has completed the maneuver */
 	if(state.maneuver) {
 		if(cb_is_maneuver_completed()) {
@@ -186,6 +186,9 @@ void nav_listen2helsman(void) {
 		}
 
 	}
+	#endif
+
+
 
 
 } //end of nav_listen2helsman
@@ -200,25 +203,27 @@ void nav_listen2helsman(void) {
  */
 void nav_speak2helsman() {
 
-	/* Get the new alpha Value
+	/* Set the new alpha reference Value
 	 * alpha = yaw-twd;
 	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
 	float alpha_star = nh_sensor2dumas(nh_compass2sensor(state.heading_ref) - nh_compass2sensor(state.wind_dir));
 
+	#if C_DEBUG == 0
 	cb_set_alpha_star(alpha_star);
+	#endif
 
 
 	/* Tell the Helsman to tack as soon as possible, if pathplanning wants to tack */
 	if(state.maneuver) {
 		//A maneuver is necessary => tell the helsman to tack
-
-		cb_tack_now();
-
-		//TODO: Check this, does it explicitly say the boat should tack, or does it a gybe???
+		#if C_DEBUG == 0
+		cb_do_maneuver(alpha_star);
+		#endif
 	}
 
     #if C_DEBUG == 1
 		printf("New Heading Reference: %f",state.heading_ref*RAD2DEG);
+		printf("New Alpha Star: %f",alpha_star*RAD2DEG);
 
 		//Write a file with the shared-Memory Content for Matlab
 		FILE *f = fopen("sharedMemory.txt", "a");
@@ -226,7 +231,6 @@ void nav_speak2helsman() {
 			printf("Error opening file!\n");
 		}
 
-		//state.maneuver = false;
 		fprintf(f,"%f, %d, ",state.heading_ref,state.maneuver);
 		fclose(f);
 
@@ -245,7 +249,10 @@ void nav_heading_update(void) {
 	/* Get the new alpha Value
 	 * alpha = yaw-twd;
 	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
-	float alpha =  cb_get_alpha();
+	float alpha = 0;
+	#if C_DEBUG == 0
+	alpha =  cb_get_alpha();
+	#endif
 
 	state.heading_cur = nh_dumas2compass(alpha + state.wind_dir);
 
@@ -262,7 +269,9 @@ void nav_wind_update(void) {
 
 	/* Get the new Windspeed Value
 	 * Note: The Wind is measured in Sensor-Frame! => convert it to Compass-Frame! */
+	#if C_DEBUG == 0
 	cb_get_tw_info(&(state.wind_dir),&(state.wind_speed));
+	#endif
 
 	state.wind_dir = nh_sensor2compass(state.wind_dir);
 
@@ -292,7 +301,9 @@ void nav_position_update(void) {
 	/*Get the new NED-Position of the boat from the communication buffer
 	 * Note: The NED-Position is in decimeters => convert to meters */
 	int32_t ned[3];
+	#if C_DEBUG == 0
 	cb_get_boat_ned(ned);
+	#endif
 
 	NEDpoint newPos;
 	newPos.northx = ned[0]/10.0f;

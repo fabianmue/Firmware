@@ -7,10 +7,12 @@
  *      Author: Jonas Wirz (wirzjo@student.ethz.ch)
  */
 
-
-#include "pp_navigation_helper.h"
 #include "pp_config.h"
+#include "pp_navigation_helper.h"
+
+#if C_DEBUG == 0
 #include "pp_navigation_module.h"
+#endif
 
 
 #define EARTHRADIUS  6371000.0f				//Earth Radius [m]
@@ -165,7 +167,12 @@ NEDpoint nh_geo2ned(Point geo) {
 	int32_t east_dm;
 	int32_t down_dm;
 
-	n_geo_to_ned(geo.lat,geo.lon,geo.alt,&north_dm,&east_dm,&down_dm);
+	struct vehicle_global_position_s pos;
+	pos.lat = geo.lat;
+	pos.lon = geo.lon;
+	pos.alt = geo.alt;
+
+	n_geo_to_ned(&pos,&north_dm,&east_dm,&down_dm);
 
 	result.northx = north_dm/10.0f;
 	result.easty = east_dm/10.0f;

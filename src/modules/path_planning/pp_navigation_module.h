@@ -47,6 +47,7 @@
 #include <stdint.h>
 
 //Include topics necessary
+#include "pp_config.h"
 #include "pp_topics_handler.h"
 #include "pp_communication_buffer.h"
 
