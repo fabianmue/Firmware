@@ -1315,8 +1315,7 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
         //Autonomous mode
 
         if(use_essc){
-
-        	//Get sail command
+            //Get sail command using extremum sail seeking
         	sail_command = essc_sail_control_value();
 
             //rudder controlled by RC, even if in autonomous mode
