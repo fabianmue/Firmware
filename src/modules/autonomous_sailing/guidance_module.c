@@ -1310,6 +1310,7 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
         //read rudder and sails command from RC and save them
         rudder_command = strs_p->rc_channels.channels[RC_RUD_INDEX];
         sail_command = strs_p->rc_channels.channels[RC_SAIL_INDEX];
+        //TODO add here reset condiotions before startin autonomous sailing
     }
     else{
         //Autonomous mode

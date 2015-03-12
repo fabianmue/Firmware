@@ -260,6 +260,7 @@ void p_param_init(void){
     pointers_param_qgc.repeat_past_grids_pointer = param_find("ASP_REIN_GRS");
 
     pointers_param_qgc.alpha_star_vel_pointer = param_find("ASP_ALPST_V_DS");
+    pointers_param_qgc.downwind_alpha_star_pointer = param_find("ASP_DWN_ALPST_D");
     #endif //USE_GRID_LINES == 1
 
     //explicit tack now command from QGC
@@ -275,7 +276,6 @@ void p_param_init(void){
     pointers_param_qgc.lat_sim_pointer = param_find("ASPS_LAT_E7");
     pointers_param_qgc.lon_sim_pointer = param_find("ASPS_LON_E7");
     pointers_param_qgc.alt_sim_pointer = param_find("ASPS_ALT_E3");
-    pointers_param_qgc.downwind_alpha_star_pointer = param_find("ASP_DWN_ALPST_D");
     #endif //USE_GRID_LINES == 1
 
     #endif //SIMULATION_FLAG == 1
