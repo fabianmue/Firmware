@@ -213,6 +213,43 @@ uint8_t nh_findMin(const float *array, uint8_t arraySize) {
 
 
 
+/*
+ * Calculate the absolute difference between two headings in Compass Frame
+ *
+ * Note: This function accounts for the discontinuity from 360° -> 0°
+ *
+ * @param head1: First heading [rad]
+ * @param head2: Second heading [rad]
+ *
+ * @return difference between the two headings [rad]
+ */
+float nh_heading_diff(float head1, float head2) {
+
+	if(head1 > head2) {
+		float temp = head2;
+		head2 = head1;
+		head1 = temp;
+	}
+
+	float dirA = head1-head2;		//Clockwise
+	float dirB = 2*PI-head2 + head1;//Counterclockwise
+
+	printf("dirA: %f / dirB: %f\n",dirA*RAD2DEG,dirB*RAD2DEG);
+
+	float result = 0;
+
+	if(fabs(dirA) <= fabs(dirB)) {
+		result = -dirA;
+	} else {
+		result = dirB;
+	}
+
+	return result;
+}
+
+
+
+
 /**
  * Convert from Compass to Dumas' Frame
  *

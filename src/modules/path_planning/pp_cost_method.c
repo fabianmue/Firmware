@@ -362,6 +362,14 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
     //} else {
     	//The boat is not on the last leg. => push the boat away from the laylines <=> stay close to the center-line
 
+		//Update the Centerline
+		float dx = sinf(state->wind_dir);
+		float dy = cosf(state->wind_dir);
+		float norm = sqrtf(dx*dx+dy*dy);
+
+		float clx = dx/norm;
+		float cly = dy/norm;
+
     	//The meeting-point of the center-line and the boat-heading
     	float tcl = (field->centerline*(position(2)-target(2))-cl(2)*(position(1)-target(1)))/
     				(head_vect(1)*cl(2)-head_vect(2)*cl(1));

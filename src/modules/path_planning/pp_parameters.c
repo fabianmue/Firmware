@@ -224,6 +224,14 @@ PARAM_DEFINE_INT32(PP_NAV_PERIOD, 1000);
 
 
 /**
+ * pp_navigator: Maximum Turnrate of the boat [°/s]
+ *
+ * @min 0
+ */
+PARAM_DEFINE_INT32(PP_NAV_TURNRATE, 10);
+
+
+/**
  * pp_navigator: Target Position (GEO-Coordinate Frame)
  */
 PARAM_DEFINE_FLOAT(PP_NAV_TARGET1_LAT, HOMELAT);
@@ -323,6 +331,7 @@ static struct pointers_param_qgc_s{
 
 	//**NAVIGATION
 	param_t nav_period;
+	param_t nav_turnrate;
 	param_t nav_target1_lat;
 	param_t nav_target1_lon;
 	param_t nav_target2_lat;
@@ -412,6 +421,7 @@ void p_param_init(void){
 
 	//**NAVIGATION
 	pointers_param_qgc.nav_period = param_find("PP_NAV_PERIOD");
+	pointers_param_qgc.nav_turnrate = param_find("PP_NAV_TURNRATE");
 	pointers_param_qgc.nav_target1_lat = param_find("PP_NAV_TARGET1_LAT");
 	pointers_param_qgc.nav_target1_lon = param_find("PP_NAV_TARGET1_LON");
 	pointers_param_qgc.nav_target2_lat = param_find("PP_NAV_TARGET2_LAT");
@@ -624,9 +634,10 @@ void p_param_update(bool update_path_param){
 
 
 	//**NAVIGATOR
-	uint32_t period;
+	uint32_t period, turnrate;
 	param_get(pointers_param_qgc.nav_period, &period);
-	nav_set_configuration(period);
+	param_get(pointers_param_qgc.nav_turnrate, &turnrate);
+	nav_set_configuration(period, turnrate);
 
 	Point target[MAXTARGETNUMBER];
 	Point obstacle[MAXOBSTACLENUMBER];
@@ -656,8 +667,6 @@ void p_param_update(bool update_path_param){
 	obstacle[0].alt = altitude;
 	obstacle[1].alt = altitude;
 	obstacle[2].alt = altitude;
-
-
 
 	uint8_t t;
 	for(t = 0; t < t_num; t++) {

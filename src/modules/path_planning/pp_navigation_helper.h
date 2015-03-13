@@ -58,6 +58,10 @@ uint8_t nh_findMin(const float *array, uint8_t arraySize);
 NEDpoint nh_geo2ned(Point geo);
 
 
+/* @brief Calculate the absolute difference between two headings in Compass Frame and account for the discontinuity */
+float nh_heading_diff(float head1, float head2);
+
+
 /* @brief Convert from Compass to Dumas' Frame */
 float nh_compass2dumas(float compass);
 

@@ -41,8 +41,6 @@ struct nav_field_s {
 	uint8_t NumberOfObstacles;		//Number of obstacles currently in the Matrix
 
 	NEDpoint startline[2]; 			//Matrix containing the start-line [buoy1, buoy2]
-	NEDpoint centerline; 			//Center Line of the Race-Course (starts in the target and has the same direction
-									//as the average true wind.
 };
 
 
@@ -88,7 +86,7 @@ void nav_set_startline(Point buoy1, Point buoy2);
 
 
 /** @brief Set Configuration Parameters for the Navigator */
-void nav_set_configuration(uint64_t period);
+void nav_set_configuration(uint64_t period, uint32_t turnrate);
 
 
 

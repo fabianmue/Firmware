@@ -17,7 +17,6 @@
 /* TODO:
  * - add Potentialfield Method
  * - Winddirection => how's the definition? Wind from Nort = 0°/ Wind from South = 180° (Sensor-Frame)
- * - Calculate the distance to target and bearing to target only once!!!
  * - Add the center-line for Tactical cost
  */
 
@@ -35,8 +34,10 @@
 /** Struct holding the main configuration variables of the navigator */
 static struct {
 	uint64_t period; 		//The period of calls to Pathplanning (time between two calls to nav_navigate())
+	float max_headchange;	//Maximum possible change in heading of the boat [rad]
 } config = {
-	.period = 1000
+	.period = 1000,
+	.max_headchange = 0.1745329f //~10°/s
 };
 
 
@@ -91,8 +92,11 @@ void nav_init(void) {
 	home.lat = HOMELAT;
 	home.lon = HOMELON;
 	state.position = nh_geo2ned(home);
-
 	state.last_call = 0;
+
+	//Set the initial Values for the Configuration
+	config.period = 1000000;			// = 1s
+	config.max_headchange = 0.17453292f; // = 10°/period
 }
 
 
@@ -147,15 +151,31 @@ void nav_navigator(void) {
 
 
 			/*Decide if we have to do a tack or a gybe
-			* A maneuver is necessary, iff we change the hull. A change of hull is represented as a change of sign of the
-			* apparent Wind direction.
-			*/
+			 * A maneuver is necessary, iff we change the hull. A change of hull is represented as a change of sign of the
+			 * apparent Wind direction.
+			 */
 			if(!((NewWind < 0 && OldWind < 0) || (NewWind > 0 && OldWind > 0))) {
 				//A Maneuver is Necessary
 
 				state.maneuver = true;
 
 			} //if boat should do a maneuver
+
+
+			/* The boat has a limited turnrate. Therefore, ensure that the pathplanning
+			 * does not suggest heading-changes bigger than the maximum possible turnrate */
+			if(!state.maneuver) {
+				//No Maneuver is necessary
+
+				if(nh_heading_diff(state.heading_cur, state.heading_ref) > config.max_headchange) {
+					//The desired change in heading is bigger than the maximum possibe heading-change
+
+					//TODO: Find out if we have to put + or - config.max_headchange!!!
+					//state.heading_cur -= config.max_headchange;
+
+				}
+
+			}
 
 
 			/****COMMUNICATION
@@ -201,14 +221,15 @@ void nav_listen2helsman(void) {
  * A new heading reference is available. Communicate this new information to the "autonomous_sailing module".
  * Therefore, speak to the Helsman.
  *
- * TODO: Check if the transformation from true heading to alpha is correct...
  */
 void nav_speak2helsman() {
 
 	/* Set the new alpha reference Value
 	 * alpha = yaw-twd;
 	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
-	float alpha_star = nh_sensor2dumas(nh_compass2sensor(state.heading_ref) - nh_compass2sensor(state.wind_dir));
+	float alpha_star = 0;
+	alpha_star = fmod(state.heading_ref - state.wind_dir,2*PI); //In Compass-Frame
+	alpha_star = nh_compass2dumas(alpha_star);					//Convert to Duma's convention for Autonomous Sailing Module
 
 	#if C_DEBUG == 0
 	cb_set_alpha_star(alpha_star);
@@ -245,18 +266,29 @@ void nav_speak2helsman() {
  * New information about the heading is available. Therefore, the state of the navigator needs to be updated
  *
  * @param *strs_p: Pointer to the topics-struct
+ *
+ * Debug-State: Should be OK
  */
 void nav_heading_update(void) {
 
 	/* Get the new alpha Value
-	 * alpha = yaw-twd;
+	 * alpha = yaw-twd => yaw = alpha + twd;
 	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
 	float alpha = 0;
 	#if C_DEBUG == 0
 	alpha =  cb_get_alpha();
 	#endif
 
-	state.heading_cur = nh_dumas2compass(alpha + state.wind_dir);
+
+	/* Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
+	 * Compass-Frame.  */
+	alpha = nh_dumas2compass(alpha);				//Convert to Compass-Frame
+
+
+	/* The Heading of the Boat is needes, which is either the COG or the yaw-angle. */
+	alpha = fmod(alpha + state.wind_dir,2*PI);		//Add Wind-Direction (heading = alpha + twd)
+
+	state.heading_cur = alpha;
 
 } //end of nav_heading_update
 
@@ -276,16 +308,6 @@ void nav_wind_update(void) {
 	#endif
 
 	state.wind_dir = nh_sensor2compass(state.wind_dir);
-
-
-	/* Update the Centerline
-	 * The Centerline always has the same direction as the mean wind. And starts at the next target.*/
-	float dx = sinf(state.wind_dir);
-	float dy = cosf(state.wind_dir);
-	float norm = sqrtf(dx*dx+dy*dy);
-
-	field.centerline.northx = dx/norm;
-	field.centerline.easty = dy/norm;
 
 } //end of nav_heading_update
 
@@ -387,10 +409,16 @@ void nav_set_target(uint8_t TargetNumber, Point TargetPos) {
  * This functions is called by QGroundControl to set a new Value
  *
  * @param period: Time between two calls to pathplanning [us]
+ * @param turnrate: Maximum Turnrate of the boat [°/s]
  */
-void nav_set_configuration(uint64_t period) {
+void nav_set_configuration(uint64_t period, uint32_t turnrate) {
 
-	config.period = period;
+	//Store the period
+	config.period = period*1000000.0f;
+
+	//Store the maximum possible change in Heading between two consecutive
+	//executions of Path planning
+	config.max_headchange = turnrate * RAD2DEG * period;
 }
 
 
