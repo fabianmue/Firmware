@@ -144,9 +144,9 @@ float nh_appWindDir(float heading, float windDir) {
     float zc = xw*yh - yw*xh;
 
     if(zc < 0) {
-    	zc = -1;
-    } else {
     	zc = 1;
+    } else {
+    	zc = -1;
     }
 
     return zc*acosf((xw*xh + yw*yh)/(wnorm*hnorm));
@@ -172,11 +172,11 @@ NEDpoint nh_geo2ned(Point geo) {
 	pos.lon = geo.lon;
 	pos.alt = geo.alt;*/
 
-	double lat = (double)geo.lat;
-	double lon = (double)geo.lon;
-	float alt = (float)geo.alt;
+	//double lat = (double)geo.lat;
+	//double lon = (double)geo.lon;
+	//float alt = (float)geo.alt;
 
-	n_geo_to_ned(lat,lon,alt,&north_dm,&east_dm,&down_dm);
+	n_geo_to_ned(geo.lat,geo.lon,geo.alt,&north_dm,&east_dm,&down_dm);
 
 	result.northx = north_dm/10.0f;
 	result.easty = east_dm/10.0f;

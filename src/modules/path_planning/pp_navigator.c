@@ -225,7 +225,7 @@ void nav_speak2helsman() {
 
     #if C_DEBUG == 1
 		printf("New Heading Reference: %f / ",state.heading_ref*RAD2DEG);
-		printf("New Alpha Star: %f",alpha_star*RAD2DEG);
+		printf("New Alpha Star: %f\n",alpha_star*RAD2DEG);
 
 		//Write a file with the shared-Memory Content for Matlab
 		FILE *f = fopen("sharedMemory.txt", "a");
@@ -310,7 +310,7 @@ void nav_position_update(void) {
 	NEDpoint newPos;
 	newPos.northx = ned[0]/10.0f;
 	newPos.easty = ned[1]/10.0f;
-	newPos.downz = ned[2]; 			//Pathplanning does not need the down-value
+	newPos.downz = ned[2]/10.0f; 			//Pathplanning does not need the down-value
 
 
 	//Check, if we reached a target

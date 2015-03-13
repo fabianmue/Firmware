@@ -40,10 +40,10 @@ static struct {
 } Config = {
 		.Gw = 0.9f, //0.9
 		.Go = 0.8f, //0.8
-		.Gm = 0.4f, //0.4
+		.Gm = 0.3f, //0.4
 		.Gs = 0.0f,//0.05
 		.Gt = 0.0f, //0.1
-		.GLee = 0.0f,//0.15
+		.GLee = 0.15f,//0.15
 		.ObstSafetyRadius = 10.0f, //10
 		.ObstHorizon = 100.0f, //100
 		.WindowSize = 5 //5
@@ -244,7 +244,7 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 
 	//Apparent Wind Direction
 	float appWind = nh_appWindDir(seg,state->wind_dir);
-	//printf("App Wind Dir: %f\n",appWind*RAD2DEG);
+	printf("App Wind Dir: %f / ",appWind*RAD2DEG);
 
 	//Calcualte x and y Differences
 	float dx = state->position.northx-field->targets[state->targetNum].northx;
