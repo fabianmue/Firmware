@@ -244,7 +244,7 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 
 	//Apparent Wind Direction
 	float appWind = nh_appWindDir(seg,state->wind_dir);
-	printf("App Wind Dir: %f\n",appWind*RAD2DEG);
+	//printf("App Wind Dir: %f\n",appWind*RAD2DEG);
 
 	//Calcualte x and y Differences
 	float dx = state->position.northx-field->targets[state->targetNum].northx;

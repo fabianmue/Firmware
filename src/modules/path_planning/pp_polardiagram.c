@@ -94,7 +94,7 @@ float pol_polardiagram(float wind_dir, float wind_speed) {
 
 			return ((float)polar_3_0[ind]/170);
 		} else {
-			printf("WSpeed: %f\n",wind_speed);
+			//printf("WSpeed: %f\n",wind_speed);
 			return -1;
 		}
 	}

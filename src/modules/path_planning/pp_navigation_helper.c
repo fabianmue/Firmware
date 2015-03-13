@@ -167,12 +167,16 @@ NEDpoint nh_geo2ned(Point geo) {
 	int32_t east_dm;
 	int32_t down_dm;
 
-	struct vehicle_global_position_s pos;
+	/*struct vehicle_global_position_s pos;
 	pos.lat = geo.lat;
 	pos.lon = geo.lon;
-	pos.alt = geo.alt;
+	pos.alt = geo.alt;*/
 
-	n_geo_to_ned(&pos,&north_dm,&east_dm,&down_dm);
+	double lat = (double)geo.lat;
+	double lon = (double)geo.lon;
+	float alt = (float)geo.alt;
+
+	n_geo_to_ned(lat,lon,alt,&north_dm,&east_dm,&down_dm);
 
 	result.northx = north_dm/10.0f;
 	result.easty = east_dm/10.0f;
