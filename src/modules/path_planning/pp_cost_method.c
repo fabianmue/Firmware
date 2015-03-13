@@ -41,9 +41,9 @@ static struct {
 		.Gw = 0.9f, //0.9
 		.Go = 0.8f, //0.8
 		.Gm = 0.4f, //0.4
-		.Gs = 0.05f,//0.05
+		.Gs = 0.0f,//0.05
 		.Gt = 0.0f, //0.1
-		.GLee = 0.15f,//0.15
+		.GLee = 0.0f,//0.15
 		.ObstSafetyRadius = 10.0f, //10
 		.ObstHorizon = 100.0f, //100
 		.WindowSize = 5 //5
@@ -115,7 +115,7 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 		headMat[ind] = seg_compass;
 
 		#if C_DEBUG == 1
-			printf("Total Cost: %f, %f\n",seg_compass*RAD2DEG,costMat[ind]);
+			//printf("Total Cost: %f, %f\n",seg_compass*RAD2DEG,costMat[ind]);
 		#endif
 
 		//Update Index
@@ -243,7 +243,8 @@ float total_cost(float seg, struct nav_state_s *state, struct nav_field_s *field
 float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s *field) {
 
 	//Apparent Wind Direction
-	float appWind = nh_appWindDir(state->heading_cur,state->wind_dir);
+	float appWind = nh_appWindDir(seg,state->wind_dir);
+	printf("App Wind Dir: %f\n",appWind*RAD2DEG);
 
 	//Calcualte x and y Differences
 	float dx = state->position.northx-field->targets[state->targetNum].northx;
@@ -252,12 +253,14 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 	//Distance to target
 	float distToTarget = nh_ned_dist(state->position,field->targets[state->targetNum]);
 
-	float tgx = -dx/distToTarget;			//Vector pointing towards the target
-	float tgy = -dy/distToTarget;
+	float tgx = dx/distToTarget;			//Vector pointing towards the target
+	float tgy = dy/distToTarget;
 
 	//Get the Boatspeed from the Polardiagram
-	float boatspeed = pol_polardiagram(appWind,state->wind_dir);
-
+	float boatspeed = pol_polardiagram(appWind,state->wind_speed);
+#if C_DEBUG == 1
+	printf("Boatspeed: %f @%f\n",boatspeed,seg*RAD2DEG);
+#endif
 
 	//Calcualte Direction and Speed of the Boat
 	float vhx = cosf(seg)*boatspeed;

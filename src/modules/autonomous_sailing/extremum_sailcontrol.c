@@ -78,7 +78,7 @@ static struct {
 	float period	;				//Timeinterval between two changes in the sail control value [us]
 } Config = {
 		.k = 2.0f,					//Init the values of the struct with the default values
-		.period = 1.0f,
+		.period = 1000000.0f,		//Start with 1s Period-Time
 		.windowSize = 8
 };
 
@@ -204,11 +204,11 @@ void essc_set_qground_values(float k, int windowSize, float period) {
 	}
 
 	//Assign the Period
-	if(period < 0) {
+	if(period > 0) {
 		Config.period = period*1000000.0f;
 	} else {
 		//Set the default Value
-		Config.period = 1/1.0f;
+		Config.period = 1000000.0f;
 	}
 
 	//Assign the Size of the Window for the speed Averaging (must be bigger than two, otherwise

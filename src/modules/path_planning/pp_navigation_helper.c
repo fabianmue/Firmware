@@ -130,8 +130,8 @@ float nh_ned_bearing(NEDpoint start, NEDpoint end) {
 float nh_appWindDir(float heading, float windDir) {
 
 	//Calculate Wind-Vector
-    float xw = cosf(windDir);
-    float yw = sinf(windDir);
+    float xw = cosf(PI-windDir);
+    float yw = sinf(PI-windDir);
     float wnorm = sqrtf(xw*xw + yw*yw);
 
     //Calculate Heading-Vector

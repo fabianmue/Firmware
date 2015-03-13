@@ -103,10 +103,12 @@ void nav_init(void) {
 void nav_navigator(void) {
 
 	/** Check if new Inforamtion is available and update the state accordingly. */
+	#if C_DEBUG == 0
 	nav_listen2helsman();	//Check, if a maneuver is completed
 	nav_heading_update();	//Check for a new Heading (alpha)
 	nav_position_update();  //Check for a new Position update
 	nav_wind_update();		//Check for new Wind measurements
+	#endif
 
 
 
@@ -222,7 +224,7 @@ void nav_speak2helsman() {
 	}
 
     #if C_DEBUG == 1
-		printf("New Heading Reference: %f",state.heading_ref*RAD2DEG);
+		printf("New Heading Reference: %f / ",state.heading_ref*RAD2DEG);
 		printf("New Alpha Star: %f",alpha_star*RAD2DEG);
 
 		//Write a file with the shared-Memory Content for Matlab
