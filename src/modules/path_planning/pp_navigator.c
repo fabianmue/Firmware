@@ -170,6 +170,8 @@ void nav_navigator(void) {
 				if(nh_heading_diff(state.heading_cur, state.heading_ref) > config.max_headchange) {
 					//The desired change in heading is bigger than the maximum possibe heading-change
 
+
+
 					//TODO: Find out if we have to put + or - config.max_headchange!!!
 					//state.heading_cur -= config.max_headchange;
 
@@ -210,9 +212,6 @@ void nav_listen2helsman(void) {
 	}
 	#endif
 
-
-
-
 } //end of nav_listen2helsman
 
 
@@ -236,9 +235,9 @@ void nav_speak2helsman() {
 	#endif
 
 
-	/* Tell the Helsman to tack as soon as possible, if pathplanning wants to tack */
+	/* Tell the Helsman to tack/gybe as soon as possible, if pathplanning wants to tack/gybe */
 	if(state.maneuver) {
-		//A maneuver is necessary => tell the helsman to tack
+		//A maneuver is necessary
 		#if C_DEBUG == 0
 		cb_do_maneuver(alpha_star);
 		#endif
