@@ -708,8 +708,10 @@ void p_param_update(struct parameters_qgc *params_p,
 
     //----- tack type
     int32_t tack_type;
+    int32_t type_of_tack = -1;//strange work around to be sure tack_type will be saved later
 
     param_get(pointers_param_qgc.tack_type_pointer, &tack_type);
+    type_of_tack = tack_type;//strange work around to be sure tack_type will be saved later
     gm_set_maneuver_data((uint16_t)tack_type);
 
     //----- param for rudder controller
@@ -911,7 +913,6 @@ void p_param_update(struct parameters_qgc *params_p,
 
     strs_p->boat_qgc_param1.window_alpha = window_alpha;
     strs_p->boat_qgc_param1.window_twd = window_twd;
-    strs_p->boat_qgc_param1.type_of_tack = (uint16_t)tack_type;
     strs_p->boat_qgc_param1.delta1 = delta_vect[0];
     strs_p->boat_qgc_param1.delta2 = delta_vect[1];
     strs_p->boat_qgc_param1.use_fixed_twd = (uint16_t)use_fixed_twd;
@@ -936,6 +937,7 @@ void p_param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param3.window_alpha_tack = alpha_window_during_tack;
     strs_p->boat_qgc_param3.window_twd_tack = twd_window_during_tack;
     strs_p->boat_qgc_param3.pred_horizon_steps = mpc_pred_horiz_steps;
+    strs_p->boat_qgc_param3.type_of_tack = type_of_tack;
 
     orb_publish(ORB_ID(boat_qgc_param3), pubs_p->boat_qgc_param3, &(strs_p->boat_qgc_param3));
 

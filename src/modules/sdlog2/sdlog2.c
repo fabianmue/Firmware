@@ -1801,7 +1801,6 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_QGC_PARAM1.rud_contr_type = buf.boat_qgc_param1.rud_contr_type;           
             log_msg.body.log_BOAT_QGC_PARAM1.window_alpha = buf.boat_qgc_param1.window_alpha;
             log_msg.body.log_BOAT_QGC_PARAM1.window_twd = buf.boat_qgc_param1.window_twd;
-            log_msg.body.log_BOAT_QGC_PARAM1.type_of_tack = buf.boat_qgc_param1.type_of_tack;
             log_msg.body.log_BOAT_QGC_PARAM1.delta1 = buf.boat_qgc_param1.delta1;
             log_msg.body.log_BOAT_QGC_PARAM1.delta2 = buf.boat_qgc_param1.delta2;
             log_msg.body.log_BOAT_QGC_PARAM1.use_fixed_twd = buf.boat_qgc_param1.use_fixed_twd;
@@ -1854,6 +1853,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_QGC_PARAM3.window_alpha_tack = buf.boat_qgc_param3.window_alpha_tack;
             log_msg.body.log_BOAT_QGC_PARAM3.window_twd_tack = buf.boat_qgc_param3.window_twd_tack;
             log_msg.body.log_BOAT_QGC_PARAM3.pred_horizon_steps = buf.boat_qgc_param3.pred_horizon_steps;
+            log_msg.body.log_BOAT_QGC_PARAM3.type_of_tack = buf.boat_qgc_param3.type_of_tack;
             LOGBUFFER_WRITE_AND_COUNT(QGC3);
         }
 
