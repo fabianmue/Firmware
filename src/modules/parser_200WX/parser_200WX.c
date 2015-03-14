@@ -124,9 +124,11 @@ bool retrieve_data(int *wx_port_pointer,
                    struct subscribtion_fd_s  *subs_p,
                    struct structs_topics_s   *strs_p);
 
+#if ENABLE_BOAT_WEATHER_STATION_MSGS == 1
 /** @brief Parser for YXXDR messages. */
 void xdr_parser(const char *buffer, const int buffer_length,
                 struct structs_topics_s   *strs_p);
+#endif //ENABLE_BOAT_WEATHER_STATION_MSGS == 1
 
 /** @brief Parser for GPXXX messages. */
 void gp_parser(const char *buffer, const int buffer_length,
@@ -139,9 +141,11 @@ float nmea_ndeg2degree(float val);
 void vr_parser(const char *buffer, const int buffer_length,
                struct structs_topics_s   *strs_p);
 
+#if ENABLE_BOAT_WEATHER_STATION_MSGS == 1
 /** @brief Parser for HCHDT message. */
 void hdt_parser(const char *buffer, const int buffer_length,
                 struct structs_topics_s   *strs_p);
+#endif
 
 /** @brief Parser for WIMWD message. */
 void mwd_parser(const char *buffer, const int buffer_length,
@@ -324,10 +328,12 @@ bool parser_variables_init(int *wx_port_pointer,
     orb_set_interval(subs_p->sensor, 110);	// set px4 sensors update every 0.11 [second] = 9.1 Hz
 
 
+    #if ENABLE_BOAT_WEATHER_STATION_MSGS == 1
     // advertise boat_weather_station topic
     memset(&(strs_p->boat_weather_station), 0, sizeof(strs_p->boat_weather_station));
     strs_p->boat_weather_station.timestamp = hrt_absolute_time();
     pubs_p->boat_weather_station = orb_advertise(ORB_ID(boat_weather_station), &(strs_p->boat_weather_station));
+    #endif
 
     // advertise vehicle_gps_position topic
     memset(&(strs_p->gps), 0, sizeof(strs_p->gps));
@@ -347,7 +353,10 @@ bool parser_variables_init(int *wx_port_pointer,
     //none topic has been updated yet
     strs_p->gps_updated = false;
     strs_p->wind_updated = false;
+
+    #if ENABLE_BOAT_WEATHER_STATION_MSGS == 1
     strs_p->boat_weather_station_updated = false;
+    #endif
     //strs_p->debug_updated = false;
 
     return true;
@@ -378,13 +387,16 @@ bool retrieve_data(int *wx_port_pointer,
     if(buffer_length < 1)
         return false;
 
+    #if ENABLE_BOAT_WEATHER_STATION_MSGS == 1
     // see if buffer there is one (or more) YXXDR message(s)
     xdr_parser(buffer_global, buffer_length, strs_p);
+    #endif
 
     // see if buffer there is one (or more) WIVW_ message(s)
     vr_parser(buffer_global, buffer_length, strs_p);
 
-    if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
+
+#if AS_TYPE_OF_ENVIRONMENT == 1//outdoor
 
 
 #if GPS_SIMULATION == 1
@@ -413,13 +425,16 @@ bool retrieve_data(int *wx_port_pointer,
         // see if there is one (or more) GPXXX message(s)
         gp_parser(buffer_global, buffer_length, strs_p);
 
+        #if ENABLE_BOAT_WEATHER_STATION_MSGS == 1
         // see if there is one (or more) HCHDT message(s)
         hdt_parser(buffer_global, buffer_length, strs_p);
+        #endif
 
         // see if there is one (or more) WIMWD message(s)
         mwd_parser(buffer_global, buffer_length, strs_p);
-#endif
-    }
+#endif //GPS_SIMULATION == 1
+
+#endif //AS_TYPE_OF_ENVIRONMENT == 1
 
 #if SAVE_DEBUG_VALUES == 1
 
@@ -442,6 +457,7 @@ bool retrieve_data(int *wx_port_pointer,
     return true;
 }
 
+#if ENABLE_BOAT_WEATHER_STATION_MSGS == 1
 /**
 * Parse transducer data received from 200WX, YXXDR message type B, C and E.
 *
@@ -591,6 +607,7 @@ void xdr_parser(const char *buffer, const int buffer_length,
         }
     }
 }
+#endif //ENABLE_BOAT_WEATHER_STATION_MSGS == 1
 
 /**
 * Parse transducer data received from 200WX, GPGGA, GPGSA, GPVTG messages.
@@ -1002,6 +1019,7 @@ void vr_parser(const char *buffer, const int buffer_length,
     }
 }
 
+#if ENABLE_BOAT_WEATHER_STATION_MSGS == 1
 /**
  * Parse HCHDT message. Heading w.r.t. True North saved as yaw angle
 */
@@ -1048,7 +1066,7 @@ void hdt_parser(const char *buffer, const int buffer_length,
     }
 
 }
-
+#endif //ENABLE_BOAT_WEATHER_STATION_MSGS == 1
 
 /**
   * Parses a WIMWD message, if any in the buffer. Saves wind speed and direction w.r.t. true North.
@@ -1151,11 +1169,13 @@ void publish_new_data(struct published_fd_s *pubs_p, struct structs_topics_s *st
         strs_p->wind_updated = false;
     }
 
+    #if ENABLE_BOAT_WEATHER_STATION_MSGS == 1
     //publish boat_weather_station_updated data if updated
     if(strs_p->boat_weather_station_updated){
         orb_publish(ORB_ID(boat_weather_station), pubs_p->boat_weather_station, &(strs_p->boat_weather_station));
         strs_p->boat_weather_station_updated = false;
     }
+    #endif //ENABLE_BOAT_WEATHER_STATION_MSGS == 1
 
     if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
         //publish gps data if updated

@@ -110,8 +110,10 @@ bool weather_station_init(int *wx_port_pointer){
         // enable  GPS GPZDA message, set 0.1 sec as amount of time between succesive trasmission
         encode_msg_200WX(wx_port_pointer, "PAMTC,EN,ZDA,1,1");
 
+        #if ENABLE_BOAT_WEATHER_STATION_MSGS == 1
         // enable heading w.r.t. True North, message HCHDT, set 0.1 sec as amount of time between succesive trasmission
         encode_msg_200WX(wx_port_pointer, "PAMTC,EN,HDT,1,1");
+        #endif
 
         // enable wind direction and speed w.r.t. True North, message WIMWD, set 0.1 sec as amount of time between succesive trasmission
         encode_msg_200WX(wx_port_pointer, "PAMTC,EN,MWD,1,1");
@@ -120,6 +122,7 @@ bool weather_station_init(int *wx_port_pointer){
     // enable relative wind  measurement, set 0.1 sec as amount of time between succesive trasmission
     encode_msg_200WX(wx_port_pointer, "PAMTC,EN,VWR,1,1");
 
+    #if ENABLE_BOAT_WEATHER_STATION_MSGS == 1
     // enable vessel attitude (pitch and roll), set 0.1 sec as amount of time between succesive trasmission
     encode_msg_200WX(wx_port_pointer, "PAMTC,EN,XDRB,1,1");
 
@@ -128,6 +131,7 @@ bool weather_station_init(int *wx_port_pointer){
 
     // enable x, y, z accelerometer readings, set 0.1 sec as amount of time between succesive trasmission
     encode_msg_200WX(wx_port_pointer, "PAMTC,EN,XDRC,1,1");
+    #endif //PARSE_VEHICLE_STATUS_MSG == 1
 
     warnx(" clean UART buffer before start.\n");
 
