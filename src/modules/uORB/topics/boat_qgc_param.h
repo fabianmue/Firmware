@@ -86,6 +86,7 @@ struct boat_qgc_param3_s{
     uint16_t window_twd_tack;      /// Window size of moving average filter of the TWD during tack
     uint16_t pred_horizon_steps;      /// Steps of the prediction horizon
     int32_t type_of_tack;      /// Type of tack set by AS_TY_TCK parameter
+    int32_t use_only_yaw_man;      /// Value of AS_TCK_USE_Y
 };
 
 ORB_DECLARE(boat_qgc_param1);

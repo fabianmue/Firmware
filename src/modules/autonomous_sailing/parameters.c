@@ -109,6 +109,18 @@ PARAM_DEFINE_FLOAT(AS_SAI_X2_AL, 150.0f);
 PARAM_DEFINE_INT32(AS_TY_TCK, 0);
 
 /**
+ * During a meneuver (tack or jybe) should alpha be computed using
+ * only the yaw angle or should it be computed in the normal way as during
+ * normal sailing?
+ * 0 = during maneuver compute alpha using both yaw and cog
+ * 1 = during maneuver compute alpha using only yaw
+ *
+ * @min 0
+ * @max 1
+ */
+PARAM_DEFINE_INT32(AS_TCK_USE_Y, 0);
+
+/**
  * Proportional gain of the PI controller for the rudder.
  * When using the conditional PI, this value is even reffered as Kp.
  *
@@ -491,6 +503,8 @@ static struct pointers_param_qgc_s{
 
     param_t use_fixed_twd_pointer; /**< pointer to AS_USE_FIXED_TWD */
 
+    param_t use_only_yaw_on_maneuver; /**< pointer to AS_TCK_USE_Y */
+
     //-- params for LQR controller
     param_t lqr_k1_poniter; /**< pointer to  ASO_LQR_K1*/
     param_t lqr_k2_poniter; /**< pointer to  ASO_LQR_K2*/
@@ -607,6 +621,8 @@ void p_param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.moving_twd_window_pointer = param_find("AS_WIN_TWD");
 
     pointers_param_qgc.use_fixed_twd_pointer = param_find("AS_USE_FIXED_TWD");
+
+    pointers_param_qgc.use_only_yaw_on_maneuver = param_find("AS_TCK_USE_Y");
 
     //--- params for lqr controller
     pointers_param_qgc.lqr_k1_poniter = param_find("ASO_LQR_K1");
@@ -872,6 +888,12 @@ void p_param_update(struct parameters_qgc *params_p,
     //give these two values to guidance module
     gm_set_p_tack_data(p_tack_kp, p_tack_cp);
 
+    // how to compute alpha during a maneuver
+    int use_only_yaw;
+
+    param_get(pointers_param_qgc.use_only_yaw_on_maneuver, &use_only_yaw);
+    cd_use_only_yaw_on_man(use_only_yaw);
+
     // --- essc
     int use_essc;
     param_get(pointers_param_qgc.use_essc_pointer, &use_essc);
@@ -938,6 +960,7 @@ void p_param_update(struct parameters_qgc *params_p,
     strs_p->boat_qgc_param3.window_twd_tack = twd_window_during_tack;
     strs_p->boat_qgc_param3.pred_horizon_steps = mpc_pred_horiz_steps;
     strs_p->boat_qgc_param3.type_of_tack = type_of_tack;
+    strs_p->boat_qgc_param3.use_only_yaw_man = use_only_yaw;
 
     orb_publish(ORB_ID(boat_qgc_param3), pubs_p->boat_qgc_param3, &(strs_p->boat_qgc_param3));
 

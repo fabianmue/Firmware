@@ -1854,6 +1854,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_QGC_PARAM3.window_twd_tack = buf.boat_qgc_param3.window_twd_tack;
             log_msg.body.log_BOAT_QGC_PARAM3.pred_horizon_steps = buf.boat_qgc_param3.pred_horizon_steps;
             log_msg.body.log_BOAT_QGC_PARAM3.type_of_tack = buf.boat_qgc_param3.type_of_tack;
+            log_msg.body.log_BOAT_QGC_PARAM3.use_only_yaw_man = buf.boat_qgc_param3.use_only_yaw_man;
             LOGBUFFER_WRITE_AND_COUNT(QGC3);
         }
 
