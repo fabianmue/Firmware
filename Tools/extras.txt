@@ -3,7 +3,7 @@
 # Radio MAVLink start
 #
 
-mavlink start -d /dev/ttyS1 -x
+mavlink start -d /dev/ttyS1 #-x for ftp
 mavlink stream -d /dev/ttyS1 -s GUID_DEBUG_MSG -r 4
 usleep 100000
 mavlink stream -d /dev/ttyS1 -s BOAT_LOCAL_POS_MSG -r 2
