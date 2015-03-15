@@ -227,7 +227,7 @@ void geo_to_ned(const struct vehicle_global_position_s *gps_p,
     ecef_to_ned(&x_dm, &y_dm, &z_dm, north_dm_p, east_dm_p, down_dm_p);
 
     //save NED coordinates in communication_buffer
-    cb_set_ned_coordinates(*north_dm_p, *east_dm_p, *down_dm_p);
+    //cb_set_ned_coordinates(*north_dm_p, *east_dm_p, *down_dm_p);
 }
 
 /**
@@ -387,7 +387,7 @@ void n_navigation_module(const struct vehicle_global_position_s *vgp_p){
     geo_to_race(vgp_p, &x_dm, &y_dm);
 
     //convert local position from decimeters to meters and save it in path_planning struct
-    cb_set_race_coordinates((float)x_dm / E1, (float)y_dm / E1);
+    //cb_set_race_coordinates((float)x_dm / E1, (float)y_dm / E1);
 }
 
 /**

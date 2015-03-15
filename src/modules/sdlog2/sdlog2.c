@@ -105,6 +105,8 @@
 #include <uORB/topics/boat_optimal_control.h>
 //Added by Marco Tranzatto
 #include <uORB/topics/path_planning.h>
+//Added by Marco Tranzatto
+#include <uORB/topics/boat_local_position.h>
 
 #include <systemlib/systemlib.h>
 #include <systemlib/param/param.h>
@@ -978,6 +980,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         struct boat_opt_mat_s boat_opt_mat; //Added by Marco Tranzatto
         struct boat_qgc_param3_s boat_qgc_param3; //Added by Marco Tranzatto
         struct path_planning_s path_planning; //Added by Marco Tranzatto
+        struct boat_local_position_s boat_local_position; //Added by Marco Tranzatto
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1029,6 +1032,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             struct log_OPTM_s log_BOAT_OPT_MATRICES; //Added by Marco Tranzatto
             struct log_QGC3_s log_BOAT_QGC_PARAM3; //Added by Marco Tranzatto
             struct log_PP_s log_PP; //Added by Marco Tranzatto
+            struct log_BLP_s log_BLP; //Added by Marco Tranzatto
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1075,6 +1079,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         int boat_opt_mat_sub; //Added by Marco Tranzatto
         int boat_qgc_param3_sub; //Added by Marco Tranzatto
         int path_planning; //Added by Marco Tranzatto
+        int boat_local_position; //Added by Marco Tranzatto
 	} subs;
 
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
@@ -1130,6 +1135,8 @@ int sdlog2_thread_main(int argc, char *argv[])
     subs.boat_qgc_param3_sub = orb_subscribe(ORB_ID(boat_qgc_param3));
 
     subs.path_planning = orb_subscribe(ORB_ID(path_planning));
+
+    subs.boat_local_position = orb_subscribe(ORB_ID(boat_local_position));
     //****************** End Add by Marco Tranzatto ************
 
 
@@ -1863,10 +1870,17 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.msg_type = LOG_PP_MSG;
             log_msg.body.log_PP.alpha_star = buf.path_planning.alpha_star;
             log_msg.body.log_PP.do_maneuver = buf.path_planning.do_maneuver;
-            log_msg.body.log_PP.x_race_m = buf.path_planning.x_race_m;
-            log_msg.body.log_PP.y_race_m = buf.path_planning.y_race_m;
             log_msg.body.log_PP.id_cmd = buf.path_planning.id_cmd;
             LOGBUFFER_WRITE_AND_COUNT(PP);
+        }
+
+        /* --- BOAT LOCAL POSITION */
+        if (copy_if_updated(ORB_ID(boat_local_position), subs.boat_local_position, &buf.boat_local_position)) {
+            log_msg.msg_type = LOG_BLP_MSG;
+            log_msg.body.log_BLP.x_race_m = buf.boat_local_position.x_race_m;
+            log_msg.body.log_BLP.y_race_m = buf.boat_local_position.y_race_m;
+            log_msg.body.log_BLP.dist_m = buf.boat_local_position.dist_m;
+            LOGBUFFER_WRITE_AND_COUNT(BLP);
         }
         //********************** End add *******************************
 

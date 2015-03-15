@@ -73,10 +73,10 @@ float cb_get_alpha_star(void);
 uint8_t cb_get_haul(void);
 
 /** @brief get last X coordinate in race frame */
-float cb_get_x_race_m(void);
+//float cb_get_x_race_m(void);
 
 /** @brief get last Y coordinate in race frame */
-float cb_get_y_race_m(void);
+//float cb_get_y_race_m(void);
 
 /** @brief get alpha angle sent by autonomous_sailing app */
 float cb_get_alpha(void);
@@ -91,7 +91,7 @@ bool cb_tack_now(void);
 void cb_use_fixed_twd(bool use_fixed_twd);
 
 /** @brief get the most updated NEd coordinates of the boat */
-void cb_get_boat_ned(int32_t ned[3]);
+//void cb_get_boat_ned(int32_t ned[3]);
 
 // ----- end usefull functions
 
@@ -104,7 +104,7 @@ void cb_new_as_data(int boat_guidance_debug_sub);
 void cb_publish_pp_if_updated(void);
 
 /** @brief set new X and Y coordinates in race frame */
-void cb_set_race_coordinates(float x_m, float y_m);
+//void cb_set_race_coordinates(float x_m, float y_m);
 
 /** @brief init module */
 void cb_init(void);
@@ -112,8 +112,8 @@ void cb_init(void);
 /** @brief copy new data from remote controller*/
 void cb_new_rc_data(const struct structs_topics_s *strs_p);
 
-/** @vrief set most updated boat NED coordinates */
-void cb_set_ned_coordinates(int32_t n, int32_t e, int32_t d);
+/** @brief set most updated boat NED coordinates */
+//void cb_set_ned_coordinates(int32_t n, int32_t e, int32_t d);
 
 #if USE_GRID_LINES == 1
 
