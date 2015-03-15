@@ -46,6 +46,7 @@
 #include <stdio.h>
 #include "pp_send_msg_qgc.h"
 #include "pp_communication_buffer.h"
+#include "pp_navigation_module.h"
 
 /** @brief Initialize the grid lines struct.*/
 void gh_init_grids(void);

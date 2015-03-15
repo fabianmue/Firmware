@@ -264,7 +264,7 @@ void gh_gridlines_handler(void){
     //check if we have a valid grid line to reach, if so, take it
     if(gh_get_next_gridline(&next_grid)){
         //see if we have reached or exceeded our goal
-        if(cb_get_x_race_m() <= next_grid){
+        if(n_get_x_race_m() <= next_grid){
 
             //Advise we have reached the current target grid line
             reached_current_grid();

@@ -59,6 +59,15 @@ float n_get_mean_wind_angle(void);
 void n_geo_to_race(double lat_deg, double lon_deg, float alt_m,
                    int32_t *x_dm_p, int32_t *y_dm_p);
 
+/** @brief get last X coordinate in race frame */
+float n_get_x_race_m(void);
+
+/** @brief get last Y coordinate in race frame */
+float n_get_y_race_m(void);
+
+/** @brief get the most updated NEd coordinates of the boat */
+void n_get_boat_ned(int32_t ned[3]);
+
 // ----- end usefull functions
 
 
