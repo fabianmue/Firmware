@@ -68,6 +68,9 @@ float n_get_y_race_m(void);
 /** @brief get the most updated NEd coordinates of the boat */
 void n_get_boat_ned(int32_t ned[3]);
 
+/** @brief get the distance of the boat from the top mark */
+float n_get_dist_m(void);
+
 // ----- end usefull functions
 
 

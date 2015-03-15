@@ -488,8 +488,17 @@ float n_get_y_race_m(void){
  *
  * @param ned   ned <-- [North, East, Down] in decimeters.
 */
-void cb_get_boat_ned(int32_t ned[3]){
+void n_get_boat_ned(int32_t ned[3]){
     ned[0] = boat_ned_dm[0];
     ned[1] = boat_ned_dm[1];
     ned[2] = boat_ned_dm[2];
+}
+
+/**
+ * Get the latest distance of the boat from the top mark.
+ *
+ * @return distnace of the boat from the top mark [m]
+*/
+float n_get_dist_m(void){
+    return boat_local_position.dist_m;
 }
