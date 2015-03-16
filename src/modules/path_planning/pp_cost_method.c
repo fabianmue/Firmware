@@ -40,12 +40,12 @@ static struct {
 	float ObstHorizon; 		//Obstacle Horizon <=> inside this horizon obstacles are recognized [m]
 	uint8_t WindowSize; 		//Size of the window for smoothing the Costfunction
 } Config = {
-		.Gw = 0.9f, //0.9
-		.Go = 0.8f, //0.8
-		.Gm = 0.3f, //0.4
+		.Gw = 0.0f, //0.9
+		.Go = 0.0f, //0.8
+		.Gm = 0.0f, //0.4
 		.Gs = 0.0f,//0.05
 		.Gt = 0.1f, //0.1
-		.GLee = 0.15f,//0.15
+		.GLee = 0.0f,//0.15
 		.ObstSafetyRadius = 10.0f, //10
 		.ObstHorizon = 100.0f, //100
 		.WindowSize = 5 //5
@@ -246,7 +246,6 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 
 	//Apparent Wind Direction
 	float appWind = nh_appWindDir(seg,state->wind_dir);
-	printf("App Wind Dir: %f / ",appWind*RAD2DEG);
 
 	//Calcualte x and y Differences
 	float dx = state->position.northx-field->targets[state->targetNum].northx;
@@ -260,9 +259,6 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 
 	//Get the Boatspeed from the Polardiagram
 	float boatspeed = pol_polardiagram(appWind,state->wind_speed);
-#if C_DEBUG == 1
-	printf("Boatspeed: %f @%f\n",boatspeed,seg*RAD2DEG);
-#endif
 
 	//Calcualte Direction and Speed of the Boat
 	float vhx = cosf(seg)*boatspeed;
@@ -355,10 +351,9 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
 
 
     /* Case 2) */
-    //TODO
+    //TODO: There's still a bug somewhere....
 
 	float Ct = 0;
-
 
     if(Config.Gt > 0) {
 
@@ -369,6 +364,8 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
 
 			Ct = 0; 	//Assign a low cost, since we are on the last leg it's up to the other costs to
 						//guide the boat towards the target.
+
+			printf("We are on the last leg!\n");
 
 		} else {
 			//The boat is not on the last leg. => push the boat away from the laylines <=> stay close to the center-line
