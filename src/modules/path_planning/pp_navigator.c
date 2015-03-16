@@ -97,7 +97,7 @@ void nav_init(void) {
 
 	//Set the initial Values for the Configuration
 	config.period = 1000000;			// = 1s
-	config.max_headchange = 2.5*0.17453292f; // = 12°/period
+	config.max_headchange = 2.5f*0.17453292f; // = 12°/period
 	config.method = 1; //As a default use the Cost-Function-Method
 }
 
@@ -350,7 +350,7 @@ void nav_position_update(void) {
 	 * Note: The NED-Position is in decimeters => convert to meters */
 	int32_t ned[3];
 	#if C_DEBUG == 0
-	cb_get_boat_ned(ned);
+	n_get_boat_ned(ned);
 	#endif
 
 	NEDpoint newPos;

@@ -402,7 +402,6 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
 			float dist_mcl = nh_ned_dist(state->position,mcl);			//Distance to the Center-Line
 
 			Ct = min(dist_mcl,dist_target)/dist_target;
-			printf(" Ct = %f\n",Ct);
 
 			if(Ct < 0.99999f) {  //Give a rectangular shape to the cost
 					Ct = 0;
