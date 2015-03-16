@@ -168,7 +168,8 @@ void nav_navigator(void) {
 			 * does not suggest heading-changes bigger than the maximum possible turnrate.
 			 * The check is only done when the boat is not doing a maneuver. If you want to
 			 * disable the turnrate, just set the value to a high value. */
-			if(!state.maneuver) {
+			if(false && !state.maneuver) {
+				//TODO: Remove false....somewhere here's an error, because the boat does Q-tacks
 				//No Maneuver is necessary
 
 				float diff = nh_heading_diff(state.heading_cur, state.heading_ref);

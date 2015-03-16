@@ -348,8 +348,10 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
     if(appWind < 0) {
         Ct_colreg = 0;
     } else {
-        Ct_colreg = Config.Gt * 1;
+        Ct_colreg = Config.Gt * 0.5 * 1;
     }
+
+    //DEBUG:
 
 
 
