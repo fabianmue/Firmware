@@ -17,6 +17,7 @@
 
 #include "pp_polardiagram.h"
 
+//Calculate the minimum of two values
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
 
@@ -38,14 +39,14 @@ static struct {
 	float GLee;       		//Weighting factor for passing Obstacles in Lee. (higher value <=> force boat to pass in Lee)
 	float ObstSafetyRadius; //Safety Radius around an obstacle [m]
 	float ObstHorizon; 		//Obstacle Horizon <=> inside this horizon obstacles are recognized [m]
-	uint8_t WindowSize; 		//Size of the window for smoothing the Costfunction
+	uint8_t WindowSize; 	//Size of the window for smoothing the Costfunction
 } Config = {
-		.Gw = 0.0f, //0.9
-		.Go = 0.0f, //0.8
-		.Gm = 0.0f, //0.4
-		.Gs = 0.0f,//0.05
+		.Gw = 0.9f, //0.9
+		.Go = 0.8f, //0.8
+		.Gm = 0.4f, //0.4
+		.Gs = 0.05f,//0.05
 		.Gt = 0.1f, //0.1
-		.GLee = 0.0f,//0.15
+		.GLee = 0.15f,//0.15
 		.ObstSafetyRadius = 10.0f, //10
 		.ObstHorizon = 100.0f, //100
 		.WindowSize = 5 //5
@@ -340,9 +341,10 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
 
 	float appWind= nh_appWindDir(seg,state->wind_dir);		//Current apparent Wind Direction
 
-	float Ct_colreg = 0;											//Tactical Cost that is returned at the end of this function
 
 	/* Case 1) */
+	float Ct_colreg = 0;									//Tactical Cost for COLREGS
+
     if(appWind < 0) {
         Ct_colreg = 0;
     } else {
@@ -350,10 +352,9 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
     }
 
 
-    /* Case 2) */
-    //TODO: There's still a bug somewhere....
 
-	float Ct = 0;
+    /* Case 2) */
+	float Ct = 0;											//Tactical Cost for Centerline
 
     if(Config.Gt > 0) {
 
@@ -365,14 +366,12 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
 			Ct = 0; 	//Assign a low cost, since we are on the last leg it's up to the other costs to
 						//guide the boat towards the target.
 
-			printf("We are on the last leg!\n");
-
 		} else {
 			//The boat is not on the last leg. => push the boat away from the laylines <=> stay close to the center-line
 
 			//Calculate the Centerline
-			float dx = sinf(state->wind_dir);
-			float dy = cosf(state->wind_dir);
+			float dx = cosf(state->wind_dir);
+			float dy = sinf(state->wind_dir);
 			float norm = sqrtf(dx*dx+dy*dy);
 
 			float clx = dx/norm;
@@ -380,8 +379,8 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
 
 
 			//Calculate the Heading-Vector
-			float hx = cos(seg);
-			float hy = sin(seg);
+			float hx = cosf(seg);
+			float hy = sinf(seg);
 			norm = sqrt(hx * hx + hy * hy);
 			hx = hx/norm;
 			hy = hy/norm;
@@ -399,10 +398,11 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
 				mcl.easty = 10000000.0f;
 			}
 
-
 			float dist_target = nh_ned_dist(state->position,field->targets[state->targetNum]);  //The closer the boat gets to the target, the smaller is the cone-opening
 			float dist_mcl = nh_ned_dist(state->position,mcl);			//Distance to the Center-Line
+
 			Ct = min(dist_mcl,dist_target)/dist_target;
+			printf(" Ct = %f\n",Ct);
 
 			if(Ct < 0.99999f) {  //Give a rectangular shape to the cost
 					Ct = 0;
@@ -573,8 +573,6 @@ void smooth(const float signal[], int SignalLen, int KernelLen,
 		FILE *f = fopen("output.txt", "a");
 		if (f == NULL)
 		{
-
-
 		    printf("Error opening file!\n");
 		}
 
