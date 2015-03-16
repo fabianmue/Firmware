@@ -537,6 +537,8 @@ void xdr_parser(const char *buffer, const int buffer_length,
                             strs_p->boat_weather_station.roll_r = temp_val * deg2rad; /// Roll in rad.
                             strs_p->boat_weather_station.pitch_r = pitch * deg2rad;   /// Pitch in rad.
                             strs_p->boat_weather_station_updated = true;
+                            strs_p->parser200wx_status.completed_msgs =
+                                    strs_p->parser200wx_status.completed_msgs + 1;
                         }
                     }
                 }
@@ -576,6 +578,8 @@ void xdr_parser(const char *buffer, const int buffer_length,
                                 strs_p->boat_weather_station.pitch_rate_r_s = pitchspeed * deg2rad;   ///< Pitch speed in rad/s.
                                 strs_p->boat_weather_station.yaw_rate_r_s = temp_val * deg2rad;       ///< Yaw speed in rad/s.
                                 strs_p->boat_weather_station_updated = true;
+                                strs_p->parser200wx_status.completed_msgs =
+                                        strs_p->parser200wx_status.completed_msgs + 1;
                             }
                         }
                     }
@@ -608,6 +612,8 @@ void xdr_parser(const char *buffer, const int buffer_length,
                             strs_p->boat_weather_station.acc_y_g = lat_acc;
                             strs_p->boat_weather_station.acc_z_g = vert_acc;
                             strs_p->boat_weather_station_updated = true;
+                            strs_p->parser200wx_status.completed_msgs =
+                                    strs_p->parser200wx_status.completed_msgs + 1;
                         }
                     }
                 }
@@ -732,6 +738,9 @@ void gp_parser(const char *buffer, const int buffer_length,
 
                                         //geodedical coordinate has been updated
                                         strs_p->parser200wx_status.read_msgs |= PWS_READ_GPGGA;
+                                        //update numer of completed messages read
+                                        strs_p->parser200wx_status.completed_msgs =
+                                                strs_p->parser200wx_status.completed_msgs + 1;
                                     }
 
                                     //cancella
@@ -887,6 +896,10 @@ void gp_parser(const char *buffer, const int buffer_length,
                                 //cog has been updated
                                 strs_p->parser200wx_status.read_msgs |= PWS_READ_GPVTG;
 
+                                //update numer of completed messages read
+                                strs_p->parser200wx_status.completed_msgs =
+                                        strs_p->parser200wx_status.completed_msgs + 1;
+
                             }
 
                         }
@@ -1039,6 +1052,10 @@ void vr_parser(const char *buffer, const int buffer_length,
                         strs_p->wind_updated = true;
                         //apparent wind has been updated
                         strs_p->parser200wx_status.read_msgs |= PWS_READ_WIVWR;
+
+                        //update numer of completed messages read
+                        strs_p->parser200wx_status.completed_msgs =
+                                strs_p->parser200wx_status.completed_msgs + 1;
                     }
                 }
             }
@@ -1087,6 +1104,10 @@ void hdt_parser(const char *buffer, const int buffer_length,
                 strs_p->boat_weather_station.timestamp = hrt_absolute_time();
                 strs_p->boat_weather_station.heading_tn = heading * deg2rad; /// Heading w.r.t. true North in rad, positive on the right.
                 strs_p->boat_weather_station_updated = true;
+
+                //update numer of completed messages read
+                strs_p->parser200wx_status.completed_msgs =
+                        strs_p->parser200wx_status.completed_msgs + 1;
             }
         }
 
@@ -1174,6 +1195,10 @@ void mwd_parser(const char *buffer, const int buffer_length,
 
                             //true wind has been updated
                             strs_p->parser200wx_status.read_msgs |= PWS_READ_WIMWD;
+
+                            //update numer of completed messages read
+                            strs_p->parser200wx_status.completed_msgs =
+                                    strs_p->parser200wx_status.completed_msgs + 1;
                         }
                     }
                 }
@@ -1221,6 +1246,7 @@ void publish_new_data(struct published_fd_s *pubs_p, struct structs_topics_s *st
     orb_publish(ORB_ID(parser200wx_status), pubs_p->parser200wx_status, &(strs_p->parser200wx_status));
     //clean bit mask
     strs_p->parser200wx_status.read_msgs = 0x0000;
+    strs_p->parser200wx_status.completed_msgs = 0;
 
 #if SAVE_DEBUG_VALUES == 1
 

@@ -532,6 +532,7 @@ struct log_PWS_s{
     int32_t byte_read;
     uint16_t read_msgs;
     float debug1;
+    uint16_t completed_msgs;
 };
 
 //********************** End add *******************************
@@ -610,7 +611,7 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(QGC3, "iiffffffHHHii", "LqrTs,MpcTs,A11,A12,A21,A22,B1,B2,WAlT,WTdT,PH,TT,OnlyY"), //Added by Marco Tranzatto
     LOG_FORMAT(PP, "fHB", "AlphaStr,DoMan,IdCmd"), //Added by Marco Tranzatto
     LOG_FORMAT(BLP, "fff", "X,Y,D"), //Added by Marco Tranzatto
-    LOG_FORMAT(PWS, "iHf", "ByteR,Mask,DB1"), //Added by Marco Tranzatto
+    LOG_FORMAT(PWS, "iHfH", "ByteR,Mask,DB1,ComMsg"), //Added by Marco Tranzatto
     /* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),

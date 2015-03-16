@@ -14,7 +14,8 @@ struct parser200wx_status_s {
     uint64_t timestamp;    /**< Time of the last Pathplanning Update since System Start in Microseconds */
     int32_t byte_read;     /**< Number of byte read from the weather station*/
     uint16_t read_msgs;    /**< Bit mask, shows which msgs have been received */
-    float debug1;          /**< usefull value for debugging */
+    float debug1;          /**< Usefull value for debugging */
+    uint16_t completed_msgs; /**< Number of full messages read */
 };
 
 
