@@ -729,6 +729,9 @@ void gp_parser(const char *buffer, const int buffer_length,
 
                                         //publish gps position only if there is GGA or VTG message.
                                         strs_p->gps_updated = true;
+
+                                        //geodedical coordinate has been updated
+                                        strs_p->parser200wx_status.read_msgs |= PWS_READ_GEO;
                                     }
 
                                     //cancella
@@ -851,15 +854,25 @@ void gp_parser(const char *buffer, const int buffer_length,
                                 if(course_over_ground > 180.0f && course_over_ground <= 360.0f)
                                     course_over_ground = course_over_ground - 360.0f;
 
-                                strs_p->gps.vel_m_s = speed_over_ground * km_h2m_s; /// Speed over ground in m/s.
-                                strs_p->gps.cog_rad = course_over_ground * deg2rad; /// Course over ground w.r.t true North in rad, positive on the right, negative on the left.
+                                // Speed over ground in m/s.
+                                speed_over_ground = speed_over_ground * km_h2m_s;
+
+                                /* Course over ground w.r.t true North in rad,
+                                 * positive on the right, negative on the left.
+                                */
+                                course_over_ground = course_over_ground * deg2rad;
+
+                                //debug
+                                strs_p->parser200wx_status.debug1 = course_over_ground;
+                                //end debug
+
+                                strs_p->gps.vel_m_s = speed_over_ground;
+                                strs_p->gps.cog_rad = course_over_ground;
 
                                 //compute north and east velocity  hypothesizing down velocity = 0
-                               strs_p->gps.vel_n_m_s = strs_p->gps.vel_m_s *
-                                                            (float)cos(strs_p->gps.cog_rad);
+                               strs_p->gps.vel_n_m_s = speed_over_ground * cosf(course_over_ground);
 
-                                strs_p->gps.vel_e_m_s = strs_p->gps.vel_m_s *
-                                                            (float)sin(strs_p->gps.cog_rad);
+                                strs_p->gps.vel_e_m_s = speed_over_ground * sinf(course_over_ground);
 
                                 //TODO verificare se puoi mettere un valore vero
                                 strs_p->gps.vel_d_m_s = 0.0f;
@@ -873,6 +886,7 @@ void gp_parser(const char *buffer, const int buffer_length,
 
                                 //cog has been updated
                                 strs_p->parser200wx_status.read_msgs |= PWS_READ_COG;
+
                             }
 
                         }
@@ -1198,6 +1212,7 @@ void publish_new_data(struct published_fd_s *pubs_p, struct structs_topics_s *st
     if(strs_p->gps_updated){
         orb_publish(ORB_ID(vehicle_gps_position), pubs_p->gps, &(strs_p->gps));
         strs_p->gps_updated = false;
+        strs_p->gps.vel_ned_valid = false;
     }
     #endif
 

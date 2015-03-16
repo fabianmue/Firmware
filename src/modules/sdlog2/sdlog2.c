@@ -1896,6 +1896,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.msg_type = LOG_PWS_MSG;
             log_msg.body.log_PWS.byte_read = buf.parser200wx_status.byte_read;
             log_msg.body.log_PWS.read_msgs = buf.parser200wx_status.read_msgs;
+            log_msg.body.log_PWS.debug1 = buf.parser200wx_status.debug1;
             LOGBUFFER_WRITE_AND_COUNT(PWS);
         }
         //********************** End add *******************************

@@ -5,14 +5,16 @@
 #include "../uORB.h"
 
 //Mask baytes
-#define PWS_READ_COG 0x0001
-#define PWS_READ_TW  0x0002
-#define PWS_READ_AW  0x0004
+#define PWS_READ_COG    0x0001
+#define PWS_READ_TW     0x0002
+#define PWS_READ_AW     0x0004
+#define PWS_READ_GEO    0x0008
 
 struct parser200wx_status_s {
     uint64_t timestamp;    /**< Time of the last Pathplanning Update since System Start in Microseconds */
     int32_t byte_read;     /**< Number of byte read from the weather station*/
     uint16_t read_msgs;    /**< Bit mask, shows which msgs have been received */
+    float debug1;          /**< usefull value for debugging */
 };
 
 
