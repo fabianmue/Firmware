@@ -164,13 +164,37 @@ void nav_navigator(void) {
 
 			/* The boat has a limited turnrate. Therefore, ensure that the pathplanning
 			 * does not suggest heading-changes bigger than the maximum possible turnrate */
-			if(!state.maneuver) {
+			if(!state.maneuver && (state.config.)) {
 				//No Maneuver is necessary
 
-				if(nh_heading_diff(state.heading_cur, state.heading_ref) > config.max_headchange) {
+				float diff = nh_heading_diff(state.heading_cur, state.heading_ref);
+				if(diff > config.max_headchange) {
 					//The desired change in heading is bigger than the maximum possibe heading-change
 
+					if(state.heading_cur-diff < 0) {
+						if((2*PI+(state.heading_cur-diff)) - state.heading_ref < 0.00000001f) {
+							//Reference lays on the left of Current Heading => -
 
+							state.heading_ref = fmod(state.heading_ref - config.max_headchange,2*PI);
+
+						} else {
+							//Reference lays on the right of the current Heading => +
+
+							state.heading_ref = fmod(state.heading_ref + config.max_headchange,2*PI);
+						}
+					} else {
+						if((state.heading_cur-diff) - state.heading_ref < 0.00000001f) {
+							//Reference lays on the left of current Heading => -
+
+							state.heading_ref = fmod(state.heading_ref - config.max_headchange,2*PI);
+
+						} else {
+							//Reference lays on the right of current Heading => +
+
+							state.heading_ref = fmod(state.heading_ref + config.max_headchange,2*PI);
+
+						}
+					}
 
 					//TODO: Find out if we have to put + or - config.max_headchange!!!
 					//state.heading_cur -= config.max_headchange;
