@@ -35,9 +35,14 @@
 static struct {
 	uint64_t period; 		//The period of calls to Pathplanning (time between two calls to nav_navigate())
 	float max_headchange;	//Maximum possible change in heading of the boat [rad]
+	uint8_t method; 		//Which method should be used for Pathplanning
+	 	 	 	 	 	 	/* Chooses a path-planning algorithm
+	 	 	 	 	 	 	 * 1 = Cost-Function-Method
+	 	 	 	 	 	 	 * 2 = Potential-Field-Method */
 } config = {
 	.period = 1000,
-	.max_headchange = 0.1745329f //~10°/s
+	.max_headchange = 0.1745329f, //~10°/s
+	.method = 1
 };
 
 
@@ -48,11 +53,6 @@ static struct nav_state_s state;
 /** Init the Struct containing the Race-Field-Information */
 static struct nav_field_s field;
 
-
-
-
-/** Which algorithm should be used for pathplanning */
-uint8_t pp_algorithm = 1;  	//Set Cost-Function-Method as the default algorithm
 
 
 
@@ -96,7 +96,8 @@ void nav_init(void) {
 
 	//Set the initial Values for the Configuration
 	config.period = 1000000;			// = 1s
-	config.max_headchange = 5*0.17453292f; // = 10°/period
+	config.max_headchange = 2.5*0.17453292f; // = 12°/period
+	config.method = 1; //As a default use the Cost-Function-Method
 }
 
 
@@ -130,13 +131,13 @@ void nav_navigator(void) {
 
 			/****FIND A NEW REFERENCE HEADING
 			 * Different algorithms can be used. */
-			if(pp_algorithm == 1) {
+			if(config.method == 1) {
 				//Use Cost-Function-Method
 
 				state.heading_ref = cm_NewHeadingReference(&state,&field);
 			}
 
-			if(pp_algorithm == 2) {
+			if(config.method == 2) {
 				//Use Potential-Field-Method
 
 				//TODO add the Potential-Field Reference Heading here
@@ -197,9 +198,6 @@ void nav_navigator(void) {
 
 						}
 					}
-
-					//TODO: Find out if we have to put + or - config.max_headchange!!!
-					//state.heading_cur -= config.max_headchange;
 
 				}
 

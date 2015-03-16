@@ -84,14 +84,6 @@
 #define TARGETTOLERANCE 3
 
 
-/* ALGORITHM FLAG
- * Chooses a path-planning algorithm
- * 1 = Cost-Function-Method
- * 2 = Potential-Field-Method
- *
- * DEFAULT = 1 = Cost-Function-Method */
-extern uint8_t pp_algorithm;
-
 //remote control usefull value
 #define RC_MODE_INDEX 4             ///index of the type of mode in rc_channels struct
 #define RC_MANUAL_MODE -1.0f        ///Rc_Ch4 == RC_MANUAL_MODE if manual mode selected

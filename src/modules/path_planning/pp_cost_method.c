@@ -17,6 +17,8 @@
 
 #include "pp_polardiagram.h"
 
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+
 
 /**********************************************************************************************/
 /****************************  VARIABLES  *****************************************************/
@@ -42,7 +44,7 @@ static struct {
 		.Go = 0.8f, //0.8
 		.Gm = 0.3f, //0.4
 		.Gs = 0.0f,//0.05
-		.Gt = 0.0f, //0.1
+		.Gt = 0.1f, //0.1
 		.GLee = 0.15f,//0.15
 		.ObstSafetyRadius = 10.0f, //10
 		.ObstHorizon = 100.0f, //100
@@ -342,82 +344,78 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
 
 	float appWind= nh_appWindDir(seg,state->wind_dir);		//Current apparent Wind Direction
 
-	float Ct = 0;											//Tactical Cost that is returned at the end of this function
+	float Ct_colreg = 0;											//Tactical Cost that is returned at the end of this function
 
 	/* Case 1) */
     if(appWind < 0) {
-        Ct = 0;
+        Ct_colreg = 0;
     } else {
-        Ct = Config.Gt * 1;
+        Ct_colreg = Config.Gt * 1;
     }
 
 
     /* Case 2) */
     //TODO
-    /*float target_bearing = nh_ned_bearing(state->position,state->heading_cur);
 
-    //if((state->heading_cur >= target_bearing*0.9f) && (state->heading_ref <= 1.1f*target_bearing)) {
-    	//The boat is on the last leg.
-
-    //} else {
-    	//The boat is not on the last leg. => push the boat away from the laylines <=> stay close to the center-line
-
-		//Update the Centerline
-		float dx = sinf(state->wind_dir);
-		float dy = cosf(state->wind_dir);
-		float norm = sqrtf(dx*dx+dy*dy);
-
-		float clx = dx/norm;
-		float cly = dy/norm;
-
-    	//The meeting-point of the center-line and the boat-heading
-    	float tcl = (field->centerline*(position(2)-target(2))-cl(2)*(position(1)-target(1)))/
-    				(head_vect(1)*cl(2)-head_vect(2)*cl(1));
-    	mcl = [position(1)+tcl * head_vect(1),position(2)+tcl*head_vect(2)];   %Meeting-Point
+	float Ct = 0;
 
 
+    if(Config.Gt > 0) {
+
+		float target_bearing = nh_ned_bearing(state->position,field->targets[state->targetNum]);
+
+		if((state->heading_cur >= target_bearing*0.9f) && (state->heading_ref <= 1.1f*target_bearing)) {
+			//The boat is on the last leg.
+
+			Ct = 0; 	//Assign a low cost, since we are on the last leg it's up to the other costs to
+						//guide the boat towards the target.
+
+		} else {
+			//The boat is not on the last leg. => push the boat away from the laylines <=> stay close to the center-line
+
+			//Calculate the Centerline
+			float dx = sinf(state->wind_dir);
+			float dy = cosf(state->wind_dir);
+			float norm = sqrtf(dx*dx+dy*dy);
+
+			float clx = dx/norm;
+			float cly = dy/norm;
 
 
-    } //if we are on the last leg
-
- */
-
-          /*      %Vector for centerline
-                cl = simData.raceField.start-target;
-                cl = cl./norm(cl);
-
-                %Vector for heading
-                head_vect(1) = cos(deg2rad(seg));
-                head_vect(2) = sin(deg2rad(seg));
-                head_vect = head_vect./norm(head_vect);
-
-                %Calculate the meeting-point of the heading and the center-line
-                %by intersecting the heading and the centerline
-                %The parametrization "line = startpoint + t * unitvector" is used
-                tcl = (cl(1)*(position(2)-target(2))-cl(2)*(position(1)-target(1)))/(head_vect(1)*cl(2)-head_vect(2)*cl(1));
-                mcl = [position(1)+tcl * head_vect(1),position(2)+tcl*head_vect(2)];   %Meeting-Point
-
-                if(tcl < 0)
-                    %The Meeting Point lays behind the boat => actually the
-                    %lines do not intersect <=> meeting point lays in infinity
-                    mcl = [inf,inf];
-                end %if
-
-                %Set the tactical Cost
-                dist = distance(position,target);  %The closer the boat gets to the target, the smaller is the cone-opening
-                Ct = min(distance(position,mcl),dist)/dist;
-
-                if(Ct ~= 1)    %Give a rectangular shape to the cost
-                    Ct = 0;
-                end %if
-
-                Ct = Gt * Ct;           %Weight and save the cost
-
-            end %if */
+			//Calculate the Heading-Vector
+			float hx = cos(seg);
+			float hy = sin(seg);
+			norm = sqrt(hx * hx + hy * hy);
+			hx = hx/norm;
+			hy = hy/norm;
 
 
+			//The meeting-point of the center-line and the boat-heading
+			float tcl = (clx*(state->position.easty-field->targets[state->targetNum].easty)-cly*(state->position.northx-field->targets[state->targetNum].northx))/(hx*cly-hy*clx);
+			NEDpoint mcl;
+			mcl.northx = state->position.northx + tcl * hx;
+			mcl.easty = state->position.easty + tcl * hy;
 
-    return Ct;
+			if(tcl < 0) {
+				//the meeting point lays behind the boat's heading => no meeting point exists => assign very high cost
+				mcl.northx = 10000000.0f;
+				mcl.easty = 10000000.0f;
+			}
+
+
+			float dist_target = nh_ned_dist(state->position,field->targets[state->targetNum]);  //The closer the boat gets to the target, the smaller is the cone-opening
+			float dist_mcl = nh_ned_dist(state->position,mcl);			//Distance to the Center-Line
+			Ct = min(dist_mcl,dist_target)/dist_target;
+
+			if(Ct < 0.99999f) {  //Give a rectangular shape to the cost
+					Ct = 0;
+			}
+
+		} //if we are on the last leg
+
+    } //end of "is the tactical cost weight bigger than 0?"
+
+	return (Config.Gt * Ct + Ct_colreg);           //Weight and save the cost
 
 } //end of cost_tactical
 
