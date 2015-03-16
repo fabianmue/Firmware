@@ -110,10 +110,12 @@ static struct{
     uint64_t max_time_cog_not_up;///maximum time without updating cog, in microseconds
     bool use_fixed_twd; ///true if alpha must be computed with a constant twd value
     float fixed_twd_r; ///fixed true wind direction in rad
+    bool use_only_yaw_on_maneuver;
 }user_params = {
     .max_time_cog_not_up = 2 * 1000000,//micro seconds
     .use_fixed_twd = false, //us twd from get_twd_sns()
-    .fixed_twd_r = 0
+    .fixed_twd_r = 0,
+    .use_only_yaw_on_maneuver = false
 };
 
 /**
@@ -379,19 +381,30 @@ void cd_update_raw_tw_info(float twd_r, float tws_m_s){
 /**
  * Compute a new value for the alpha angle in our sensor frame.
  *
- * Compute a convex combination of alpha_cog and alpha_yaw based on time, then
- * update the vector containing the old value of alpha and use
+ * During normal sailing, compute a convex combination of
+ * alpha_cog and alpha_yaw based on time, then update the vector containing
+ * the oldest value of alpha and use
  * @see robust_avg_sns() with these values.
+ *
+ * During a maneuver, the user can have decided to compute alpha using only
+ * alpha_yaw. @see cd_use_only_yaw_on_man
 */
 void update_alpha_sns(void){
 
     float alpha_lambda_sns;
     float lambda;
 
-    //compute the convex combination between alpha_cog and alpha_yaw
-    lambda = compute_lambda();
-    alpha_lambda_sns = (1.0f - lambda) * measurements_raw.alpha_cog_sns +
-                    lambda * measurements_raw.alpha_yaw_sns;
+    //check in which way we must compute alpha
+    if(measurements_filtered.opt_tack_going == true && user_params.use_only_yaw_on_maneuver){
+        //use only alpha_yaw to compute alpha
+        alpha_lambda_sns = measurements_raw.alpha_yaw_sns;
+    }
+    else{
+        //compute the convex combination between alpha_cog and alpha_yaw
+        lambda = compute_lambda();
+        alpha_lambda_sns = (1.0f - lambda) * measurements_raw.alpha_cog_sns +
+                        lambda * measurements_raw.alpha_yaw_sns;
+    }
 
     //save new alpha_lambda by deleting the oldest value
     measurements_filtered.alpha_p[measurements_filtered.oldestValue] = alpha_lambda_sns;
@@ -704,6 +717,24 @@ void cd_set_mean_twd(float fixed_twd_r){
         //new value for user_params.use_fixed_twd, send a msg to QGC
         sprintf(txt_msg, "Fixed TWD = %0.1f [deg]", (double)(user_params.fixed_twd_r * rad2deg));
         smq_send_log_info(txt_msg);
+    }
+}
+
+/**
+ * Set how the alpha value must be computed during a maneuver.
+ * Since during a maneuver is likely to lose the GPS signal, could be usefull
+ * to compute the alpha angle using only the yaw angle.
+ *
+ * @param use_only_yaw 0 if you want to use both cog and yaw, 1 if only yaw
+*/
+void cd_use_only_yaw_on_man(int use_only_yaw){
+    if(use_only_yaw != 0 && user_params.use_only_yaw_on_maneuver == false){
+        smq_send_log_info("During maneuver use only yaw.");
+        user_params.use_only_yaw_on_maneuver = true;
+    }
+    else if(use_only_yaw == 0 && user_params.use_only_yaw_on_maneuver == true){
+        smq_send_log_info("During maneuver use both cog and yaw.");
+        user_params.use_only_yaw_on_maneuver = false;
     }
 }
 

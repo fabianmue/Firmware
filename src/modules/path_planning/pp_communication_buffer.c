@@ -56,7 +56,7 @@ static bool change_alpha_star = false;//use it only after reaced last grid line
 static uint64_t last_change_alpha_star = 0;
 static uint64_t now = 0;
 static float downwind_alpha_star_abs = 2.7925268f;
-int32_t boat_ned[3];//boat NED coordinates
+//int32_t boat_ned[3];//boat NED coordinates
 //data from autonomous_sailing app
 static struct boat_guidance_debug_s boat_guidance_debug;
 
@@ -165,21 +165,10 @@ void cb_publish_pp_if_updated(void){
 
     //if path_planning topic has been updated, publish it
     if(pp_updated == true){
+        pp.timestamp = hrt_absolute_time();
         th_publish_path_planning(&pp);
         pp_updated = false;
     }
-}
-
-/**
- * Update X and Y coordinate in path_planning topic.
- *
- * @param x_m       X coordinate in the race frame, [m]
- * @param y_m       Y coordinate in the race frame, [m]
- */
-void cb_set_race_coordinates(float x_m, float y_m){
-    pp.x_race_m = x_m;
-    pp.y_race_m = y_m;
-    pp_updated = true;
 }
 
 /**
@@ -257,7 +246,7 @@ void cb_new_rc_data(const struct structs_topics_s *strs_p){
             float next_grid;
             if(gh_get_next_gridline(&next_grid)){
                 //send a message to QGC
-                sprintf(txt_msg, "Next grid: 0.1%f [m]", (double) next_grid);
+                sprintf(txt_msg, "Next grid: %0.1f [m]", (double) next_grid);
                 smq_send_log_info(txt_msg);
             }
         }
@@ -276,24 +265,6 @@ void cb_new_rc_data(const struct structs_topics_s *strs_p){
 uint8_t cb_get_haul(void){
     return (boat_guidance_debug.alpha < 0.0f) ?
             HAUL_PORT : HAUL_STARBOARD;
-}
-
-/**
- * Get the last computed X coordinate of the boat in the race frame.
- *
- * @return X coordinate in meters
-*/
-float cb_get_x_race_m(void){
-    return pp.x_race_m;
-}
-
-/**
- * Get the last computed Y coordinate of the boat in the race frame.
- *
- * @return Y coordinate in meters
-*/
-float cb_get_y_race_m(void){
-    return pp.y_race_m;
 }
 
 /**
@@ -345,31 +316,6 @@ void cb_use_fixed_twd(bool use_fixed_twd){
         pp_updated = true;
     }
 }
-
-/**
- * Set the most updated NED coordinate of the boat.
- *
- * @param n North coordinate in decimeters
- * @param e East coordinate in decimeters
- * @param d Down coordinate in decimeters
-*/
-void cb_set_ned_coordinates(int32_t n, int32_t e, int32_t d){
-    boat_ned[0] = n;
-    boat_ned[1] = e;
-    boat_ned[2] = d;
-}
-
-/**
- * Get the most updated NED coordinate of the boat.
- *
- * @param ned   ned <-- [North, East, Down] in decimeters.
-*/
-void cb_get_boat_ned(int32_t ned[3]){
-    ned[0] = boat_ned[0];
-    ned[1] = boat_ned[1];
-    ned[2] = boat_ned[2];
-}
-
 
 #if USE_GRID_LINES == 1
 

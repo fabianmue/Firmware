@@ -62,20 +62,21 @@ struct subscribtion_fd_s{
 struct published_fd_s{
     orb_advert_t gps;
     orb_advert_t wind_sailing;
+    #if ENABLE_BOAT_WEATHER_STATION_MSGS == 1
     orb_advert_t boat_weather_station;
-    //orb_advert_t debug_values;
+    #endif
 };
 
 struct structs_topics_s{
     struct vehicle_gps_position_s  gps;
     struct wind_sailing_s wind_sailing;
+    #if ENABLE_BOAT_WEATHER_STATION_MSGS == 1
     struct boat_weather_station_s boat_weather_station;
-    //struct debug_values_s debug_values;
+    bool boat_weather_station_updated;
+    #endif
 
     bool gps_updated;
     bool wind_updated;
-    bool boat_weather_station_updated;
-    //bool debug_updated;
 };
 
 #endif // TOPICS_HANDLER_H

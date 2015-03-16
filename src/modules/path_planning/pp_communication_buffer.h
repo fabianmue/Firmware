@@ -73,12 +73,6 @@ float cb_get_alpha_star(void);
 /** @brief get the current haul of the boat */
 uint8_t cb_get_haul(void);
 
-/** @brief get last X coordinate in race frame */
-float cb_get_x_race_m(void);
-
-/** @brief get last Y coordinate in race frame */
-float cb_get_y_race_m(void);
-
 /** @brief get alpha angle sent by autonomous_sailing app */
 float cb_get_alpha(void);
 
@@ -91,9 +85,6 @@ bool cb_tack_now(void);
 /** @brief set if you want to use a fixed TWD or the TWD by a moving average filter */
 void cb_use_fixed_twd(bool use_fixed_twd);
 
-/** @brief get the most updated NEd coordinates of the boat */
-void cb_get_boat_ned(int32_t ned[3]);
-
 // ----- end usefull functions
 
 // ----- functions used by other modules, do not change or use them
@@ -103,9 +94,6 @@ void cb_new_as_data(int boat_guidance_debug_sub);
 
 /** @brief publish path_planning module if it has been updated */
 void cb_publish_pp_if_updated(void);
-
-/** @brief set new X and Y coordinates in race frame */
-void cb_set_race_coordinates(float x_m, float y_m);
 
 /** @brief init module */
 void cb_init(void);

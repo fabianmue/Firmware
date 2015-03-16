@@ -457,7 +457,6 @@ struct log_QGC1_s{
     uint8_t rud_contr_type;
     uint16_t window_alpha;
     uint16_t window_twd;
-    uint16_t type_of_tack;
     float delta1;
     float delta2;
     uint16_t use_fixed_twd;
@@ -507,6 +506,8 @@ struct log_QGC3_s{
     uint16_t window_alpha_tack;
     uint16_t window_twd_tack;
     uint16_t pred_horizon_steps;
+    int32_t type_of_tack;
+    int32_t use_only_yaw_man;
 };
 
 /* --- PATH PLANNING -------------------------------------------------*/
@@ -514,9 +515,15 @@ struct log_QGC3_s{
 struct log_PP_s{
     float    alpha_star;
     uint16_t do_maneuver;
+    uint8_t  id_cmd;
+};
+
+/* --- BOAT LOCAL POSITION -------------------------------------------*/
+#define LOG_BLP_MSG 64
+struct log_BLP_s{
     float    x_race_m;
     float    y_race_m;
-    uint8_t  id_cmd;
+    float    dist_m;
 };
 
 //********************** End add *******************************
@@ -589,11 +596,12 @@ static const struct log_format_s log_formats[] = {
     //LOG_FORMAT(BWES, "fffffffff", "AccX,AccY,AccZ,Roll,Pitch,Heading,RollRate,PitchRate,YawRate"), //Added by Marco Tranzatto
     LOG_FORMAT(OPTS, "ffffiiffffff", "X1,X2,X3,RudStr,TypeCtr,It,SolT,ResEq,Pob,Dob,Dga,Rdga"), //Added by Marco Tranzatto
     LOG_FORMAT(BGUD, "fffffH", "Alpha,Rudder,Sail,TwdAvg,TwsAvg,ManCompl"), //Added by Marco Tranzatto
-    LOG_FORMAT(QGC1, "fffffBHHHffHff", "P,I,Kaw,Cp,Ci,RudType,WinAlp,WinTWD,TypTck,D1,D2,FixTwd,TckP_k,TckP_c"), //Added by Marco Tranzatto
+    LOG_FORMAT(QGC1, "fffffBHHffHff", "P,I,Kaw,Cp,Ci,RudType,WinAlp,WinTWD,D1,D2,FixTwd,TckP_k,TckP_c"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC2, "LLiLLif", "Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
     LOG_FORMAT(OPTM, "fffffffffff", "K1,K2,K3,H1,H2,H3,H4,Lb1,Lb2,Ub1,Ub2"), //Added by Marco Tranzatto
-    LOG_FORMAT(QGC3, "iiffffffHHH", "LqrTs,MpcTs,A11,A12,A21,A22,B1,B2,WinAlpTck,WinTwdTck, PredHor"), //Added by Marco Tranzatto
-    LOG_FORMAT(PP, "fHffB", "AlphaStr,DoMan,XRace,YRace,IdCmd"), //Added by Marco Tranzatto
+    LOG_FORMAT(QGC3, "iiffffffHHHii", "LqrTs,MpcTs,A11,A12,A21,A22,B1,B2,WAlT,WTdT,PH,TT,OnlyY"), //Added by Marco Tranzatto
+    LOG_FORMAT(PP, "fHB", "AlphaStr,DoMan,IdCmd"), //Added by Marco Tranzatto
+    LOG_FORMAT(BLP, "fff", "X,Y,D"), //Added by Marco Tranzatto
     /* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),

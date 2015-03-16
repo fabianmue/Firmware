@@ -41,6 +41,15 @@
 
 #include "pp_navigation_module.h"
 
+//local position of the boat
+static float boat_ned_dm[3] = {0.0f, 0.0f, 0.0f};
+
+//boat_local_position topic
+static struct boat_local_position_s boat_local_position =
+                                    {.x_race_m = 0.0f,
+                                     .y_race_m = 0.0f,
+                                     .dist_m = 0.0f};
+
 //WGS84 data
 
 static const double squared_one_minus_flatness_m = 0.99330561993959; ///(1-flatness)^2 in meters
@@ -226,8 +235,10 @@ void geo_to_ned(const struct vehicle_global_position_s *gps_p,
     //compute NED position from ECEF coordinate
     ecef_to_ned(&x_dm, &y_dm, &z_dm, north_dm_p, east_dm_p, down_dm_p);
 
-    //save NED coordinates in communication_buffer
-    cb_set_ned_coordinates(*north_dm_p, *east_dm_p, *down_dm_p);
+    //save NED coordinates
+    boat_ned_dm[0] = *north_dm_p;
+    boat_ned_dm[1] = *east_dm_p;
+    boat_ned_dm[2] = *down_dm_p;
 }
 
 /**
@@ -386,8 +397,14 @@ void n_navigation_module(const struct vehicle_global_position_s *vgp_p){
     //convert gps filtered position in race frame coordinates
     geo_to_race(vgp_p, &x_dm, &y_dm);
 
-    //convert local position from decimeters to meters and save it in path_planning struct
-    cb_set_race_coordinates((float)x_dm / E1, (float)y_dm / E1);
+    //convert local position from decimeters to meters and save them
+    boat_local_position.x_race_m = (float)x_dm / E1;
+    boat_local_position.y_race_m = (float)y_dm / E1;
+    boat_local_position.dist_m = sqrtf(boat_local_position.x_race_m * boat_local_position.x_race_m +
+                                       boat_local_position.y_race_m * boat_local_position.y_race_m);
+    //publish boat_local_position topic
+    boat_local_position.timestamp = hrt_absolute_time();
+    th_publish_boat_local_position(&boat_local_position);
 }
 
 /**
@@ -467,5 +484,44 @@ void n_geo_to_ned(double lat_deg, double lon_deg, float alt_m,
 
 	//compute boat position in NED frame w.r.t. lat0 lon0 alt0 set by set_ref0()
 	geo_to_ned(&vehicle_global_position, x_dm_p, y_dm_p, z_dm_p);
+}
 
+
+/**
+ * Get the last computed X coordinate of the boat in the race frame.
+ *
+ * @return X coordinate in meters
+*/
+float n_get_x_race_m(void){
+    return boat_local_position.x_race_m;
+}
+
+
+/**
+ * Get the last computed Y coordinate of the boat in the race frame.
+ *
+ * @return Y coordinate in meters
+*/
+float n_get_y_race_m(void){
+    return boat_local_position.y_race_m;
+}
+
+/**
+ * Get the most updated NED coordinate of the boat.
+ *
+ * @param ned   ned <-- [North, East, Down] in decimeters.
+*/
+void n_get_boat_ned(int32_t ned[3]){
+    ned[0] = boat_ned_dm[0];
+    ned[1] = boat_ned_dm[1];
+    ned[2] = boat_ned_dm[2];
+}
+
+/**
+ * Get the latest distance of the boat from the top mark.
+ *
+ * @return distnace of the boat from the top mark [m]
+*/
+float n_get_dist_m(void){
+    return boat_local_position.dist_m;
 }

@@ -77,7 +77,7 @@
 
 #include <uORB/topics/wind_sailing.h>//Added by Marco Tranzatto
 #include <uORB/topics/boat_guidance_debug.h>//Added by Marco Tranzatto
-#include <uORB/topics/path_planning.h>//Added by Marco Tranzatto
+#include <uORB/topics/boat_local_position.h>//Added by Marco Tranzatto
 
 #include "mavlink_messages.h"
 #include "mavlink_main.h"
@@ -2093,18 +2093,18 @@ protected:
     }
 };
 
-//--------------------------------- ADD PATH PLANNING MSG ------------------
-class MavlinkStreamPathPlanning : public MavlinkStream
+//--------------------------------- ADD BOAT LOCAL POSITION MSG ------------------
+class MavlinkStreamBoatLocalPos : public MavlinkStream
 {
 public:
     const char *get_name() const
     {
-        return MavlinkStreamPathPlanning::get_name_static();
+        return MavlinkStreamBoatLocalPos::get_name_static();
     }
 
     static const char *get_name_static()
     {
-        return "PATH_PLAN_MSG";
+        return "BOAT_LOCAL_POS_MSG";
     }
 
     uint8_t get_id()
@@ -2114,7 +2114,7 @@ public:
 
     static MavlinkStream *new_instance(Mavlink *mavlink)
     {
-        return new MavlinkStreamPathPlanning(mavlink);
+        return new MavlinkStreamBoatLocalPos(mavlink);
     }
 
     unsigned get_size()
@@ -2123,31 +2123,31 @@ public:
     }
 
 private:
-    MavlinkOrbSubscription *_path_planning_sub;
-    uint64_t _path_planning_time;
+    MavlinkOrbSubscription *_boat_local_pos_sub;
+    uint64_t _boat_local_position_time;
 
     /* do not allow top copying this class */
-    MavlinkStreamPathPlanning(MavlinkStreamPathPlanning &);
-    MavlinkStreamPathPlanning& operator = (const MavlinkStreamPathPlanning &);
+    MavlinkStreamBoatLocalPos(MavlinkStreamBoatLocalPos &);
+    MavlinkStreamBoatLocalPos& operator = (const MavlinkStreamBoatLocalPos &);
 
 protected:
-    explicit MavlinkStreamPathPlanning(Mavlink *mavlink) : MavlinkStream(mavlink),
-        _path_planning_sub(_mavlink->add_orb_subscription(ORB_ID(path_planning))),
-        _path_planning_time(0)
+    explicit MavlinkStreamBoatLocalPos(Mavlink *mavlink) : MavlinkStream(mavlink),
+        _boat_local_pos_sub(_mavlink->add_orb_subscription(ORB_ID(boat_local_position))),
+        _boat_local_position_time(0)
     {}
 
     void send(const hrt_abstime t)
     {
-        struct path_planning_s path_planning;
+        struct boat_local_position_s boat_local_position;
 
-        if (_path_planning_sub->update(&_path_planning_time, &path_planning)) {
+        if (_boat_local_pos_sub->update(&_boat_local_position_time, &boat_local_position)) {
             /* send, add spaces so that string buffer is at least 10 chars long */
             mavlink_named_value_float_t msg;
 
-            msg.time_boot_ms = path_planning.timestamp / 1000;
+            msg.time_boot_ms = boat_local_position.timestamp / 1000;
 
-            snprintf(msg.name, sizeof(msg.name), "pp_x");
-            msg.value = path_planning.x_race_m;
+            snprintf(msg.name, sizeof(msg.name), "blp_d");
+            msg.value = boat_local_position.dist_m;
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
         }
@@ -2391,6 +2391,6 @@ StreamListItem *streams_list[] = {
 	new StreamListItem(&MavlinkStreamDistanceSensor::new_instance, &MavlinkStreamDistanceSensor::get_name_static),
     new StreamListItem(&MavlinkStreamWindSailing::new_instance, &MavlinkStreamWindSailing::get_name_static),//Added by Marco Tranzatto
     new StreamListItem(&MavlinkStreamGuidanceDebug::new_instance, &MavlinkStreamGuidanceDebug::get_name_static),//Added by Marco Tranzatto
-    new StreamListItem(&MavlinkStreamPathPlanning::new_instance, &MavlinkStreamPathPlanning::get_name_static),//Added by Marco Tranzatto
+    new StreamListItem(&MavlinkStreamBoatLocalPos::new_instance, &MavlinkStreamBoatLocalPos::get_name_static),//Added by Marco Tranzatto
 	nullptr
 };

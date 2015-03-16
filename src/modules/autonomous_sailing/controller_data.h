@@ -102,4 +102,7 @@ void cd_use_fixed_twd(int32_t use_fixed_twd);
 /** @brief set mean true wind direction */
 void cd_set_mean_twd(float fixed_twd_r);
 
+/** @brief set how alpha should be computed during a maneuver */
+void cd_use_only_yaw_on_man(int use_only_yaw);
+
 #endif // CONTROLLER_DATA_H

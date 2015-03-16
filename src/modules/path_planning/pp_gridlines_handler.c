@@ -54,7 +54,7 @@ static char txt_msg[150]; //used to send messages to QGC
 
 //grid lines data
 static struct{
-    float *x_m_p;           ///array of x coordinates [m] of grid lines, in Race frame
+    float *x_m_p;           ///array of rays [m] of grid lines, in Race frame
     int16_t size;           ///size of array x_m_p
     int16_t current_goal;   ///index of current grid line to reach
     int16_t last_goal;      ///index of the last grid line to reach
@@ -73,8 +73,8 @@ void reached_current_grid(void);
 /** @brief set number of grid lines*/
 void set_grids_number(int16_t size);
 
-/** @brief set the x coordinate of a grid line*/
-void set_grid(float x_m);
+/** @brief set the ray of a grid line*/
+void set_grid(float ray_m);
 
 /** @brief check if there is at least one valid grid line to reach */
 bool is_there_grid_line(void);
@@ -138,12 +138,12 @@ void gh_set_grids_number_qgc(int16_t size){
 }
 
 /**
- * Set the x coordinate in Race frame of a grid line.
+ * Set the ray of a grid line.
  * Grid lines are inserted with a FIFO policy.
  *
- * @param x_m       X coordinate [m] in the race frame of the new grid line
+ * @param ray_m       ray [m] of the new circular grid line
 */
-void set_grid(float x_m){
+void set_grid(float ray_m){
 
     //if last_goal != -1, it is the position of the last grid line inserted
     if((grid_lines.last_goal + 1) >= grid_lines.size){
@@ -156,7 +156,7 @@ void set_grid(float x_m){
 
     //enough space, add the new grid line
     grid_lines.last_goal = grid_lines.last_goal + 1;
-    grid_lines.x_m_p[grid_lines.last_goal] = x_m;
+    grid_lines.x_m_p[grid_lines.last_goal] = ray_m;
     grid_lines.grid_counter++;
 
     //if this is the first grid line inserted, it's even the current goal grid line
@@ -165,18 +165,18 @@ void set_grid(float x_m){
     }
 
     //send a message to QGC to tell that a new grid line has been added
-    sprintf(txt_msg, "Added grid number %d at %3.2f meters.", grid_lines.last_goal, (double)x_m);
+    sprintf(txt_msg, "Added grid number %d at %3.2f meters.", grid_lines.last_goal, (double)ray_m);
     smq_send_log_info(txt_msg);
 }
 
 /**
- * Set the x coordinate in Race frame of a grid line.
+ * Set the the ray of a grid line.
  * Grid lines are inserted with a FIFO policy, if there is enough space.
  *
- * @param x_m       x coordinate [m] in Race frame of the new grid line
+ * @param x_m       ray [m] of the new circular grid line
 */
-void gh_set_grid_qgc(float x_m){
-        set_grid(x_m);
+void gh_set_grid_qgc(float ray_m){
+        set_grid(ray_m);
 }
 
 /**
@@ -264,7 +264,7 @@ void gh_gridlines_handler(void){
     //check if we have a valid grid line to reach, if so, take it
     if(gh_get_next_gridline(&next_grid)){
         //see if we have reached or exceeded our goal
-        if(cb_get_x_race_m() <= next_grid){
+        if(n_get_dist_m() >= next_grid){
 
             //Advise we have reached the current target grid line
             reached_current_grid();

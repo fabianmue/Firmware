@@ -115,13 +115,13 @@ PARAM_DEFINE_FLOAT(ASP_MEAN_WIND_D, 0.0f);
 PARAM_DEFINE_INT32(ASP_P_TOT_G, 1);
 
 /**
- * X coordinate in Race frame of grid line of index AS_P_INDEX, in meters.
+ * Ray of the the grid line of index AS_P_INDEX, in meters.
  *
  */
-PARAM_DEFINE_FLOAT(ASP_P_X_M, 0.0f);
+PARAM_DEFINE_FLOAT(ASP_P_R_M, 0.0f);
 
 /**
- * 1 if you want to add a new grid line at x = ASC_P_X_M.
+ * 1 if you want to add a new grid line at ray = ASP_P_R_M.
  *
  * @min 0
  * @max 1
@@ -289,7 +289,7 @@ static struct pointers_param_qgc_s{
     // --- grid lines system parameters
     #if USE_GRID_LINES == 1
     param_t grids_number_pointer;         /**< pointer to param ASP_P_TOT_G*/
-    param_t grid_x_pointer;         /**< pointer to param ASP_P_X_M*/
+    param_t grid_ray_pointer;         /**< pointer to param ASP_P_R_M*/
     param_t grid_add_pointer;         /**< pointer to param ASP_P_ADD*/
     param_t repeat_past_grids_pointer;    /**< pointer to param ASP_REIN_GRS */
     param_t alpha_star_vel_pointer; /**< pointer to param ASP_ALPST_V_DS */
@@ -375,12 +375,13 @@ void p_param_init(void){
     // --- grid lines system parameters
     #if USE_GRID_LINES == 1
     pointers_param_qgc.grids_number_pointer    = param_find("ASP_P_TOT_G");
-    pointers_param_qgc.grid_x_pointer    = param_find("ASP_P_X_M");
+    pointers_param_qgc.grid_ray_pointer    = param_find("ASP_P_R_M");
 
     pointers_param_qgc.grid_add_pointer = param_find("ASP_P_ADD");
     pointers_param_qgc.repeat_past_grids_pointer = param_find("ASP_REIN_GRS");
 
     pointers_param_qgc.alpha_star_vel_pointer = param_find("ASP_ALPST_V_DS");
+    pointers_param_qgc.downwind_alpha_star_pointer = param_find("ASP_DWN_ALPST_D");
     #endif //USE_GRID_LINES == 1
 
     //explicit tack now command from QGC
@@ -396,7 +397,6 @@ void p_param_init(void){
     pointers_param_qgc.lat_sim_pointer = param_find("ASPS_LAT_E7");
     pointers_param_qgc.lon_sim_pointer = param_find("ASPS_LON_E7");
     pointers_param_qgc.alt_sim_pointer = param_find("ASPS_ALT_E3");
-    pointers_param_qgc.downwind_alpha_star_pointer = param_find("ASP_DWN_ALPST_D");
     #endif //USE_GRID_LINES == 1
 
     #endif //SIMULATION_FLAG == 1
@@ -499,18 +499,18 @@ void p_param_update(bool update_path_param){
     #if USE_GRID_LINES == 1
     //----- number of grids
     int32_t grids_number;
-    float grids_x_m;
+    float grids_ray_m;
     param_get(pointers_param_qgc.grids_number_pointer, &grids_number);
 
     //x coordinate of current grid line
-    param_get(pointers_param_qgc.grid_x_pointer, &grids_x_m);
+    param_get(pointers_param_qgc.grid_ray_pointer, &grids_ray_m);
 
     //check if we have to add a new grid line
     int32_t temp = 0;
     param_get(pointers_param_qgc.grid_add_pointer, &temp);
     if(temp > 0 && update_path_param){
         //set x coordinate of a new grid line
-        gh_set_grid_qgc(grids_x_m);
+        gh_set_grid_qgc(grids_ray_m);
     }
 
     //set the new number of grid lines
