@@ -10,6 +10,8 @@
  * 		 - Dumas' Frame:  [pi...0...-pi] = [South..West..North..East..South]
  * 		 - Compass Frame: [0...2pi]      = [North..East..South..West..North]
  *
+ * Note: The winddirection is defined as where the wind is coming from! (0° = North/ 180° = South) Sensorframe is used.
+ *
  *  Created on: 04.03.2015
  *      Author: Jonas Wirz <wirzjo@student.ethz.ch>
  */
@@ -17,7 +19,6 @@
 /* TODO:
  * - add Potentialfield Method
  * - Winddirection => how's the definition? Wind from Nort = 0°/ Wind from South = 180° (Sensor-Frame)
- * - Add the center-line for Tactical cost
  */
 
 
