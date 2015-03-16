@@ -731,7 +731,7 @@ void gp_parser(const char *buffer, const int buffer_length,
                                         strs_p->gps_updated = true;
 
                                         //geodedical coordinate has been updated
-                                        strs_p->parser200wx_status.read_msgs |= PWS_READ_GEO;
+                                        strs_p->parser200wx_status.read_msgs |= PWS_READ_GPGGA;
                                     }
 
                                     //cancella
@@ -885,7 +885,7 @@ void gp_parser(const char *buffer, const int buffer_length,
                                 strs_p->gps_updated = true;
 
                                 //cog has been updated
-                                strs_p->parser200wx_status.read_msgs |= PWS_READ_COG;
+                                strs_p->parser200wx_status.read_msgs |= PWS_READ_GPVTG;
 
                             }
 
@@ -1038,7 +1038,7 @@ void vr_parser(const char *buffer, const int buffer_length,
 
                         strs_p->wind_updated = true;
                         //apparent wind has been updated
-                        strs_p->parser200wx_status.read_msgs |= PWS_READ_AW;
+                        strs_p->parser200wx_status.read_msgs |= PWS_READ_WIVWR;
                     }
                 }
             }
@@ -1173,7 +1173,7 @@ void mwd_parser(const char *buffer, const int buffer_length,
                             strs_p->wind_updated = true;
 
                             //true wind has been updated
-                            strs_p->parser200wx_status.read_msgs |= PWS_READ_TW;
+                            strs_p->parser200wx_status.read_msgs |= PWS_READ_WIMWD;
                         }
                     }
                 }

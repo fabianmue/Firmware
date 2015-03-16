@@ -5,10 +5,10 @@
 #include "../uORB.h"
 
 //Mask baytes
-#define PWS_READ_COG    0x0001
-#define PWS_READ_TW     0x0002
-#define PWS_READ_AW     0x0004
-#define PWS_READ_GEO    0x0008
+#define PWS_READ_GPVTG      0x0001
+#define PWS_READ_WIMWD      0x0002
+#define PWS_READ_WIVWR      0x0004
+#define PWS_READ_GPGGA      0x0008
 
 struct parser200wx_status_s {
     uint64_t timestamp;    /**< Time of the last Pathplanning Update since System Start in Microseconds */
