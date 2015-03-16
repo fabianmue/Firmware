@@ -107,6 +107,9 @@
 #include <uORB/topics/path_planning.h>
 //Added by Marco Tranzatto
 #include <uORB/topics/boat_local_position.h>
+//Added by Marco Tranzatto
+#include <uORB/topics/parser200wx_status.h>
+
 
 #include <systemlib/systemlib.h>
 #include <systemlib/param/param.h>
@@ -981,6 +984,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         struct boat_qgc_param3_s boat_qgc_param3; //Added by Marco Tranzatto
         struct path_planning_s path_planning; //Added by Marco Tranzatto
         struct boat_local_position_s boat_local_position; //Added by Marco Tranzatto
+        struct parser200wx_status_s parser200wx_status; //Added by Marco Tranzatto
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1033,6 +1037,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             struct log_QGC3_s log_BOAT_QGC_PARAM3; //Added by Marco Tranzatto
             struct log_PP_s log_PP; //Added by Marco Tranzatto
             struct log_BLP_s log_BLP; //Added by Marco Tranzatto
+            struct log_PWS_s log_PWS; // Added by Marco Tranzatto
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1080,6 +1085,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         int boat_qgc_param3_sub; //Added by Marco Tranzatto
         int path_planning; //Added by Marco Tranzatto
         int boat_local_position; //Added by Marco Tranzatto
+        int parser200wx_status; // Added by Marco Tranzatto
 	} subs;
 
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
@@ -1137,6 +1143,8 @@ int sdlog2_thread_main(int argc, char *argv[])
     subs.path_planning = orb_subscribe(ORB_ID(path_planning));
 
     subs.boat_local_position = orb_subscribe(ORB_ID(boat_local_position));
+
+    subs.parser200wx_status = orb_subscribe(ORB_ID(parser200wx_status));
     //****************** End Add by Marco Tranzatto ************
 
 
@@ -1881,6 +1889,14 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BLP.y_race_m = buf.boat_local_position.y_race_m;
             log_msg.body.log_BLP.dist_m = buf.boat_local_position.dist_m;
             LOGBUFFER_WRITE_AND_COUNT(BLP);
+        }
+
+        /* --- PARSER 200WX STATUS */
+        if (copy_if_updated(ORB_ID(parser200wx_status), subs.parser200wx_status, &buf.parser200wx_status)) {
+            log_msg.msg_type = LOG_PWS_MSG;
+            log_msg.body.log_PWS.byte_read = buf.parser200wx_status.byte_read;
+            log_msg.body.log_PWS.read_msgs = buf.parser200wx_status.read_msgs;
+            LOGBUFFER_WRITE_AND_COUNT(PWS);
         }
         //********************** End add *******************************
 

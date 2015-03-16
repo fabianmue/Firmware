@@ -345,6 +345,11 @@ bool parser_variables_init(int *wx_port_pointer,
     strs_p->wind_sailing.timestamp = hrt_absolute_time();
     pubs_p->wind_sailing = orb_advertise(ORB_ID(wind_sailing), &(strs_p->wind_sailing));
 
+    //advertise parser200wx_status
+    memset(&(strs_p->parser200wx_status), 0, sizeof(strs_p->parser200wx_status));
+    strs_p->parser200wx_status.timestamp = hrt_absolute_time();
+    pubs_p->parser200wx_status = orb_advertise(ORB_ID(parser200wx_status), &(strs_p->parser200wx_status));
+
     // advertise debug_values topic
     //memset(&(strs_p->debug_values), 0, sizeof(strs_p->debug_values));
     //strs_p->debug_values.timestamp = hrt_absolute_time();
@@ -380,6 +385,9 @@ bool retrieve_data(int *wx_port_pointer,
 
 	// read UART when px4 sensors are updated
     buffer_length = read(*wx_port_pointer, buffer_global, sizeof(buffer_global));
+
+    //save buffer length
+    strs_p->parser200wx_status.byte_read = buffer_length;
 
     //Uncomment for debug
     //debug_print_nchar(buffer_global, buffer_length, 0, buffer_length); //cancella
@@ -862,6 +870,9 @@ void gp_parser(const char *buffer, const int buffer_length,
 
                                 //publish gps position only if there is GGA or VTG message.
                                 strs_p->gps_updated = true;
+
+                                //cog has been updated
+                                strs_p->parser200wx_status.read_msgs |= PWS_READ_COG;
                             }
 
                         }
@@ -1012,6 +1023,8 @@ void vr_parser(const char *buffer, const int buffer_length,
                         strs_p->wind_sailing.speed_apparent = temp_speed; ///Apparent wind speed in m/s.
 
                         strs_p->wind_updated = true;
+                        //apparent wind has been updated
+                        strs_p->parser200wx_status.read_msgs |= PWS_READ_AW;
                     }
                 }
             }
@@ -1144,6 +1157,9 @@ void mwd_parser(const char *buffer, const int buffer_length,
                             strs_p->wind_sailing.speed_true = speed;/// True wind speed wrt true North in m/s
 
                             strs_p->wind_updated = true;
+
+                            //true wind has been updated
+                            strs_p->parser200wx_status.read_msgs |= PWS_READ_TW;
                         }
                     }
                 }
@@ -1177,13 +1193,19 @@ void publish_new_data(struct published_fd_s *pubs_p, struct structs_topics_s *st
     }
     #endif //ENABLE_BOAT_WEATHER_STATION_MSGS == 1
 
-    if(AS_TYPE_OF_ENVIRONMENT == 1){//outdoor
-        //publish gps data if updated
-        if(strs_p->gps_updated){
-            orb_publish(ORB_ID(vehicle_gps_position), pubs_p->gps, &(strs_p->gps));
-            strs_p->gps_updated = false;
-        }
+    #if AS_TYPE_OF_ENVIRONMENT == 1//outdoor
+    //publish gps data if updated
+    if(strs_p->gps_updated){
+        orb_publish(ORB_ID(vehicle_gps_position), pubs_p->gps, &(strs_p->gps));
+        strs_p->gps_updated = false;
     }
+    #endif
+
+    //publish parser status
+    strs_p->parser200wx_status.timestamp = hrt_absolute_time();
+    orb_publish(ORB_ID(parser200wx_status), pubs_p->parser200wx_status, &(strs_p->parser200wx_status));
+    //clean bit mask
+    strs_p->parser200wx_status.read_msgs = 0x0000;
 
 #if SAVE_DEBUG_VALUES == 1
 
