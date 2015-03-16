@@ -96,7 +96,7 @@ void nav_init(void) {
 
 	//Set the initial Values for the Configuration
 	config.period = 1000000;			// = 1s
-	config.max_headchange = 0.17453292f; // = 10°/period
+	config.max_headchange = 5*0.17453292f; // = 10°/period
 }
 
 
@@ -163,8 +163,10 @@ void nav_navigator(void) {
 
 
 			/* The boat has a limited turnrate. Therefore, ensure that the pathplanning
-			 * does not suggest heading-changes bigger than the maximum possible turnrate */
-			if(!state.maneuver && (state.config.)) {
+			 * does not suggest heading-changes bigger than the maximum possible turnrate.
+			 * The check is only done when the boat is not doing a maneuver. If you want to
+			 * disable the turnrate, just set the value to a high value. */
+			if(!state.maneuver) {
 				//No Maneuver is necessary
 
 				float diff = nh_heading_diff(state.heading_cur, state.heading_ref);
@@ -175,23 +177,23 @@ void nav_navigator(void) {
 						if((2*PI+(state.heading_cur-diff)) - state.heading_ref < 0.00000001f) {
 							//Reference lays on the left of Current Heading => -
 
-							state.heading_ref = fmod(state.heading_ref - config.max_headchange,2*PI);
+							state.heading_ref = fmod(state.heading_cur - config.max_headchange,2*PI);
 
 						} else {
 							//Reference lays on the right of the current Heading => +
 
-							state.heading_ref = fmod(state.heading_ref + config.max_headchange,2*PI);
+							state.heading_ref = fmod(state.heading_cur + config.max_headchange,2*PI);
 						}
 					} else {
 						if((state.heading_cur-diff) - state.heading_ref < 0.00000001f) {
 							//Reference lays on the left of current Heading => -
 
-							state.heading_ref = fmod(state.heading_ref - config.max_headchange,2*PI);
+							state.heading_ref = fmod(state.heading_cur - config.max_headchange,2*PI);
 
 						} else {
 							//Reference lays on the right of current Heading => +
 
-							state.heading_ref = fmod(state.heading_ref + config.max_headchange,2*PI);
+							state.heading_ref = fmod(state.heading_cur + config.max_headchange,2*PI);
 
 						}
 					}
