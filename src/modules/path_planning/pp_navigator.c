@@ -286,6 +286,10 @@ void nav_speak2helsman() {
 		fclose(f);
 
 	#endif
+
+    #if P_DEBUG == 1
+		printf("New Heading Reference: %f\n",(double)(state.heading_ref*RAD2DEG));
+	#endif
 }
 
 
