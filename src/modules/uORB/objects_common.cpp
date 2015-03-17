@@ -258,6 +258,10 @@ ORB_DEFINE(boat_opt_mat, struct boat_opt_mat_s);
 #include "topics/path_planning.h"
 ORB_DEFINE(path_planning, struct path_planning_s);
 
+//Added by Jonas Wirz
+#include "topics/essc_log.h"
+ORB_DEFINE(essc_log, struct essc_log_s);
+
 //Added by Marco Tranzatto
 #include "topics/boat_local_position.h"
 ORB_DEFINE(boat_local_position, struct boat_local_position_s);

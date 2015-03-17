@@ -108,6 +108,10 @@ void nav_init(void) {
  */
 void nav_navigator(void) {
 
+	/** DEBUG: */
+	printf("  Navigator called: ");
+
+
 	/** Check if new Inforamtion is available and update the state accordingly. */
 	#if C_DEBUG == 0
 	nav_listen2helsman();	//Check, if a maneuver is completed
@@ -115,7 +119,6 @@ void nav_navigator(void) {
 	nav_position_update();  //Check for a new Position update
 	nav_wind_update();		//Check for new Wind measurements
 	#endif
-
 
 
 	/** Pathplanning is only done with a certain frequency
