@@ -202,6 +202,12 @@ int pp_thread_main(int argc, char *argv[]) {
     gh_init_grids();
     #endif //USE_GRID_LINES == 1
 
+    //init the navigator
+	#if USE_GRID_LINES == 0
+    nav_init();
+	#endif
+
+
 	//**SET THE THREAD-STATUS TO RUNNING
 	thread_running = true;
 
@@ -266,7 +272,9 @@ int pp_thread_main(int argc, char *argv[]) {
         /* Call the navigator for a new Reference Heading
          * Note: The navigator is called in every loop, but it will publish a new alpha star in the shared
          *       memory only within a predefined period of time.*/
-        nav_navigator();
+		#if USE_GRID_LINES == 0
+        	nav_navigator();
+		#endif
 
 
 

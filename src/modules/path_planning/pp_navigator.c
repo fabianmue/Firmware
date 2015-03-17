@@ -261,6 +261,7 @@ void nav_speak2helsman() {
 
 	#if C_DEBUG == 0
 	cb_set_alpha_star(alpha_star);
+	smq_send_log_info("Helsman: Set new alpha star!");
 	#endif
 
 
