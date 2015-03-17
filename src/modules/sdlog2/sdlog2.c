@@ -107,8 +107,6 @@
 #include <uORB/topics/path_planning.h>
 //Added by Marco Tranzatto
 #include <uORB/topics/boat_local_position.h>
-//Added by Jonas Wirz
-#include <uORB/topics/essc_log.h>
 
 #include <systemlib/systemlib.h>
 #include <systemlib/param/param.h>

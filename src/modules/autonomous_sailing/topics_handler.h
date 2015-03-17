@@ -17,8 +17,6 @@
 #include <uORB/topics/boat_optimal_control.h>
 #include <uORB/topics/rc_channels.h>
 
-#include <uORB/topics/essc_log.h>
-
 //only for debug on qcg
 #include <uORB/topics/airspeed.h>
 

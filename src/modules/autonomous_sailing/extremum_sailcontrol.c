@@ -11,6 +11,7 @@
 
 
 #include <stdio.h>
+#include <uORB/uORB.h>
 
 
 #include "extremum_sailcontrol.h"
@@ -24,6 +25,8 @@ typedef struct {
 	uint8_t maxBuffersize;     		//Maximum possible Buffersize
 	uint8_t buffersize;        		//Current size of the buffer
 } CircularBuffer;
+
+struct published_fd_s *local_pubs;	//Pointer to the published-Struct
 
 
 /** @brief Calculate the Signum of Speed/Sailcontrol (Signum according to the Paper) */
@@ -96,10 +99,13 @@ static struct {
  *
  *
  */
-void essc_init(void) {
+void essc_init(struct published_fd_s *pubs) {
 
 	/* Create the Speed-Buffer */
 	State.buffer = buffer_init(Config.windowSize);
+
+	/* Store the pointer to the publish-topics-struct */
+	local_pubs = pubs;
 
 }
 
@@ -220,6 +226,9 @@ void essc_set_qground_values(float k, int windowSize, float period) {
 		//Set the default Value
 		Config.windowSize = 8;
 	}
+
+	//The parameters are updated => add these parameters to the SD-Log
+	essc_log_data();
 
 }
 
@@ -434,13 +443,16 @@ float buffer_get_value(CircularBuffer *buffer, uint8_t pos) {
 
 /**
  * Log some useful data for postprocessing
- *
- * @param k: Stepsize [rad]
- * @param windowsize: Size of the window for averaging the speed of the boat
- * @param period: Time between two sail changes [us]
  */
-void essc_log_data(float k, uint16_t windowsize, float period) {
+void essc_log_data(void) {
 
+	struct essc_log_s temp_log;
+	temp_log.timestamp = hrt_absolute_time();
+	temp_log.k = Config.k;
+	temp_log.windowsize = Config.windowSize;
+	temp_log.period = Config.period;
+
+	orb_publish(ORB_ID(essc_log), local_pubs->essc_log, &temp_log);
 }
 
 

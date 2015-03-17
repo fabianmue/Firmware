@@ -196,6 +196,9 @@ int as_daemon_thread_main(int argc, char *argv[]){
     //init message module
     smq_init_msg_module();
 
+    //init ESSC
+    essc_init(&pubs);
+
     //subscribe/advertise interested topics
     as_topics(&subs, &pubs, &strs);
 
@@ -329,9 +332,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
 
         //publish usefull data for post processisng
         orb_publish(ORB_ID(boat_guidance_debug), pubs.boat_guidance_debug_pub, &(strs.boat_guidance_debug));
-
-        //publish ESSC-Data for Post-Processing (Added by Jonas Wirz)
-        orb_publish(ORB_ID(essc_log), pubs.essc_log, &(strs.essc_log));
 
         //publish optimal control status if updated
         if(strs.boat_opt_status_updated){

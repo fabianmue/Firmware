@@ -90,6 +90,7 @@ struct boat_qgc_param3_s{
 };
 
 struct essc_log_s {
+	uint64_t timestamp;
 	float k; 				/**< Stepsize between to consecutive sail-angle changes [rad] */
     uint16_t windowsize;    /**< Size of the window for averaging the speed */
     float period; 			/**< Time between two consecutive changes in sail-angle [us] */
