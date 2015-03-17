@@ -610,7 +610,7 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(QGC3, "iiffffffHHHii", "LqrTs,MpcTs,A11,A12,A21,A22,B1,B2,WAlT,WTdT,PH,TT,OnlyY"), //Added by Marco Tranzatto
     LOG_FORMAT(PP, "fHB", "AlphaStr,DoMan,IdCmd"), //Added by Marco Tranzatto
     LOG_FORMAT(BLP, "fff", "X,Y,D"), //Added by Marco Tranzatto
-    //LOG_FORMAT(ESSC,"fHf", "k, windSize, Period"), 	//Added by Jonas Wirz
+    LOG_FORMAT(ESSC,"fHf", "k, windSize, Period"), 	//Added by Jonas Wirz
     /* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),

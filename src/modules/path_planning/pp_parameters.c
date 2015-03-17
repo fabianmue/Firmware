@@ -234,31 +234,31 @@ PARAM_DEFINE_INT32(PP_NAV_TURNRATE, 10);
 /**
  * pp_navigator: Target Position (GEO-Coordinate Frame)
  */
-PARAM_DEFINE_FLOAT(PP_NAV_TARGET1_LAT, HOMELAT);
-PARAM_DEFINE_FLOAT(PP_NAV_TARGET1_LON, HOMELON);
+PARAM_DEFINE_FLOAT(PP_NAV_TAR1_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_TAR1_LON, HOMELON);
 
-PARAM_DEFINE_FLOAT(PP_NAV_TARGET2_LAT, HOMELAT);
-PARAM_DEFINE_FLOAT(PP_NAV_TARGET2_LON, HOMELON);
+PARAM_DEFINE_FLOAT(PP_NAV_TAR2_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_TAR2_LON, HOMELON);
 
-PARAM_DEFINE_FLOAT(PP_NAV_TARGET3_LAT, HOMELAT);
-PARAM_DEFINE_FLOAT(PP_NAV_TARGET3_LON, HOMELON);
+PARAM_DEFINE_FLOAT(PP_NAV_TAR3_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_TAR3_LON, HOMELON);
 
-PARAM_DEFINE_INT32(PP_NAV_TARGET_NUMBER, 1);	//Number of Targets currently set
+PARAM_DEFINE_INT32(PP_NAV_TAR_NUM, 1);	//Number of Targets currently set
 
 
 /**
  * pp_navigator: Target Position (GEO-Coordinate Frame)
  */
-PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE1_LAT, HOMELAT);
-PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE1_LON, HOMELON);
+PARAM_DEFINE_FLOAT(PP_NAV_OBST1_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_OBST1_LON, HOMELON);
 
-PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE2_LAT, HOMELAT);
-PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE2_LON, HOMELON);
+PARAM_DEFINE_FLOAT(PP_NAV_OBST2_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_OBST2_LON, HOMELON);
 
-PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE3_LAT, HOMELAT);
-PARAM_DEFINE_FLOAT(PP_NAV_OBSTACLE3_LON, HOMELON);
+PARAM_DEFINE_FLOAT(PP_NAV_OBST3_LAT, HOMELAT);
+PARAM_DEFINE_FLOAT(PP_NAV_OBST3_LON, HOMELON);
 
-PARAM_DEFINE_INT32(PP_NAV_OBSTACLE_NUMBER, 1);	//Number of Obstacles currently set
+PARAM_DEFINE_INT32(PP_NAV_OBST_NUM, 1);	//Number of Obstacles currently set
 
 
 /**
@@ -422,20 +422,20 @@ void p_param_init(void){
 	//**NAVIGATION
 	pointers_param_qgc.nav_period = param_find("PP_NAV_PERIOD");
 	pointers_param_qgc.nav_turnrate = param_find("PP_NAV_TURNRATE");
-	pointers_param_qgc.nav_target1_lat = param_find("PP_NAV_TARGET1_LAT");
-	pointers_param_qgc.nav_target1_lon = param_find("PP_NAV_TARGET1_LON");
-	pointers_param_qgc.nav_target2_lat = param_find("PP_NAV_TARGET2_LAT");
-	pointers_param_qgc.nav_target2_lon = param_find("PP_NAV_TARGET2_LON");
-	pointers_param_qgc.nav_target3_lat = param_find("PP_NAV_TARGET3_LAT");
-	pointers_param_qgc.nav_target3_lon = param_find("PP_NAV_TARGET3_LON");
-	pointers_param_qgc.nav_target_number = param_find("PP_NAV_TARGET_NUMBER");
-	pointers_param_qgc.nav_obstacle1_lat = param_find("PP_NAV_TARGET1_LAT");
-	pointers_param_qgc.nav_obstacle1_lon = param_find("PP_NAV_TARGET1_LON");
-	pointers_param_qgc.nav_obstacle2_lat = param_find("PP_NAV_TARGET2_LAT");
-	pointers_param_qgc.nav_obstacle2_lon = param_find("PP_NAV_TARGET2_LON");
-	pointers_param_qgc.nav_obstacle3_lat = param_find("PP_NAV_TARGET3_LAT");
-	pointers_param_qgc.nav_obstacle3_lon = param_find("PP_NAV_TARGET3_LON");
-	pointers_param_qgc.nav_obstacle_number = param_find("PP_NAV_OBSTACLE_NUMBER");
+	pointers_param_qgc.nav_target1_lat = param_find("PP_NAV_TAR1_LAT");
+	pointers_param_qgc.nav_target1_lon = param_find("PP_NAV_TAR1_LON");
+	pointers_param_qgc.nav_target2_lat = param_find("PP_NAV_TAR2_LAT");
+	pointers_param_qgc.nav_target2_lon = param_find("PP_NAV_TAR2_LON");
+	pointers_param_qgc.nav_target3_lat = param_find("PP_NAV_TAR3_LAT");
+	pointers_param_qgc.nav_target3_lon = param_find("PP_NAV_TAR3_LON");
+	pointers_param_qgc.nav_target_number = param_find("PP_NAV_TAR_NUM");
+	pointers_param_qgc.nav_obstacle1_lat = param_find("PP_NAV_TAR1_LAT");
+	pointers_param_qgc.nav_obstacle1_lon = param_find("PP_NAV_TAR1_LON");
+	pointers_param_qgc.nav_obstacle2_lat = param_find("PP_NAV_TAR2_LAT");
+	pointers_param_qgc.nav_obstacle2_lon = param_find("PP_NAV_TAR2_LON");
+	pointers_param_qgc.nav_obstacle3_lat = param_find("PP_NAV_TAR3_LAT");
+	pointers_param_qgc.nav_obstacle3_lon = param_find("PP_NAV_TAR3_LON");
+	pointers_param_qgc.nav_obstacle_number = param_find("PP_NAV_OBST_NUM");
 
 	pointers_param_qgc.nav_start1_lat = param_find("PP_NAV_START1_LAT, HOMELAT");
 	pointers_param_qgc.nav_start1_lon = param_find("PP_NAV_START1_LON, HOMELON");
