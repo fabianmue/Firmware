@@ -432,6 +432,19 @@ float buffer_get_value(CircularBuffer *buffer, uint8_t pos) {
 
 
 
+/**
+ * Log some useful data for postprocessing
+ *
+ * @param k: Stepsize [rad]
+ * @param windowsize: Size of the window for averaging the speed of the boat
+ * @param period: Time between two sail changes [us]
+ */
+void essc_log_data(float k, uint16_t windowsize, float period) {
+
+}
+
+
+
 
 
 

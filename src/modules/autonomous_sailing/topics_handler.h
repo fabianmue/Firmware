@@ -17,6 +17,8 @@
 #include <uORB/topics/boat_optimal_control.h>
 #include <uORB/topics/rc_channels.h>
 
+#include <uORB/topics/essc_log.h>
+
 //only for debug on qcg
 #include <uORB/topics/airspeed.h>
 
@@ -41,6 +43,7 @@ struct published_fd_s{
     orb_advert_t boat_qgc_param3;
     //only for debug on qGC
     orb_advert_t airspeed;
+    orb_advert_t essc_log;		//Added by Jonas Wirz
 };
 
 struct structs_topics_s{
@@ -62,6 +65,8 @@ struct structs_topics_s{
 
    //only for debug on qGC
    struct airspeed_s airspeed;
+
+   struct essc_log_s essc_log; 			//Added by Jonas Wirz
 };
 
 

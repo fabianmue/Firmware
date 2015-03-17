@@ -45,5 +45,9 @@ float essc_sail_control_value(void);
 void essc_set_qground_values(float k, int buffersize, float frequency);
 
 
+/** @brief Log Data for Postprocessing */
+void essc_log_data(float k, uint16_t windowsize, float period);
+
+
 
 #endif /* EXTREMUM_SAILCONTROL_H_ */

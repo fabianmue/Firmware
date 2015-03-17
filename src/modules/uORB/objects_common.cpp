@@ -249,6 +249,7 @@ ORB_DEFINE(boat_guidance_debug, struct boat_guidance_debug_s);
 ORB_DEFINE(boat_qgc_param1, struct boat_qgc_param1_s);
 ORB_DEFINE(boat_qgc_param2, struct boat_qgc_param2_s);
 ORB_DEFINE(boat_qgc_param3, struct boat_qgc_param3_s);
+ORB_DEFINE(essc_log, struct essc_log_s);				//Added by Jonas Wirz
 
 //Added by Marco Tranzatto
 #include "topics/boat_optimal_control.h"
@@ -258,9 +259,7 @@ ORB_DEFINE(boat_opt_mat, struct boat_opt_mat_s);
 #include "topics/path_planning.h"
 ORB_DEFINE(path_planning, struct path_planning_s);
 
-//Added by Jonas Wirz
-#include "topics/essc_log.h"
-ORB_DEFINE(essc_log, struct essc_log_s);
+
 
 //Added by Marco Tranzatto
 #include "topics/boat_local_position.h"

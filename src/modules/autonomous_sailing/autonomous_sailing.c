@@ -330,6 +330,9 @@ int as_daemon_thread_main(int argc, char *argv[]){
         //publish usefull data for post processisng
         orb_publish(ORB_ID(boat_guidance_debug), pubs.boat_guidance_debug_pub, &(strs.boat_guidance_debug));
 
+        //publish ESSC-Data for Post-Processing (Added by Jonas Wirz)
+        orb_publish(ORB_ID(essc_log), pubs.essc_log, &(strs.essc_log));
+
         //publish optimal control status if updated
         if(strs.boat_opt_status_updated){
             orb_publish(ORB_ID(boat_opt_status), pubs.boat_opt_status, &(strs.boat_opt_status));
@@ -436,6 +439,12 @@ bool as_topics(struct subscribtion_fd_s *subs_p,
     //qgc3
     memset(&(strs_p->boat_qgc_param3), 0, sizeof(strs_p->boat_qgc_param3));
     pubs_p->boat_qgc_param3 = orb_advertise(ORB_ID(boat_qgc_param3), &(strs_p->boat_qgc_param3));
+
+
+    //Log ESSC-Parameters (Added by Jonas Wirz)
+    memset(&(strs_p->essc_log), 0, sizeof(strs_p->essc_log));
+    pubs_p->essc_log = orb_advertise(ORB_ID(essc_log), &(strs_p->essc_log));
+
 
     #if SIMULATION_FLAG == 1
     memset(&(strs_p->airspeed), 0, sizeof(strs_p->airspeed));

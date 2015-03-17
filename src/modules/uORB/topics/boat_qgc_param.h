@@ -89,8 +89,15 @@ struct boat_qgc_param3_s{
     int32_t use_only_yaw_man;      /// Value of AS_TCK_USE_Y
 };
 
+struct essc_log_s {
+	float k; 				/**< Stepsize between to consecutive sail-angle changes [rad] */
+    uint16_t windowsize;    /**< Size of the window for averaging the speed */
+    float period; 			/**< Time between two consecutive changes in sail-angle [us] */
+};
+
 ORB_DECLARE(boat_qgc_param1);
 ORB_DECLARE(boat_qgc_param2);
 ORB_DECLARE(boat_qgc_param3);
+ORB_DECLARE(essc_log);
 
 #endif // BOAT_QGC_PARAM_H

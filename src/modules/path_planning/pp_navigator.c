@@ -109,7 +109,7 @@ void nav_init(void) {
 void nav_navigator(void) {
 
 	/** DEBUG: */
-	printf("  Navigator called: ");
+	printf("  Navigator called: %d\n",hrt_absolute_time());
 
 
 	/** Check if new Inforamtion is available and update the state accordingly. */
