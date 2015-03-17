@@ -414,8 +414,8 @@ void p_param_init(void){
 	pointers_param_qgc.cm_weight_gt_pointer = param_find("PP_CM_WEIGHT_GT");
 	pointers_param_qgc.cm_weight_glee_pointer = param_find("PP_CM_WEIGHT_GLEE");
 
-	pointers_param_qgc.cm_obstsafetyradius_pointer = param_find("PP_CM_OBSTACLESAFETYRADIUS");
-	pointers_param_qgc.cm_obsthorizon_pointer = param_find("PP_CM_OBSTHORIZONT");
+	pointers_param_qgc.cm_obstsafetyradius_pointer = param_find("PP_CM_OBSTSAFRAD");
+	pointers_param_qgc.cm_obsthorizon_pointer = param_find("PP_CM_OBSTHORIZN");
 	pointers_param_qgc.cm_windowsize_pointer = param_find("PP_CM_WINDOWSIZE");
 
 
@@ -437,10 +437,10 @@ void p_param_init(void){
 	pointers_param_qgc.nav_obstacle3_lon = param_find("PP_NAV_TAR3_LON");
 	pointers_param_qgc.nav_obstacle_number = param_find("PP_NAV_OBST_NUM");
 
-	pointers_param_qgc.nav_start1_lat = param_find("PP_NAV_START1_LAT, HOMELAT");
-	pointers_param_qgc.nav_start1_lon = param_find("PP_NAV_START1_LON, HOMELON");
-	pointers_param_qgc.nav_start2_lat = param_find("PP_NAV_START2_LAT, HOMELAT");
-	pointers_param_qgc.nav_start2_lon = param_find("PP_NAV_START2_LON, HOMELON");
+	pointers_param_qgc.nav_start1_lat = param_find("PP_NAV_STRT1_LAT, HOMELAT");
+	pointers_param_qgc.nav_start1_lon = param_find("PP_NAV_STRT1_LON, HOMELON");
+	pointers_param_qgc.nav_start2_lat = param_find("PP_NAV_STRT2_LAT, HOMELAT");
+	pointers_param_qgc.nav_start2_lon = param_find("PP_NAV_STRT2_LON, HOMELON");
 	pointers_param_qgc.nav_altitude = param_find("PP_NAV_ALTITUDE, HOMEALT");
 
 
