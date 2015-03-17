@@ -107,6 +107,8 @@
 #include <uORB/topics/path_planning.h>
 //Added by Marco Tranzatto
 #include <uORB/topics/boat_local_position.h>
+//Added by Jonas Wirz
+#include <uORB/topics/essc_log.h>
 
 #include <systemlib/systemlib.h>
 #include <systemlib/param/param.h>
@@ -981,6 +983,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         struct boat_qgc_param3_s boat_qgc_param3; //Added by Marco Tranzatto
         struct path_planning_s path_planning; //Added by Marco Tranzatto
         struct boat_local_position_s boat_local_position; //Added by Marco Tranzatto
+        struct essc_log_s essc_log; //Added by Jonas Wirz
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1033,6 +1036,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             struct log_QGC3_s log_BOAT_QGC_PARAM3; //Added by Marco Tranzatto
             struct log_PP_s log_PP; //Added by Marco Tranzatto
             struct log_BLP_s log_BLP; //Added by Marco Tranzatto
+            struct log_ESSC_s log_ESSC; //Added by Jonas Wirz
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1080,6 +1084,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         int boat_qgc_param3_sub; //Added by Marco Tranzatto
         int path_planning; //Added by Marco Tranzatto
         int boat_local_position; //Added by Marco Tranzatto
+        int essc_log_sub; //Added by Jonas Wirz
 	} subs;
 
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
@@ -1137,6 +1142,8 @@ int sdlog2_thread_main(int argc, char *argv[])
     subs.path_planning = orb_subscribe(ORB_ID(path_planning));
 
     subs.boat_local_position = orb_subscribe(ORB_ID(boat_local_position));
+
+    subs.essc_log_sub = orb_subscribe(ORB_ID(essc_log));	//Added by Jonas Wirz
     //****************** End Add by Marco Tranzatto ************
 
 
@@ -1882,6 +1889,16 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BLP.dist_m = buf.boat_local_position.dist_m;
             LOGBUFFER_WRITE_AND_COUNT(BLP);
         }
+
+        /* --- BOAT LOCAL POSITION */
+        if (copy_if_updated(ORB_ID(essc_log), subs.essc_log_sub, &buf.essc_log)) {
+             log_msg.msg_type = LOG_ESSC_MSG;
+             log_msg.body.log_ESSC.k = buf.essc_log.k;
+             log_msg.body.log_ESSC.period = buf.essc_log.period;
+             log_msg.body.log_ESSC.windowsize = buf.essc_log.windowsize;
+             LOGBUFFER_WRITE_AND_COUNT(BLP);
+        }
+
         //********************** End add *******************************
 
 		/* signal the other thread new data, but not yet unlock */

@@ -526,6 +526,14 @@ struct log_BLP_s{
     float    dist_m;
 };
 
+/* --- ESSC LOG -------------------------------------------------*/
+#define LOG_ESSC_MSG 65
+struct log_ESSC_s{
+	float k;
+	uint16_t windowsize;
+	float period;
+};
+
 //********************** End add *******************************
 
 /********** SYSTEM MESSAGES, ID > 0x80 **********/
