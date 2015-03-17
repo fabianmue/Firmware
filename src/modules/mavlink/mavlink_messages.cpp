@@ -78,6 +78,7 @@
 #include <uORB/topics/wind_sailing.h>//Added by Marco Tranzatto
 #include <uORB/topics/boat_guidance_debug.h>//Added by Marco Tranzatto
 #include <uORB/topics/boat_local_position.h>//Added by Marco Tranzatto
+//#include <uORB/topics/path_planning.h> //Added by Jonas Wirz
 
 #include "mavlink_messages.h"
 #include "mavlink_main.h"

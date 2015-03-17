@@ -109,7 +109,9 @@ void nav_init(void) {
 void nav_navigator(void) {
 
 	/** DEBUG: */
+	#if P_DEBUG == 1
 	printf("  Navigator called: %d\n",state.last_call);
+	#endif
 
 
 	/** Check if new Inforamtion is available and update the state accordingly. */
@@ -456,7 +458,7 @@ void nav_set_configuration(uint64_t period, uint32_t turnrate) {
 
 
 /* FUNCTIONS FOR DEBUGGING */
-#if C_DEBUG == 1
+#if C_DEBUG == 1 || P_DEBUG == 1
 
 	/*
 	 * Set a fake State for the navigator

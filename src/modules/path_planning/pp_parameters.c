@@ -271,6 +271,14 @@ PARAM_DEFINE_FLOAT(PP_NAV_STRT2_LON, HOMELON);
 
 PARAM_DEFINE_FLOAT(PP_NAV_ALTITUDE, HOMEALT);		//Note: The altitude value is in Millimeters
 
+/**
+ * pp_navigator: Simulate the position update for the boat
+ */
+#if P_DEBUG == 1
+PARAM_DEFINE_FLOAT(SIM_NED_NORTHX, 0);	//Current position of the boat in NED-Frame
+PARAM_DEFINE_FLOAT(SIM_NED_EASTY, 0);
+PARAM_DEFINE_FLOAT(SIM_HEADING,0);			//Current heading of the boat in degrees (compass-frame)
+#endif
 
 
 static struct pointers_param_qgc_s{
@@ -351,6 +359,14 @@ static struct pointers_param_qgc_s{
 	param_t nav_start2_lat;
 	param_t nav_start2_lon;
 	param_t nav_altitude;
+
+
+	//**SIMULATION FOR DEBUGGING
+	#if P_DEBUG == 1
+	param_t sim_ned_northx;
+	param_t sim_ned_easty;
+	param_t sim_heading;
+	#endif
 
 } pointers_param_qgc;
 
@@ -437,11 +453,19 @@ void p_param_init(void){
 	pointers_param_qgc.nav_obstacle3_lon = param_find("PP_NAV_TAR3_LON");
 	pointers_param_qgc.nav_obstacle_number = param_find("PP_NAV_OBST_NUM");
 
-	pointers_param_qgc.nav_start1_lat = param_find("PP_NAV_STRT1_LAT, HOMELAT");
-	pointers_param_qgc.nav_start1_lon = param_find("PP_NAV_STRT1_LON, HOMELON");
-	pointers_param_qgc.nav_start2_lat = param_find("PP_NAV_STRT2_LAT, HOMELAT");
-	pointers_param_qgc.nav_start2_lon = param_find("PP_NAV_STRT2_LON, HOMELON");
-	pointers_param_qgc.nav_altitude = param_find("PP_NAV_ALTITUDE, HOMEALT");
+	pointers_param_qgc.nav_start1_lat = param_find("PP_NAV_STRT1_LAT");
+	pointers_param_qgc.nav_start1_lon = param_find("PP_NAV_STRT1_LON");
+	pointers_param_qgc.nav_start2_lat = param_find("PP_NAV_STRT2_LAT");
+	pointers_param_qgc.nav_start2_lon = param_find("PP_NAV_STRT2_LON");
+	pointers_param_qgc.nav_altitude = param_find("PP_NAV_ALTITUDE");
+
+
+	//**SIMULATION DEBUG
+	#if P_DEBUG == 1
+	pointers_param_qgc.sim_ned_northx = param_find("SIM_NED_NORTHX");
+	pointers_param_qgc.sim_ned_easty = param_find("SIM_NED_EASTY");
+	pointers_param_qgc.sim_heading = param_find("SIM_HEADING");
+	#endif
 
 
     //get parameters but do not add any grid lines at start up
@@ -687,5 +711,17 @@ void p_param_update(bool update_path_param){
 	start[1].alt = altitude;
 
 	nav_set_startline(start[0],start[1]);
+
+
+	//**SIMULATION DEBUG
+	#if P_DEBUG == 1
+	NEDpoint p;
+	float head;
+	param_get(pointers_param_qgc.sim_ned_northx,&(p.northx));
+	param_get(pointers_param_qgc.sim_ned_easty,&(p.easty));
+	param_get(pointers_param_qgc.sim_heading,&head);
+
+	DEBUG_nav_set_fake_state(p, head);
+	#endif
 
 }
