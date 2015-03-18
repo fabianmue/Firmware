@@ -250,6 +250,9 @@ void nav_navigator(void) {
 
 		} //if no tack or gybe is in progress
 
+	} else {
+		//We do no pathplanning in this step
+		smq_send_log_info(" ");
 	} //if do pathplanning with a predefined frequency
 
 } //end of nav_navigate
@@ -434,9 +437,13 @@ void nav_position_update(void) {
  * @param buoy1: left buoy in GEO-Coordinates
  * @param buoy2: right buoy in GEO-Coordinates
  */
-void nav_set_startline(Point buoy1, Point buoy2) {
-	field.startline[0] = nh_geo2ned(buoy1);
-	field.startline[1] = nh_geo2ned(buoy2);
+void nav_set_startline(PointE7 buoy1, PointE7 buoy2) {
+
+	//Convert from int32 to double
+
+
+	field.startline[0] = nh_geo2ned(nh_e7_to_point(buoy1));
+	field.startline[1] = nh_geo2ned(nh_e7_to_point(buoy2));
 }
 
 
@@ -448,10 +455,10 @@ void nav_set_startline(Point buoy1, Point buoy2) {
  * @param ObstNumber: The position of the obstacle in the Array of all Obstacles
  * @param ObstPos: The GPS-Position of the obstacle represented as a Point
  */
-void nav_set_obstacle(uint8_t ObstNumber, Point ObstPos) {
+void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos) {
 
 	/* Convert to NED-Frame */
-	field.obstacles[ObstNumber] = nh_geo2ned(ObstPos);
+	field.obstacles[ObstNumber] = nh_geo2ned(nh_e7_to_point(ObstPos));
 
 	field.NumberOfObstacles = ObstNumber;
 }
@@ -464,9 +471,9 @@ void nav_set_obstacle(uint8_t ObstNumber, Point ObstPos) {
  * @param TargetNumber: The position of the target in the Array of all Targets
  * @param TargetPos: The GPS-Position of the target represented as a Point
  */
-void nav_set_target(uint8_t TargetNumber, Point TargetPos) {
+void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos) {
 
-	field.targets[TargetNumber] = nh_geo2ned(TargetPos);
+	field.targets[TargetNumber] = nh_geo2ned(nh_e7_to_point(TargetPos));
 
 	field.NumberOfTargets = TargetNumber;
 }

@@ -74,15 +74,15 @@ void nav_heading_update(void);
 
 
 /** @brief Set Obstacles */
-void nav_set_obstacle(uint8_t ObstNumber, Point ObstPos);
+void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos);
 
 
 /** @brief Set Targets */
-void nav_set_target(uint8_t TargetNumber, Point TargetPos);
+void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos);
 
 
 /** @brief Set the Start-Line */
-void nav_set_startline(Point buoy1, Point buoy2);
+void nav_set_startline(PointE7 buoy1, PointE7 buoy2);
 
 
 /** @brief Set Configuration Parameters for the Navigator */

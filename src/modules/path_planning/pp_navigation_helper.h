@@ -14,12 +14,16 @@
 
 /* Type Definition for a GPS-Point defined by the Latitude and Longitude */
 typedef struct Point_s{		 //Contains the GPS-Coordinate of a point
-	float lat;				 //Latitude of a point [deg]
-	float lon;				 //Longitude of a point [deg]
+	double lat;				 //Latitude of a point [deg]
+	double lon;				 //Longitude of a point [deg]
 	float alt;				 //Altitude [m]
-
-	float debug;
 } Point;
+
+typedef struct PointE7_s{		 //Contains the GPS-Coordinate of a point in E7-Convention
+	int32_t lat;			 //Latitude of a point [deg] in E7
+	int32_t lon;			 //Longitude of a point [deg] in E7
+	float alt;				 //Altitude [m]
+} PointE7;
 
 
 /**Define a Position in NED-Coordinates */
@@ -84,6 +88,10 @@ float nh_sensor2compass(float sensor);
 
 /* @brief Convert from Compass Frame to Sensor Frame */
 float nh_compass2sensor(float compass);
+
+
+/* @brief Convert a GEO-Coordinate from E7 to double-convention */
+Point nh_e7_to_point(PointE7 geoE7);
 
 
 #endif /* NAVIGATION_HELPER_H_ */

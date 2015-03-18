@@ -8,7 +8,9 @@
  *      Author: Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
+#include <stdio.h>
 #include "pp_parameters.h"
+#include <drivers/drv_hrt.h>
 
 #define M_PI_F 3.14159265358979323846f
 
@@ -234,14 +236,14 @@ PARAM_DEFINE_INT32(PP_NAV_TURNRATE, 10);
 /**
  * pp_navigator: Target Position (GEO-Coordinate Frame)
  */
-PARAM_DEFINE_FLOAT(PP_NAV_TAR1_LAT, HOMELAT);
-PARAM_DEFINE_FLOAT(PP_NAV_TAR1_LON, HOMELON);
+PARAM_DEFINE_INT32(PP_NAV_TAR1_LAT, HOMELAT);
+PARAM_DEFINE_INT32(PP_NAV_TAR1_LON, HOMELON);
 
-PARAM_DEFINE_FLOAT(PP_NAV_TAR2_LAT, HOMELAT);
-PARAM_DEFINE_FLOAT(PP_NAV_TAR2_LON, HOMELON);
+PARAM_DEFINE_INT32(PP_NAV_TAR2_LAT, HOMELAT);
+PARAM_DEFINE_INT32(PP_NAV_TAR2_LON, HOMELON);
 
-PARAM_DEFINE_FLOAT(PP_NAV_TAR3_LAT, HOMELAT);
-PARAM_DEFINE_FLOAT(PP_NAV_TAR3_LON, HOMELON);
+PARAM_DEFINE_INT32(PP_NAV_TAR3_LAT, HOMELAT);
+PARAM_DEFINE_INT32(PP_NAV_TAR3_LON, HOMELON);
 
 PARAM_DEFINE_INT32(PP_NAV_TAR_NUM, 1);	//Number of Targets currently set
 
@@ -249,14 +251,14 @@ PARAM_DEFINE_INT32(PP_NAV_TAR_NUM, 1);	//Number of Targets currently set
 /**
  * pp_navigator: Target Position (GEO-Coordinate Frame)
  */
-PARAM_DEFINE_FLOAT(PP_NAV_OBST1_LAT, HOMELAT);
-PARAM_DEFINE_FLOAT(PP_NAV_OBST1_LON, HOMELON);
+PARAM_DEFINE_INT32(PP_NAV_OBST1_LAT, HOMELAT);
+PARAM_DEFINE_INT32(PP_NAV_OBST1_LON, HOMELON);
 
-PARAM_DEFINE_FLOAT(PP_NAV_OBST2_LAT, HOMELAT);
-PARAM_DEFINE_FLOAT(PP_NAV_OBST2_LON, HOMELON);
+PARAM_DEFINE_INT32(PP_NAV_OBST2_LAT, HOMELAT);
+PARAM_DEFINE_INT32(PP_NAV_OBST2_LON, HOMELON);
 
-PARAM_DEFINE_FLOAT(PP_NAV_OBST3_LAT, HOMELAT);
-PARAM_DEFINE_FLOAT(PP_NAV_OBST3_LON, HOMELON);
+PARAM_DEFINE_INT32(PP_NAV_OBST3_LAT, HOMELAT);
+PARAM_DEFINE_INT32(PP_NAV_OBST3_LON, HOMELON);
 
 PARAM_DEFINE_INT32(PP_NAV_OBST_NUM, 1);	//Number of Obstacles currently set
 
@@ -264,10 +266,10 @@ PARAM_DEFINE_INT32(PP_NAV_OBST_NUM, 1);	//Number of Obstacles currently set
 /**
  * pp_navigator: Start-Line defined by two buoys
  */
-PARAM_DEFINE_FLOAT(PP_NAV_STRT1_LAT, HOMELAT);
-PARAM_DEFINE_FLOAT(PP_NAV_STRT1_LON, HOMELON);
-PARAM_DEFINE_FLOAT(PP_NAV_STRT2_LAT, HOMELAT);
-PARAM_DEFINE_FLOAT(PP_NAV_STRT2_LON, HOMELON);
+PARAM_DEFINE_INT32(PP_NAV_STRT1_LAT, HOMELAT);
+PARAM_DEFINE_INT32(PP_NAV_STRT1_LON, HOMELON);
+PARAM_DEFINE_INT32(PP_NAV_STRT2_LAT, HOMELAT);
+PARAM_DEFINE_INT32(PP_NAV_STRT2_LON, HOMELON);
 
 PARAM_DEFINE_FLOAT(PP_NAV_ALTITUDE, HOMEALT);		//Note: The altitude value is in Millimeters
 
@@ -663,8 +665,8 @@ void p_param_update(bool update_path_param){
 	param_get(pointers_param_qgc.nav_turnrate, &turnrate);
 	nav_set_configuration(period, turnrate);
 
-	Point target[MAXTARGETNUMBER];
-	Point obstacle[MAXOBSTACLENUMBER];
+	PointE7 target[MAXTARGETNUMBER];
+	PointE7 obstacle[MAXOBSTACLENUMBER];
 	uint8_t t_num, o_num;
 	int32_t altitude;
 
@@ -701,7 +703,7 @@ void p_param_update(bool update_path_param){
 		nav_set_obstacle(t,obstacle[t]);
 	}
 
-	Point start[2];
+	PointE7 start[2];
 	param_get(pointers_param_qgc.nav_start1_lat, &(start[0].lat));
 	param_get(pointers_param_qgc.nav_start1_lon, &(start[0].lon));
 	param_get(pointers_param_qgc.nav_start2_lat, &(start[1].lat));

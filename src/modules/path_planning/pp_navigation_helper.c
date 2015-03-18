@@ -17,6 +17,8 @@
 
 #define EARTHRADIUS  6371000.0f				//Earth Radius [m]
 
+static const float E7 = 10000000.0f;	//E7-Format = 7 digits after comma
+
 
 /**
  * Calculate the bearing from a point to another point.
@@ -311,7 +313,8 @@ float nh_sensor2compass(float sensor) {
 
 
 
-/** Convert from Compass Frame to Sensor Frame
+/**
+ * Convert from Compass Frame to Sensor Frame
  *
  * @param compass: Boat's heading in Compass-Frame [rad] element of [0...2pi]
  * @return Boat's heading in Sensor Frame
@@ -323,6 +326,21 @@ float nh_compass2sensor(float compass) {
 	} else {
 		return compass;
 	}
+}
+
+
+
+/**
+ * Convert from a E7-Coordinate to a Geo coordinate in double-format
+ */
+Point nh_e7_to_point(PointE7 geoE7) {
+
+	Point res;
+	res.lat = geoE7.lat/E7;
+	res.lon = geoE7.lon/E7;
+	res.alt = geoE7.alt;
+
+	return res;
 }
 
 
