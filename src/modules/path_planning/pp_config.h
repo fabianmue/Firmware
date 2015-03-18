@@ -29,7 +29,7 @@
  * It this flag is set to 1, the pathplanning module can be debugged using
  * the Pixhawk in Lab.
  */
-#define P_DEBUG 0
+#define P_DEBUG 1
 
 
 

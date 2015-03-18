@@ -109,7 +109,7 @@ bool cb_do_maneuver(float new_alpha_star){
  * @return      true if the boat is not doing or has to do any maneuver
 */
 bool cb_is_maneuver_completed(void){
-    return (pp.do_maneuver == true) ? false : true;
+    return (pp.do_maneuver == 1) ? false : true;
 
 }
 
@@ -218,8 +218,6 @@ void cb_init(void){
     cb_set_alpha_star(M_PI_F / 4.0f);
     pp.id_cmd = PP_NORMAL_CMD;
 
-    //Set the initial state for the maneuver flag
-    pp.do_maneuver = false;
 }
 
 /**
