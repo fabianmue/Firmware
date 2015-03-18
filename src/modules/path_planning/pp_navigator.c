@@ -31,6 +31,8 @@
 #include <drivers/drv_hrt.h>
 #endif
 
+static char txt_msg[150]; ///used to send messages to QGC
+
 
 /** Struct holding the main configuration variables of the navigator */
 static struct {
@@ -87,7 +89,7 @@ void nav_init(void) {
 	state.heading_cur = PI/2;
 	state.heading_ref = 0;
 	state.wind_dir = 0;
-	state.maneuver = false;
+	state.maneuver = true;
 	state.targetNum = 0;
 	Point home;
 	home.lat = HOMELAT;
@@ -103,22 +105,22 @@ void nav_init(void) {
 
 	//Update the state by requesting the values from the communication Buffer
 	#if C_DEBUG == 0
-	//nav_listen2helsman();	//Check, if a maneuver is completed
-	//nav_heading_update();	//Check for a new Heading (alpha)
-	//nav_position_update();  //Check for a new Position update
-	//nav_wind_update();		//Check for new Wind measurements
+	nav_listen2helsman();	//Check, if a maneuver is completed
+	nav_heading_update();	//Check for a new Heading (alpha)
+	nav_position_update();  //Check for a new Position update
+	nav_wind_update();		//Check for new Wind measurements
 	#endif
 
 
 	//For Debug only
 	#if P_DEBUG == 1
-	//NEDpoint target;
-	//target.northx = 0;
-	//target.easty = 300;
-	//NEDpoint obstacle;
-	//obstacle.northx = 0;
-	//obstacle.easty = 150;
-	//DEBUG_nav_set_fake_field(target,obstacle);
+	NEDpoint target;
+	target.northx = 0;
+	target.easty = 300;
+	NEDpoint obstacle;
+	obstacle.northx = 0;
+	obstacle.easty = 150;
+	DEBUG_nav_set_fake_field(target,obstacle);
 	#endif
 }
 
@@ -258,14 +260,17 @@ void nav_listen2helsman(void) {
 
 	#if C_DEBUG == 0
 	/* Check if Helsman has completed the maneuver */
-	if(state.maneuver) {
+
+	state.maneuver = !cb_is_maneuver_completed();
+
+	/*if(state.maneuver) {
 		if(cb_is_maneuver_completed()) {
 			//The ongoing maneuver is completed and therefore the state can be reseted.
 
 			state.maneuver = false;
 		}
 
-	}
+	}*/
 	#endif
 
 } //end of nav_listen2helsman
@@ -317,6 +322,10 @@ void nav_speak2helsman() {
     #if P_DEBUG == 1
 		printf("New Heading Reference: %f\n",(double)(state.heading_ref*RAD2DEG));
 	#endif
+
+	//Report the Result of the Pathplanning to QGround Control
+	sprintf(txt_msg, "New Alpha Star = %0.1f [deg], Maneuver = %d", (double)(state.heading_ref*RAD2DEG),(int)(state.maneuver));
+	smq_send_log_info(txt_msg);
 }
 
 

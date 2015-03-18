@@ -278,9 +278,6 @@ int pp_thread_main(int argc, char *argv[]) {
 		#endif
 
 
-        	 smq_send_log_info("Hello World");
-
-
 
 	} //END OF MAIN THREAD-LOOP
 

@@ -34,7 +34,7 @@
 
 
 //1 if you're testing path_planning app indoor, PLEASE SET INDOOR PARSER_200WX
-#define SIMULATION_FLAG 1
+#define SIMULATION_FLAG 0
 
 //set if you want to use a path planning that uses grid lines
 #define USE_GRID_LINES 0 ///1 if you want to use grid line system to tell the boat where to tack
@@ -79,9 +79,13 @@
 
 /* INITIAL TARGET
  * Position of the initial Target position [rad]*/
-#define HOMELAT 47.34879556f			//Note: This is a point outside of the testarea near Tiefenbrunnen ZH
-#define HOMELON 8.56092835f
-#define HOMEALT	405*1000.0f				//Note: The altitude value is in Millimeters
+//#define HOMELAT 47.34879556f			//Note: This is a point outside of the testarea near Tiefenbrunnen ZH
+//#define HOMELON 8.56092835f
+//#define HOMEALT	405*1000.0f				//Note: The altitude value is in Millimeters
+
+#define HOMELAT 47.378573f			//Note: This is the lower terrass at ETH Zurich (Physikstrasse)
+#define HOMELON 8.552777f
+#define HOMEALT	484.276f*1000.0f				//Note: The altitude value is in Millimeters
 
 
 /* TARGET TOLERANCE
