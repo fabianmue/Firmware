@@ -109,7 +109,8 @@ bool cb_do_maneuver(float new_alpha_star){
  * @return      true if the boat is not doing or has to do any maneuver
 */
 bool cb_is_maneuver_completed(void){
-    return (pp.do_maneuver == 1) ? false : true;
+    return (pp.do_maneuver == true) ? false : true;
+
 }
 
 /**
@@ -194,6 +195,7 @@ bool cb_set_alpha_star(float new_alpha_star){
 
     // set new alpha if the boat is not maneuvering
     if(cb_is_maneuver_completed() == true){
+    	//smq_send_log_info("Set a new alpha Star JW");
         pp.alpha_star = new_alpha_star;
         pp_updated = true;
     }
@@ -215,6 +217,9 @@ void cb_init(void){
     //default alpha_star = 45 deg
     cb_set_alpha_star(M_PI_F / 4.0f);
     pp.id_cmd = PP_NORMAL_CMD;
+
+    //Set the initial state for the maneuver flag
+    pp.do_maneuver = false;
 }
 
 /**

@@ -2220,7 +2220,11 @@ protected:
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
             snprintf(msg.name, sizeof(msg.name), "as_manflg");
-            msg.value = path_planning.do_maneuver;
+            if(path_planning.do_maneuver) {
+            	msg.value = 1;
+            } else {
+            	msg.value = 0;
+            }
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 

@@ -89,7 +89,7 @@ void nav_init(void) {
 	state.heading_cur = PI/2;
 	state.heading_ref = 0;
 	state.wind_dir = 0;
-	state.maneuver = true;
+	state.maneuver = false;
 	state.targetNum = 0;
 	Point home;
 	home.lat = HOMELAT;
@@ -193,6 +193,12 @@ void nav_navigator(void) {
 
 				state.maneuver = true;
 
+				#if P_DEBUG == 1
+				//Never tell the Controller to do a Maneuver in LAB-Environment
+				state.maneuver = false;
+				#endif
+
+
 			} //if boat should do a maneuver
 
 
@@ -261,16 +267,11 @@ void nav_listen2helsman(void) {
 	#if C_DEBUG == 0
 	/* Check if Helsman has completed the maneuver */
 
-	state.maneuver = !cb_is_maneuver_completed();
+	if(cb_is_maneuver_completed()) {
+		//The ongoing maneuver is completed and therefore the state can be reseted.
 
-	/*if(state.maneuver) {
-		if(cb_is_maneuver_completed()) {
-			//The ongoing maneuver is completed and therefore the state can be reseted.
-
-			state.maneuver = false;
-		}
-
-	}*/
+		state.maneuver = false;
+	}
 	#endif
 
 } //end of nav_listen2helsman

@@ -29,12 +29,12 @@
  * It this flag is set to 1, the pathplanning module can be debugged using
  * the Pixhawk in Lab.
  */
-#define P_DEBUG 1
+#define P_DEBUG 0
 
 
 
 //1 if you're testing path_planning app indoor, PLEASE SET INDOOR PARSER_200WX
-#define SIMULATION_FLAG 0
+#define SIMULATION_FLAG 1
 
 //set if you want to use a path planning that uses grid lines
 #define USE_GRID_LINES 0 ///1 if you want to use grid line system to tell the boat where to tack
@@ -85,7 +85,7 @@
 
 #define HOMELAT 47.378573f			//Note: This is the lower terrass at ETH Zurich (Physikstrasse)
 #define HOMELON 8.552777f
-#define HOMEALT	484.276f*1000.0f				//Note: The altitude value is in Millimeters
+#define HOMEALT	484.276f*1000.0f	//Note: The altitude value is in Millimeters
 
 
 /* TARGET TOLERANCE
