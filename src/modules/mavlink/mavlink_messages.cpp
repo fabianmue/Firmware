@@ -2220,11 +2220,7 @@ protected:
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
             snprintf(msg.name, sizeof(msg.name), "as_manflg");
-            if(path_planning.do_maneuver) {
-            	msg.value = 1;
-            } else {
-            	msg.value = 0;
-            }
+            msg.value = path_planning.do_maneuver;
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
@@ -2472,6 +2468,6 @@ StreamListItem *streams_list[] = {
     new StreamListItem(&MavlinkStreamWindSailing::new_instance, &MavlinkStreamWindSailing::get_name_static),//Added by Marco Tranzatto
     new StreamListItem(&MavlinkStreamGuidanceDebug::new_instance, &MavlinkStreamGuidanceDebug::get_name_static),//Added by Marco Tranzatto
     new StreamListItem(&MavlinkStreamBoatLocalPos::new_instance, &MavlinkStreamBoatLocalPos::get_name_static),//Added by Marco Tranzatto
-    new StreamListItem(&MavlinkStreamPathPlanning::new_instance, &MavlinkStreamPathPlanning::get_name_static), //Added by Jonas Wirz
+    //new StreamListItem(&MavlinkStreamPathPlanning::new_instance, &MavlinkStreamPathPlanning::get_name_static), //Added by Jonas Wirz
 	nullptr
 };
