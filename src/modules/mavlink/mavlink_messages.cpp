@@ -83,6 +83,8 @@
 #include "mavlink_messages.h"
 #include "mavlink_main.h"
 
+#define RAD2DEG     57.2957795131f	//Added by Jonas Wirz
+
 static uint16_t cm_uint16_from_m_float(float m);
 static void get_mavlink_mode_state(struct vehicle_status_s *status, struct position_setpoint_triplet_s *pos_sp_triplet,
 				   uint8_t *mavlink_state, uint8_t *mavlink_base_mode, uint32_t *mavlink_custom_mode);
@@ -2213,7 +2215,7 @@ protected:
             msg.time_boot_ms = path_planning.timestamp / 1000;
 
             snprintf(msg.name, sizeof(msg.name), "pp_alp*");
-            msg.value = path_planning.alpha_star;
+            msg.value = path_planning.alpha_star * RAD2DEG;
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 

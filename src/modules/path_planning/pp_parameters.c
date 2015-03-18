@@ -216,11 +216,11 @@ PARAM_DEFINE_INT32(PP_CM_WINDOWSIZE, 5);
 
 
 /**
- * pp_navigator: Time between two calls of Path Planning [us]
+ * pp_navigator: Time between two calls of Path Planning [s]
  *
  * @min 0
  */
-PARAM_DEFINE_INT32(PP_NAV_PERIOD, 1000000);
+PARAM_DEFINE_INT32(PP_NAV_PERIOD, 1);
 
 
 /**

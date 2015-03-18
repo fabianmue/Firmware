@@ -71,6 +71,7 @@
 #include "pp_navigation_module.h"
 #include "pp_parameters.h"
 #include "pp_navigator.h"
+#include "pp_send_msg_qgc.h"
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
@@ -275,6 +276,9 @@ int pp_thread_main(int argc, char *argv[]) {
 		#if USE_GRID_LINES == 0
         	nav_navigator();
 		#endif
+
+
+        	 smq_send_log_info("Hello World");
 
 
 

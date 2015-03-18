@@ -99,6 +99,27 @@ void nav_init(void) {
 	config.period = 1000000;			// = 1s
 	config.max_headchange = 2.5f*0.17453292f; // = 12°/period
 	config.method = 1; //As a default use the Cost-Function-Method
+
+
+	//Update the state by requesting the values from the communication Buffer
+	#if C_DEBUG == 0
+	//nav_listen2helsman();	//Check, if a maneuver is completed
+	//nav_heading_update();	//Check for a new Heading (alpha)
+	//nav_position_update();  //Check for a new Position update
+	//nav_wind_update();		//Check for new Wind measurements
+	#endif
+
+
+	//For Debug only
+	#if P_DEBUG == 1
+	//NEDpoint target;
+	//target.northx = 0;
+	//target.easty = 300;
+	//NEDpoint obstacle;
+	//obstacle.northx = 0;
+	//obstacle.easty = 150;
+	//DEBUG_nav_set_fake_field(target,obstacle);
+	#endif
 }
 
 
@@ -114,13 +135,17 @@ void nav_navigator(void) {
 	#endif
 
 
-	/** Check if new Inforamtion is available and update the state accordingly. */
+	/** Check if new Information is available and update the state accordingly. */
 	#if C_DEBUG == 0
 	nav_listen2helsman();	//Check, if a maneuver is completed
-	nav_heading_update();	//Check for a new Heading (alpha)
-	nav_position_update();  //Check for a new Position update
 	nav_wind_update();		//Check for new Wind measurements
+
+	#if P_DEBUG == 0
+	nav_position_update();  //Check for a new Position update
+	nav_heading_update();	//Check for a new Heading (alpha)
 	#endif
+
+	#endif //C_DEBUG
 
 
 	/** Pathplanning is only done with a certain frequency
@@ -263,7 +288,6 @@ void nav_speak2helsman() {
 
 	#if C_DEBUG == 0
 	cb_set_alpha_star(alpha_star);
-	smq_send_log_info("Helsman: Set new alpha star!");
 	#endif
 
 
