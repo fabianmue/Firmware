@@ -2469,6 +2469,6 @@ StreamListItem *streams_list[] = {
     //new StreamListItem(&MavlinkStreamWindSailing::new_instance, &MavlinkStreamWindSailing::get_name_static),//Added by Marco Tranzatto
     new StreamListItem(&MavlinkStreamGuidanceDebug::new_instance, &MavlinkStreamGuidanceDebug::get_name_static),//Added by Marco Tranzatto
     new StreamListItem(&MavlinkStreamBoatLocalPos::new_instance, &MavlinkStreamBoatLocalPos::get_name_static),//Added by Marco Tranzatto
-    //new StreamListItem(&MavlinkStreamPathPlanning::new_instance, &MavlinkStreamPathPlanning::get_name_static), //Added by Jonas Wirz
+    new StreamListItem(&MavlinkStreamPathP::new_instance, &MavlinkStreamPathP::get_name_static),//Added by Jonas Wirz
 	nullptr
 };
