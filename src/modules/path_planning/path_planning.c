@@ -201,6 +201,12 @@ int pp_thread_main(int argc, char *argv[]) {
     gh_init_grids();
     #endif //USE_GRID_LINES == 1
 
+    //init the Navigator
+	#if USE_GRID_LINES == 0
+    //nav_init();
+	#endif
+
+
 
 	//**SET THE THREAD-STATUS TO RUNNING
 	thread_running = true;
@@ -259,6 +265,14 @@ int pp_thread_main(int argc, char *argv[]) {
          * Use pp_communication_buffer to change topic's values.
         */
         cb_publish_pp_if_updated();
+
+
+        /* Call the navigator to calculate an new reference Heading
+         * Note: The navigator is called in every loop, but it is only executed in a regular
+         * time-based interval. */
+		#if USE_GRID_LINES == 0
+        //nav_navigator();
+		#endif
 
 
 	} //END OF MAIN THREAD-LOOP

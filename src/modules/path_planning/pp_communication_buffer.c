@@ -51,16 +51,20 @@ static struct path_planning_s pp;
 static bool pp_updated = false;//has pp been updated ?
 static bool manual_mode = false; //is remote control in manual mode?
 static uint8_t last_haul = HAUL_PORT;//dummy initial guess
-static float alpha_star_vel_r_s = 0.2f;//velocity of changing alpha_star when reached last grid line
+
 static bool change_alpha_star = false;//use it only after reaced last grid line
-static uint64_t last_change_alpha_star = 0;
-static uint64_t now = 0;
-static float downwind_alpha_star_abs = 2.7925268f;
+
 //int32_t boat_ned[3];//boat NED coordinates
 //data from autonomous_sailing app
 static struct boat_guidance_debug_s boat_guidance_debug;
 
+#if USE_GRID_LINES == 1
+static float alpha_star_vel_r_s = 0.2f;//velocity of changing alpha_star when reached last grid line
+static uint64_t last_change_alpha_star = 0;
+static uint64_t now = 0;
+static float downwind_alpha_star_abs = 2.7925268f;
 static char txt_msg[70]; ///used to send messages to QGC
+#endif
 
 /**
  * Tell autonomous_sailing app to start a tack or jybe maneuver.
