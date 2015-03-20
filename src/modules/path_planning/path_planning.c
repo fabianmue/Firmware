@@ -71,6 +71,8 @@
 #include "pp_navigation_module.h"
 #include "pp_parameters.h"
 
+#include "pp_navigator.h"
+
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
 static int daemon_task;						/**< Handle of daemon task / thread */
@@ -203,7 +205,7 @@ int pp_thread_main(int argc, char *argv[]) {
 
     //init the Navigator
 	#if USE_GRID_LINES == 0
-    //nav_init();
+    nav_init();
 	#endif
 
 
