@@ -272,11 +272,11 @@ void nav_listen2helsman(void) {
 	#if C_DEBUG == 0
 	/* Check if Helsman has completed the maneuver */
 
-	/*if(cb_is_maneuver_completed()) {
+	if(cb_is_maneuver_completed()) {
 		//The ongoing maneuver is completed and therefore the state can be reseted.
 
 		state.maneuver = false;
-	}*/
+	}
 	#endif
 
 } //end of nav_listen2helsman
