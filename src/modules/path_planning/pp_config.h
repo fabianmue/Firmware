@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 
-/*DEBUG ON THE COMPUTER
+/*DEBUG ON THE COMPUTERgit
  * If this flag is set to 1, the pathplanning module can be debugged using
  * an external C-Program simulating the parameter updates. This way it
  * is possible checking the algorithms and the inputs/outputs of the
@@ -77,13 +77,13 @@
 
 
 /* INITIAL TARGET
- * Position of the initial Target position [rad]*/
+ * Position of the initial Target position [° E7-Format]*/
 //#define HOMELAT 47.34879556f			//Note: This is a point outside of the testarea near Tiefenbrunnen ZH
 //#define HOMELON 8.56092835f
 //#define HOMEALT	405*1000.0f				//Note: The altitude value is in Millimeters
 
-#define HOMELAT 47.378573f			//Note: This is the lower terrass at ETH Zurich (Physikstrasse)
-#define HOMELON 8.552777f
+#define HOMELAT 4737857				//Note: This is the lower terrass at ETH Zurich (Physikstrasse)
+#define HOMELON 8552777
 #define HOMEALT	484.276f*1000.0f	//Note: The altitude value is in Millimeters
 
 

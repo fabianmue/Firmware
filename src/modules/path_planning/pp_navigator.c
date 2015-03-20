@@ -19,6 +19,7 @@
 /* TODO:
  * - add Potentialfield Method
  * - Winddirection => how's the definition? Wind from Nort = 0°/ Wind from South = 180° (Sensor-Frame)
+ * - Check E7-Convention (North must have 9 Digits!!!!) 470000000
  */
 
 
@@ -133,7 +134,8 @@ void nav_navigator(void) {
 
 	/** DEBUG: */
 	#if P_DEBUG == 1
-	printf("  Navigator called: %d\n",state.last_call);
+	smq_send_log_info("Navigator called");
+	//printf("  Navigator called: %d\n",state.last_call);
 	#endif
 
 
