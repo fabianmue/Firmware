@@ -3,11 +3,5 @@
 # Radio MAVLink start
 #
 
-mavlink start -d /dev/ttyS1 -x
-mavlink stream -d /dev/ttyS1 -s GUID_DEBUG_MSG -r 6
-usleep 100000
-mavlink stream -d /dev/ttyS1 -s PATH_PLAN_MSG -r 1
-usleep 100000
-
-# Exit shell to make it available to MAVLink
-exit
+mavlink stream -d /dev/ttyS1 -s GUID_DEBUG_MSG -r 2
+mavlink stream -d /dev/ttyS1 -s BOAT_LOCAL_POS_MSG -r 2
