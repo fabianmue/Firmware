@@ -9,6 +9,8 @@
  */
 
 #include "pp_parameters.h"
+#include <drivers/drv_hrt.h>
+#include <stdio.h>
 
 #define M_PI_F 3.14159265358979323846f
 
