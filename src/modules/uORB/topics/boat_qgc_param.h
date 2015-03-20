@@ -54,7 +54,6 @@ struct boat_qgc_param1_s {
     uint8_t rud_contr_type; /// Type of controller for the rudder
     uint16_t window_alpha;      /// Window size of moving average filter of alpha
     uint16_t window_twd;        /// Window size of moving average filter of twd
-    uint16_t type_of_tack;      /// Type of tack set by AS_TY_TCK parameter
     float delta1;               /// Delta1 used to define the band in optimal tack maneuver
     float delta2;               /// Delta2 used to define the band in optimal tack maneuver
     uint16_t use_fixed_twd;     /// True if a fixed twd is used to compute alpha angle
@@ -86,6 +85,8 @@ struct boat_qgc_param3_s{
     uint16_t window_alpha_tack;      /// Window size of moving average filter of alpha during tack
     uint16_t window_twd_tack;      /// Window size of moving average filter of the TWD during tack
     uint16_t pred_horizon_steps;      /// Steps of the prediction horizon
+    int32_t type_of_tack;      /// Type of tack set by AS_TY_TCK parameter
+    int32_t use_only_yaw_man;      /// Value of AS_TCK_USE_Y
 };
 
 ORB_DECLARE(boat_qgc_param1);

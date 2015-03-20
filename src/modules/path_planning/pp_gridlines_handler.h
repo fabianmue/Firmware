@@ -46,6 +46,7 @@
 #include <stdio.h>
 #include "pp_send_msg_qgc.h"
 #include "pp_communication_buffer.h"
+#include "pp_navigation_module.h"
 
 /** @brief Initialize the grid lines struct.*/
 void gh_init_grids(void);
@@ -53,8 +54,8 @@ void gh_init_grids(void);
 /** @brief set number of grid lines from QGroundControl*/
 void gh_set_grids_number_qgc(int16_t size);
 
-/** @brief set the x coordinate of a grid line from QGroundControl*/
-void gh_set_grid_qgc(float x_m);
+/** @brief set the ray of a grid line from QGroundControl*/
+void gh_set_grid_qgc(float ray_m);
 
 /** @brief based on gps position decide reference actions*/
 void gh_gridlines_handler(void);

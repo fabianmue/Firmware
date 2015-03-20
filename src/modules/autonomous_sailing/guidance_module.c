@@ -53,6 +53,8 @@
 //const for type of rudder controller during normal sailing
 #define SAILING_RUD_STD_PI 0 ///standard PI with anti-wind up action
 #define SAILING_RUD_COND_PI 1 ///conditional PI
+#define SAILING_RUD_LQR 2 ///LQR
+#define SAILING_RUD_MPC 3 ///MPC
 
 // errors legend in is_tack_completed()
 #define EVERYTHING_OK 0
@@ -479,21 +481,34 @@ void gm_set_rudder_data(float p, float i, float cp,
 
         //send message to QGC
         if(rudder_type == SAILING_RUD_STD_PI){
-            sprintf(txt_msg, "Switched to normal PI with anti wind-up gain.");
+            sprintf(txt_msg, "Tracking alpha star with standard PI.");
             smq_send_log_info(txt_msg);
             //save new type of controller
             rudder_controller_data.rudder_controller_type = rudder_type;
         }
         else if(rudder_type == SAILING_RUD_COND_PI){
-            sprintf(txt_msg, "Switched to conditional PI.");
+            sprintf(txt_msg, "Tracking alpha star with non linear PI.");
+            smq_send_log_info(txt_msg);
+            //save new type of controller
+            rudder_controller_data.rudder_controller_type = rudder_type;
+        }
+        else if(rudder_type == SAILING_RUD_LQR){
+            sprintf(txt_msg, "Tracking alpha star with LQR.");
+            smq_send_log_info(txt_msg);
+            //save new type of controller
+            rudder_controller_data.rudder_controller_type = rudder_type;
+        }
+        else if(rudder_type == SAILING_RUD_MPC){
+            sprintf(txt_msg, "Tracking alpha star with MPC.");
             smq_send_log_info(txt_msg);
             //save new type of controller
             rudder_controller_data.rudder_controller_type = rudder_type;
         }
         else{
-            sprintf(txt_msg, "Error: select a rudder controller: 0 or 1.");
+            sprintf(txt_msg, "Error: select a rudder controller: 0,1,2,3.");
             smq_send_log_critical(txt_msg);
-            //use the actual PI configuration
+            //use non linear PI as default
+            rudder_controller_data.rudder_controller_type = SAILING_RUD_COND_PI;
         }
     }
 
@@ -1329,8 +1344,23 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
             }
             if(!reference_actions.do_maneuver){
                 //compute rudder and sails actions to follow reference alpha
-                //PI controller for rudder
-                rudder_command = pi_controller();
+                if(rudder_controller_data.rudder_controller_type == SAILING_RUD_STD_PI ||
+                   rudder_controller_data.rudder_controller_type == SAILING_RUD_COND_PI){
+                    //PI controller for rudder
+                    rudder_command = pi_controller();
+                }
+                else if(rudder_controller_data.rudder_controller_type == SAILING_RUD_LQR){
+                    //LQR controller
+                    lqr_control_rudder(&rudder_command, strs_p);
+                }
+                else if(rudder_controller_data.rudder_controller_type == SAILING_RUD_MPC){
+                    //MPC
+                    mpc_control_rudder(&rudder_command, strs_p);
+                }
+                else{
+                    //no valid rudder controller selected, use PI as default
+                    rudder_command = pi_controller();
+                }
 
                 //sails control only if AS_SAIL param from QGC is negative
                 if(param_qgc_p->sail_servo < 0.0f)

@@ -257,3 +257,11 @@ ORB_DEFINE(boat_opt_mat, struct boat_opt_mat_s);
 //Added by Jonas Wirz
 #include "topics/path_planning.h"
 ORB_DEFINE(path_planning, struct path_planning_s);
+
+//Added by Marco Tranzatto
+#include "topics/boat_local_position.h"
+ORB_DEFINE(boat_local_position, struct boat_local_position_s);
+
+//Added by Marco Tranzatto
+#include "topics/parser200wx_status.h"
+ORB_DEFINE(parser200wx_status, struct parser200wx_status_s);

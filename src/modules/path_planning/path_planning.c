@@ -173,7 +173,7 @@ int pp_thread_main(int argc, char *argv[]) {
 
 
     th_subscribe(&subs,&strs);       //Subscribe to interested Topics
-    th_advertise(&strs);	 		 //Advertise Topics
+    th_advertise();                 //Advertise Topics
 
 	//**POLL FOR CHANGES IN SUBSCRIBED TOPICS
     struct pollfd fds[] = {			 // Polling Management

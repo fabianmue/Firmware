@@ -47,4 +47,6 @@
 
 #define GPS_SIMULATION 0    //1 to simulate GPS signal
 
+#define ENABLE_BOAT_WEATHER_STATION_MSGS 0
+
 #endif // SETTINGS_H

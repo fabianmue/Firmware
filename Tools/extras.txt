@@ -3,5 +3,16 @@
 # Radio MAVLink start
 #
 
+<<<<<<< HEAD
 mavlink stream -d /dev/ttyS1 -s GUID_DEBUG_MSG -r 2
 mavlink stream -d /dev/ttyS1 -s BOAT_LOCAL_POS_MSG -r 2
+=======
+mavlink start -d /dev/ttyS1 #-x for ftp
+mavlink stream -d /dev/ttyS1 -s GUID_DEBUG_MSG -r 4
+usleep 100000
+mavlink stream -d /dev/ttyS1 -s BOAT_LOCAL_POS_MSG -r 2
+usleep 100000
+
+# Exit shell to make it available to MAVLink
+exit
+>>>>>>> e63e55d2a6a6717575f658dcad20cde7c9873778
