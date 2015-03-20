@@ -43,6 +43,8 @@ SRCS	= path_planning.c\
           pp_communication_buffer.c\
           pp_send_msg_qgc.c\
           pp_navigation_helper.c\
-          pp_polardiagram.c
+          pp_polardiagram.c\
+          pp_navigator.c\
+          pp_cost_method.c
 
 #add here all additional c-Files by using \ at the end of each line

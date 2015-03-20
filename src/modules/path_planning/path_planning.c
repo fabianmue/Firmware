@@ -201,6 +201,7 @@ int pp_thread_main(int argc, char *argv[]) {
     gh_init_grids();
     #endif //USE_GRID_LINES == 1
 
+
 	//**SET THE THREAD-STATUS TO RUNNING
 	thread_running = true;
 
