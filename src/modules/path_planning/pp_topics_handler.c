@@ -65,7 +65,7 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
  * @param *strs_p: Pointer to a struct of all interested Topics
  * @return true, iff successfully subscribed to all topics
  */
-bool th_advertise() {
+bool th_advertise(void) {
 
 	//Advertise the Pathplanning topic
     struct path_planning_s path_planning;

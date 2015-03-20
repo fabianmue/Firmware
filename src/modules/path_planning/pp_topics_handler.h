@@ -45,7 +45,7 @@ struct structs_topics_s{
 bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *strs_p);
 
 /** @brief Advertise Topics */
-bool th_advertise();
+bool th_advertise(void);
 
 /** @brief publish path_planning topic*/
 int th_publish_path_planning(const struct path_planning_s *path_planning_p);
