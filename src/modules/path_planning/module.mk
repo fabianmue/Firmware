@@ -41,6 +41,7 @@ SRCS	= path_planning.c\
           pp_navigation_module.c\
           pp_gridlines_handler.c\
           pp_communication_buffer.c\
-          pp_send_msg_qgc.c
+          pp_send_msg_qgc.c\
+          pp_navigation_helper.c
 
 #add here all additional c-Files by using \ at the end of each line
