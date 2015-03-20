@@ -78,8 +78,14 @@
 
 /* INITIAL TARGET
  * Position of the initial Target position [rad]*/
-#define HOMELAT 47.348877f * DEG2RAD	//Note: This is a point outside of the testarea near Tiefenbrunnen ZH
-#define HOMELON 8.5604200f * DEG2RAD
+//#define HOMELAT 47.34879556f			//Note: This is a point outside of the testarea near Tiefenbrunnen ZH
+//#define HOMELON 8.56092835f
+//#define HOMEALT	405*1000.0f				//Note: The altitude value is in Millimeters
+
+#define HOMELAT 47.378573f			//Note: This is the lower terrass at ETH Zurich (Physikstrasse)
+#define HOMELON 8.552777f
+#define HOMEALT	484.276f*1000.0f	//Note: The altitude value is in Millimeters
+
 
 
 /* TARGET TOLERANCE
