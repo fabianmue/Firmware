@@ -93,7 +93,7 @@ void nav_init(void) {
 
 	//Set the initial values for the State
 	state.heading_cur = PI/2;
-	state.heading_ref = 0;
+	state.heading_ref = PI/2;
 	state.wind_dir = 0;
 	state.maneuver = false;
 	state.targetNum = 0;

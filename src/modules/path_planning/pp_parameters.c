@@ -301,6 +301,12 @@ PARAM_DEFINE_FLOAT(SIM_HEADING,0);			//Current heading of the boat in degrees (c
 #endif
 
 
+/**
+ * pp_navigator: Reset all variables to the initial state.
+ */
+PARAM_DEFINE_INT32(PP_NAV_RESET,0);
+
+
 static struct pointers_param_qgc_s{
 
 
@@ -377,6 +383,8 @@ static struct pointers_param_qgc_s{
 	param_t nav_start2_lat;
 	param_t nav_start2_lon;
 	param_t nav_altitude;
+
+	param_t nav_reset;
 
 
 	//**SIMULATION FOR DEBUGGING
@@ -476,6 +484,8 @@ void p_param_init(void){
     	pointers_param_qgc.nav_start2_lat = param_find("PP_NAV_STRT2_LAT");
     	pointers_param_qgc.nav_start2_lon = param_find("PP_NAV_STRT2_LON");
     	pointers_param_qgc.nav_altitude = param_find("PP_NAV_ALTITUDE");
+
+    	pointers_param_qgc.nav_reset = param_find("PP_NAV_RESET");
 
 
     	//**SIMULATION DEBUG
@@ -729,6 +739,14 @@ void p_param_update(bool update_path_param){
     	start[1].alt = altitude;
 
     	nav_set_startline(start[0],start[1]);
+
+    	//**RESET THE NAVIGTOR PARAMETERS
+    	uint8_t reset;
+    	param_get(pointers_param_qgc.nav_reset, &reset);
+    	if(reset == 1) {
+    		//Reset the parameters for the pathplanning to the default values.
+    		nav_init();
+    	}
 
 
     	//**SIMULATION DEBUG
