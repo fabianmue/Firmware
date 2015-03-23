@@ -300,9 +300,6 @@ void nav_speak2helsman() {
 	alpha_star = fmod(state.heading_ref - state.wind_dir,2*PI); //In Compass-Frame
 	alpha_star = nh_compass2dumas(alpha_star);					//Convert to Duma's convention for Autonomous Sailing Module
 
-	//TODO: DEBUG only
-	alpha_star = 1.57;
-
 	#if C_DEBUG == 0
 	cb_set_alpha_star(alpha_star);
 	#endif
