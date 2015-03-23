@@ -200,7 +200,7 @@ bool cb_set_alpha_star(float new_alpha_star){
         pp_updated = true;
 
         sprintf(txt_msg,"New alpha star set to: %f",(double)pp.alpha_star);
-        smq_send_log_info("New alpha star set!");
+        smq_send_log_info(txt_msg);
     }
     else
         res = false;
