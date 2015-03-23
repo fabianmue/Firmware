@@ -458,7 +458,6 @@ void essc_log_data(void) {
 	temp_log.windowsize = Config.windowSize;
 	temp_log.period = Config.period;
 	orb_publish(ORB_ID(boat_qgc_param4), local_pubs->boat_qgc_param4, &temp_log);
-
 }
 
 
