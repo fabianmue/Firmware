@@ -535,6 +535,16 @@ struct log_PWS_s{
     uint16_t completed_msgs;
 };
 
+
+/* --- PARAM4 ---------------------------------------------------------*/
+#define LOG_QGC4_MSG 66
+struct log_QGC4_s{
+	float k;
+	uint8_t windowsize;
+	float period;
+};
+
+
 //********************** End add *******************************
 
 /********** SYSTEM MESSAGES, ID > 0x80 **********/
@@ -616,7 +626,8 @@ static const struct log_format_s log_formats[] = {
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),
 	LOG_FORMAT(VER, "NZ", "Arch,FwGit"),
-	LOG_FORMAT(PARM, "Nf", "Name,Value")
+	LOG_FORMAT(PARM, "Nf", "Name,Value"),
+	LOG_FORMAT(QGC4, "fBf", "k,WindSize,Period")
 };
 
 static const unsigned log_formats_num = sizeof(log_formats) / sizeof(log_formats[0]);

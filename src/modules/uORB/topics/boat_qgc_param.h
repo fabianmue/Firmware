@@ -89,8 +89,16 @@ struct boat_qgc_param3_s{
     int32_t use_only_yaw_man;      /// Value of AS_TCK_USE_Y
 };
 
+struct boat_qgc_param4_s{
+	float k; 					///Stepsize for two changes in Sail-Angle [°]
+	uint8_t windowsize; 		///Windowsize for average filtering of Speed
+	float period; 				///Time between two changes in Sail-Angle [s]
+};
+
+
 ORB_DECLARE(boat_qgc_param1);
 ORB_DECLARE(boat_qgc_param2);
 ORB_DECLARE(boat_qgc_param3);
+ORB_DECLARE(boat_qgc_param4);
 
 #endif // BOAT_QGC_PARAM_H

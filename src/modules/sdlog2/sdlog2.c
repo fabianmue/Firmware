@@ -982,6 +982,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         struct boat_qgc_param2_s boat_qgc_param2; //Added by Marco Tranzatto
         struct boat_opt_mat_s boat_opt_mat; //Added by Marco Tranzatto
         struct boat_qgc_param3_s boat_qgc_param3; //Added by Marco Tranzatto
+        struct boat_qgc_param4_s boat_qgc_param4; //Added by Jonas Wirz
         struct path_planning_s path_planning; //Added by Marco Tranzatto
         struct boat_local_position_s boat_local_position; //Added by Marco Tranzatto
         struct parser200wx_status_s parser200wx_status; //Added by Marco Tranzatto
@@ -1033,6 +1034,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             struct log_BGUD_s log_BOAT_GUIDANCE; //Added by Marco Tranzatto
             struct log_QGC1_s log_BOAT_QGC_PARAM1; //Added by Marco Tranzatto
             struct log_QGC2_s log_BOAT_QGC_PARAM2; //Added by Marco Tranzatto
+            struct log_QGC4_s log_BOAT_QGC_PARAM4; //Added by Jonas Wirz
             struct log_OPTM_s log_BOAT_OPT_MATRICES; //Added by Marco Tranzatto
             struct log_QGC3_s log_BOAT_QGC_PARAM3; //Added by Marco Tranzatto
             struct log_PP_s log_PP; //Added by Marco Tranzatto
@@ -1081,6 +1083,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         int boat_guidance_sub; //Added by Marco Tranzatto
         int boat_qgc_param1_sub; //Added by Marco Tranzatto
         int boat_qgc_param2_sub; //Added by Marco Tranzatto
+        int boat_qgc_param4_sub; //Added by Jonas Wirz
         int boat_opt_mat_sub; //Added by Marco Tranzatto
         int boat_qgc_param3_sub; //Added by Marco Tranzatto
         int path_planning; //Added by Marco Tranzatto
@@ -1135,6 +1138,8 @@ int sdlog2_thread_main(int argc, char *argv[])
 
     subs.boat_qgc_param1_sub = orb_subscribe(ORB_ID(boat_qgc_param1));
     subs.boat_qgc_param2_sub = orb_subscribe(ORB_ID(boat_qgc_param2));
+    subs.boat_qgc_param4_sub = orb_subscribe(ORB_ID(boat_qgc_param4));	//Added by Jonas Wirz
+
 
     subs.boat_opt_mat_sub = orb_subscribe(ORB_ID(boat_opt_mat));
 
@@ -1836,6 +1841,17 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_QGC_PARAM2.mean_wind_direction_r = buf.boat_qgc_param2.mean_wind_direction_r;
             LOGBUFFER_WRITE_AND_COUNT(QGC2);
         }
+
+        /* --- BOAT QGC PARAM 4 */
+        /* Added by Jonas Wirz */
+        if (copy_if_updated(ORB_ID(boat_qgc_param4), subs.boat_qgc_param4_sub, &buf.boat_qgc_param4)) {
+            log_msg.msg_type = LOG_QGC4_MSG;
+            log_msg.body.log_BOAT_QGC_PARAM4.k = buf.boat_qgc_param4.k;
+            log_msg.body.log_BOAT_QGC_PARAM4.windowsize = buf.boat_qgc_param4.windowsize;
+            log_msg.body.log_BOAT_QGC_PARAM4.period = buf.boat_qgc_param4.period;
+            LOGBUFFER_WRITE_AND_COUNT(QGC4);
+        }
+
 
         /* --- BOAT OPT MATRICES */
         if (copy_if_updated(ORB_ID(boat_opt_mat), subs.boat_opt_mat_sub, &buf.boat_opt_mat)) {
