@@ -46,12 +46,12 @@ static struct {
 	 	 	 	 	 	 	/* Chooses a path-planning algorithm
 	 	 	 	 	 	 	 * 1 = Cost-Function-Method
 	 	 	 	 	 	 	 * 2 = Potential-Field-Method */
-	bool reset; 			//Resets all local varables to a predefined state (init-state)
+	bool reset; 			//Resets all local varables to a predefined state (init-state), if true
 } config = {
 	.period = 1000000,
 	.max_headchange = 0.1745329f, //~10°/s
-	.method = 1
-	.
+	.method = 1,
+	.reset = false
 };
 
 
@@ -162,13 +162,10 @@ void nav_navigator(void) {
 		/** Assign the current time as the last call time */
 		state.last_call = systime;
 
-		sprintf(txt_msg,"Navigator called @ %d",(int)systime);
-		smq_send_log_info(txt_msg);
-
 
 		/** A new reference heading should only be calculated if the boat is not doing a maneuver */
-		//TODO: Uncomment this false
-		if(false && !state.maneuver) {
+		//TODO: True only for Debug
+		if(!state.maneuver || true) {
 
 			/****FIND A NEW REFERENCE HEADING
 			 * Different algorithms can be used. */
@@ -254,7 +251,7 @@ void nav_navigator(void) {
 
 			/****COMMUNICATION
 			* A new Reference Heading is generated => send this data to the Helsman (autonomous_sailing module) */
-			//nav_speak2helsman();
+			nav_speak2helsman();
 
 		} //if no tack or gybe is in progress
 
