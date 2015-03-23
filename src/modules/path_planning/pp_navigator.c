@@ -46,10 +46,12 @@ static struct {
 	 	 	 	 	 	 	/* Chooses a path-planning algorithm
 	 	 	 	 	 	 	 * 1 = Cost-Function-Method
 	 	 	 	 	 	 	 * 2 = Potential-Field-Method */
+	bool reset; 			//Resets all local varables to a predefined state (init-state)
 } config = {
 	.period = 1000000,
 	.max_headchange = 0.1745329f, //~10°/s
 	.method = 1
+	.
 };
 
 
