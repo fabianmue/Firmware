@@ -21,6 +21,8 @@
  * - Winddirection => how's the definition? Wind from Nort = 0°/ Wind from South = 180° (Sensor-Frame)
  * - Check E7-Convention (North must have 9 Digits!!!!) 470000000
  * - Add logging of Pathplanning parameters
+ * - Add logging of ESSC-Parameters
+ *
  */
 
 
