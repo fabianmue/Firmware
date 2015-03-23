@@ -33,7 +33,7 @@
 
 
 //1 if you're testing path_planning app indoor, PLEASE SET INDOOR PARSER_200WX
-#define SIMULATION_FLAG 1
+#define SIMULATION_FLAG 0
 
 //set if you want to use a path planning that uses grid lines
 #define USE_GRID_LINES 0 ///1 if you want to use grid line system to tell the boat where to tack

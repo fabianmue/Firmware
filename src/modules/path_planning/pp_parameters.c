@@ -197,6 +197,22 @@ PARAM_DEFINE_INT32(ASPS_ALT_E3, 406000);
 #endif //SIMULATION_FLAG == 1
 
 
+
+
+/**
+* pp_cost_method: Weighting factors for Cost Function Method
+*
+* @min 0
+* @max 5
+*/
+PARAM_DEFINE_FLOAT(PP_CM_W_GW, 0.9f);
+PARAM_DEFINE_FLOAT(PP_CM_W_GO, 0.8f);
+PARAM_DEFINE_FLOAT(PP_CM_W_GM, 0.4f);
+PARAM_DEFINE_FLOAT(PP_CM_W_GS, 0.05f);
+PARAM_DEFINE_FLOAT(PP_CM_W_GT, 0.1f);
+PARAM_DEFINE_FLOAT(PP_CM_W_GLEE, 0.15f);
+
+
 /**
  * pp_cost_method: Saftey Radius around Obstacles
  *
@@ -425,12 +441,12 @@ void p_param_init(void){
 
 
     //**COST_METHOD
-    	pointers_param_qgc.cm_weight_gw_pointer = param_find("PP_CM_WEIGHT_GW");
-    	pointers_param_qgc.cm_weight_go_pointer = param_find("PP_CM_WEIGHT_GO");
-    	pointers_param_qgc.cm_weight_gm_pointer = param_find("PP_CM_WEIGHT_GM");
-    	pointers_param_qgc.cm_weight_gs_pointer = param_find("PP_CM_WEIGHT_GS");
-    	pointers_param_qgc.cm_weight_gt_pointer = param_find("PP_CM_WEIGHT_GT");
-    	pointers_param_qgc.cm_weight_glee_pointer = param_find("PP_CM_WEIGHT_GLEE");
+    	pointers_param_qgc.cm_weight_gw_pointer = param_find("PP_CM_W_GW");
+    	pointers_param_qgc.cm_weight_go_pointer = param_find("PP_CM_W_GO");
+    	pointers_param_qgc.cm_weight_gm_pointer = param_find("PP_CM_W_GM");
+    	pointers_param_qgc.cm_weight_gs_pointer = param_find("PP_CM_W_GS");
+    	pointers_param_qgc.cm_weight_gt_pointer = param_find("PP_CM_W_GT");
+    	pointers_param_qgc.cm_weight_glee_pointer = param_find("PP_CM_W_GLEE");
 
     	pointers_param_qgc.cm_obstsafetyradius_pointer = param_find("PP_CM_OBSTSAFRAD");
     	pointers_param_qgc.cm_obsthorizon_pointer = param_find("PP_CM_OBSTHORIZN");

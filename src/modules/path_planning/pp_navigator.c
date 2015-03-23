@@ -163,6 +163,10 @@ void nav_navigator(void) {
 	#endif
 	if((systime-state.last_call >= config.period) || (C_DEBUG == 1)) {
 
+		/** Assign the current time as the last call time */
+		state.last_call = systime;
+
+
 		/** A new reference heading should only be calculated if the boat is not doing a maneuver */
 		if(!state.maneuver) {
 
