@@ -152,8 +152,6 @@ void cb_new_as_data(int boat_guidance_debug_sub){
         last_haul = haul_tmp;
     }
 
-    //TODO: DEBUG
-    pp.do_maneuver = 0;
 }
 
 /**

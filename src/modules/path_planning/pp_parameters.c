@@ -449,51 +449,51 @@ void p_param_init(void){
 
 
     //**COST_METHOD
-    	pointers_param_qgc.cm_weight_gw_pointer = param_find("PP_CM_W_GW");
-    	pointers_param_qgc.cm_weight_go_pointer = param_find("PP_CM_W_GO");
-    	pointers_param_qgc.cm_weight_gm_pointer = param_find("PP_CM_W_GM");
-    	pointers_param_qgc.cm_weight_gs_pointer = param_find("PP_CM_W_GS");
-    	pointers_param_qgc.cm_weight_gt_pointer = param_find("PP_CM_W_GT");
-    	pointers_param_qgc.cm_weight_glee_pointer = param_find("PP_CM_W_GLEE");
+    pointers_param_qgc.cm_weight_gw_pointer = param_find("PP_CM_W_GW");
+    pointers_param_qgc.cm_weight_go_pointer = param_find("PP_CM_W_GO");
+    pointers_param_qgc.cm_weight_gm_pointer = param_find("PP_CM_W_GM");
+    pointers_param_qgc.cm_weight_gs_pointer = param_find("PP_CM_W_GS");
+    pointers_param_qgc.cm_weight_gt_pointer = param_find("PP_CM_W_GT");
+    pointers_param_qgc.cm_weight_glee_pointer = param_find("PP_CM_W_GLEE");
 
-    	pointers_param_qgc.cm_obstsafetyradius_pointer = param_find("PP_CM_OBSTSAFRAD");
-    	pointers_param_qgc.cm_obsthorizon_pointer = param_find("PP_CM_OBSTHORIZN");
-    	pointers_param_qgc.cm_windowsize_pointer = param_find("PP_CM_WINDOWSIZE");
-
-
-    	//**NAVIGATION
-    	pointers_param_qgc.nav_period = param_find("PP_NAV_PERIOD");
-    	pointers_param_qgc.nav_turnrate = param_find("PP_NAV_TURNRATE");
-    	pointers_param_qgc.nav_target1_lat = param_find("PP_NAV_TAR1_LAT");
-    	pointers_param_qgc.nav_target1_lon = param_find("PP_NAV_TAR1_LON");
-    	pointers_param_qgc.nav_target2_lat = param_find("PP_NAV_TAR2_LAT");
-    	pointers_param_qgc.nav_target2_lon = param_find("PP_NAV_TAR2_LON");
-    	pointers_param_qgc.nav_target3_lat = param_find("PP_NAV_TAR3_LAT");
-    	pointers_param_qgc.nav_target3_lon = param_find("PP_NAV_TAR3_LON");
-    	pointers_param_qgc.nav_target_number = param_find("PP_NAV_TAR_NUM");
-    	pointers_param_qgc.nav_obstacle1_lat = param_find("PP_NAV_TAR1_LAT");
-    	pointers_param_qgc.nav_obstacle1_lon = param_find("PP_NAV_TAR1_LON");
-    	pointers_param_qgc.nav_obstacle2_lat = param_find("PP_NAV_TAR2_LAT");
-    	pointers_param_qgc.nav_obstacle2_lon = param_find("PP_NAV_TAR2_LON");
-    	pointers_param_qgc.nav_obstacle3_lat = param_find("PP_NAV_TAR3_LAT");
-    	pointers_param_qgc.nav_obstacle3_lon = param_find("PP_NAV_TAR3_LON");
-    	pointers_param_qgc.nav_obstacle_number = param_find("PP_NAV_OBST_NUM");
-
-    	pointers_param_qgc.nav_start1_lat = param_find("PP_NAV_STRT1_LAT");
-    	pointers_param_qgc.nav_start1_lon = param_find("PP_NAV_STRT1_LON");
-    	pointers_param_qgc.nav_start2_lat = param_find("PP_NAV_STRT2_LAT");
-    	pointers_param_qgc.nav_start2_lon = param_find("PP_NAV_STRT2_LON");
-    	pointers_param_qgc.nav_altitude = param_find("PP_NAV_ALTITUDE");
-
-    	pointers_param_qgc.nav_reset = param_find("PP_NAV_RESET");
+    pointers_param_qgc.cm_obstsafetyradius_pointer = param_find("PP_CM_OBSTSAFRAD");
+    pointers_param_qgc.cm_obsthorizon_pointer = param_find("PP_CM_OBSTHORIZN");
+    pointers_param_qgc.cm_windowsize_pointer = param_find("PP_CM_WINDOWSIZE");
 
 
-    	//**SIMULATION DEBUG
-    	#if P_DEBUG == 1
-    	pointers_param_qgc.sim_ned_northx = param_find("SIM_NED_NORTHX");
-    	pointers_param_qgc.sim_ned_easty = param_find("SIM_NED_EASTY");
-    	pointers_param_qgc.sim_heading = param_find("SIM_HEADING");
-    	#endif
+    //**NAVIGATION
+    pointers_param_qgc.nav_period = param_find("PP_NAV_PERIOD");
+    pointers_param_qgc.nav_turnrate = param_find("PP_NAV_TURNRATE");
+    pointers_param_qgc.nav_target1_lat = param_find("PP_NAV_TAR1_LAT");
+    pointers_param_qgc.nav_target1_lon = param_find("PP_NAV_TAR1_LON");
+    pointers_param_qgc.nav_target2_lat = param_find("PP_NAV_TAR2_LAT");
+    pointers_param_qgc.nav_target2_lon = param_find("PP_NAV_TAR2_LON");
+    pointers_param_qgc.nav_target3_lat = param_find("PP_NAV_TAR3_LAT");
+    pointers_param_qgc.nav_target3_lon = param_find("PP_NAV_TAR3_LON");
+    pointers_param_qgc.nav_target_number = param_find("PP_NAV_TAR_NUM");
+    pointers_param_qgc.nav_obstacle1_lat = param_find("PP_NAV_TAR1_LAT");
+    pointers_param_qgc.nav_obstacle1_lon = param_find("PP_NAV_TAR1_LON");
+    pointers_param_qgc.nav_obstacle2_lat = param_find("PP_NAV_TAR2_LAT");
+    pointers_param_qgc.nav_obstacle2_lon = param_find("PP_NAV_TAR2_LON");
+    pointers_param_qgc.nav_obstacle3_lat = param_find("PP_NAV_TAR3_LAT");
+    pointers_param_qgc.nav_obstacle3_lon = param_find("PP_NAV_TAR3_LON");
+    pointers_param_qgc.nav_obstacle_number = param_find("PP_NAV_OBST_NUM");
+
+    pointers_param_qgc.nav_start1_lat = param_find("PP_NAV_STRT1_LAT");
+    pointers_param_qgc.nav_start1_lon = param_find("PP_NAV_STRT1_LON");
+    pointers_param_qgc.nav_start2_lat = param_find("PP_NAV_STRT2_LAT");
+    pointers_param_qgc.nav_start2_lon = param_find("PP_NAV_STRT2_LON");
+    pointers_param_qgc.nav_altitude = param_find("PP_NAV_ALTITUDE");
+
+    pointers_param_qgc.nav_reset = param_find("PP_NAV_RESET");
+
+
+    //**SIMULATION DEBUG
+    #if P_DEBUG == 1
+    pointers_param_qgc.sim_ned_northx = param_find("SIM_NED_NORTHX");
+    pointers_param_qgc.sim_ned_easty = param_find("SIM_NED_EASTY");
+    pointers_param_qgc.sim_heading = param_find("SIM_HEADING");
+    #endif
 
 
 
@@ -746,6 +746,7 @@ void p_param_update(bool update_path_param){
     	if(reset == 1) {
     		//Reset the parameters for the pathplanning to the default values.
     		nav_init();
+    		smq_send_log_info("NAVIGATOR RESET! switch back to 0!");
     	}
 
 
