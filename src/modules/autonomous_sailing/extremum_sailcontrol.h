@@ -30,7 +30,7 @@
 
 
 /** @brief Initialize the use of Extremum Seeking Sailcontrol (ESSC) */
-void essc_init(void);
+void essc_init(struct published_fd_s *pubs);
 
 
 /** @brief Handle a new Speed-Value*/

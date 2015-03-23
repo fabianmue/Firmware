@@ -25,6 +25,9 @@ typedef struct {
 	uint8_t buffersize;        		//Current size of the buffer
 } CircularBuffer;
 
+/** Pointer for logging on SD-Card */
+struct published_fd_s *local_pubs; //Pointer to the published-Struct
+
 
 /** @brief Calculate the Signum of Speed/Sailcontrol (Signum according to the Paper) */
 int sign(float value);
@@ -52,6 +55,9 @@ float deg2pwm(float degSail);
 
 /** @brief Convert the opening Angle for the sail as a PWM signal to degrees */
 float pwm2deg(float pwmSail);
+
+/** @brief Log usefull data for postprocessing on SD-Card */
+void essc_log_data(void);
 
 
 
@@ -96,10 +102,13 @@ static struct {
  *
  *
  */
-void essc_init(void) {
+void essc_init(struct published_fd_s *pubs) {
 
 	/* Create the Speed-Buffer */
 	State.buffer = buffer_init(Config.windowSize);
+
+	/* Store the pointer to the publish-topics-struct */
+	local_pubs = pubs;
 
 }
 
@@ -220,6 +229,10 @@ void essc_set_qground_values(float k, int windowSize, float period) {
 		//Set the default Value
 		Config.windowSize = 8;
 	}
+
+
+	//The parameters are updated => add these parameters to the SD-Log
+	essc_log_data();
 
 }
 
@@ -429,6 +442,20 @@ float buffer_get_value(CircularBuffer *buffer, uint8_t pos) {
 	return buffer->bufferData_p[ind];
 
 } //End of buffer_getValue
+
+
+
+/**
+* Log some useful data for postprocessing
+*/
+void essc_log_data(void) {
+	struct boat_qgc_param4_s temp_log;
+	temp_log.timestamp = hrt_absolute_time();
+	temp_log.k = Config.k;
+	temp_log.windowsize = Config.windowSize;
+	temp_log.period = Config.period;
+	orb_publish(ORB_ID(boat_qgc_param4), local_pubs->boat_qgc_param4, &temp_log);
+}
 
 
 

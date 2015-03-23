@@ -90,6 +90,7 @@ struct boat_qgc_param3_s{
 };
 
 struct boat_qgc_param4_s{
+    uint64_t timestamp;
 	float k; 					///Stepsize for two changes in Sail-Angle [°]
 	uint8_t windowsize; 		///Windowsize for average filtering of Speed
 	float period; 				///Time between two changes in Sail-Angle [s]
