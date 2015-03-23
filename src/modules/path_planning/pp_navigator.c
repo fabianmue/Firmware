@@ -137,7 +137,6 @@ void nav_navigator(void) {
 
 	/** DEBUG: */
 	#if P_DEBUG == 1
-	smq_send_log_info("Navigator called");
 	//printf("  Navigator called: %d\n",state.last_call);
 	#endif
 
@@ -257,7 +256,7 @@ void nav_navigator(void) {
 
 	} else {
 		//We do no pathplanning in this step
-		smq_send_log_info(" ");
+		//smq_send_log_info(" ");
 	} //if do pathplanning with a predefined frequency
 
 } //end of nav_navigate

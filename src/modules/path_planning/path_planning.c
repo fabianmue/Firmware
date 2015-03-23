@@ -273,7 +273,7 @@ int pp_thread_main(int argc, char *argv[]) {
          * Note: The navigator is called in every loop, but it is only executed in a regular
          * time-based interval. */
 		#if USE_GRID_LINES == 0
-        nav_navigator();
+        //nav_navigator();
 		#endif
 
 
