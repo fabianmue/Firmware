@@ -39,6 +39,7 @@
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 #include "pp_communication_buffer.h"
+#include <drivers/drv_hrt.h>
 
 #define M_PI_F 3.14159265358979323846f
 
