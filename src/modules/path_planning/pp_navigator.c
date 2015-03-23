@@ -47,7 +47,7 @@ static struct {
 	 	 	 	 	 	 	 * 1 = Cost-Function-Method
 	 	 	 	 	 	 	 * 2 = Potential-Field-Method */
 } config = {
-	.period = 1000,
+	.period = 1000000,
 	.max_headchange = 0.1745329f, //~10°/s
 	.method = 1
 };
@@ -135,12 +135,6 @@ void nav_init(void) {
  */
 void nav_navigator(void) {
 
-	/** DEBUG: */
-	#if P_DEBUG == 1
-	//printf("  Navigator called: %d\n",state.last_call);
-	#endif
-
-
 	/** Check if new Information is available and update the state accordingly. */
 	#if C_DEBUG == 0
 	nav_listen2helsman();	//Check, if a maneuver is completed
@@ -166,9 +160,13 @@ void nav_navigator(void) {
 		/** Assign the current time as the last call time */
 		state.last_call = systime;
 
+		sprintf(txt_msg,"Navigator called @ %d",(int)systime);
+		smq_send_log_info(txt_msg);
+
 
 		/** A new reference heading should only be calculated if the boat is not doing a maneuver */
-		if(!state.maneuver) {
+		//TODO: Uncomment this false
+		if(false && !state.maneuver) {
 
 			/****FIND A NEW REFERENCE HEADING
 			 * Different algorithms can be used. */
@@ -254,13 +252,13 @@ void nav_navigator(void) {
 
 			/****COMMUNICATION
 			* A new Reference Heading is generated => send this data to the Helsman (autonomous_sailing module) */
-			nav_speak2helsman();
+			//nav_speak2helsman();
 
 		} //if no tack or gybe is in progress
 
 	} else {
 		//We do no pathplanning in this step
-		//smq_send_log_info(" ");
+
 	} //if do pathplanning with a predefined frequency
 
 } //end of nav_navigate
@@ -303,6 +301,9 @@ void nav_speak2helsman() {
 	alpha_star = fmod(state.heading_ref - state.wind_dir,2*PI); //In Compass-Frame
 	alpha_star = nh_compass2dumas(alpha_star);					//Convert to Duma's convention for Autonomous Sailing Module
 
+	//TODO: DEBUG only
+	alpha_star = 1.57;
+
 	#if C_DEBUG == 0
 	cb_set_alpha_star(alpha_star);
 	#endif
@@ -331,12 +332,8 @@ void nav_speak2helsman() {
 
 	#endif
 
-    #if P_DEBUG == 1
-		printf("New Heading Reference: %f\n",(double)(state.heading_ref*RAD2DEG));
-	#endif
-
 	//Report the Result of the Pathplanning to QGround Control
-	sprintf(txt_msg, "New Alpha Star = %0.1f [deg], Maneuver = %d", (double)(state.heading_ref*RAD2DEG),(int)(state.maneuver));
+	sprintf(txt_msg, "New Alpha Star = %0.1f [deg], Maneuver = %d @ %d" , (double)(state.heading_ref*RAD2DEG),(int)(state.maneuver),(int)state.last_call);
 	smq_send_log_info(txt_msg);
 }
 
@@ -427,6 +424,7 @@ void nav_position_update(void) {
 			//This was the last target
 
 			//Don't know what to do here...just be happy?... maybe report to QGround Control?
+			smq_send_log_info("Final target reached!");
 
 		}
 	}

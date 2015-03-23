@@ -195,6 +195,8 @@ bool cb_set_alpha_star(float new_alpha_star){
     if(cb_is_maneuver_completed() == true){
         pp.alpha_star = new_alpha_star;
         pp_updated = true;
+
+        smq_send_log_info("New alpha star set!");
     }
     else
         res = false;
