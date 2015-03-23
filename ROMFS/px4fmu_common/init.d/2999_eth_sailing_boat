@@ -44,5 +44,5 @@ set VEHICLE_TYPE sb
 set MIXER IO_pass
 
 #Use only indoor to stop BEEP from Whinch servomotor
-#set PWM_OUTPUTS 4
-#set PWM_DISARMED 1710
+ set PWM_OUTPUTS 4
+ set PWM_DISARMED 1710

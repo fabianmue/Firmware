@@ -537,7 +537,7 @@ struct log_PWS_s{
 
 
 /* --- PARAM4 ---------------------------------------------------------*/
-#define LOG_QGC4_MSG 66
+#define LOG_QGC4_MSG 66	//Added by Jonas Wirz
 struct log_QGC4_s{
 	float k;
 	uint8_t windowsize;
@@ -622,12 +622,12 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(PP, "fHB", "AlphaStr,DoMan,IdCmd"), //Added by Marco Tranzatto
     LOG_FORMAT(BLP, "fff", "X,Y,D"), //Added by Marco Tranzatto
     LOG_FORMAT(PWS, "iHfH", "ByteR,Mask,DB1,ComMsg"), //Added by Marco Tranzatto
+	LOG_FORMAT(QGC4, "fBf", "k,Windo,Period"), //Added by Jonas Wirz
     /* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),
 	LOG_FORMAT(VER, "NZ", "Arch,FwGit"),
-	LOG_FORMAT(PARM, "Nf", "Name,Value"),
-	LOG_FORMAT(QGC4, "fBf", "k,WindSize,Period")
+	LOG_FORMAT(PARM, "Nf", "Name,Value")
 };
 
 static const unsigned log_formats_num = sizeof(log_formats) / sizeof(log_formats[0]);

@@ -11,6 +11,8 @@
 
 
 #include <stdio.h>
+#include <uORB/uORB.h>
+#include "uORB/topics/boat_qgc_param.h"
 
 
 #include "extremum_sailcontrol.h"
@@ -204,6 +206,8 @@ float essc_sail_control_value() {
 */
 void essc_set_qground_values(float k, int windowSize, float period) {
 
+	smq_send_log_info("Published ESSC Values");
+
 	//Assign the Stepsize (make sure the stepsize is bigger than zero, else set a default value)
 	if(k > 0) {
 		Config.k = k;
@@ -232,7 +236,7 @@ void essc_set_qground_values(float k, int windowSize, float period) {
 
 
 	//The parameters are updated => add these parameters to the SD-Log
-	essc_log_data();
+	//essc_log_data();
 
 }
 
@@ -455,6 +459,7 @@ void essc_log_data(void) {
 	temp_log.windowsize = Config.windowSize;
 	temp_log.period = Config.period;
 	orb_publish(ORB_ID(boat_qgc_param4), local_pubs->boat_qgc_param4, &temp_log);
+
 }
 
 

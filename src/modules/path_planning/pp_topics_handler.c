@@ -13,6 +13,7 @@ static struct{
     orb_advert_t path_planning;        //output of path_planning topic
     orb_advert_t boat_qgc_param2;      //QGC paramters for path_planning
     orb_advert_t boat_local_position; // local position of the boat
+    orb_advert_t boat_qgc_param4;	//ESSC Data
 }pubs;
 
 /**
@@ -76,6 +77,11 @@ bool th_advertise(void) {
     struct boat_qgc_param2_s boat_qgc_param2;
     memset(&boat_qgc_param2, 0, sizeof(boat_qgc_param2));
     pubs.boat_qgc_param2 = orb_advertise(ORB_ID(boat_qgc_param2), &boat_qgc_param2);
+
+    //Advertise boat_qgc_param4 topic	//Added by Jonas Wirz
+    struct boat_qgc_param4_s boat_qgc_param4;
+    memset(&boat_qgc_param4, 0, sizeof(boat_qgc_param4));
+    pubs.boat_qgc_param4 = orb_advertise(ORB_ID(boat_qgc_param4), &boat_qgc_param4);
 
     //Advertise boat_loca_position topic
     struct boat_local_position_s boat_local_position;

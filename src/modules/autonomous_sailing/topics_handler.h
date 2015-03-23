@@ -30,6 +30,7 @@ struct subscribtion_fd_s{
     int rc_channels;
     int boat_qgc_param2;
     int vehicle_global_position;
+    int boat_qgc_param4;
 };
 
 struct published_fd_s{

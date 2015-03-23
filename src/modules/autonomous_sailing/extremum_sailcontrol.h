@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <drivers/drv_hrt.h>
 #include <unistd.h>
+#include "send_msg_qgc.h"
 
 
 #define BUFFERSIZE 8			   	//Maximum size of the Buffer for the Speeds
