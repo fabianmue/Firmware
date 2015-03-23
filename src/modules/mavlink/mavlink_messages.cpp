@@ -2217,7 +2217,7 @@ protected:
             msg.time_boot_ms = path_p_debug.timestamp / 1000;
 
             snprintf(msg.name, sizeof(msg.name), "as_alstr");
-            msg.value = path_p_debug.alpha_star*RAD2DEG;
+            msg.value = (path_p_debug.alpha_star*RAD2DEG);
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
