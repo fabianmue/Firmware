@@ -84,7 +84,7 @@ bool cb_do_maneuver(float new_alpha_star){
         cb_set_alpha_star(new_alpha_star);
 
         //send do_maneuver command to autonomous_sailing app
-        pp.do_maneuver = true;
+        pp.do_maneuver = 1;
 
         //give a new Id for this new maneuver
         if(pp.id_maneuver == 255)
@@ -108,7 +108,7 @@ bool cb_do_maneuver(float new_alpha_star){
  * @return      true if the boat is not doing or has to do any maneuver
 */
 bool cb_is_maneuver_completed(void){
-    return (pp.do_maneuver == true) ? false : true;
+    return (pp.do_maneuver == 1) ? false : true;
 }
 
 /**
@@ -133,7 +133,7 @@ void cb_new_as_data(int boat_guidance_debug_sub){
            boat_guidance_debug.id_maneuver == pp.id_maneuver){
 
             //maneuver is completed
-            pp.do_maneuver = false;
+            pp.do_maneuver = 1;
             pp_updated = true;
         }
     }
@@ -219,7 +219,7 @@ void cb_init(void){
     pp.id_cmd = PP_NORMAL_CMD;
 
     //Init maneuver state with false
-    pp.do_maneuver = false;
+    pp.do_maneuver = 0;
 }
 
 /**

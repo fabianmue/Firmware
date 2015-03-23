@@ -110,7 +110,7 @@ void nav_init(void) {
 
 
 	//Update the state by requesting the values from the communication Buffer
-	#if C_DEBUG == 0
+	#if C_DEBUG == 0 && P_DEBUG == 0
 	nav_listen2helsman();	//Check, if a maneuver is completed
 	nav_heading_update();	//Check for a new Heading (alpha)
 	nav_position_update();  //Check for a new Position update

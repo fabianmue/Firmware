@@ -16,7 +16,7 @@
 
 
 struct path_planning_s {
-	uint64_t timestamp;    /**< Time of the last Pathplanning Update since System Start in Microseconds */
+	uint64_t timestamp;   /**< Time of the last Pathplanning Update since System Start in Microseconds */
     float    alpha_star;  /**< Alpha angle reference, in Dumas' convention [rad] */
     bool     do_maneuver; /**< True, iff boat should either tack or jybe */
     uint8_t  id_maneuver; /**< ID last commanded maneuver */
