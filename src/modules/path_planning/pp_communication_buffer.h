@@ -60,6 +60,9 @@
 /** @brief store the current NED-Position in the pathplanning-topic */
 bool cb_new_position(float north, float east);
 
+/** @brief store the current Heading known by the Pathplanner in the pathplanning-topic */
+bool cb_new_heading(float heading);
+
 /** @brief command a tack or a jybe */
 bool cb_do_maneuver(float new_alpha_star);
 

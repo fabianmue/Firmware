@@ -24,6 +24,7 @@ struct path_planning_s {
 
     float ned_north;	/**< North-Coordinate in NED-Frame of the Boat => for debugging*/
     float ned_east;		/**< East-Coordinate in NED-Frame of the Boat  => for debugging*/
+    float heading; 		/**< Current heading of the boat known by the Navigator => for debugging*/
 };
 
 

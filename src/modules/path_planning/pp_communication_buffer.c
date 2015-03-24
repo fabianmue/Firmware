@@ -74,11 +74,25 @@ static char txt_msg[70]; ///used to send messages to QGC
  * Store the current Position of the boat in NED-Coordinates in the Pathplanning Topic
  * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
  *
- * @param ned[3] array containing the ned-coordinates in meters (north, east, down)
+ * @param north, east position of the boat in NED-Frame [m]
  */
 bool cb_new_position(float north, float east) {
 	pp.ned_east = east;
 	pp.ned_north = north;
+
+	pp_updated = true;
+
+	return true;
+}
+
+/**
+ * Store the current Heading of the boat in Pathplanning Topic
+ * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
+ *
+ * @param
+ */
+bool cb_new_heading(float heading) {
+	pp.heading = heading;
 
 	pp_updated = true;
 
