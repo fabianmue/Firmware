@@ -40,6 +40,7 @@
  */
 #include "pp_communication_buffer.h"
 #include <drivers/drv_hrt.h>
+#include <stdio.h>
 
 #define M_PI_F 3.14159265358979323846f
 
@@ -199,7 +200,7 @@ bool cb_set_alpha_star(float new_alpha_star){
         pp.alpha_star = new_alpha_star;
         pp_updated = true;
 
-        sprintf(txt_msg,"New alpha star set to: %f",(double)pp.alpha_star);
+        sprintf(txt_msg,"New alpha star set to: %3.1f",(double)pp.alpha_star);
         smq_send_log_info(txt_msg);
     }
     else

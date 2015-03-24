@@ -140,19 +140,17 @@ void nav_navigator(void) {
 	/** Pathplanning is only done with a certain frequency
 	 *  Therefore, check the systemtime.
 	 *  Note: When the Computer-Debug-Mode is on Pathplanning is done in every loop!*/
-	uint64_t systime = 0;
-	#if C_DEBUG == 0
-		systime = hrt_absolute_time();
-	#endif
-	if((systime-state.last_call >= config.period) || (C_DEBUG == 1)) {
+	uint64_t systime = hrt_absolute_time();
+
+	if((systime-state.last_call >= config.period)) {
 
 		/** Assign the current time as the last call time */
 		state.last_call = systime;
 
 
-		/** A new reference heading should only be calculated if the boat is not doing a maneuver */
-		//TODO: True only for Debug
-		if(!state.maneuver || true) {
+		/** A new reference heading should only be calculated if the boat is not doing a maneuver
+		 * The boat is not doing a maneuver, if the maneuver-flag is set to false! */
+		if(!state.maneuver) {
 
 			/****FIND A NEW REFERENCE HEADING
 			 * Different algorithms can be used. */
@@ -198,9 +196,8 @@ void nav_navigator(void) {
 			 * does not suggest heading-changes bigger than the maximum possible turnrate.
 			 * The check is only done when the boat is not doing a maneuver. If you want to
 			 * disable the turnrate, just set the value to a high value. */
-			if(false && !state.maneuver) {
-				//TODO: Remove false....somewhere here's an error, because the boat does Q-tacks
-				//No Maneuver is necessary
+			/*if(!state.maneuver) {
+				//The boat is not doing a maneuver
 
 				float diff = nh_heading_diff(state.heading_cur, state.heading_ref);
 				if(diff > config.max_headchange) {
@@ -233,7 +230,7 @@ void nav_navigator(void) {
 
 				}
 
-			}
+			}*/
 
 
 			/****COMMUNICATION
@@ -243,7 +240,7 @@ void nav_navigator(void) {
 		} //if no tack or gybe is in progress
 
 	} else {
-		//We do no pathplanning in this step
+		//We do NO pathplanning in this step
 
 	} //if do pathplanning with a predefined frequency
 
@@ -259,15 +256,11 @@ void nav_navigator(void) {
  */
 void nav_listen2helsman(void) {
 
-	#if C_DEBUG == 0
-	/* Check if Helsman has completed the maneuver */
-
 	if(cb_is_maneuver_completed()) {
 		//The ongoing maneuver is completed and therefore the state can be reseted.
 
 		state.maneuver = false;
 	}
-	#endif
 
 } //end of nav_listen2helsman
 
@@ -287,20 +280,19 @@ void nav_speak2helsman() {
 	alpha_star = fmod(state.heading_ref - state.wind_dir,2*PI); //In Compass-Frame
 	alpha_star = nh_compass2dumas(alpha_star);					//Convert to Duma's convention for Autonomous Sailing Module
 
-	#if C_DEBUG == 0
-	cb_set_alpha_star(alpha_star);
-	#endif
-
 
 	/* Tell the Helsman to tack/gybe as soon as possible, if pathplanning wants to tack/gybe */
 	if(state.maneuver) {
 		//A maneuver is necessary
-		#if C_DEBUG == 0
+
 		cb_do_maneuver(alpha_star);
-		#endif
+	} else {
+		//No maneuver is necessary
+
+		cb_set_alpha_star(alpha_star);
 	}
 
-    #if C_DEBUG == 1
+    /*#if C_DEBUG == 1
 		printf("New Heading Reference: %f / ",state.heading_ref*RAD2DEG);
 		printf("New Alpha Star: %f\n",alpha_star*RAD2DEG);
 
@@ -313,7 +305,7 @@ void nav_speak2helsman() {
 		fprintf(f,"%f, %d, ",state.heading_ref,state.maneuver);
 		fclose(f);
 
-	#endif
+	#endif*/
 
 	//Report the Result of the Pathplanning to QGround Control
 	sprintf(txt_msg, "New Alpha Star = %0.1f [deg], Maneuver = %d @ %d" , (double)(state.heading_ref*RAD2DEG),(int)(state.maneuver),(int)state.last_call);
@@ -334,10 +326,7 @@ void nav_heading_update(void) {
 	/* Get the new alpha Value
 	 * alpha = yaw-twd => yaw = alpha + twd;
 	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
-	float alpha = 0;
-	#if C_DEBUG == 0
-	alpha =  cb_get_alpha();
-	#endif
+	float alpha =  cb_get_alpha();
 
 
 	/* Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
@@ -363,9 +352,7 @@ void nav_wind_update(void) {
 
 	/* Get the new Windspeed Value
 	 * Note: The Wind is measured in Sensor-Frame! => convert it to Compass-Frame! */
-	#if C_DEBUG == 0
 	cb_get_tw_info(&(state.wind_dir),&(state.wind_speed));
-	#endif
 
 	state.wind_dir = nh_sensor2compass(state.wind_dir);
 
@@ -385,9 +372,7 @@ void nav_position_update(void) {
 	/*Get the new NED-Position of the boat from the communication buffer
 	 * Note: The NED-Position is in decimeters => convert to meters */
 	int32_t ned[3];
-	#if C_DEBUG == 0
 	n_get_boat_ned(ned);
-	#endif
 
 	NEDpoint newPos;
 	newPos.northx = ned[0]/10.0f;
@@ -427,9 +412,6 @@ void nav_position_update(void) {
  * @param buoy2: right buoy in GEO-Coordinates
  */
 void nav_set_startline(PointE7 buoy1, PointE7 buoy2) {
-
-	//Convert from int32 to double
-
 
 	field.startline[0] = nh_geo2ned(nh_e7_to_point(buoy1));
 	field.startline[1] = nh_geo2ned(nh_e7_to_point(buoy2));
@@ -473,7 +455,7 @@ void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos) {
  * Set the configuration of the Navigator by QGround Control
  * This functions is called by QGroundControl to set a new Value
  *
- * @param period: Time between two calls to pathplanning [us]
+ * @param period: Time between two calls to pathplanning [s]
  * @param turnrate: Maximum Turnrate of the boat [°/s]
  */
 void nav_set_configuration(uint64_t period, uint32_t turnrate) {
@@ -488,7 +470,7 @@ void nav_set_configuration(uint64_t period, uint32_t turnrate) {
 
 
 /* FUNCTIONS FOR DEBUGGING */
-#if C_DEBUG == 1 || P_DEBUG == 1
+#if P_DEBUG == 1
 
 	/*
 	 * Set a fake State for the navigator
@@ -521,10 +503,6 @@ void nav_set_configuration(uint64_t period, uint32_t turnrate) {
 
 			field.targets[0] = target;
 			field.obstacles[0] = obstacle;
-
-			//printf("Target: %f/%f",field.targets[0].northx,field.targets[0].easty);
-			//printf("Obstac: %f/%f",field.obstacles[0].northx,field.obstacles[0].easty);
-
 
 			//Only one Target/Obstacle
 			field.NumberOfTargets = 1;
