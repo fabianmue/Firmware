@@ -157,8 +157,12 @@ void nav_navigator(void) {
 
 		//DEBUG: Send the current heading and Position known by the Navigator to QGroundControl
 		cb_new_heading(state.heading_cur);
-		cb_new_position(state.position.northx, state.position.easty);
-		cb_new_wind(state.wind_dir);
+		//cb_new_position(state.position.northx, state.position.easty);
+		//cb_new_wind(state.wind_dir);
+
+		//For DEBUGGING send the target and the target Number to QGround Control
+		cb_new_position(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
+		cb_new_wind((float)state.targetNum);
 
 
 		/** A new reference heading should only be calculated if the boat is not doing a maneuver
@@ -442,7 +446,7 @@ void nav_set_startline(PointE7 buoy1, PointE7 buoy2) {
  */
 void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos) {
 
-	#if P_DEBUG == 1
+	#if P_DEBUG == 0
 	//The update of the target position should only be done, if we are not debugging
 	field.obstacles[ObstNumber] = nh_geo2ned(nh_e7_to_point(ObstPos));
 
@@ -460,7 +464,7 @@ void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos) {
  */
 void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos) {
 
-	#if P_DEBUG == 1
+	#if P_DEBUG == 0
 	//The update of the target position should only be done, if we are not debugging
 	field.targets[TargetNumber] = nh_geo2ned(nh_e7_to_point(TargetPos));
 
