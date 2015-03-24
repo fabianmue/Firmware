@@ -162,7 +162,6 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 */
 void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float ObstSafetyRadius, float ObstHorizon, float WindowSize) {
 
-	#if P_DEBUG == 0
 	//Do not update these values, if we are in Debug-Mode
 	Config.Gw = Gw;
 	Config.Go = Go;
@@ -173,7 +172,6 @@ void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, floa
 	Config.ObstSafetyRadius = ObstSafetyRadius;
 	Config.ObstHorizon = ObstHorizon;
 	Config.WindowSize = WindowSize;
-	#endif
 }
 
 
