@@ -308,7 +308,7 @@ void nav_speak2helsman() {
 	#endif*/
 
 	//Report the Result of the Pathplanning to QGround Control
-	sprintf(txt_msg, "New Alpha Star = %0.1f [deg], Maneuver = %d @ %d" , (double)(state.heading_ref*RAD2DEG),(int)(state.maneuver),(int)state.last_call);
+	sprintf(txt_msg, "New Alpha Star = %1.1f [deg], Maneuver = %d @ %d" , (double)(alpha_star*RAD2DEG),(int)(state.maneuver),(int)state.last_call);
 	smq_send_log_info(txt_msg);
 }
 
