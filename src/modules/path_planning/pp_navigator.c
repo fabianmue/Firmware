@@ -28,10 +28,8 @@
 #include "pp_navigator.h"
 #include "pp_cost_method.h"
 
-#if C_DEBUG == 0
 #include "pp_communication_buffer.h"
 #include <drivers/drv_hrt.h>
-#endif
 
 static char txt_msg[150]; ///used to send messages to QGC
 
@@ -93,6 +91,7 @@ void nav_init(void) {
 	state.heading_cur = PI/2;
 	state.heading_ref = PI/2;
 	state.wind_dir = 0;
+	state.wind_speed = 3;
 	state.maneuver = false;
 	state.targetNum = 0;
 	Point home;
@@ -108,15 +107,14 @@ void nav_init(void) {
 
 
 	//Update the state by requesting the values from the communication Buffer
-	#if C_DEBUG == 0 && P_DEBUG == 0
 	nav_listen2helsman();	//Check, if a maneuver is completed
 	nav_heading_update();	//Check for a new Heading (alpha)
 	nav_position_update();  //Check for a new Position update
 	nav_wind_update();		//Check for new Wind measurements
-	#endif
 
 
 	//For Debug only
+	//Set a fake-field, as it is used in matlab for the competition-task
 	#if P_DEBUG == 1
 	NEDpoint target;
 	target.northx = 0;
@@ -135,17 +133,8 @@ void nav_init(void) {
  */
 void nav_navigator(void) {
 
-	/** Check if new Information is available and update the state accordingly. */
-	#if C_DEBUG == 0
-	nav_listen2helsman();	//Check, if a maneuver is completed
-	nav_wind_update();		//Check for new Wind measurements
+	//** Check if new information is available and change the state accordingly */
 
-	#if P_DEBUG == 0
-	nav_position_update();  //Check for a new Position update
-	nav_heading_update();	//Check for a new Heading (alpha)
-	#endif
-
-	#endif //C_DEBUG
 
 
 	/** Pathplanning is only done with a certain frequency
