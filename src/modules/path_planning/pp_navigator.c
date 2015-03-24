@@ -442,10 +442,12 @@ void nav_set_startline(PointE7 buoy1, PointE7 buoy2) {
  */
 void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos) {
 
-	/* Convert to NED-Frame */
+	#if P_DEBUG == 1
+	//The update of the target position should only be done, if we are not debugging
 	field.obstacles[ObstNumber] = nh_geo2ned(nh_e7_to_point(ObstPos));
 
 	field.NumberOfObstacles = ObstNumber;
+	#endif
 }
 
 
@@ -458,9 +460,12 @@ void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos) {
  */
 void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos) {
 
+	#if P_DEBUG == 1
+	//The update of the target position should only be done, if we are not debugging
 	field.targets[TargetNumber] = nh_geo2ned(nh_e7_to_point(TargetPos));
 
 	field.NumberOfTargets = TargetNumber;
+	#endif
 }
 
 
