@@ -21,6 +21,9 @@
  * - Winddirection => how's the definition? Wind from Nort = 0°/ Wind from South = 180° (Sensor-Frame)
  *
  * - CHECK, IF CALCULATION FROM ALPHA TO HEADING IN nav_heading_update() is correct!!!!!!!!!
+ *
+ * - Check ESSC-Loging....
+ * - Test if Upwind Course is possible...
  */
 
 
