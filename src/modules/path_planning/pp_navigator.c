@@ -133,10 +133,6 @@ void nav_init(void) {
  */
 void nav_navigator(void) {
 
-	//** Check if new information is available and change the state accordingly */
-	//TODO: Add this here!!!
-
-
 	/** Pathplanning is only done with a certain frequency
 	 *  Therefore, check the systemtime.
 	 *  Note: When the Computer-Debug-Mode is on Pathplanning is done in every loop!*/
@@ -147,9 +143,18 @@ void nav_navigator(void) {
 		/** Assign the current time as the last call time */
 		state.last_call = systime;
 
+
+		//** Check if new information is available and change the state accordingly */
+		nav_wind_update();
+
+		//TODO: Add Heading/Position updates here
+
+
+
 		//DEBUG: Send the current heading and Position known by the Navigator to QGroundControl
 		cb_new_heading(state.heading_cur);
 		cb_new_position(state.position.northx, state.position.easty);
+		cb_new_wind(state.wind_dir);
 
 
 		/** A new reference heading should only be calculated if the boat is not doing a maneuver

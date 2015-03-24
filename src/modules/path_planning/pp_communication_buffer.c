@@ -99,6 +99,21 @@ bool cb_new_heading(float heading) {
 	return true;
 }
 
+/**
+ * Store the current Heading of the boat in Pathplanning Topic
+ * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
+ *
+ * @param
+ */
+bool cb_new_wind(float wind) {
+	pp.wind = wind;
+
+	pp_updated = true;
+
+	return true;
+}
+
+
 
 
 
