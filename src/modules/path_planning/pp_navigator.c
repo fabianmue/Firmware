@@ -161,7 +161,7 @@ void nav_navigator(void) {
 		//cb_new_wind(state.wind_dir);
 
 		//For DEBUGGING send the target and the target Number to QGround Control
-		cb_new_position(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
+		cb_new_position(field.obstacles.northx, field.obstacles.easty);
 		cb_new_wind((float)state.targetNum);
 
 
