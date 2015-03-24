@@ -145,20 +145,19 @@ void nav_navigator(void) {
 
 
 		//** Check if new information is available and change the state accordingly */
-		nav_wind_update();		//New Wind-Data
-
 		#if P_DEBUG == 0
 		//Note: This information is only available, when the boat is not in test-mode
 		nav_listen2helsman();   //Listen to helsman for completed maneuvers
 		nav_heading_update();   //New Heading-Data
 		nav_position_update();  //New Position-Data
+		nav_wind_update();		//New Wind-Data
 		#endif
 
 
 		//DEBUG: Send the current heading and Position known by the Navigator to QGroundControl
 		cb_new_heading(state.heading_cur);
 		cb_new_position(state.position.northx, state.position.easty);
-		cb_new_wind(state.wind_dir);
+		//cb_new_wind(state.wind_dir);
 
 		//For DEBUGGING send the target and the target Number to QGround Control
 		//cb_new_position(field.obstacles[0].northx, field.obstacles[0].easty);
@@ -174,6 +173,7 @@ void nav_navigator(void) {
 				//Use Cost-Function-Method
 
 				state.heading_ref = cm_NewHeadingReference(&state,&field);
+				cb_new_wind(state.heading_ref); //TODO: DEBUG, set Wind as the calculated reference heading
 			}
 
 			if(config.method == 2) {
