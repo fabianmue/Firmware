@@ -157,12 +157,11 @@ void nav_navigator(void) {
 
 		//DEBUG: Send the current heading and Position known by the Navigator to QGroundControl
 		cb_new_heading(state.heading_cur);
-		//cb_new_position(state.position.northx, state.position.easty);
-		//cb_new_wind(state.wind_dir);
+		cb_new_position(state.position.northx, state.position.easty);
+		cb_new_wind(state.wind_dir);
 
 		//For DEBUGGING send the target and the target Number to QGround Control
-		cb_new_position(field.obstacles.northx, field.obstacles.easty);
-		cb_new_wind((float)state.targetNum);
+		//cb_new_position(field.obstacles[0].northx, field.obstacles[0].easty);
 
 
 		/** A new reference heading should only be calculated if the boat is not doing a maneuver
