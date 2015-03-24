@@ -2236,11 +2236,11 @@ protected:
             msg.value = ((float)path_p_debug.ned_east);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "as_navhead");
+            snprintf(msg.name, sizeof(msg.name), "as_navhea");
             msg.value = ((float)path_p_debug.heading*RAD2DEG);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "as_navwind");
+            snprintf(msg.name, sizeof(msg.name), "as_navwin");
             msg.value = ((float)path_p_debug.wind*RAD2DEG);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
         }

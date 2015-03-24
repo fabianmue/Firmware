@@ -145,10 +145,14 @@ void nav_navigator(void) {
 
 
 		//** Check if new information is available and change the state accordingly */
-		nav_wind_update();
+		nav_wind_update();		//New Wind-Data
 
-		//TODO: Add Heading/Position updates here
-
+		#if P_DEBUG == 0
+		//Note: This information is only available, when the boat is not in test-mode
+		nav_listen2helsman();   //Listen to helsman for completed maneuvers
+		nav_heading_update();   //New Heading-Data
+		nav_position_update();  //New Position-Data
+		#endif
 
 
 		//DEBUG: Send the current heading and Position known by the Navigator to QGroundControl
@@ -317,7 +321,8 @@ void nav_speak2helsman() {
 	#endif*/
 
 	//Report the Result of the Pathplanning to QGround Control
-	sprintf(txt_msg, "New Alpha Star = %1.1f [deg], Maneuver = %d @ %d" , (double)(alpha_star*RAD2DEG),(int)(state.maneuver),(int)state.last_call);
+	//sprintf(txt_msg, "New Alpha Star = %1.1f [deg], Maneuver = %d @ %d" , (double)(alpha_star*RAD2DEG),(int)(state.maneuver),(int)state.last_call);
+	sprintf(txt_msg, "New Alpha Star = %1.1f [deg], Maneuver = %d @ %d" , (double)(state.heading_ref),(int)(state.maneuver),(int)state.last_call);
 	smq_send_log_info(txt_msg);
 }
 
@@ -479,31 +484,28 @@ void nav_set_configuration(uint64_t period, uint32_t turnrate) {
 
 
 /* FUNCTIONS FOR DEBUGGING */
+
+/*
+ * Set a fake State for the navigator
+ *
+ * @param pos: Position in NED-Frame
+ * @param heading: heading of the boat in Compass-Frame in Degrees
+ */
+void DEBUG_nav_set_fake_state(NEDpoint pos, float heading) {
+
+	state.heading_cur = DEG2RAD*heading;
+	state.position = pos;
+
+	//Set Environmental conditions
+	state.wind_dir = 0;
+	state.wind_speed = 3;
+
+	//Always take the first Target
+	state.targetNum = 0;
+}
+
+
 #if P_DEBUG == 1
-
-	/*
-	 * Set a fake State for the navigator
-	 *
-	 * @param pos: Position in NED-Frame
-	 * @param heading: heading of the boat in Compass-Frame in Degrees
-	 */
-	void DEBUG_nav_set_fake_state(NEDpoint pos, float heading) {
-
-		state.heading_cur = DEG2RAD*heading;
-		state.position = pos;
-
-		//Set Environmental conditions
-		state.wind_dir = 0;
-		state.wind_speed = 3;
-
-		//Always take the first Target
-		state.targetNum = 0;
-
-		//Make the update visible in QGround Control
-		//cb_new_position(pos.northx, pos.easty);
-	}
-
-
 	/*
 	 * Set a fake Field for the navigator
 	 *

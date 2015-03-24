@@ -294,11 +294,9 @@ PARAM_DEFINE_FLOAT(PP_NAV_ALTITUDE, HOMEALT);		//Note: The altitude value is in 
 /**
  * pp_navigator: Simulate the position update for the boat
  */
-#if P_DEBUG == 1
 PARAM_DEFINE_FLOAT(SIM_NED_NORTHX, 0);		//Current position of the boat in NED-Frame
 PARAM_DEFINE_FLOAT(SIM_NED_EASTY, 0);
 PARAM_DEFINE_FLOAT(SIM_HEADING,0);			//Current heading of the boat in degrees (compass-frame)
-#endif
 
 
 /**
@@ -489,11 +487,9 @@ void p_param_init(void){
 
 
     //**SIMULATION DEBUG
-    #if P_DEBUG == 1
     pointers_param_qgc.sim_ned_northx = param_find("SIM_NED_NORTHX");
     pointers_param_qgc.sim_ned_easty = param_find("SIM_NED_EASTY");
     pointers_param_qgc.sim_heading = param_find("SIM_HEADING");
-    #endif
 
 
 
@@ -751,7 +747,6 @@ void p_param_update(bool update_path_param){
 
 
     	//**SIMULATION DEBUG
-    	#if P_DEBUG == 1
     	NEDpoint p;
     	float head;
     	param_get(pointers_param_qgc.sim_ned_northx,&(p.northx));
@@ -759,6 +754,5 @@ void p_param_update(bool update_path_param){
     	param_get(pointers_param_qgc.sim_heading,&head);
 
     	DEBUG_nav_set_fake_state(p, head);
-    	#endif
 
 }
