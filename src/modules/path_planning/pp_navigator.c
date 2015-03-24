@@ -20,7 +20,7 @@
  * - add Potentialfield Method
  * - Winddirection => how's the definition? Wind from Nort = 0°/ Wind from South = 180° (Sensor-Frame)
  *
- *
+ * - CHECK, IF CALCULATION FROM ALPHA TO HEADING IN nav_heading_update() is correct!!!!!!!!!
  */
 
 
@@ -296,8 +296,7 @@ void nav_speak2helsman() {
 	//alpha_star = fmod(state.heading_ref - state.wind_dir,2*PI); //In Compass-Frame
 	//alpha_star = nh_compass2dumas(alpha_star);					//Convert to Duma's convention for Autonomous Sailing Module
 
-	float alpha_star = (-1)*nh_appWindDir(state.heading_ref, state.wind_dir);
-
+	float alpha_star = nh_appWindDir(state.heading_ref, state.wind_dir);
 
 	/* Tell the Helsman to tack/gybe as soon as possible, if pathplanning wants to tack/gybe */
 	if(state.maneuver) {
