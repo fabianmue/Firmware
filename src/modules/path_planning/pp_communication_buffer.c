@@ -69,6 +69,25 @@ static float downwind_alpha_star_abs = 2.7925268f;
 
 static char txt_msg[70]; ///used to send messages to QGC
 
+
+/**
+ * Store the current Position of the boat in NED-Coordinates in the Pathplanning Topic
+ * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
+ *
+ * @param ned[3] array containing the ned-coordinates in meters (north, east, down)
+ */
+bool cb_new_position(float north, float east) {
+	pp.ned_east = east;
+	pp.ned_north = north;
+
+	pp_updated = true;
+
+	return true;
+}
+
+
+
+
 /**
  * Tell autonomous_sailing app to start a tack or jybe maneuver.
  * You should call this funcion only if the boat is not doing another maneuver.

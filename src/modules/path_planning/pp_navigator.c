@@ -490,6 +490,8 @@ void nav_set_configuration(uint64_t period, uint32_t turnrate) {
 		//Always take the first Target
 		state.targetNum = 0;
 
+		//Make the update visible in QGround Control
+		cb_new_position(pos.northx, pos.easty);
 	}
 
 

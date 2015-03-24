@@ -21,6 +21,9 @@ struct path_planning_s {
     bool     do_maneuver; /**< True, iff boat should either tack or jybe */
     uint8_t  id_maneuver; /**< ID last commanded maneuver */
     uint8_t  id_cmd; /**< ID command for autonomous_sailing app */
+
+    float ned_north;	/**< North-Coordinate in NED-Frame of the Boat => for debugging*/
+    float ned_east;		/**< East-Coordinate in NED-Frame of the Boat  => for debugging*/
 };
 
 

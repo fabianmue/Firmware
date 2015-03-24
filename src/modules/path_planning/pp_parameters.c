@@ -295,7 +295,7 @@ PARAM_DEFINE_FLOAT(PP_NAV_ALTITUDE, HOMEALT);		//Note: The altitude value is in 
  * pp_navigator: Simulate the position update for the boat
  */
 #if P_DEBUG == 1
-PARAM_DEFINE_FLOAT(SIM_NED_NORTHX, 0);	//Current position of the boat in NED-Frame
+PARAM_DEFINE_FLOAT(SIM_NED_NORTHX, 0);		//Current position of the boat in NED-Frame
 PARAM_DEFINE_FLOAT(SIM_NED_EASTY, 0);
 PARAM_DEFINE_FLOAT(SIM_HEADING,0);			//Current heading of the boat in degrees (compass-frame)
 #endif
