@@ -6,6 +6,7 @@
  */
 
 #include "pp_topics_handler.h"
+#include "pp_send_msg_qgc.h"
 
 
 //Stuct of all topic-Advertisements
@@ -99,6 +100,8 @@ bool th_advertise(void) {
  * @return return value from orb_publish()
  */
 int th_publish_path_planning(const struct path_planning_s *path_planning_p) {
+
+	smq_send_log_info("Path planning topic is updated! JW");
 
     return orb_publish(ORB_ID(path_planning), pubs.path_planning, path_planning_p);
 }

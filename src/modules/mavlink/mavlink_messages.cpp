@@ -2189,7 +2189,7 @@ public:
         //return 8 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
         //return 6 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
         //return 4 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
-        return 2 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 4 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
     }
 
 private:
@@ -2202,7 +2202,7 @@ private:
 
 protected:
     explicit MavlinkStreamPathP(Mavlink *mavlink) : MavlinkStream(mavlink),
-        _path_p_sub(_mavlink->add_orb_subscription(ORB_ID(boat_guidance_debug))),
+        _path_p_sub(_mavlink->add_orb_subscription(ORB_ID(path_planning))),
         _path_p_time(0)
     {}
 
@@ -2216,7 +2216,7 @@ protected:
 
             msg.time_boot_ms = path_p_debug.timestamp / 1000;
 
-            /*snprintf(msg.name, sizeof(msg.name), "as_alstr");
+            snprintf(msg.name, sizeof(msg.name), "as_alstr");
             msg.value = (path_p_debug.alpha_star*RAD2DEG);
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
@@ -2230,14 +2230,13 @@ protected:
 
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-*/
-
             snprintf(msg.name, sizeof(msg.name), "as_pp_N");
-            msg.value = (path_p_debug.ned_north);
+            msg.value = ((float)path_p_debug.ned_north);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
             snprintf(msg.name, sizeof(msg.name), "as_pp_E");
-            msg.value = (path_p_debug.ned_east);
+            //TODO: Changed these values!!!!
+            msg.value = ((float)path_p_debug.ned_east);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
         }
     }
