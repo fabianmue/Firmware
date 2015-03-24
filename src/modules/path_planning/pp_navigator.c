@@ -134,7 +134,7 @@ void nav_init(void) {
 void nav_navigator(void) {
 
 	//** Check if new information is available and change the state accordingly */
-
+	//TODO: Add this here!!!
 
 
 	/** Pathplanning is only done with a certain frequency
