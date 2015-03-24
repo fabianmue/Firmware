@@ -101,8 +101,6 @@ bool th_advertise(void) {
  */
 int th_publish_path_planning(const struct path_planning_s *path_planning_p) {
 
-	smq_send_log_info("Path planning topic is updated! JW");
-
     return orb_publish(ORB_ID(path_planning), pubs.path_planning, path_planning_p);
 }
 

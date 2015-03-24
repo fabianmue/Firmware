@@ -2218,7 +2218,6 @@ protected:
 
             snprintf(msg.name, sizeof(msg.name), "as_alstr");
             msg.value = (path_p_debug.alpha_star*RAD2DEG);
-
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
             snprintf(msg.name, sizeof(msg.name), "as_maneu");
@@ -2227,7 +2226,6 @@ protected:
             } else {
             	msg.value = 0;
             }
-
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
             snprintf(msg.name, sizeof(msg.name), "as_pp_N");
