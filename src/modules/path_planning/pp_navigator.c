@@ -292,9 +292,11 @@ void nav_speak2helsman() {
 	/* Set the new alpha reference Value
 	 * alpha = yaw-twd;
 	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
-	float alpha_star = 0;
-	alpha_star = fmod(state.heading_ref - state.wind_dir,2*PI); //In Compass-Frame
-	alpha_star = nh_compass2dumas(alpha_star);					//Convert to Duma's convention for Autonomous Sailing Module
+	//float alpha_star = 0;
+	//alpha_star = fmod(state.heading_ref - state.wind_dir,2*PI); //In Compass-Frame
+	//alpha_star = nh_compass2dumas(alpha_star);					//Convert to Duma's convention for Autonomous Sailing Module
+
+	float alpha_star = (-1)*nh_appWindDir(state.heading_ref, state.wind_dir);
 
 
 	/* Tell the Helsman to tack/gybe as soon as possible, if pathplanning wants to tack/gybe */
