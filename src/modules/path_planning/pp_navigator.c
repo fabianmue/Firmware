@@ -31,7 +31,7 @@
 #include "pp_communication_buffer.h"
 #include <drivers/drv_hrt.h>
 
-static char txt_msg[150]; ///used to send messages to QGC
+//static char txt_msg[150]; ///used to send messages to QGC
 
 
 /** Struct holding the main configuration variables of the navigator */
@@ -325,8 +325,8 @@ void nav_speak2helsman() {
 
 	//Report the Result of the Pathplanning to QGround Control
 	//sprintf(txt_msg, "New Alpha Star = %1.1f [deg], Maneuver = %d @ %d" , (double)(alpha_star*RAD2DEG),(int)(state.maneuver),(int)state.last_call);
-	sprintf(txt_msg, "New Alpha Star = %1.1f [deg], Maneuver = %d @ %d" , (double)(state.heading_ref*RAD2DEG),(int)(state.maneuver),(int)state.last_call);
-	smq_send_log_info(txt_msg);
+	//sprintf(txt_msg, "New Alpha Star = %1.1f [deg], Maneuver = %d @ %d" , (double)(state.heading_ref*RAD2DEG),(int)(state.maneuver),(int)state.last_call);
+	//smq_send_log_info(txt_msg);
 }
 
 

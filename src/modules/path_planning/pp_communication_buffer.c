@@ -65,9 +65,9 @@ static float alpha_star_vel_r_s = 0.2f;//velocity of changing alpha_star when re
 static uint64_t last_change_alpha_star = 0;
 static uint64_t now = 0;
 static float downwind_alpha_star_abs = 2.7925268f;
+static char txt_msg[70]; ///used to send messages to QGC
 #endif
 
-static char txt_msg[70]; ///used to send messages to QGC
 
 
 /**
@@ -248,8 +248,8 @@ bool cb_set_alpha_star(float new_alpha_star){
         pp.alpha_star = new_alpha_star;
         pp_updated = true;
 
-        sprintf(txt_msg,"New alpha star set to: %3.1f",(double)pp.alpha_star);
-        smq_send_log_info(txt_msg);
+        //sprintf(txt_msg,"New alpha star set to: %3.1f",(double)pp.alpha_star);
+        //smq_send_log_info(txt_msg);
     }
     else
         res = false;
