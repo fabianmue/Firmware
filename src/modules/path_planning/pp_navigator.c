@@ -22,6 +22,7 @@
  *
  * - Check ESSC-Loging....
  * - Test if Upwind Course is possible...
+ * - Log Pathplanning - Constants on SD-Card
  */
 
 
