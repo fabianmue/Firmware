@@ -254,31 +254,19 @@ PARAM_DEFINE_INT32(PP_NAV_TURNRATE, 10);
 /**
  * pp_navigator: Target Position (GEO-Coordinate Frame)
  */
-PARAM_DEFINE_INT32(PP_NAV_TAR1_LAT, HOMELAT);
-PARAM_DEFINE_INT32(PP_NAV_TAR1_LON, HOMELON);
+PARAM_DEFINE_INT32(PP_NAV_TAR_LAT, HOMELAT);
+PARAM_DEFINE_INT32(PP_NAV_TAR_LON, HOMELON);
 
-PARAM_DEFINE_INT32(PP_NAV_TAR2_LAT, HOMELAT);
-PARAM_DEFINE_INT32(PP_NAV_TAR2_LON, HOMELON);
-
-PARAM_DEFINE_INT32(PP_NAV_TAR3_LAT, HOMELAT);
-PARAM_DEFINE_INT32(PP_NAV_TAR3_LON, HOMELON);
-
-PARAM_DEFINE_INT32(PP_NAV_TAR_NUM, 1);	//Number of Targets currently set
+PARAM_DEFINE_INT32(PP_NAV_TAR_NUM, 1);	//Number of Target currently set
 
 
 /**
  * pp_navigator: Target Position (GEO-Coordinate Frame)
  */
-PARAM_DEFINE_INT32(PP_NAV_OBST1_LAT, HOMELAT);
-PARAM_DEFINE_INT32(PP_NAV_OBST1_LON, HOMELON);
+PARAM_DEFINE_INT32(PP_NAV_OBST_LAT, HOMELAT);
+PARAM_DEFINE_INT32(PP_NAV_OBST_LON, HOMELON);
 
-PARAM_DEFINE_INT32(PP_NAV_OBST2_LAT, HOMELAT);
-PARAM_DEFINE_INT32(PP_NAV_OBST2_LON, HOMELON);
-
-PARAM_DEFINE_INT32(PP_NAV_OBST3_LAT, HOMELAT);
-PARAM_DEFINE_INT32(PP_NAV_OBST3_LON, HOMELON);
-
-PARAM_DEFINE_INT32(PP_NAV_OBST_NUM, 1);	//Number of Obstacles currently set
+PARAM_DEFINE_INT32(PP_NAV_OBST_NUM, 1);	//Number of Obstacle currently set
 
 
 /**
@@ -362,19 +350,11 @@ static struct pointers_param_qgc_s{
 	//**NAVIGATION
 	param_t nav_period;
 	param_t nav_turnrate;
-	param_t nav_target1_lat;
-	param_t nav_target1_lon;
-	param_t nav_target2_lat;
-	param_t nav_target2_lon;
-	param_t nav_target3_lat;
-	param_t nav_target3_lon;
+	param_t nav_target_lat;
+	param_t nav_target_lon;
 	param_t nav_target_number;
-	param_t nav_obstacle1_lat;
-	param_t nav_obstacle1_lon;
-	param_t nav_obstacle2_lat;
-	param_t nav_obstacle2_lon;
-	param_t nav_obstacle3_lat;
-	param_t nav_obstacle3_lon;
+	param_t nav_obstacle_lat;
+	param_t nav_obstacle_lon;
 	param_t nav_obstacle_number;
 	param_t nav_start1_lat;
 	param_t nav_start1_lon;
@@ -462,19 +442,11 @@ void p_param_init(void){
     //**NAVIGATION
     pointers_param_qgc.nav_period = param_find("PP_NAV_PERIOD");
     pointers_param_qgc.nav_turnrate = param_find("PP_NAV_TURNRATE");
-    pointers_param_qgc.nav_target1_lat = param_find("PP_NAV_TAR1_LAT");
-    pointers_param_qgc.nav_target1_lon = param_find("PP_NAV_TAR1_LON");
-    pointers_param_qgc.nav_target2_lat = param_find("PP_NAV_TAR2_LAT");
-    pointers_param_qgc.nav_target2_lon = param_find("PP_NAV_TAR2_LON");
-    pointers_param_qgc.nav_target3_lat = param_find("PP_NAV_TAR3_LAT");
-    pointers_param_qgc.nav_target3_lon = param_find("PP_NAV_TAR3_LON");
+    pointers_param_qgc.nav_target_lat = param_find("PP_NAV_TAR_LAT");
+    pointers_param_qgc.nav_target_lon = param_find("PP_NAV_TAR_LON");
     pointers_param_qgc.nav_target_number = param_find("PP_NAV_TAR_NUM");
-    pointers_param_qgc.nav_obstacle1_lat = param_find("PP_NAV_TAR1_LAT");
-    pointers_param_qgc.nav_obstacle1_lon = param_find("PP_NAV_TAR1_LON");
-    pointers_param_qgc.nav_obstacle2_lat = param_find("PP_NAV_TAR2_LAT");
-    pointers_param_qgc.nav_obstacle2_lon = param_find("PP_NAV_TAR2_LON");
-    pointers_param_qgc.nav_obstacle3_lat = param_find("PP_NAV_TAR3_LAT");
-    pointers_param_qgc.nav_obstacle3_lon = param_find("PP_NAV_TAR3_LON");
+    pointers_param_qgc.nav_obstacle_lat = param_find("PP_NAV_OBST_LAT");
+    pointers_param_qgc.nav_obstacle_lon = param_find("PP_NAV_OBST_LON");
     pointers_param_qgc.nav_obstacle_number = param_find("PP_NAV_OBST_NUM");
 
     pointers_param_qgc.nav_start1_lat = param_find("PP_NAV_STRT1_LAT");
@@ -687,43 +659,26 @@ void p_param_update(bool update_path_param){
     	param_get(pointers_param_qgc.nav_turnrate, &turnrate);
     	nav_set_configuration(period, turnrate);
 
-    	PointE7 target[MAXTARGETNUMBER];
-    	PointE7 obstacle[MAXOBSTACLENUMBER];
+    	PointE7 target;
+    	PointE7 obstacle;
     	uint8_t t_num, o_num;
     	int32_t altitude;
 
     	param_get(pointers_param_qgc.nav_altitude, &altitude);
 
-    	param_get(pointers_param_qgc.nav_target1_lat,&(target[0].lat));
-    	param_get(pointers_param_qgc.nav_target1_lon,&(target[0].lon));
-    	param_get(pointers_param_qgc.nav_target2_lat,&(target[1].lat));
-    	param_get(pointers_param_qgc.nav_target2_lon,&(target[1].lon));
-    	param_get(pointers_param_qgc.nav_target3_lat,&(target[2].lat));
-    	param_get(pointers_param_qgc.nav_target3_lon,&(target[2].lon));
+    	param_get(pointers_param_qgc.nav_target_lat,&(target.lat));
+    	param_get(pointers_param_qgc.nav_target_lon,&(target.lon));
     	param_get(pointers_param_qgc.nav_target_number,&t_num);
-    	param_get(pointers_param_qgc.nav_obstacle1_lat,&(obstacle[0].lat));
-    	param_get(pointers_param_qgc.nav_obstacle1_lon,&(obstacle[0].lon));
-    	param_get(pointers_param_qgc.nav_obstacle2_lat,&(obstacle[1].lat));
-    	param_get(pointers_param_qgc.nav_obstacle2_lon,&(obstacle[1].lon));
-    	param_get(pointers_param_qgc.nav_obstacle3_lat,&(obstacle[2].lat));
-    	param_get(pointers_param_qgc.nav_obstacle3_lon,&(obstacle[2].lon));
+    	param_get(pointers_param_qgc.nav_obstacle_lat,&(obstacle.lat));
+    	param_get(pointers_param_qgc.nav_obstacle_lon,&(obstacle.lon));
     	param_get(pointers_param_qgc.nav_obstacle_number,&o_num);
 
-    	target[0].alt = altitude;
-    	target[1].alt = altitude;
-    	target[2].alt = altitude;
-    	obstacle[0].alt = altitude;
-    	obstacle[1].alt = altitude;
-    	obstacle[2].alt = altitude;
+    	target.alt = altitude;
+    	obstacle.alt = altitude;
 
-    	uint8_t t;
-    	for(t = 0; t < t_num; t++) {
-    		nav_set_target(t,target[t]);
-    	}
+    	nav_set_target(t_num,target);
+    	nav_set_obstacle(o_num,obstacle);
 
-    	for(t = 0; t < o_num; t++) {
-    		nav_set_obstacle(t,obstacle[t]);
-    	}
 
     	PointE7 start[2];
     	param_get(pointers_param_qgc.nav_start1_lat, &(start[0].lat));
