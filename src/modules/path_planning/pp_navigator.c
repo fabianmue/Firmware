@@ -32,6 +32,7 @@
 
 #include "pp_communication_buffer.h"
 #include <drivers/drv_hrt.h>
+#include <stdbool.h>
 
 //static char txt_msg[150]; ///used to send messages to QGC
 
@@ -142,10 +143,10 @@ void nav_init(void) {
 void nav_navigator(void) {
 
 	//A maneuver is in Progress => wait for the maneuver to be completed
-	if(state.maneuver) {
+	if(state.maneuver == true) {
 		if(cb_is_maneuver_completed()) {
 			//The maneuver is completed => the flag can be reset
-			state.maneuver = false;
+			state.maneuver = 0;
 		}
 
 		//For safety reason end the maneuver after a predefined time, if the communication buffer is not responding
@@ -157,12 +158,20 @@ void nav_navigator(void) {
 	}
 
 
+	//For Debug only (show state of the maneuver-flag as the wind-direction)
+	if(state.maneuver == true) {
+		cb_new_wind(1.0f);
+	} else {
+		cb_new_wind(0.0f);
+	}
+
+
 	/** Pathplanning is only done with a certain frequency AND if no maneuver is under progress
 	 *  Therefore, check the systemtime.
 	 *  Note: When the Computer-Debug-Mode is on Pathplanning is done in every loop!*/
 	uint64_t systime = hrt_absolute_time();
 
-	if((systime-state.last_call >= config.period) && state.maneuver) {
+	if((systime-state.last_call >= config.period) && (state.maneuver == false)) {
 
 		/** Assign the current time as the last call time */
 		state.last_call = systime;
@@ -189,105 +198,94 @@ void nav_navigator(void) {
 
 			/****FIND A NEW REFERENCE HEADING
 			 * Different algorithms can be used. */
-			if(config.method == 1) {
-				//Use Cost-Function-Method
+		if(config.method == 1) {
+			//Use Cost-Function-Method
 
-				state.heading_ref = cm_NewHeadingReference(&state,&field);
-				//cb_new_wind(state.heading_ref); //TODO: DEBUG, set Wind as the calculated reference heading
-			}
+			state.heading_ref = cm_NewHeadingReference(&state,&field);
+			//cb_new_wind(state.heading_ref); //TODO: DEBUG, set Wind as the calculated reference heading
+		}
 
-			if(config.method == 2) {
-				//Use Potential-Field-Method
+		if(config.method == 2) {
+			//Use Potential-Field-Method
 
-				//TODO add the Potential-Field Reference Heading here
-			}
-
-
-			//****DECISION MAKING
-			/* In the following section the decisions based on the optimal Heading are made. In particular
-			 * the the Navigator decides if the boat should tack */
-			float NewWind = nh_appWindDir(state.heading_ref,state.wind_dir); 		//New Apparent Winddirection
-			float OldWind = nh_appWindDir(state.heading_cur,state.wind_dir);		//Current Apparent Winddirection
+			//TODO add the Potential-Field Reference Heading here
+		}
 
 
-			//DEBUG ONLY: Use Position-Variables for the Apparent Wind-Results
-			cb_new_position(NewWind,OldWind);
+		//****DECISION MAKING
+		/* In the following section the decisions based on the optimal Heading are made. In particular
+		 * the the Navigator decides if the boat should tack */
+		float NewWind = nh_appWindDir(state.heading_ref,state.wind_dir); 		//New Apparent Winddirection
+		float OldWind = nh_appWindDir(state.heading_cur,state.wind_dir);		//Current Apparent Winddirection
+
+
+		//DEBUG ONLY: Use Position-Variables for the Apparent Wind-Results
+		cb_new_position(NewWind,OldWind);
 
 
 
-			/*Decide if we have to do a tack or a gybe
-			 * A maneuver is necessary, iff we change the hull. A change of hull is represented as a change of sign of the
-			 * apparent Wind direction.
-			 */
-			if(!((NewWind < 0 && OldWind < 0) || (NewWind > 0 && OldWind > 0))) {
-				//A Maneuver is Necessary
+		/*Decide if we have to do a tack or a gybe
+		 * A maneuver is necessary, iff we change the hull. A change of hull is represented as a change of sign of the
+		 * apparent Wind direction.
+		 */
+		if(!((NewWind < 0 && OldWind < 0) || (NewWind > 0 && OldWind > 0))) {
+			//A Maneuver is Necessary
 
-				state.command_maneuver = true;
+			state.command_maneuver = true;
 
-
-				#if P_DEBUG == 1
-				//Never tell the Controller to do a Maneuver in LAB-Environment
-				//state.maneuver = false;
-				#endif
-
-
-			} //if boat should do a maneuver
+			#if P_DEBUG == 1
+			//Never tell the Controller to do a Maneuver in LAB-Environment
+			//state.maneuver = false;
+			#endif
 
 
-			/* The boat has a limited turnrate. Therefore, ensure that the pathplanning
-			 * does not suggest heading-changes bigger than the maximum possible turnrate.
-			 * The check is only done when the boat is not doing a maneuver. If you want to
-			 * disable the turnrate, just set the value to a high value. */
-			/*if(!state.maneuver) {
-				//The boat is not doing a maneuver
+		} //if boat should do a maneuver
 
-				float diff = nh_heading_diff(state.heading_cur, state.heading_ref);
-				if(diff > config.max_headchange) {
-					//The desired change in heading is bigger than the maximum possibe heading-change
 
-					if(state.heading_cur-diff < 0) {
-						if((2*PI+(state.heading_cur-diff)) - state.heading_ref < 0.00000001f) {
-							//Reference lays on the left of Current Heading => -
+		/* The boat has a limited turnrate. Therefore, ensure that the pathplanning
+		 * does not suggest heading-changes bigger than the maximum possible turnrate.
+		 * The check is only done when the boat is not doing a maneuver. If you want to
+		 * disable the turnrate, just set the value to a high value. */
+		/*if(!state.maneuver) {
+			//The boat is not doing a maneuver
 
-							state.heading_ref = fmod(state.heading_cur - config.max_headchange,2*PI);
+			float diff = nh_heading_diff(state.heading_cur, state.heading_ref);
+			if(diff > config.max_headchange) {
+				//The desired change in heading is bigger than the maximum possibe heading-change
 
-						} else {
-							//Reference lays on the right of the current Heading => +
+				if(state.heading_cur-diff < 0) {
+					if((2*PI+(state.heading_cur-diff)) - state.heading_ref < 0.00000001f) {
+						//Reference lays on the left of Current Heading => -
 
-							state.heading_ref = fmod(state.heading_cur + config.max_headchange,2*PI);
-						}
+						state.heading_ref = fmod(state.heading_cur - config.max_headchange,2*PI);
+
 					} else {
-						if((state.heading_cur-diff) - state.heading_ref < 0.00000001f) {
-							//Reference lays on the left of current Heading => -
+						//Reference lays on the right of the current Heading => +
 
-							state.heading_ref = fmod(state.heading_cur - config.max_headchange,2*PI);
-
-						} else {
-							//Reference lays on the right of current Heading => +
-
-							state.heading_ref = fmod(state.heading_cur + config.max_headchange,2*PI);
-
-						}
+						state.heading_ref = fmod(state.heading_cur + config.max_headchange,2*PI);
 					}
+				} else {
+					if((state.heading_cur-diff) - state.heading_ref < 0.00000001f) {
+						//Reference lays on the left of current Heading => -
 
+						state.heading_ref = fmod(state.heading_cur - config.max_headchange,2*PI);
+
+					} else {
+						//Reference lays on the right of current Heading => +
+
+						state.heading_ref = fmod(state.heading_cur + config.max_headchange,2*PI);
+
+					}
 				}
 
-			}*/
-
-
-			//For Debug only (show state of the maneuver-flag as the wind-direction)
-			if(state.command_maneuver) {
-				cb_new_wind(1);
-			} else {
-				cb_new_wind(0);
 			}
 
+		}*/
 
-			/****COMMUNICATION
-			* A new Reference Heading is generated => send this data to the Helsman (autonomous_sailing module) */
-			nav_speak2helsman();
 
-		//} //if no tack or gybe is in progress
+		/****COMMUNICATION
+		* A new Reference Heading is generated => send this data to the Helsman (autonomous_sailing module) */
+		nav_speak2helsman();
 
 	} else {
 		//We do NO pathplanning in this step
@@ -347,7 +345,8 @@ void nav_speak2helsman() {
 		//A maneuver is necessary
 
 		state.maneuver_start = hrt_absolute_time();	//Define the start of the maneuver
-		cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
+		//cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
+		smq_send_log_info("HELSMAN: Do maneuver! JW");
 		state.command_maneuver = false;		//The command has been sent to the navigator => no need to tell it any more
 		state.maneuver = true;				//A maneuver is in progress => wait for maneuver completed
 	} else {
