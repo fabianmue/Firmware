@@ -246,6 +246,9 @@ int pp_thread_main(int argc, char *argv[]) {
                     #if USE_GRID_LINES == 1
                     gh_gridlines_handler();
                     #endif //USE_GRID_LINES == 1
+
+                    //nav_navigator();
+
                 }
                 if(fds[2].revents & POLLIN){
                     //copy new parameters from QGC
@@ -263,18 +266,21 @@ int pp_thread_main(int argc, char *argv[]) {
 			}
 		}
 
-        /* Warning: path_planning topic should be published only ONCE for every loop iteration.
-         * Use pp_communication_buffer to change topic's values.
-        */
-        cb_publish_pp_if_updated();
-
 
         /* Call the navigator to calculate an new reference Heading
          * Note: The navigator is called in every loop, but it is only executed in a regular
          * time-based interval. */
 		#if USE_GRID_LINES == 0
-        nav_navigator();
+        //nav_navigator();
+		cb_new_wind(5.0f);
 		#endif
+
+
+
+        /* Warning: path_planning topic should be published only ONCE for every loop iteration.
+         * Use pp_communication_buffer to change topic's values.
+        */
+        cb_publish_pp_if_updated();
 
 
 	} //END OF MAIN THREAD-LOOP

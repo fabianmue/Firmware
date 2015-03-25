@@ -146,7 +146,7 @@ void nav_navigator(void) {
 	if(state.maneuver == true) {
 		if(cb_is_maneuver_completed()) {
 			//The maneuver is completed => the flag can be reset
-			state.maneuver = 0;
+			state.maneuver = false;
 		}
 
 		//For safety reason end the maneuver after a predefined time, if the communication buffer is not responding
