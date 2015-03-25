@@ -342,7 +342,7 @@ void nav_speak2helsman() {
 		} else {
 			smq_send_log_info("HELSMAN: Finish the maneuver! JW");
 		}
-		//TODO state.command_maneuver = false;		//The command has been sent to the navigator => no need to tell it any more
+		state.command_maneuver = false;		//The command has been sent to the navigator => no need to tell it any more
 		//TODO state.maneuver = true;				//A maneuver is in progress => wait for maneuver completed
 	} else {
 		//No maneuver is necessary => command the course the helsman should sail at
