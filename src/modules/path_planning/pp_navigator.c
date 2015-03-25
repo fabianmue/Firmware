@@ -201,7 +201,7 @@ void nav_navigator(void) {
 
 				state.maneuver = true;
 
-				#if P_DEBUG == 0
+				#if P_DEBUG == 1
 				//Never tell the Controller to do a Maneuver in LAB-Environment
 				state.maneuver = false;
 				#endif
@@ -304,7 +304,7 @@ void nav_speak2helsman() {
 	if(state.maneuver) {
 		//A maneuver is necessary
 
-		cb_do_maneuver(alpha_star);
+		//cb_do_maneuver(alpha_star);
 	} else {
 		//No maneuver is necessary
 
