@@ -342,6 +342,7 @@ void nav_speak2helsman() {
 		state.maneuver_start = hrt_absolute_time();	//Define the start of the maneuver
 		if(cb_is_maneuver_completed()) {
 			//cb_do_maneuver(-alpha_star);			//Tell the helsman to do a maneuver
+			cb_tack_now();
 			smq_send_log_info("HELSMAN: Do maneuver! JW");
 		} else {
 			smq_send_log_info("HELSMAN: Finish the maneuver! JW");
