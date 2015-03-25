@@ -24,6 +24,7 @@
  *
  * - Check ESSC-Loging....
  * - Test if Upwind Course is possible...
+ * - Change setting of parameters for targets/obstacles => use only one LAT/LON pair and a number that stands for the pair that is currently changed
  */
 
 
@@ -340,7 +341,7 @@ void nav_speak2helsman() {
  *
  * @param *strs_p: Pointer to the topics-struct
  *
- * Debug-State: Should be OK
+ * Debug-State: Should be OK, Tested in a separate Program
  */
 void nav_heading_update(void) {
 
@@ -351,12 +352,14 @@ void nav_heading_update(void) {
 
 
 	/* Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
-	 * Compass-Frame.  */
-	alpha = nh_dumas2compass(alpha);				//Convert to Compass-Frame
+	 * Compass-Frame. heading = alpha + twd */
+	alpha = alpha + state.wind_dir;
 
+	if(alpha < 0) {
+		alpha = 2*PI + alpha;
+	}
 
-	/* The Heading of the Boat is needes, which is either the COG or the yaw-angle. */
-	alpha = fmod(alpha + state.wind_dir,2*PI);		//Add Wind-Direction (heading = alpha + twd)
+	alpha = fmod(alpha,2*PI);
 
 	state.heading_cur = alpha;
 
