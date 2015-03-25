@@ -29,7 +29,7 @@
 /* PIXHAWK DEBUG FLAG
  * The development on the Pixhawk is on, if set to 1. It displays additional messages in QGround-Control then.
  */
-#define P_DEBUG 1
+#define P_DEBUG 0
 
 
 //1 if you're testing path_planning app indoor, PLEASE SET INDOOR PARSER_200WX

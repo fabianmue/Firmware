@@ -116,7 +116,7 @@ void nav_init(void) {
 
 	//For Debug only
 	//Set a fake-field, as it is used in matlab for the competition-task
-	#if P_DEBUG == 1
+	#if P_DEBUG == 0
 	NEDpoint target;
 	target.northx = 0;
 	target.easty = 300;
