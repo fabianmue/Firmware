@@ -337,13 +337,13 @@ void nav_speak2helsman() {
 
 		state.maneuver_start = hrt_absolute_time();	//Define the start of the maneuver
 		if(cb_is_maneuver_completed()) {
-			cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
+			//cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
 			smq_send_log_info("HELSMAN: Do maneuver! JW");
 		} else {
 			smq_send_log_info("HELSMAN: Finish the maneuver! JW");
 		}
-		state.command_maneuver = false;		//The command has been sent to the navigator => no need to tell it any more
-		state.maneuver = true;				//A maneuver is in progress => wait for maneuver completed
+		//TODO state.command_maneuver = false;		//The command has been sent to the navigator => no need to tell it any more
+		//TODO state.maneuver = true;				//A maneuver is in progress => wait for maneuver completed
 	} else {
 		//No maneuver is necessary => command the course the helsman should sail at
 
