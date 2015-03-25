@@ -366,11 +366,10 @@ static struct pointers_param_qgc_s{
 
 
 	//**SIMULATION FOR DEBUGGING
-	#if P_DEBUG == 1
 	param_t sim_ned_northx;
 	param_t sim_ned_easty;
 	param_t sim_heading;
-	#endif
+
 
 }pointers_param_qgc;
 

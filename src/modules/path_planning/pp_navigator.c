@@ -20,11 +20,8 @@
  * - add Potentialfield Method
  * - Winddirection => how's the definition? Wind from Nort = 0°/ Wind from South = 180° (Sensor-Frame)
  *
- * - CHECK, IF CALCULATION FROM ALPHA TO HEADING IN nav_heading_update() is correct!!!!!!!!!
- *
  * - Check ESSC-Loging....
  * - Test if Upwind Course is possible...
- * - Change setting of parameters for targets/obstacles => use only one LAT/LON pair and a number that stands for the pair that is currently changed
  */
 
 

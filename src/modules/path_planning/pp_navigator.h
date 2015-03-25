@@ -90,10 +90,11 @@ void nav_set_configuration(uint64_t period, uint32_t turnrate);
 
 
 /* FUNCTIONS FOR DEBUGGING */
-#if P_DEBUG == 1
-	/* @brief Set a fake-state for debugging */
-	void DEBUG_nav_set_fake_state(NEDpoint pos, float heading);
 
+/* @brief Set a fake-state for debugging */
+void DEBUG_nav_set_fake_state(NEDpoint pos, float heading);
+
+#if P_DEBUG == 1
 	/* @brief Set a fake-field for debugging */
 	void DEBUG_nav_set_fake_field(NEDpoint target, NEDpoint obstacle);
 #endif
