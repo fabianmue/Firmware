@@ -30,6 +30,7 @@ struct nav_state_s {
 	uint8_t targetNum; 				//Current number of target to be reached (limits number of targets to 256)
 	bool maneuver;					//true, iff a maneuver is in progress
 	uint64_t last_call; 			//Systemtime, when the Pathplanning was done the last time [us]
+	uint64_t maneuver_start; 		//Time, when a maneuver was started.
 };
 
 /**Struct containing the Race-Field-Information */
@@ -94,10 +95,9 @@ void nav_set_configuration(uint64_t period, uint32_t turnrate);
 /* @brief Set a fake-state for debugging */
 void DEBUG_nav_set_fake_state(NEDpoint pos, float heading);
 
-#if P_DEBUG == 1
-	/* @brief Set a fake-field for debugging */
-	void DEBUG_nav_set_fake_field(NEDpoint target, NEDpoint obstacle);
-#endif
+
+/* @brief Set a fake-field for debugging */
+void DEBUG_nav_set_fake_field(NEDpoint target, NEDpoint obstacle);
 
 
 #endif /* PP_NAVIGATOR_H_ */

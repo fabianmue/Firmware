@@ -45,11 +45,13 @@ static struct {
 	 	 	 	 	 	 	 * 1 = Cost-Function-Method
 	 	 	 	 	 	 	 * 2 = Potential-Field-Method */
 	bool reset; 			//Resets all local varables to a predefined state (init-state), if true
+	uint64_t maneuverduration;
 } config = {
 	.period = 1000000,
 	.max_headchange = 0.1745329f, //~10°/s
 	.method = 1,
-	.reset = false
+	.reset = false,
+	.maneuverduration = 10*1e6	  //A maneuver normally tooks no longer than 10s
 };
 
 
@@ -106,6 +108,7 @@ void nav_init(void) {
 	config.period = 1000000;			// = 1s
 	config.max_headchange = 2.5f*0.17453292f; // = 12°/period
 	config.method = 1; //As a default use the Cost-Function-Method
+	config.maneuverduration = 10*1e6;
 
 
 	//Update the state by requesting the values from the communication Buffer
@@ -117,7 +120,8 @@ void nav_init(void) {
 
 	//For Debug only
 	//Set a fake-field, as it is used in matlab for the competition-task
-	#if P_DEBUG == 1
+	#if P_DEBUG == 0
+	//TODO: Set this to 1
 	NEDpoint target;
 	target.northx = 0;
 	target.easty = 300;
@@ -148,22 +152,18 @@ void nav_navigator(void) {
 
 		//** Check if new information is available and change the state accordingly */
 		#if P_DEBUG == 0
-		//TODO: Change this to 0!
 		//Note: This information is only available, when the boat is not in test-mode
 		nav_listen2helsman();   //Listen to helsman for completed maneuvers
-		nav_heading_update();   //New Heading-Data
-		nav_position_update();  //New Position-Data
-		nav_wind_update();		//New Wind-Data
+		//nav_heading_update();   	//New Heading-Data TODO: Uncomment this
+		//nav_position_update();  	//New Position-Data TODO: Uncomment this
+		//nav_wind_update();		//New Wind-Data TODO: Uncomment this
 		#endif
 
 
 		//DEBUG: Send the current heading and Position known by the Navigator to QGroundControl
 		cb_new_heading(state.heading_cur);
 		cb_new_position(state.position.northx, state.position.easty);
-		//cb_new_wind(state.wind_dir);
 
-		//For DEBUGGING send the target and the target Number to QGround Control
-		//cb_new_position(field.obstacles[0].northx, field.obstacles[0].easty);
 
 
 		/** A new reference heading should only be calculated if the boat is not doing a maneuver
@@ -176,7 +176,7 @@ void nav_navigator(void) {
 				//Use Cost-Function-Method
 
 				state.heading_ref = cm_NewHeadingReference(&state,&field);
-				cb_new_wind(state.heading_ref); //TODO: DEBUG, set Wind as the calculated reference heading
+				//cb_new_wind(state.heading_ref); //TODO: DEBUG, set Wind as the calculated reference heading
 			}
 
 			if(config.method == 2) {
@@ -193,6 +193,11 @@ void nav_navigator(void) {
 			float OldWind = nh_appWindDir(state.heading_cur,state.wind_dir);		//Current Apparent Winddirection
 
 
+			//DEBUG ONLY: Use Position-Variables for the Apparent Wind-Results
+			cb_new_position(NewWind,OldWind);
+
+
+
 			/*Decide if we have to do a tack or a gybe
 			 * A maneuver is necessary, iff we change the hull. A change of hull is represented as a change of sign of the
 			 * apparent Wind direction.
@@ -201,11 +206,16 @@ void nav_navigator(void) {
 				//A Maneuver is Necessary
 
 				state.maneuver = true;
+				state.maneuver_start = systime;	//Define the start of the maneuver
+
 
 				#if P_DEBUG == 1
 				//Never tell the Controller to do a Maneuver in LAB-Environment
 				state.maneuver = false;
 				#endif
+
+				//TODO: DEBUG ONLY
+				//state.maneuver = false;
 
 
 			} //if boat should do a maneuver
@@ -252,6 +262,14 @@ void nav_navigator(void) {
 			}*/
 
 
+			//For Debug only (show state of the maneuver-flag as the wind-direction)
+			if(state.maneuver) {
+				cb_new_wind(1);
+			} else {
+				cb_new_wind(0);
+			}
+
+
 			/****COMMUNICATION
 			* A new Reference Heading is generated => send this data to the Helsman (autonomous_sailing module) */
 			nav_speak2helsman();
@@ -281,6 +299,14 @@ void nav_listen2helsman(void) {
 		state.maneuver = false;
 	}
 
+	/** A maneuver is under progress. A maneuver is normally completed after a certain time => reset the maneuver flag in this case.
+	 * Note: This is very ugly, but it hopefully helps...*/
+	if(state.maneuver) {
+		if(hrt_absolute_time()-state.maneuver_start >= config.maneuverduration) {
+			state.maneuver = false;
+		}
+	}
+
 } //end of nav_listen2helsman
 
 
@@ -305,27 +331,12 @@ void nav_speak2helsman() {
 	if(state.maneuver) {
 		//A maneuver is necessary
 
-		cb_do_maneuver(alpha_star);
+		//cb_do_maneuver(alpha_star);
 	} else {
 		//No maneuver is necessary
 
 		cb_set_alpha_star(alpha_star);
 	}
-
-    /*#if C_DEBUG == 1
-		printf("New Heading Reference: %f / ",state.heading_ref*RAD2DEG);
-		printf("New Alpha Star: %f\n",alpha_star*RAD2DEG);
-
-		//Write a file with the shared-Memory Content for Matlab
-		FILE *f = fopen("sharedMemory.txt", "a");
-		if (f == NULL) {
-			printf("Error opening file!\n");
-		}
-
-		fprintf(f,"%f, %d, ",state.heading_ref,state.maneuver);
-		fclose(f);
-
-	#endif*/
 
 	//Report the Result of the Pathplanning to QGround Control
 	//sprintf(txt_msg, "New Alpha Star = %1.1f [deg], Maneuver = %d @ %d" , (double)(alpha_star*RAD2DEG),(int)(state.maneuver),(int)state.last_call);
@@ -519,7 +530,7 @@ void DEBUG_nav_set_fake_state(NEDpoint pos, float heading) {
 }
 
 
-#if P_DEBUG == 1
+
 	/*
 	 * Set a fake Field for the navigator
 	 *
@@ -536,7 +547,6 @@ void DEBUG_nav_set_fake_state(NEDpoint pos, float heading) {
 			field.NumberOfObstacles = 1;
 		}
 
-#endif
 
 
 
