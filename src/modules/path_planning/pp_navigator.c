@@ -65,9 +65,6 @@ static struct nav_field_s field;
 
 
 
-
-
-
 /**
  * Init a new Navigator by creating all necessary variables.
  *
@@ -142,7 +139,10 @@ void nav_init(void) {
  */
 void nav_navigator(void) {
 
+	uint64_t systime = hrt_absolute_time();
+
 	//A maneuver is in Progress => wait for the maneuver to be completed
+	//TODO: remove false
 	if(state.maneuver == true) {
 		if(cb_is_maneuver_completed()) {
 			//The maneuver is completed => the flag can be reset
@@ -150,7 +150,7 @@ void nav_navigator(void) {
 		}
 
 		//For safety reason end the maneuver after a predefined time, if the communication buffer is not responding
-		if((hrt_absolute_time()-state.maneuver_start) >= config.maneuverduration) {
+		if((systime-state.maneuver_start) >= config.maneuverduration) {
 			state.maneuver = false;
 
 			smq_send_log_info("Safety Reset of the maneuver flag!");
@@ -158,18 +158,9 @@ void nav_navigator(void) {
 	}
 
 
-	//For Debug only (show state of the maneuver-flag as the wind-direction)
-	if(state.maneuver == true) {
-		cb_new_wind(1.0f);
-	} else {
-		cb_new_wind(0.0f);
-	}
-
-
 	/** Pathplanning is only done with a certain frequency AND if no maneuver is under progress
 	 *  Therefore, check the systemtime.
 	 *  Note: When the Computer-Debug-Mode is on Pathplanning is done in every loop!*/
-	uint64_t systime = hrt_absolute_time();
 
 	if((systime-state.last_call >= config.period) && (state.maneuver == false)) {
 
@@ -219,7 +210,7 @@ void nav_navigator(void) {
 		float OldWind = nh_appWindDir(state.heading_cur,state.wind_dir);		//Current Apparent Winddirection
 
 
-		//DEBUG ONLY: Use Position-Variables for the Apparent Wind-Results
+		//TODO DEBUG ONLY: Use Position-Variables for the Apparent Wind-Results
 		cb_new_position(NewWind,OldWind);
 
 
@@ -341,12 +332,16 @@ void nav_speak2helsman() {
 	float alpha_star = nh_appWindDir(state.heading_ref, state.wind_dir);
 
 	/* Tell the Helsman to tack/gybe as soon as possible, if pathplanning wants to tack/gybe */
-	if(state.command_maneuver) {
+	if(state.command_maneuver == true) {
 		//A maneuver is necessary
 
 		state.maneuver_start = hrt_absolute_time();	//Define the start of the maneuver
-		//cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
-		smq_send_log_info("HELSMAN: Do maneuver! JW");
+		if(cb_is_maneuver_completed()) {
+			cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
+			smq_send_log_info("HELSMAN: Do maneuver! JW");
+		} else {
+			smq_send_log_info("HELSMAN: Finish the maneuver! JW");
+		}
 		state.command_maneuver = false;		//The command has been sent to the navigator => no need to tell it any more
 		state.maneuver = true;				//A maneuver is in progress => wait for maneuver completed
 	} else {

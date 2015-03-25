@@ -1261,6 +1261,7 @@ void gm_set_data_by_pp(const struct structs_topics_s *strs_p){
             if(error_counter == 10){
                 smq_send_log_critical("Warning: 10 unvalid cmd from  PP.");
                 error_counter = 0;
+                break;
             }
         }
     }
