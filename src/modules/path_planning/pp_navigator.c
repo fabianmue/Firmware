@@ -116,7 +116,7 @@ void nav_init(void) {
 
 	//For Debug only
 	//Set a fake-field, as it is used in matlab for the competition-task
-	#if P_DEBUG == 0
+	#if P_DEBUG == 1
 	NEDpoint target;
 	target.northx = 0;
 	target.easty = 300;
@@ -147,6 +147,7 @@ void nav_navigator(void) {
 
 		//** Check if new information is available and change the state accordingly */
 		#if P_DEBUG == 0
+		//TODO: Change this to 0!
 		//Note: This information is only available, when the boat is not in test-mode
 		nav_listen2helsman();   //Listen to helsman for completed maneuvers
 		nav_heading_update();   //New Heading-Data
@@ -200,7 +201,7 @@ void nav_navigator(void) {
 
 				state.maneuver = true;
 
-				#if P_DEBUG == 1
+				#if P_DEBUG == 0
 				//Never tell the Controller to do a Maneuver in LAB-Environment
 				state.maneuver = false;
 				#endif
