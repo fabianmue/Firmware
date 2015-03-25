@@ -144,6 +144,10 @@ void nav_navigator(void) {
 	//A maneuver is in Progress => wait for the maneuver to be completed
 	//TODO: remove false
 	if(state.maneuver == true) {
+		//DEBUG:
+		smq_send_log_info("Maneuver completed... JW ");
+		state.maneuver = false; //DEBUG
+
 		if(cb_is_maneuver_completed()) {
 			//The maneuver is completed => the flag can be reset
 			state.maneuver = false;
@@ -337,13 +341,13 @@ void nav_speak2helsman() {
 
 		state.maneuver_start = hrt_absolute_time();	//Define the start of the maneuver
 		if(cb_is_maneuver_completed()) {
-			//cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
+			//cb_do_maneuver(-alpha_star);			//Tell the helsman to do a maneuver
 			smq_send_log_info("HELSMAN: Do maneuver! JW");
 		} else {
 			smq_send_log_info("HELSMAN: Finish the maneuver! JW");
 		}
 		state.command_maneuver = false;		//The command has been sent to the navigator => no need to tell it any more
-		//TODO state.maneuver = true;				//A maneuver is in progress => wait for maneuver completed
+		state.maneuver = true;				//A maneuver is in progress => wait for maneuver completed
 	} else {
 		//No maneuver is necessary => command the course the helsman should sail at
 
