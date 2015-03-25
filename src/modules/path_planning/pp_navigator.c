@@ -304,7 +304,7 @@ void nav_speak2helsman() {
 	if(state.maneuver) {
 		//A maneuver is necessary
 
-		//cb_do_maneuver(alpha_star);
+		cb_do_maneuver(alpha_star);
 	} else {
 		//No maneuver is necessary
 
