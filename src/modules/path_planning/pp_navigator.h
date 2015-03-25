@@ -31,6 +31,7 @@ struct nav_state_s {
 	bool maneuver;					//true, iff a maneuver is in progress
 	uint64_t last_call; 			//Systemtime, when the Pathplanning was done the last time [us]
 	uint64_t maneuver_start; 		//Time, when a maneuver was started.
+	bool command_maneuver;			//True, if the boat should do a maneuver, false else(<=> command a maneuver)
 };
 
 /**Struct containing the Race-Field-Information */

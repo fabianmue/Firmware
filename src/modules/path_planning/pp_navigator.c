@@ -103,6 +103,8 @@ void nav_init(void) {
 	home.lon = HOMELON;
 	state.position = nh_geo2ned(home);
 	state.last_call = 0;
+	state.maneuver_start = 0;
+	state.command_maneuver = false;
 
 	//Set the initial Values for the Configuration
 	config.period = 1000000;			// = 1s
@@ -139,12 +141,28 @@ void nav_init(void) {
  */
 void nav_navigator(void) {
 
-	/** Pathplanning is only done with a certain frequency
+	//A maneuver is in Progress => wait for the maneuver to be completed
+	if(state.maneuver) {
+		if(cb_is_maneuver_completed()) {
+			//The maneuver is completed => the flag can be reset
+			state.maneuver = false;
+		}
+
+		//For safety reason end the maneuver after a predefined time, if the communication buffer is not responding
+		if((hrt_absolute_time()-state.maneuver_start) >= config.maneuverduration) {
+			state.maneuver = false;
+
+			smq_send_log_info("Safety Reset of the maneuver flag!");
+		}
+	}
+
+
+	/** Pathplanning is only done with a certain frequency AND if no maneuver is under progress
 	 *  Therefore, check the systemtime.
 	 *  Note: When the Computer-Debug-Mode is on Pathplanning is done in every loop!*/
 	uint64_t systime = hrt_absolute_time();
 
-	if((systime-state.last_call >= config.period)) {
+	if((systime-state.last_call >= config.period) && state.maneuver) {
 
 		/** Assign the current time as the last call time */
 		state.last_call = systime;
@@ -153,7 +171,6 @@ void nav_navigator(void) {
 		//** Check if new information is available and change the state accordingly */
 		#if P_DEBUG == 0
 		//Note: This information is only available, when the boat is not in test-mode
-		nav_listen2helsman();   //Listen to helsman for completed maneuvers
 		//nav_heading_update();   	//New Heading-Data TODO: Uncomment this
 		//nav_position_update();  	//New Position-Data TODO: Uncomment this
 		//nav_wind_update();		//New Wind-Data TODO: Uncomment this
@@ -168,7 +185,7 @@ void nav_navigator(void) {
 
 		/** A new reference heading should only be calculated if the boat is not doing a maneuver
 		 * The boat is not doing a maneuver, if the maneuver-flag is set to false! */
-		if(!state.maneuver) {
+		//if(!state.maneuver) {
 
 			/****FIND A NEW REFERENCE HEADING
 			 * Different algorithms can be used. */
@@ -205,17 +222,13 @@ void nav_navigator(void) {
 			if(!((NewWind < 0 && OldWind < 0) || (NewWind > 0 && OldWind > 0))) {
 				//A Maneuver is Necessary
 
-				state.maneuver = true;
-				state.maneuver_start = systime;	//Define the start of the maneuver
+				state.command_maneuver = true;
 
 
 				#if P_DEBUG == 1
 				//Never tell the Controller to do a Maneuver in LAB-Environment
-				state.maneuver = false;
-				#endif
-
-				//TODO: DEBUG ONLY
 				//state.maneuver = false;
+				#endif
 
 
 			} //if boat should do a maneuver
@@ -263,7 +276,7 @@ void nav_navigator(void) {
 
 
 			//For Debug only (show state of the maneuver-flag as the wind-direction)
-			if(state.maneuver) {
+			if(state.command_maneuver) {
 				cb_new_wind(1);
 			} else {
 				cb_new_wind(0);
@@ -274,7 +287,7 @@ void nav_navigator(void) {
 			* A new Reference Heading is generated => send this data to the Helsman (autonomous_sailing module) */
 			nav_speak2helsman();
 
-		} //if no tack or gybe is in progress
+		//} //if no tack or gybe is in progress
 
 	} else {
 		//We do NO pathplanning in this step
@@ -303,7 +316,9 @@ void nav_listen2helsman(void) {
 	 * Note: This is very ugly, but it hopefully helps...*/
 	if(state.maneuver) {
 		if(hrt_absolute_time()-state.maneuver_start >= config.maneuverduration) {
-			state.maneuver = false;
+			//state.maneuver = false;
+
+			smq_send_log_info("Safety Reset of the maneuver flag!");
 		}
 	}
 
@@ -328,12 +343,15 @@ void nav_speak2helsman() {
 	float alpha_star = nh_appWindDir(state.heading_ref, state.wind_dir);
 
 	/* Tell the Helsman to tack/gybe as soon as possible, if pathplanning wants to tack/gybe */
-	if(state.maneuver) {
+	if(state.command_maneuver) {
 		//A maneuver is necessary
 
-		//cb_do_maneuver(alpha_star);
+		state.maneuver_start = hrt_absolute_time();	//Define the start of the maneuver
+		cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
+		state.command_maneuver = false;		//The command has been sent to the navigator => no need to tell it any more
+		state.maneuver = true;				//A maneuver is in progress => wait for maneuver completed
 	} else {
-		//No maneuver is necessary
+		//No maneuver is necessary => command the course the helsman should sail at
 
 		cb_set_alpha_star(alpha_star);
 	}
