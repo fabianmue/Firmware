@@ -23,6 +23,10 @@
  * - Check ESSC-Loging....
  * - Test if Upwind Course is possible...
  * - Log Pathplanning - Constants on SD-Card
+ *
+ * - One solution: Copy autonomous_sailing app from marco's working version into my gid-branch (manually)
+ * - Introduce flag and call the do_maneuver() by QGround Control
+ * - A problem could be, that a maneuver command is sent right after startup...
  */
 
 
@@ -146,7 +150,7 @@ void nav_navigator(void) {
 	if(state.maneuver == true) {
 		//DEBUG:
 		smq_send_log_info("Maneuver completed... JW ");
-		state.maneuver = false; //DEBUG
+		//state.maneuver = false; //DEBUG: delete this line in real program
 
 		if(cb_is_maneuver_completed()) {
 			//The maneuver is completed => the flag can be reset
