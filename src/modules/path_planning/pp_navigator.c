@@ -174,6 +174,7 @@ void nav_navigator(void) {
 
 		if(state.maneuver_security == true) {
 			//We are in the security zone, where we have to wait until all data is published
+			//10s should be enough...
 			if((systime-state.maneuver_start) >= 10*1e6) {
 				state.maneuver_security = false;
 				smq_send_log_info("End of Security Zone after maneuver JW");
@@ -183,7 +184,7 @@ void nav_navigator(void) {
 				//Wait for maneuver to be completed...
 
 				state.maneuver_security = false;
-				state.maneuver = false;
+				state.maneuver = false;				//The maneuver flag can be reseted and pathplanning can be done again...
 				state.command_maneuver = false;
 
 				smq_send_log_info("Maneuver is completed! JW");
@@ -266,8 +267,7 @@ void nav_navigator(void) {
 	 *  Therefore, check the systemtime.
 	 *  Note: When the Computer-Debug-Mode is on Pathplanning is done in every loop!*/
 
-	if((systime-state.last_call >= config.period)
-		&& (state.maneuver == false)) {
+	if((systime-state.last_call >= config.period) && (state.maneuver == false)) {
 
 		/** Assign the current time as the last call time */
 		state.last_call = systime;

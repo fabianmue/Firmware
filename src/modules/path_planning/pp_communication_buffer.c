@@ -145,19 +145,16 @@ bool cb_do_maneuver(float new_alpha_star){
     if(cb_is_maneuver_completed() == true){
 
         //set new alpha_star
-        //cb_set_alpha_star(new_alpha_star);
+        cb_set_alpha_star(new_alpha_star);
 
         //send do_maneuver command to autonomous_sailing app
-        //pp.do_maneuver = 1;
+        pp.do_maneuver = 1;
 
         //give a new Id for this new maneuver
         if(pp.id_maneuver == 255)
             pp.id_maneuver = 0;
         else
-        	pp.id_maneuver = pp.id_maneuver + 1;
-
-        //TODO DEBUG:
-        cb_new_int(pp.id_maneuver);
+            pp.id_maneuver = pp.id_maneuver + 1;
 
         //remember we have to send the meneuver command to autonomous_sailing app
         pp_updated = true;
@@ -200,7 +197,7 @@ void cb_new_as_data(int boat_guidance_debug_sub){
            boat_guidance_debug.id_maneuver == pp.id_maneuver){
 
             //maneuver is completed
-            pp.do_maneuver = 1;
+            pp.do_maneuver = 0;
             pp_updated = true;
         }
     }
@@ -218,7 +215,6 @@ void cb_new_as_data(int boat_guidance_debug_sub){
         //update last_haul
         last_haul = haul_tmp;
     }
-
 }
 
 /**
@@ -263,9 +259,6 @@ bool cb_set_alpha_star(float new_alpha_star){
     if(cb_is_maneuver_completed() == true){
         pp.alpha_star = new_alpha_star;
         pp_updated = true;
-
-        //sprintf(txt_msg,"New alpha star set to: %3.1f",(double)pp.alpha_star);
-        //smq_send_log_info(txt_msg);
     }
     else
         res = false;
@@ -400,7 +393,7 @@ void cb_use_fixed_twd(bool use_fixed_twd){
  * and autonomous_sailing app, alpha_star is changed with a min
  * priod of MIN_TS_GO_DOWNWIND_US.
 */
-void go_downwind(void){
+void go_downwind(){
     uint64_t time_elapsed;
 
     now = hrt_absolute_time();
