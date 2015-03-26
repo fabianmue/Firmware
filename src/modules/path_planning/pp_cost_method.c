@@ -162,7 +162,6 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 */
 void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float ObstSafetyRadius, float ObstHorizon, float WindowSize) {
 
-	//Do not update these values, if we are in Debug-Mode
 	Config.Gw = Gw;
 	Config.Go = Go;
 	Config.Gm = Gm;
@@ -172,6 +171,20 @@ void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, floa
 	Config.ObstSafetyRadius = ObstSafetyRadius;
 	Config.ObstHorizon = ObstHorizon;
 	Config.WindowSize = WindowSize;
+
+	//Publish new values to boat_pp_debug1 topic in order to Log them on SD-Card
+	struct boat_pp_debug1_s temp;
+	temp.gw = Config.Gw;
+	temp.go = Config.Go;
+	temp.gm = Config.Gm;
+	temp.gs = Config.Gs;
+	temp.gt = Config.Gt;
+	temp.glee = Config.GLee;
+	temp.obstsafetyrad = Config.ObstSafetyRadius;
+	temp.obsthorizon = Config.ObstHorizon;
+	temp.windowsize = Config.WindowSize;
+
+	th_publish_boat_pp_debug1(&temp);
 }
 
 

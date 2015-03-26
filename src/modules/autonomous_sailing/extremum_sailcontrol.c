@@ -221,6 +221,9 @@ void essc_set_qground_values(float k, int windowSize, float period) {
 		Config.windowSize = 8;
 	}
 
+
+	//TODO: Add the Logging of these parameters on SD-Card here...
+
 }
 
 
