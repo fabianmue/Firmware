@@ -55,13 +55,13 @@ static struct {
 	 	 	 	 	 	 	 * 1 = Cost-Function-Method
 	 	 	 	 	 	 	 * 2 = Potential-Field-Method */
 	bool reset; 			//Resets all local varables to a predefined state (init-state), if true
-	uint64_t maneuverduration;
+	uint64_t maneuver_security_time;	//Time the pathplanning gives the boat after a maneuver to gain speed
 } config = {
 	.period = 1000000,
 	.max_headchange = 0.1745329f, //~10°/s
 	.method = 1,
 	.reset = false,
-	.maneuverduration = 10*1e6	  //A maneuver normally tooks no longer than 10s
+	.maneuver_security_time = 20*1e6	  //A maneuver normally tooks no longer than 10s
 };
 
 
@@ -117,13 +117,15 @@ void nav_init(void) {
 	state.position = nh_geo2ned(home);
 	state.last_call = 0;
 	state.maneuver_start = 0;
+	state.maneuver_end = 0;
 	state.command_maneuver = false;
+	state.maneuver_security = false;
 
 	//Set the initial Values for the Configuration
 	config.period = 1000000;			// = 1s
 	config.max_headchange = 2.5f*0.17453292f; // = 12°/period
 	config.method = 1; //As a default use the Cost-Function-Method
-	config.maneuverduration = 10*1e6;
+	config.maneuver_security_time = 20*1e6;
 
 
 	//Update the state by requesting the values from the communication Buffer
@@ -160,10 +162,14 @@ void nav_navigator(void) {
 	//TODO: remove false
 	if(state.maneuver == true) {
 
-		if(cb_is_maneuver_completed() == true) {
+		if((cb_is_maneuver_completed() == true) && (state.maneuver_security == false)) {
 			smq_send_log_info("Maneuver completed... JW ");
-			//The maneuver is completed => the flag can be reset
-			state.maneuver = false;
+
+			//The maneuver is completed => take the time, when this happend
+			state.maneuver_end = systime;
+			state.maneuver_security = true;
+
+			//state.maneuver = false;
 
 			//Hack for Indoor-Testing
 			#if SIMULATION_FLAG == 1
@@ -187,10 +193,21 @@ void nav_navigator(void) {
 		}
 
 		//For safety reason end the maneuver after a predefined time, if the communication buffer is not responding
-		if((systime-state.maneuver_start) >= config.maneuverduration) {
+		/*if((systime-state.maneuver_start) >= config.maneuverduration) {
 			state.maneuver = false;
 
 			smq_send_log_info("Safety Reset of the maneuver flag!");
+		}*/
+
+
+		if((systime-state.maneuver_end) >= config.maneuver_security_time) {
+			//After the maneuver was completed by the autonomous_sailing app, we must give the boat
+			//some time for gaining speed, before we command a new maneuver.
+
+			state.maneuver = false;
+			state.command_maneuver = false;
+			state.maneuver_end = 0;
+			state.maneuver_security = false;
 		}
 	}
 
@@ -199,7 +216,8 @@ void nav_navigator(void) {
 	 *  Therefore, check the systemtime.
 	 *  Note: When the Computer-Debug-Mode is on Pathplanning is done in every loop!*/
 
-	if((systime-state.last_call >= config.period) && (state.maneuver == false)) {
+	if((systime-state.last_call >= config.period)
+		&& (state.maneuver == false)) {
 
 		/** Assign the current time as the last call time */
 		state.last_call = systime;
@@ -268,7 +286,9 @@ void nav_navigator(void) {
 
 
 		} else {
+			//No Maneuver is necessary and we can therefore set all flags to zero
 			state.command_maneuver = false;
+			state.maneuver = false;
 		}//if boat should do a maneuver
 
 
@@ -342,13 +362,13 @@ void nav_listen2helsman(void) {
 
 	/** A maneuver is under progress. A maneuver is normally completed after a certain time => reset the maneuver flag in this case.
 	 * Note: This is very ugly, but it hopefully helps...*/
-	if(state.maneuver) {
+	/*if(state.maneuver) {
 		if(hrt_absolute_time()-state.maneuver_start >= config.maneuverduration) {
 			//state.maneuver = false;
 
 			smq_send_log_info("Safety Reset of the maneuver flag!");
 		}
-	}
+	}*/
 
 } //end of nav_listen2helsman
 
