@@ -416,7 +416,7 @@ void nav_speak2helsman() {
 			if(enable_pathplanner == true) {
 				//Only communicate with autonomous sailing app, if pathplanner is enabled
 				cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
-				enable_pathplanner = false;			//TODO: DEBUG ONLY
+				//enable_pathplanner = false;			//TODO: DEBUG ONLY
 			}
 			smq_send_log_info("HELSMAN: Do maneuver! JW");
 		} else {
