@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <drivers/drv_hrt.h>
 #include <unistd.h>
-#include "send_msg_qgc.h"
 
 
 #define BUFFERSIZE 8			   	//Maximum size of the Buffer for the Speeds
@@ -31,7 +30,7 @@
 
 
 /** @brief Initialize the use of Extremum Seeking Sailcontrol (ESSC) */
-void essc_init(struct published_fd_s *pubs);
+void essc_init(void);
 
 
 /** @brief Handle a new Speed-Value*/

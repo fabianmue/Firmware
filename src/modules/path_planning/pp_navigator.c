@@ -342,15 +342,16 @@ void nav_speak2helsman() {
 	//alpha_star = fmod(state.heading_ref - state.wind_dir,2*PI); //In Compass-Frame
 	//alpha_star = nh_compass2dumas(alpha_star);					//Convert to Duma's convention for Autonomous Sailing Module
 
-	//float alpha_star = nh_appWindDir(state.heading_ref, state.wind_dir);
+	float alpha_star = nh_appWindDir(state.heading_ref, state.wind_dir);
 
 	/* Tell the Helsman to tack/gybe as soon as possible, if pathplanning wants to tack/gybe */
 	if(state.command_maneuver == true) {
 		//A maneuver is necessary
 
 		state.maneuver_start = hrt_absolute_time();	//Define the start of the maneuver
-		if(cb_is_maneuver_completed()) {
-			//cb_do_maneuver(-alpha_star);			//Tell the helsman to do a maneuver
+		if(cb_is_maneuver_completed()==true) {
+			//Check if the previous maneuver is completed before commanding a maneuver
+			cb_do_maneuver(-alpha_star);			//Tell the helsman to do a maneuver
 			//cb_tack_now();
 			smq_send_log_info("HELSMAN: Do maneuver! JW");
 		} else {
@@ -361,8 +362,12 @@ void nav_speak2helsman() {
 	} else {
 		//No maneuver is necessary => command the course the helsman should sail at
 
-		//cb_set_alpha_star(alpha_star);
-		smq_send_log_info("Do normal sailing... JW");
+		if(cb_is_maneuver_completed()==true) {
+			//Check if the previous maneuver is completed before commanding a maneuver
+
+			cb_set_alpha_star(alpha_star);
+			smq_send_log_info("Do normal sailing... JW");
+		}
 	}
 
 	//Report the Result of the Pathplanning to QGround Control

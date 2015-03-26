@@ -196,9 +196,6 @@ int as_daemon_thread_main(int argc, char *argv[]){
     //init message module
     smq_init_msg_module();
 
-    //init ESSC
-    essc_init(&pubs);
-
     //subscribe/advertise interested topics
     as_topics(&subs, &pubs, &strs);
 
@@ -208,7 +205,7 @@ int as_daemon_thread_main(int argc, char *argv[]){
     #endif
 
     //limit update rate of attitude every 50 milliseconds --> f = 20 Hz
-    orb_set_interval(subs.att, 50);
+     orb_set_interval(subs.att, 50);
 
 	// try to initiliaze actuators
     if(!actuators_init(&pubs, &strs)){

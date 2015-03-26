@@ -42,7 +42,6 @@
 
 #include "parameters.h"
 
-
 static const float deg2rad = 0.0174532925199433f; // pi / 180
 
 
@@ -467,7 +466,7 @@ PARAM_DEFINE_FLOAT(ESSC_K,2.0f);
  * @min 2
  * @max 20
  */
-PARAM_DEFINE_INT32(ESSC_WINDOWS,8);
+PARAM_DEFINE_INT32(ESSC_WINDOWSIZE,8);
 
 /**
  * Time between two changes of the Sailangle [s]
@@ -703,7 +702,7 @@ void p_param_init(struct parameters_qgc *params_p,
 
     //-- Extremum Seeking Sail Control (ESSC) parameters (JW)
     pointers_param_qgc.ESSC_k = param_find("ESSC_K");
-    pointers_param_qgc.ESSC_windowSize = param_find("ESSC_WINDOWS");
+    pointers_param_qgc.ESSC_windowSize = param_find("ESSC_WINDOWSIZE");
     pointers_param_qgc.ESSC_period = param_find("ESSC_PERIOD");
 
 
