@@ -266,3 +266,7 @@ ORB_DEFINE(boat_local_position, struct boat_local_position_s);
 //Added by Marco Tranzatto
 #include "topics/parser200wx_status.h"
 ORB_DEFINE(parser200wx_status, struct parser200wx_status_s);
+
+//Added by Jonas Wirz
+#include "topics/boat_pp_debug.h"
+ORB_DEFINE(boat_pp_debug1, struct boat_pp_debug1_s);
