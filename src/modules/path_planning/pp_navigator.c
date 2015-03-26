@@ -181,7 +181,7 @@ void nav_navigator(void) {
 
 			alpha = fmod(alpha,2*PI);
 
-			state.heading_cur = 270*DEG2RAD;//alpha;  //TODO: This is hard-coded just for testing
+			state.heading_cur = alpha;
 
 			#endif
 
