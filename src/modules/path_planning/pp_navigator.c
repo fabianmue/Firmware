@@ -587,7 +587,18 @@ void nav_enable_navigator(uint8_t enable) {
  * 				  the top of this page.
  */
 void nav_set_method(uint8_t method) {
-	config.method = method;
+	if(method > 0) {
+		config.method = method;
+	}
+
+	//Send an appropriate message to QGround Control
+	if(config.method == 1) {
+		smq_send_log_info("USE COST-METHOD");
+	} else if(config.method == 2) {
+		smq_send_log_info("USE POTENTIAL-METHOD");
+	} else {
+		smq_send_log_info("ERROR: METHOD UNKNOWN!");
+	}
 }
 
 

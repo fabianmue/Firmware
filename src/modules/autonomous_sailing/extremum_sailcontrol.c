@@ -231,8 +231,6 @@ void essc_set_qground_values(float k, int windowSize, float period) {
 
 	//The parameters are updated => add these parameters to the SD-Log
 	essc_log_data();
-
-	smq_send_log_info("New ESSC-Data");
 }
 
 
