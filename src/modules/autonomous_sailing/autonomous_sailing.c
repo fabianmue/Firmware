@@ -196,6 +196,9 @@ int as_daemon_thread_main(int argc, char *argv[]){
     //init message module
     smq_init_msg_module();
 
+    //init use of ESSC
+    essc_init(&pubs);
+
     //subscribe/advertise interested topics
     as_topics(&subs, &pubs, &strs);
 

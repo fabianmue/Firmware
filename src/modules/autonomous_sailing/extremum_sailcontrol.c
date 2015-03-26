@@ -216,7 +216,7 @@ void essc_set_qground_values(float k, int windowSize, float period) {
 		Config.period = period*1000000.0f;
 	} else {
 		//Set the default Value
-		Config.period = 1000000.0f;
+		Config.period = 1000000.0f;;
 	}
 
 	//Assign the Size of the Window for the speed Averaging (must be bigger than two, otherwise
@@ -232,6 +232,7 @@ void essc_set_qground_values(float k, int windowSize, float period) {
 	//The parameters are updated => add these parameters to the SD-Log
 	essc_log_data();
 
+	smq_send_log_info("New ESSC-Data");
 }
 
 
