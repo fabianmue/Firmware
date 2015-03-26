@@ -132,16 +132,19 @@ bool cb_do_maneuver(float new_alpha_star){
     if(cb_is_maneuver_completed() == true){
 
         //set new alpha_star
-        cb_set_alpha_star(new_alpha_star);
+        //TODO cb_set_alpha_star(new_alpha_star);
 
         //send do_maneuver command to autonomous_sailing app
-        pp.do_maneuver = 1;
+        //TODO pp.do_maneuver = 1;
 
         //give a new Id for this new maneuver
         if(pp.id_maneuver == 255)
             pp.id_maneuver = 0;
         else
             pp.id_maneuver = pp.id_maneuver + 1;
+
+        //TODO DEBUG:
+        cb_new_wind((float)pp.id_maneuver);
 
         //remember we have to send the meneuver command to autonomous_sailing app
         pp_updated = true;

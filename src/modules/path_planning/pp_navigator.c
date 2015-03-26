@@ -73,6 +73,12 @@ static struct nav_state_s state;
 static struct nav_field_s field;
 
 
+#if SIMULATION_FLAG == 1
+	static float last_alpha = 0;
+#endif
+
+
+
 
 /**
  * Init a new Navigator by creating all necessary variables.
@@ -153,13 +159,31 @@ void nav_navigator(void) {
 	//A maneuver is in Progress => wait for the maneuver to be completed
 	//TODO: remove false
 	if(state.maneuver == true) {
-		//DEBUG:
-		smq_send_log_info("Maneuver completed... JW ");
-		//state.maneuver = false; //DEBUG: delete this line in real program
 
-		if(cb_is_maneuver_completed()) {
+		if(cb_is_maneuver_completed() == true) {
+			smq_send_log_info("Maneuver completed... JW ");
 			//The maneuver is completed => the flag can be reset
 			state.maneuver = false;
+
+			//Hack for Indoor-Testing
+			#if SIMULATION_FLAG == 1
+				//The Maneuver is completed => we must set a new current heading, otherwise the pathplanner forces to do
+				//another maneuver...and another...and another... endless-while!
+
+				/* Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
+				 * Compass-Frame. heading = alpha + twd */
+				float alpha = last_alpha + state.wind_dir;
+
+				if(alpha < 0) {
+					alpha = 2*PI + alpha;
+				}
+
+				alpha = fmod(alpha,2*PI);
+
+				state.heading_cur = 270*DEG2RAD;//alpha;  //TODO: This is hard-coded just for testing
+
+			#endif
+
 		}
 
 		//For safety reason end the maneuver after a predefined time, if the communication buffer is not responding
@@ -243,7 +267,9 @@ void nav_navigator(void) {
 			#endif
 
 
-		} //if boat should do a maneuver
+		} else {
+			state.command_maneuver = false;
+		}//if boat should do a maneuver
 
 
 		/* The boat has a limited turnrate. Therefore, ensure that the pathplanning
@@ -344,6 +370,11 @@ void nav_speak2helsman() {
 
 	float alpha_star = nh_appWindDir(state.heading_ref, state.wind_dir);
 
+	#if SIMULATION_FLAT == 1
+		//Stor the current Alpha
+		last_alpha = alpha_star;
+	#endif
+
 	/* Tell the Helsman to tack/gybe as soon as possible, if pathplanning wants to tack/gybe */
 	if(state.command_maneuver == true) {
 		//A maneuver is necessary
@@ -351,8 +382,7 @@ void nav_speak2helsman() {
 		state.maneuver_start = hrt_absolute_time();	//Define the start of the maneuver
 		if(cb_is_maneuver_completed()==true) {
 			//Check if the previous maneuver is completed before commanding a maneuver
-			cb_do_maneuver(-alpha_star);			//Tell the helsman to do a maneuver
-			//cb_tack_now();
+			cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
 			smq_send_log_info("HELSMAN: Do maneuver! JW");
 		} else {
 			smq_send_log_info("HELSMAN: Finish the maneuver! JW");
@@ -367,6 +397,8 @@ void nav_speak2helsman() {
 
 			cb_set_alpha_star(alpha_star);
 			smq_send_log_info("Do normal sailing... JW");
+
+			state.command_maneuver == false;
 		}
 	}
 
