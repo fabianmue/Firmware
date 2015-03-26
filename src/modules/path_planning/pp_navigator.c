@@ -181,7 +181,7 @@ void nav_navigator(void) {
 
 			alpha = fmod(alpha,2*PI);
 
-			state.heading_cur = alpha;
+			state.heading_cur = 270 * DEG2RAD; //alpha;
 
 			#endif
 
@@ -356,7 +356,7 @@ void nav_speak2helsman() {
 	float alpha_star = nh_appWindDir(state.heading_ref, state.wind_dir);
 
 	#if SIMULATION_FLAT == 1
-		//Stor the current Alpha
+		//Store the current Alpha
 		last_alpha = alpha_star;
 	#endif
 
@@ -587,17 +587,20 @@ void nav_enable_navigator(uint8_t enable) {
  * 				  the top of this page.
  */
 void nav_set_method(uint8_t method) {
-	if(method > 0) {
-		config.method = method;
+
+	//Send an appropriate message to QGround Control, iff method has changed
+	if(config.method != method) {
+		if(config.method == 1) {
+			smq_send_log_info("USE COST-METHOD");
+		} else if(config.method == 2) {
+			smq_send_log_info("USE POTENTIAL-METHOD");
+		} else {
+			smq_send_log_info("ERROR: METHOD UNKNOWN!");
+		}
 	}
 
-	//Send an appropriate message to QGround Control
-	if(config.method == 1) {
-		smq_send_log_info("USE COST-METHOD");
-	} else if(config.method == 2) {
-		smq_send_log_info("USE POTENTIAL-METHOD");
-	} else {
-		smq_send_log_info("ERROR: METHOD UNKNOWN!");
+	if(method > 0) {
+		config.method = method;
 	}
 }
 
