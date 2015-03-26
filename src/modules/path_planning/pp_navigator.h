@@ -93,6 +93,10 @@ void nav_set_configuration(uint64_t period, uint32_t turnrate);
 void nav_enable_navigator(uint8_t enable);
 
 
+/** @brief Set the method that is used for pathplanning */
+void nav_set_method(uint8_t method);
+
+
 /* FUNCTIONS FOR DEBUGGING */
 
 /* @brief Set a fake-state for debugging */

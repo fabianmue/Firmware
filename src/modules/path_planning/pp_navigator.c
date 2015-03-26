@@ -18,7 +18,7 @@
 
 /* TODO:
  * - add Potentialfield Method
- * - Winddirection => how's the definition? Wind from Nort = 0°/ Wind from South = 180° (Sensor-Frame)
+ * - Winddirection => how's the definition? Wind from North = 0°/ Wind from South = 180° (Sensor-Frame)
  *
  * - Check ESSC-Loging....
  * - Test if Upwind Course is possible...
@@ -469,6 +469,10 @@ void nav_position_update(void) {
 			//This is not the last target => set new Target
 
 			state.targetNum += 1;
+
+			//Send the new target to QGround Control
+			cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
+
 		} else {
 			//This was the last target
 
@@ -532,6 +536,9 @@ void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos) {
 	field.targets[TargetNumber] = nh_geo2ned(nh_e7_to_point(TargetPos));
 
 	field.NumberOfTargets = TargetNumber;
+
+	cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
+
 	#endif
 }
 
@@ -557,7 +564,7 @@ void nav_set_configuration(uint64_t period, uint32_t turnrate) {
 
 /**
  * Enable the use of the navigator
- * This function is calles by QGroundControl to set a new Value
+ * This function is called by QGroundControl to set a new Value
  *
  * @param enable: if 1, pathplanner is enabled, else, disabled
  */
@@ -567,6 +574,20 @@ void nav_enable_navigator(uint8_t enable) {
 	} else {
 		enable_pathplanner = false;
 	}
+}
+
+
+
+/**
+ * Define the method that should be used for Pathplanning
+ * This function is called by QGroundControl to set a new Value
+ *
+ * @param method: Integer representing a method. The selectable methods
+ * 				  are defined in the definition of the struct "config" at
+ * 				  the top of this page.
+ */
+void nav_set_method(uint8_t method) {
+	config.method = method;
 }
 
 
@@ -604,10 +625,13 @@ void DEBUG_nav_set_fake_state(NEDpoint pos, float heading) {
 
 			field.targets[0] = target;
 			field.obstacles[0] = obstacle;
+			state.targetNum = 0;
 
 			//Only one Target/Obstacle
 			field.NumberOfTargets = 1;
 			field.NumberOfObstacles = 1;
+
+			cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
 		}
 
 

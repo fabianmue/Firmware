@@ -119,8 +119,9 @@ bool cb_new_wind(float wind) {
  *
  * @param int-value
  */
-bool cb_new_int(int val) {
-	pp.int_debug = val;
+bool cb_new_target(float north, float east) {
+	pp.target_north = north;
+	pp.target_east = east;
 
 	pp_updated = true;
 

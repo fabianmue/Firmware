@@ -2228,24 +2228,28 @@ protected:
             }
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "as_pp_N");
+            snprintf(msg.name, sizeof(msg.name), "pp_Npos");
             msg.value = ((float)path_p_debug.ned_north);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "as_pp_E");
+            snprintf(msg.name, sizeof(msg.name), "pp_Epos");
             msg.value = ((float)path_p_debug.ned_east);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "as_navhea");
+            snprintf(msg.name, sizeof(msg.name), "pp_navhea");
             msg.value = ((float)path_p_debug.heading*RAD2DEG);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "as_navwin");
+            snprintf(msg.name, sizeof(msg.name), "pp_navwin");
             msg.value = ((float)path_p_debug.wind*RAD2DEG);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "as_intdebg");
-            msg.value = ((int)path_p_debug.int_debug);
+            snprintf(msg.name, sizeof(msg.name), "pp_Ntar");
+            msg.value = ((float)path_p_debug.target_north);
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "pp_Etar");
+            msg.value = ((float)path_p_debug.target_east);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
         }
     }

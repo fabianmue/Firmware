@@ -297,6 +297,11 @@ PARAM_DEFINE_INT32(PP_NAV_RESET,0);
  */
 PARAM_DEFINE_INT32(PP_APATHP_ON,0);
 
+/**
+ * pp_nav_meth
+ */
+PARAM_DEFINE_INT32(PP_NAV_METH,1);
+
 
 static struct pointers_param_qgc_s{
 
@@ -369,6 +374,7 @@ static struct pointers_param_qgc_s{
 
 	param_t nav_reset;
 	param_t nav_pathp_on;
+	param_t nav_meth;
 
 
 	//**SIMULATION FOR DEBUGGING
@@ -470,6 +476,7 @@ void p_param_init(void){
 
     //**ENABLE PATHPLANNER
     pointers_param_qgc.nav_pathp_on = param_find("PP_APATHP_ON");
+    pointers_param_qgc.nav_meth = param_find("PP_NAV_METH");
 
 
     //get parameters but do not add any grid lines at start up
@@ -712,6 +719,12 @@ void p_param_update(bool update_path_param){
     	uint8_t pathp_on;
     	param_get(pointers_param_qgc.nav_pathp_on, &pathp_on);
     	nav_enable_navigator(pathp_on);
+
+
+    	//**SET METHOD USED FOR PATHPLANNING
+    	uint8_t pathp_meth;
+    	param_get(pointers_param_qgc.nav_meth, &pathp_meth);
+    	nav_set_method(pathp_meth);
 
 
     	//**SIMULATION DEBUG
