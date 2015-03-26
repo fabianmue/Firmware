@@ -27,6 +27,11 @@
  * - One solution: Copy autonomous_sailing app from marco's working version into my gid-branch (manually)
  * - Introduce flag and call the do_maneuver() by QGround Control
  * - A problem could be, that a maneuver command is sent right after startup...
+ *   => a second one is sent to autonomous sailing, what makes it behave crazy, but why is then do_maneuver set to false????
+ *   => evtl. comment out navigator and call do_maneuver() instead...
+ *
+ *
+ * - Comment out the "cb_set_alpha_star(alpha_star);" in speak2helsman()
  */
 
 
@@ -337,7 +342,7 @@ void nav_speak2helsman() {
 	//alpha_star = fmod(state.heading_ref - state.wind_dir,2*PI); //In Compass-Frame
 	//alpha_star = nh_compass2dumas(alpha_star);					//Convert to Duma's convention for Autonomous Sailing Module
 
-	float alpha_star = nh_appWindDir(state.heading_ref, state.wind_dir);
+	//float alpha_star = nh_appWindDir(state.heading_ref, state.wind_dir);
 
 	/* Tell the Helsman to tack/gybe as soon as possible, if pathplanning wants to tack/gybe */
 	if(state.command_maneuver == true) {
@@ -356,7 +361,8 @@ void nav_speak2helsman() {
 	} else {
 		//No maneuver is necessary => command the course the helsman should sail at
 
-		cb_set_alpha_star(alpha_star);
+		//cb_set_alpha_star(alpha_star);
+		smq_send_log_info("Do normal sailing... JW");
 	}
 
 	//Report the Result of the Pathplanning to QGround Control
