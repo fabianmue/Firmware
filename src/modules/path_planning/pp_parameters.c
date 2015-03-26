@@ -292,6 +292,11 @@ PARAM_DEFINE_FLOAT(SIM_HEADING,0);			//Current heading of the boat in degrees (c
  */
 PARAM_DEFINE_INT32(PP_NAV_RESET,0);
 
+/**
+ * pp_apathp_on
+ */
+PARAM_DEFINE_INT32(PP_APATHP_ON,0);
+
 
 static struct pointers_param_qgc_s{
 
@@ -363,6 +368,7 @@ static struct pointers_param_qgc_s{
 	param_t nav_altitude;
 
 	param_t nav_reset;
+	param_t nav_pathp_on;
 
 
 	//**SIMULATION FOR DEBUGGING
@@ -462,6 +468,8 @@ void p_param_init(void){
     pointers_param_qgc.sim_ned_easty = param_find("SIM_NED_EASTY");
     pointers_param_qgc.sim_heading = param_find("SIM_HEADING");
 
+    //**ENABLE PATHPLANNER
+    pointers_param_qgc.nav_pathp_on = param_find("PP_APATHP_ON");
 
 
     //get parameters but do not add any grid lines at start up
@@ -698,6 +706,12 @@ void p_param_update(bool update_path_param){
     		nav_init();
     		smq_send_log_info("NAVIGATOR RESET! switch back to 0!");
     	}
+
+
+    	//**ENABLE THE USE OF THE NAVIGATOR
+    	uint8_t pathp_on;
+    	param_get(pointers_param_qgc.nav_pathp_on, &pathp_on);
+    	nav_enable_navigator(pathp_on);
 
 
     	//**SIMULATION DEBUG

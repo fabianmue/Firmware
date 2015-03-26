@@ -92,6 +92,9 @@ void nav_set_startline(PointE7 buoy1, PointE7 buoy2);
 void nav_set_configuration(uint64_t period, uint32_t turnrate);
 
 
+/** @brief Enable the communication between pathplanner and autonomous sailing app */
+void nav_enable_navigator(uint8_t enable);
+
 
 /* FUNCTIONS FOR DEBUGGING */
 

@@ -73,9 +73,16 @@ static struct nav_state_s state;
 static struct nav_field_s field;
 
 
+/** Variable for enabling communication with autonomous sailing app
+ * if true, the pathplanner is communicating with autonomous sailing app*/
+static bool enable_pathplanner = false;
+
+
 #if SIMULATION_FLAG == 1
 	static float last_alpha = 0;
 #endif
+
+
 
 
 
@@ -133,6 +140,10 @@ void nav_init(void) {
 	nav_heading_update();	//Check for a new Heading (alpha)
 	nav_position_update();  //Check for a new Position update
 	nav_wind_update();		//Check for new Wind measurements
+
+
+	//Disable the Pathplanner by default
+	enable_pathplanner = false;
 
 
 	//For Debug only
@@ -402,7 +413,10 @@ void nav_speak2helsman() {
 		state.maneuver_start = hrt_absolute_time();	//Define the start of the maneuver
 		if(cb_is_maneuver_completed()==true) {
 			//Check if the previous maneuver is completed before commanding a maneuver
-			cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
+			if(enable_pathplanner == true) {
+				//Only communicate with autonomous sailing app, if pathplanner is enabled
+				cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
+			}
 			smq_send_log_info("HELSMAN: Do maneuver! JW");
 		} else {
 			smq_send_log_info("HELSMAN: Finish the maneuver! JW");
@@ -415,7 +429,10 @@ void nav_speak2helsman() {
 		if(cb_is_maneuver_completed()==true) {
 			//Check if the previous maneuver is completed before commanding a maneuver
 
-			cb_set_alpha_star(alpha_star);
+			if(enable_pathplanner == true) {
+				//Only communicate with autonomous sailing app, if pathplanner is enabled
+				cb_set_alpha_star(alpha_star);
+			}
 			smq_send_log_info("Do normal sailing... JW");
 
 			state.command_maneuver = false;
@@ -591,6 +608,22 @@ void nav_set_configuration(uint64_t period, uint32_t turnrate) {
 	//executions of Path planning
 	config.max_headchange = turnrate * RAD2DEG * period;
 }
+
+
+/**
+ * Enable the use of the navigator
+ * This function is calles by QGroundControl to set a new Value
+ *
+ * @param enable: if 1, pathplanner is enabled, else, disabled
+ */
+void nav_enable_navigator(uint8_t enable) {
+	if(enable == 1) {
+		enable_pathplanner = true;
+	} else {
+		enable_pathplanner = false;
+	}
+}
+
 
 
 /* FUNCTIONS FOR DEBUGGING */

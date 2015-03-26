@@ -132,10 +132,10 @@ bool cb_do_maneuver(float new_alpha_star){
     if(cb_is_maneuver_completed() == true){
 
         //set new alpha_star
-        //TODO cb_set_alpha_star(new_alpha_star);
+        cb_set_alpha_star(new_alpha_star);
 
         //send do_maneuver command to autonomous_sailing app
-        //TODO pp.do_maneuver = 1;
+        pp.do_maneuver = 1;
 
         //give a new Id for this new maneuver
         if(pp.id_maneuver == 255)
@@ -175,9 +175,6 @@ bool cb_is_maneuver_completed(void){
  * @param boat_guidance_debug_sub subscription to boat_guidance_debug
 */
 void cb_new_as_data(int boat_guidance_debug_sub){
-
-	smq_send_log_info("Got new data from Boat guidance... JW");
-
 
     //copy new BGUD data
     orb_copy(ORB_ID(boat_guidance_debug), boat_guidance_debug_sub,
