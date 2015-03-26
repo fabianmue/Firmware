@@ -66,6 +66,9 @@ bool cb_new_heading(float heading);
 /** @brief store the current Wind Direction known by the Navigator in the pathplanning-topic */
 bool cb_new_wind(float wind);
 
+/** @brief Send Debug Value to Qgroundcontrol */
+bool cb_new_int(int val);
+
 /** @brief command a tack or a jybe */
 bool cb_do_maneuver(float new_alpha_star);
 

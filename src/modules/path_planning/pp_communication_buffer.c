@@ -114,6 +114,19 @@ bool cb_new_wind(float wind) {
 }
 
 
+/**
+ * Send an Int-Value for Debug purposes to QGround Control
+ *
+ * @param int-value
+ */
+bool cb_new_int(int val) {
+	pp.int_debug = val;
+
+	pp_updated = true;
+
+	return true;
+}
+
 
 
 
@@ -141,10 +154,10 @@ bool cb_do_maneuver(float new_alpha_star){
         if(pp.id_maneuver == 255)
             pp.id_maneuver = 0;
         else
-            pp.id_maneuver = pp.id_maneuver + 1;
+            //pp.id_maneuver = pp.id_maneuver; //TODO DEBUG + 1;
 
         //TODO DEBUG:
-        cb_new_wind((float)pp.id_maneuver);
+        cb_new_int(pp.id_maneuver);
 
         //remember we have to send the meneuver command to autonomous_sailing app
         pp_updated = true;

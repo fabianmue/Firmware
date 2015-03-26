@@ -2189,7 +2189,7 @@ public:
         //return 8 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
         //return 6 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
         //return 4 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
-        return 6 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 7 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
     }
 
 private:
@@ -2242,6 +2242,10 @@ protected:
 
             snprintf(msg.name, sizeof(msg.name), "as_navwin");
             msg.value = ((float)path_p_debug.wind*RAD2DEG);
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "as_intdebg");
+            msg.value = ((int)path_p_debug.int_debug);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
         }
     }

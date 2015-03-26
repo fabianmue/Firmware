@@ -26,6 +26,7 @@ struct path_planning_s {
     float ned_east;		/**< East-Coordinate in NED-Frame of the Boat  => for debugging*/
     float heading; 		/**< Current heading of the boat known by the Navigator => for debugging*/
     float wind; 		/**< Current Wind Direction known by the Navigator => for debugging */
+    int int_debug;		/**< Debug Variable for Int-Values */
 };
 
 
