@@ -47,13 +47,11 @@ static struct {
 	 	 	 	 	 	 	 * 1 = Cost-Function-Method
 	 	 	 	 	 	 	 * 2 = Potential-Field-Method */
 	bool reset; 			//Resets all local varables to a predefined state (init-state), if true
-	uint64_t maneuver_security_time;	//Time the pathplanning gives the boat after a maneuver to gain speed
 } config = {
 	.period = 1000000,
 	.max_headchange = 0.1745329f, //~10°/s
 	.method = 1,
 	.reset = false,
-	.maneuver_security_time = 20*1e6	  //A maneuver normally tooks no longer than 10s
 };
 
 
@@ -115,16 +113,12 @@ void nav_init(void) {
 	home.lon = HOMELON;
 	state.position = nh_geo2ned(home);
 	state.last_call = 0;
-	state.maneuver_start = 0;
-	state.maneuver_end = 0;
 	state.command_maneuver = false;
-	state.maneuver_security = false;
 
 	//Set the initial Values for the Configuration
 	config.period = 1000000;			// = 1s
 	config.max_headchange = 2.5f*0.17453292f; // = 12°/period
 	config.method = 1; //As a default use the Cost-Function-Method
-	config.maneuver_security_time = 20*1e6;
 
 
 	//Update the state by requesting the values from the communication Buffer
@@ -164,95 +158,39 @@ void nav_navigator(void) {
 	if(state.maneuver == true) {
 		//A maneuver is in progress
 
-		/*if(state.maneuver_security == true) {
-			//We are in the security zone, where we have to wait until all data is published
-			//10s should be enough...
-			if((systime-state.maneuver_start) >= 1*1e6) {
-				state.maneuver_security = false;
-				smq_send_log_info("End of Security Zone after maneuver JW");
-			}
-		} else {*/
-			if(cb_is_maneuver_completed()) {
-				//Wait for maneuver to be completed...
+		if(cb_is_maneuver_completed()) {
+			//Wait for maneuver to be completed...
 
-				state.maneuver_security = false;
-				state.maneuver = false;				//The maneuver flag can be reseted and pathplanning can be done again...
-				state.command_maneuver = false;
+			state.maneuver = false;				//The maneuver flag can be reseted and pathplanning can be done again...
+			state.command_maneuver = false;
 
-				smq_send_log_info("Maneuver is completed! JW");
+			smq_send_log_info("Maneuver is completed! JW");
 
 
-				#if SIMULATION_FLAG == 1
-				//The Maneuver is completed => we must set a new current heading, otherwise the pathplanner forces to do
-				//another maneuver...and another...and another... endless-while!
-
-				//Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
-				//Compass-Frame. heading = alpha + twd
-				float alpha = last_alpha + state.wind_dir;
-
-				if(alpha < 0) {
-					alpha = 2*PI + alpha;
-				}
-
-				alpha = fmod(alpha,2*PI);
-
-				state.heading_cur = 270*DEG2RAD;//alpha;  //TODO: This is hard-coded just for testing
-
-				#endif
-
-			}
-		//}
-
-	}
-
-
-
-	/*
-	//A maneuver is in Progress => wait for the maneuver to be completed
-	//TODO: remove false
-	if(state.maneuver == true) {
-
-		if((cb_is_maneuver_completed() == true) && (state.maneuver_security == false)) {
-			smq_send_log_info("Maneuver completed... JW ");
-
-			//The maneuver is completed => take the time, when this happend
-			state.maneuver_end = systime;
-			state.maneuver_security = true;
-
-			//state.maneuver = false;
-
-			//Hack for Indoor-Testing
 			#if SIMULATION_FLAG == 1
-				//The Maneuver is completed => we must set a new current heading, otherwise the pathplanner forces to do
-				//another maneuver...and another...and another... endless-while!
+			//The Maneuver is completed => we must set a new current heading, otherwise the pathplanner forces to do
+			//another maneuver...and another...and another... endless-while!
 
-				//Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
-				//Compass-Frame. heading = alpha + twd
-				float alpha = last_alpha + state.wind_dir;
+			//Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
+			//Compass-Frame. heading = alpha + twd
+			float alpha = last_alpha + state.wind_dir;
 
-				if(alpha < 0) {
-					alpha = 2*PI + alpha;
-				}
+			if(alpha < 0) {
+				alpha = 2*PI + alpha;
+			}
 
-				alpha = fmod(alpha,2*PI);
+			alpha = fmod(alpha,2*PI);
 
-				state.heading_cur = 270*DEG2RAD;//alpha;  //TODO: This is hard-coded just for testing
+			state.heading_cur = 270*DEG2RAD;//alpha;  //TODO: This is hard-coded just for testing
 
 			#endif
 
 		}
 
+	}
 
-		if((systime-state.maneuver_end) >= config.maneuver_security_time) {
-			//After the maneuver was completed by the autonomous_sailing app, we must give the boat
-			//some time for gaining speed, before we command a new maneuver.
 
-			state.maneuver = false;
-			state.command_maneuver = false;
-			state.maneuver_end = 0;
-			state.maneuver_security = false;
-		}
-	} */
+
 
 
 	/** Pathplanning is only done with a certain frequency AND if no maneuver is under progress
@@ -280,12 +218,8 @@ void nav_navigator(void) {
 
 
 
-		/** A new reference heading should only be calculated if the boat is not doing a maneuver
-		 * The boat is not doing a maneuver, if the maneuver-flag is set to false! */
-		//if(!state.maneuver) {
-
-			/****FIND A NEW REFERENCE HEADING
-			 * Different algorithms can be used. */
+		/****FIND A NEW REFERENCE HEADING
+		 * Different algorithms can be used. */
 		if(config.method == 1) {
 			//Use Cost-Function-Method
 
@@ -307,11 +241,6 @@ void nav_navigator(void) {
 		float OldWind = nh_appWindDir(state.heading_cur,state.wind_dir);		//Current Apparent Winddirection
 
 
-		//TODO DEBUG ONLY: Use Position-Variables for the Apparent Wind-Results
-		cb_new_position(NewWind,OldWind);
-
-
-
 		/*Decide if we have to do a tack or a gybe
 		 * A maneuver is necessary, iff we change the hull. A change of hull is represented as a change of sign of the
 		 * apparent Wind direction.
@@ -320,12 +249,6 @@ void nav_navigator(void) {
 			//A Maneuver is Necessary
 
 			state.command_maneuver = true;
-
-			#if P_DEBUG == 1
-			//Never tell the Controller to do a Maneuver in LAB-Environment
-			//state.maneuver = false;
-			#endif
-
 
 		} else {
 			//No Maneuver is necessary and we can therefore set all flags to zero
@@ -441,17 +364,11 @@ void nav_speak2helsman() {
 	if(state.command_maneuver == true) {
 		//A maneuver is necessary
 
-		state.maneuver_start = hrt_absolute_time();	//Define the start of the maneuver
 		if(cb_is_maneuver_completed()==true) {
 			//Check if the previous maneuver is completed before commanding a maneuver
-			if(true || enable_pathplanner == true) {
-				//Only communicate with autonomous sailing app, if pathplanner is enabled
-				cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
-				//enable_pathplanner = false;			//TODO: DEBUG ONLY
 
-				//After a maneuver is commanded one has to wait a small time => such that the topics can be published
-				state.maneuver_security = true;
-			}
+			cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
+
 			smq_send_log_info("HELSMAN: Do maneuver! JW");
 		} else {
 			smq_send_log_info("HELSMAN: Finish the maneuver! JW");
@@ -464,21 +381,14 @@ void nav_speak2helsman() {
 		if(cb_is_maneuver_completed()==true) {
 			//Check if the previous maneuver is completed before commanding a maneuver
 
-			if(true || enable_pathplanner == true) {
-				//Only communicate with autonomous sailing app, if pathplanner is enabled
-				cb_set_alpha_star(alpha_star);
-			}
-			smq_send_log_info("Do normal sailing... JW");
+			cb_set_alpha_star(alpha_star);		//Send the new reference to autonomous sailing app
+
+			//smq_send_log_info("Do normal sailing... JW");
 
 			state.command_maneuver = false;
 			state.maneuver = false;
 		}
 	}
-
-	//Report the Result of the Pathplanning to QGround Control
-	//sprintf(txt_msg, "New Alpha Star = %1.1f [deg], Maneuver = %d @ %d" , (double)(alpha_star*RAD2DEG),(int)(state.maneuver),(int)state.last_call);
-	//sprintf(txt_msg, "New Alpha Star = %1.1f [deg], Maneuver = %d @ %d" , (double)(state.heading_ref*RAD2DEG),(int)(state.maneuver),(int)state.last_call);
-	//smq_send_log_info(txt_msg);
 }
 
 

@@ -30,10 +30,7 @@ struct nav_state_s {
 	uint8_t targetNum; 				//Current number of target to be reached (limits number of targets to 256)
 	bool maneuver;					//true, iff a maneuver is in progress
 	uint64_t last_call; 			//Systemtime, when the Pathplanning was done the last time [us]
-	uint64_t maneuver_start; 		//Time, when a maneuver was started.
-	uint64_t maneuver_end;			//Time, when the maneuver was finished.
 	bool command_maneuver;			//True, if the boat should do a maneuver, false else(<=> command a maneuver)
-	bool maneuver_security; 		//True, if the maneuver is completed and we are in the security time
 };
 
 /**Struct containing the Race-Field-Information */
