@@ -164,14 +164,14 @@ void nav_navigator(void) {
 	if(state.maneuver == true) {
 		//A maneuver is in progress
 
-		if(state.maneuver_security == true) {
+		/*if(state.maneuver_security == true) {
 			//We are in the security zone, where we have to wait until all data is published
 			//10s should be enough...
-			if((systime-state.maneuver_start) >= 10*1e6) {
+			if((systime-state.maneuver_start) >= 1*1e6) {
 				state.maneuver_security = false;
 				smq_send_log_info("End of Security Zone after maneuver JW");
 			}
-		} else {
+		} else {*/
 			if(cb_is_maneuver_completed()) {
 				//Wait for maneuver to be completed...
 
@@ -201,7 +201,7 @@ void nav_navigator(void) {
 				#endif
 
 			}
-		}
+		//}
 
 	}
 
