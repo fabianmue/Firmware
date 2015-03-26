@@ -109,6 +109,8 @@
 #include <uORB/topics/boat_local_position.h>
 //Added by Marco Tranzatto
 #include <uORB/topics/parser200wx_status.h>
+//Added by Jonas Wirz
+#include <uORB/topics/boat_pp_debug.h>
 
 
 #include <systemlib/systemlib.h>
@@ -986,6 +988,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         struct path_planning_s path_planning; //Added by Marco Tranzatto
         struct boat_local_position_s boat_local_position; //Added by Marco Tranzatto
         struct parser200wx_status_s parser200wx_status; //Added by Marco Tranzatto
+        struct boat_pp_debug1_s boat_pp_debug1; //Added by Jonas Wirz
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1040,6 +1043,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             struct log_PP_s log_PP; //Added by Marco Tranzatto
             struct log_BLP_s log_BLP; //Added by Marco Tranzatto
             struct log_PWS_s log_PWS; // Added by Marco Tranzatto
+            struct log_PPD1_s log_PPD1; //Added by Jonas Wirz
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1089,6 +1093,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         int path_planning; //Added by Marco Tranzatto
         int boat_local_position; //Added by Marco Tranzatto
         int parser200wx_status; // Added by Marco Tranzatto
+        int boat_pp_debug1_sub; //Added by Jonas Wirz
 	} subs;
 
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
@@ -1150,6 +1155,9 @@ int sdlog2_thread_main(int argc, char *argv[])
     subs.boat_local_position = orb_subscribe(ORB_ID(boat_local_position));
 
     subs.parser200wx_status = orb_subscribe(ORB_ID(parser200wx_status));
+
+    subs.boat_pp_debug1_sub = orb_subscribe(ORB_ID(boat_pp_debug1)); //Added by Jonas Wirz
+
     //****************** End Add by Marco Tranzatto ************
 
 
@@ -1916,6 +1924,23 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_PWS.completed_msgs = buf.parser200wx_status.completed_msgs;
             LOGBUFFER_WRITE_AND_COUNT(PWS);
         }
+
+        /* --- BOAT PP DEBUG 1 (Added by Jonas Wirz)  */
+        if (copy_if_updated(ORB_ID(boat_pp_debug1), subs.boat_pp_debug1_sub, &buf.boat_pp_debug1)) {
+            log_msg.msg_type = LOG_PPD1_MSG;
+            log_msg.body.log_PPD1.obsthorizon = buf.boat_pp_debug1.obsthorizon;
+            log_msg.body.log_PPD1.obstsafetyrad = buf.boat_pp_debug1.obstsafetyrad;
+            log_msg.body.log_PPD1.windowsize = buf.boat_pp_debug1.windowsize;
+            log_msg.body.log_PPD1.period = buf.boat_pp_debug1.period;
+            log_msg.body.log_PPD1.glee = buf.boat_pp_debug1.glee;
+            log_msg.body.log_PPD1.gm = buf.boat_pp_debug1.gm;
+            log_msg.body.log_PPD1.go = buf.boat_pp_debug1.go;
+            log_msg.body.log_PPD1.gs = buf.boat_pp_debug1.gs;
+            log_msg.body.log_PPD1.gt = buf.boat_pp_debug1.gt;
+            log_msg.body.log_PPD1.gw = buf.boat_pp_debug1.gw;
+            LOGBUFFER_WRITE_AND_COUNT(PPD1);
+        }
+
         //********************** End add *******************************
 
 		/* signal the other thread new data, but not yet unlock */

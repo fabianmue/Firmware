@@ -16,6 +16,7 @@
 #include <uORB/topics/boat_qgc_param.h>
 #include <uORB/topics/rc_channels.h>
 #include <uORB/topics/boat_local_position.h>
+#include <uORB/topics/boat_pp_debug.h>
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -49,6 +50,9 @@ bool th_advertise(void);
 
 /** @brief publish path_planning topic*/
 int th_publish_path_planning(const struct path_planning_s *path_planning_p);
+
+/** @brief publish boat_pp_debug1 topic */
+int th_publish_boat_pp_debug1(const struct boat_pp_debug1_s *boat_pp_debug1);
 
 /** @brief publish qgc2 topic */
 int th_publish_qgc2(const struct boat_qgc_param2_s *boat_qgc_param2_p);
