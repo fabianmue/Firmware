@@ -24,14 +24,6 @@
  * - Test if Upwind Course is possible...
  * - Log Pathplanning - Constants on SD-Card
  *
- * - One solution: Copy autonomous_sailing app from marco's working version into my gid-branch (manually)
- * - Introduce flag and call the do_maneuver() by QGround Control
- * - A problem could be, that a maneuver command is sent right after startup...
- *   => a second one is sent to autonomous sailing, what makes it behave crazy, but why is then do_maneuver set to false????
- *   => evtl. comment out navigator and call do_maneuver() instead...
- *
- *
- * - Comment out the "cb_set_alpha_star(alpha_star);" in speak2helsman()
  */
 
 
@@ -452,7 +444,7 @@ void nav_speak2helsman() {
 		state.maneuver_start = hrt_absolute_time();	//Define the start of the maneuver
 		if(cb_is_maneuver_completed()==true) {
 			//Check if the previous maneuver is completed before commanding a maneuver
-			if(enable_pathplanner == true) {
+			if(true || enable_pathplanner == true) {
 				//Only communicate with autonomous sailing app, if pathplanner is enabled
 				cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
 				//enable_pathplanner = false;			//TODO: DEBUG ONLY
@@ -472,7 +464,7 @@ void nav_speak2helsman() {
 		if(cb_is_maneuver_completed()==true) {
 			//Check if the previous maneuver is completed before commanding a maneuver
 
-			if(enable_pathplanner == true) {
+			if(true || enable_pathplanner == true) {
 				//Only communicate with autonomous sailing app, if pathplanner is enabled
 				cb_set_alpha_star(alpha_star);
 			}
