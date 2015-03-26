@@ -418,7 +418,8 @@ void nav_speak2helsman() {
 			cb_set_alpha_star(alpha_star);
 			smq_send_log_info("Do normal sailing... JW");
 
-			state.command_maneuver == false;
+			state.command_maneuver = false;
+			state.maneuver = false;
 		}
 	}
 

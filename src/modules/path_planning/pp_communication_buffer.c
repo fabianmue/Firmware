@@ -176,6 +176,9 @@ bool cb_is_maneuver_completed(void){
 */
 void cb_new_as_data(int boat_guidance_debug_sub){
 
+	smq_send_log_info("Got new data from Boat guidance... JW");
+
+
     //copy new BGUD data
     orb_copy(ORB_ID(boat_guidance_debug), boat_guidance_debug_sub,
              &boat_guidance_debug);
