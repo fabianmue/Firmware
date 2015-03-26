@@ -169,6 +169,52 @@ void nav_navigator(void) {
 
 	uint64_t systime = hrt_absolute_time();
 
+	if(state.maneuver == true) {
+		//A maneuver is in progress
+
+		if(state.maneuver_security == true) {
+			//We are in the security zone, where we have to wait until all data is published
+			if((systime-state.maneuver_start) >= 10*1e6) {
+				state.maneuver_security = false;
+				smq_send_log_info("End of Security Zone after maneuver JW");
+			}
+		} else {
+			if(cb_is_maneuver_completed()) {
+				//Wait for maneuver to be completed...
+
+				state.maneuver_security = false;
+				state.maneuver = false;
+				state.command_maneuver = false;
+
+				smq_send_log_info("Maneuver is completed! JW");
+
+
+				#if SIMULATION_FLAG == 1
+				//The Maneuver is completed => we must set a new current heading, otherwise the pathplanner forces to do
+				//another maneuver...and another...and another... endless-while!
+
+				//Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
+				//Compass-Frame. heading = alpha + twd
+				float alpha = last_alpha + state.wind_dir;
+
+				if(alpha < 0) {
+					alpha = 2*PI + alpha;
+				}
+
+				alpha = fmod(alpha,2*PI);
+
+				state.heading_cur = 270*DEG2RAD;//alpha;  //TODO: This is hard-coded just for testing
+
+				#endif
+
+			}
+		}
+
+	}
+
+
+
+	/*
 	//A maneuver is in Progress => wait for the maneuver to be completed
 	//TODO: remove false
 	if(state.maneuver == true) {
@@ -187,8 +233,8 @@ void nav_navigator(void) {
 				//The Maneuver is completed => we must set a new current heading, otherwise the pathplanner forces to do
 				//another maneuver...and another...and another... endless-while!
 
-				/* Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
-				 * Compass-Frame. heading = alpha + twd */
+				//Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
+				//Compass-Frame. heading = alpha + twd
 				float alpha = last_alpha + state.wind_dir;
 
 				if(alpha < 0) {
@@ -203,13 +249,6 @@ void nav_navigator(void) {
 
 		}
 
-		//For safety reason end the maneuver after a predefined time, if the communication buffer is not responding
-		/*if((systime-state.maneuver_start) >= config.maneuverduration) {
-			state.maneuver = false;
-
-			smq_send_log_info("Safety Reset of the maneuver flag!");
-		}*/
-
 
 		if((systime-state.maneuver_end) >= config.maneuver_security_time) {
 			//After the maneuver was completed by the autonomous_sailing app, we must give the boat
@@ -220,7 +259,7 @@ void nav_navigator(void) {
 			state.maneuver_end = 0;
 			state.maneuver_security = false;
 		}
-	}
+	} */
 
 
 	/** Pathplanning is only done with a certain frequency AND if no maneuver is under progress
@@ -417,6 +456,9 @@ void nav_speak2helsman() {
 				//Only communicate with autonomous sailing app, if pathplanner is enabled
 				cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
 				//enable_pathplanner = false;			//TODO: DEBUG ONLY
+
+				//After a maneuver is commanded one has to wait a small time => such that the topics can be published
+				state.maneuver_security = true;
 			}
 			smq_send_log_info("HELSMAN: Do maneuver! JW");
 		} else {
