@@ -554,7 +554,11 @@ void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos) {
 void nav_set_configuration(uint64_t period, uint32_t turnrate) {
 
 	//Store the period
-	config.period = period*1000000.0f;
+	if(period > 0) {
+		config.period = period*1000000.0f;
+	} else {
+		config.period = 1000000.0f;	//Set default value
+	}
 
 	//Store the maximum possible change in Heading between two consecutive
 	//executions of Path planning
