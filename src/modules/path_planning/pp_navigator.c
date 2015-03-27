@@ -609,6 +609,20 @@ void nav_set_method(uint8_t method) {
 }
 
 
+/*
+ * Set the current position of the boat as the next target position.
+ * Then one can sail away from this position manually and then switch to
+ * autonomous mode. The pathplanner should then guide the boat back to this position.
+ */
+void nav_set_quick_target(void) {
+	field.targets[0] = state.position;
+
+	state.targetNum = 0;
+	field.NumberOfTargets = 1;
+}
+
+
+
 
 /* FUNCTIONS FOR DEBUGGING */
 

@@ -294,13 +294,23 @@ PARAM_DEFINE_INT32(PP_NAV_RESET,0);
 
 /**
  * pp_apathp_on
+ * Enable the use of the Pathplanner
  */
 PARAM_DEFINE_INT32(PP_APATHP_ON,0);
 
 /**
- * pp_nav_meth
+ * pp_nav_meth: Set the method used for Pathplanning
+ * Note: The selectable methods are described in navigator.c (struct Config)
  */
 PARAM_DEFINE_INT32(PP_NAV_METH,1);
+
+
+/**
+ * pp_nav_setar
+ * Set the current position as the next target position. As soon as it is switched to
+ * autonomous mode the pathplanner guides the boat towards this target
+ */
+PARAM_DEFINE_INT32(PP_NAV_SETAR,1);
 
 
 static struct pointers_param_qgc_s{
@@ -375,6 +385,7 @@ static struct pointers_param_qgc_s{
 	param_t nav_reset;
 	param_t nav_pathp_on;
 	param_t nav_meth;
+	param_t nav_setar;
 
 
 	//**SIMULATION FOR DEBUGGING
@@ -477,6 +488,7 @@ void p_param_init(void){
     //**ENABLE PATHPLANNER
     pointers_param_qgc.nav_pathp_on = param_find("PP_APATHP_ON");
     pointers_param_qgc.nav_meth = param_find("PP_NAV_METH");
+    pointers_param_qgc.nav_setar = param_find("PP_NAV_SETAR");
 
 
     //get parameters but do not add any grid lines at start up
@@ -652,88 +664,93 @@ void p_param_update(bool update_path_param){
 
 
     //**COST METHOD
-    	float gw, go, gm, gs, gt, glee, obstsafetyradius, obsthorizon, windowsize;
-    	param_get(pointers_param_qgc.cm_weight_gw_pointer, &gw);
-    	param_get(pointers_param_qgc.cm_weight_go_pointer, &go);
-    	param_get(pointers_param_qgc.cm_weight_gm_pointer, &gm);
-    	param_get(pointers_param_qgc.cm_weight_gs_pointer, &gs);
-    	param_get(pointers_param_qgc.cm_weight_gt_pointer, &gt);
-    	param_get(pointers_param_qgc.cm_weight_glee_pointer, &glee);
+    float gw, go, gm, gs, gt, glee, obstsafetyradius, obsthorizon, windowsize;
+    param_get(pointers_param_qgc.cm_weight_gw_pointer, &gw);
+    param_get(pointers_param_qgc.cm_weight_go_pointer, &go);
+    param_get(pointers_param_qgc.cm_weight_gm_pointer, &gm);
+    param_get(pointers_param_qgc.cm_weight_gs_pointer, &gs);
+    param_get(pointers_param_qgc.cm_weight_gt_pointer, &gt);
+    param_get(pointers_param_qgc.cm_weight_glee_pointer, &glee);
 
-    	param_get(pointers_param_qgc.cm_obstsafetyradius_pointer, &obstsafetyradius);
-    	param_get(pointers_param_qgc.cm_obsthorizon_pointer, &obsthorizon);
-    	param_get(pointers_param_qgc.cm_windowsize_pointer, &windowsize);
+    param_get(pointers_param_qgc.cm_obstsafetyradius_pointer, &obstsafetyradius);
+    param_get(pointers_param_qgc.cm_obsthorizon_pointer, &obsthorizon);
+    param_get(pointers_param_qgc.cm_windowsize_pointer, &windowsize);
 
-    	cm_set_configuration(gw, go, gm, gs, gt, glee, obstsafetyradius, obsthorizon, windowsize);
-
-
-    	//**NAVIGATOR
-    	uint32_t period, turnrate;
-    	param_get(pointers_param_qgc.nav_period, &period);
-    	param_get(pointers_param_qgc.nav_turnrate, &turnrate);
-    	nav_set_configuration(period, turnrate);
-
-    	PointE7 target;
-    	PointE7 obstacle;
-    	uint8_t t_num, o_num;
-    	int32_t altitude;
-
-    	param_get(pointers_param_qgc.nav_altitude, &altitude);
-
-    	param_get(pointers_param_qgc.nav_target_lat,&(target.lat));
-    	param_get(pointers_param_qgc.nav_target_lon,&(target.lon));
-    	param_get(pointers_param_qgc.nav_target_number,&t_num);
-    	param_get(pointers_param_qgc.nav_obstacle_lat,&(obstacle.lat));
-    	param_get(pointers_param_qgc.nav_obstacle_lon,&(obstacle.lon));
-    	param_get(pointers_param_qgc.nav_obstacle_number,&o_num);
-
-    	target.alt = altitude;
-    	obstacle.alt = altitude;
-
-    	nav_set_target(t_num,target);
-    	nav_set_obstacle(o_num,obstacle);
+    cm_set_configuration(gw, go, gm, gs, gt, glee, obstsafetyradius, obsthorizon, windowsize);
 
 
-    	PointE7 start[2];
-    	param_get(pointers_param_qgc.nav_start1_lat, &(start[0].lat));
-    	param_get(pointers_param_qgc.nav_start1_lon, &(start[0].lon));
-    	param_get(pointers_param_qgc.nav_start2_lat, &(start[1].lat));
-    	param_get(pointers_param_qgc.nav_start2_lon, &(start[1].lon));
+    //**NAVIGATOR
+    uint32_t period, turnrate;
+    param_get(pointers_param_qgc.nav_period, &period);
+    param_get(pointers_param_qgc.nav_turnrate, &turnrate);
+    nav_set_configuration(period, turnrate);
 
-    	start[0].alt = altitude;
-    	start[1].alt = altitude;
+    PointE7 target;
+    PointE7 obstacle;
+    uint8_t t_num, o_num;
+    int32_t altitude;
 
-    	nav_set_startline(start[0],start[1]);
+    param_get(pointers_param_qgc.nav_altitude, &altitude);
+   	param_get(pointers_param_qgc.nav_target_lat,&(target.lat));
+   	param_get(pointers_param_qgc.nav_target_lon,&(target.lon));
+   	param_get(pointers_param_qgc.nav_target_number,&t_num);
+   	param_get(pointers_param_qgc.nav_obstacle_lat,&(obstacle.lat));
+   	param_get(pointers_param_qgc.nav_obstacle_lon,&(obstacle.lon));
+   	param_get(pointers_param_qgc.nav_obstacle_number,&o_num);
 
-    	//**RESET THE NAVIGTOR PARAMETERS
-    	uint8_t reset;
-    	param_get(pointers_param_qgc.nav_reset, &reset);
-    	if(reset == 1) {
-    		//Reset the parameters for the pathplanning to the default values.
-    		nav_init();
-    		smq_send_log_info("NAVIGATOR RESET! switch back to 0!");
-    	}
+   	target.alt = altitude;
+   	obstacle.alt = altitude;
 
-
-    	//**ENABLE THE USE OF THE NAVIGATOR
-    	uint8_t pathp_on;
-    	param_get(pointers_param_qgc.nav_pathp_on, &pathp_on);
-    	nav_enable_navigator(pathp_on);
-
-
-    	//**SET METHOD USED FOR PATHPLANNING
-    	uint8_t pathp_meth;
-    	param_get(pointers_param_qgc.nav_meth, &pathp_meth);
-    	nav_set_method(pathp_meth);
+   	nav_set_target(t_num,target);
+   	nav_set_obstacle(o_num,obstacle);
 
 
-    	//**SIMULATION DEBUG
-    	NEDpoint p;
-    	float head;
-    	param_get(pointers_param_qgc.sim_ned_northx,&(p.northx));
-    	param_get(pointers_param_qgc.sim_ned_easty,&(p.easty));
-    	param_get(pointers_param_qgc.sim_heading,&head);
+   	PointE7 start[2];
+   	param_get(pointers_param_qgc.nav_start1_lat, &(start[0].lat));
+   	param_get(pointers_param_qgc.nav_start1_lon, &(start[0].lon));
+   	param_get(pointers_param_qgc.nav_start2_lat, &(start[1].lat));
+   	param_get(pointers_param_qgc.nav_start2_lon, &(start[1].lon));
+   	start[0].alt = altitude;
+   	start[1].alt = altitude;
 
-    	DEBUG_nav_set_fake_state(p, head);
+   	nav_set_startline(start[0],start[1]);
+   	//**RESET THE NAVIGTOR PARAMETERS
+   	uint8_t reset;
+   	param_get(pointers_param_qgc.nav_reset, &reset);
+   	if(reset == 1) {
+   		//Reset the parameters for the pathplanning to the default values.
+   		nav_init();
+   		smq_send_log_info("NAVIGATOR RESET! switch back to 0!");
+   	}
+
+
+   	//**ENABLE THE USE OF THE NAVIGATOR
+   	uint8_t pathp_on;
+   	param_get(pointers_param_qgc.nav_pathp_on, &pathp_on);
+   	nav_enable_navigator(pathp_on);
+
+   	//**SET METHOD USED FOR PATHPLANNING
+   	uint8_t pathp_meth;
+   	param_get(pointers_param_qgc.nav_meth, &pathp_meth);
+   	nav_set_method(pathp_meth);
+
+
+   	//**SET THE CURRENT POSITION OF THE BOAT AS THE NEXT TARGET POSITION
+   	uint8_t pathp_settar;
+   	param_get(pointers_param_qgc.nav_setar, &pathp_settar);
+   	if(pathp_settar == 1) {
+   		nav_set_quick_target();
+   		smq_send_log_info("Set quick Target Position! switch back to 0!");
+   	}
+
+
+   	//**SIMULATION DEBUG
+   	NEDpoint p;
+   	float head;
+   	param_get(pointers_param_qgc.sim_ned_northx,&(p.northx));
+   	param_get(pointers_param_qgc.sim_ned_easty,&(p.easty));
+   	param_get(pointers_param_qgc.sim_heading,&head);
+
+   	DEBUG_nav_set_fake_state(p, head);
 
 }
