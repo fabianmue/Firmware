@@ -8,6 +8,48 @@
 
 #include "pp_config.h"
 #include "pp_potentialfield_method.h"
+#include "pp_navigation_helper.h"
+#include "pp_polardiagram.h"
+
+
+struct {
+	float G_target;       //Weighting factor for getting against target 0.7
+	float G_obstacle;     //Weighting factor for avoiding obstacles 0.4
+	float G_wind;         //Weighting factor for avoiding the non-sailing-sector 1
+	float G_tack;         //Weighting factor for avoiding tacks 0.3
+
+	float search_dist;    //Distance wrt. the boat, where the probe-charge is placed [m]
+	float upwind_dir; 	  //Maximum angle the boat can go upwind
+} Config = {
+		.G_target = 0.3,
+		.G_obstacle = 0.1,
+		.G_wind = 1,
+		.G_tack = 2,
+		.G_upwind = 1,
+
+		.search_dist = 20,
+		.upwind_dir = 0.785398163397f
+};
+
+
+#define HEADRESOLUTION 0.0872664625997f 	//Resolution for simulating the headings in [rad] (here 5°)
+#define HEADRANGE	   1.74532925199f   	//Range for simulating the headings in [rad] (here [-100°...100°] wrt. boat-heading)
+
+
+/** @brief Calculate the total potential at a given probe-placement */
+float total_potential(NEDpoint probe, float seg, struct nav_field_s *field, struct nav_state_s *state);
+
+/** @brief Calcualte the Target Potential */
+float target_potential(NEDpoint probe, struct nav_field_s *field, struct nav_state_s *state);
+
+/** @brief Calcuate the Wind Potential */
+float wind_potential(float seg, struct nav_state_s *state);
+
+/** @brief Calcualte the Obstacle Potential */
+float obstacle_potential(NEDpoint probe, struct nav_field_s *field);
+
+/** @brief Calculate the gaussian distance between the current position and an obstacle*/
+float gaussian_ned_distance(NEDpoint obst_pos, NEDpoint pos);
 
 
 /**
@@ -27,7 +69,7 @@ float pm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 	float seg_end = (state->heading_cur+HEADRANGE);
 
 	uint8_t probeNum = 2*HEADRANGE/HEADRESOLUTION+1;	//Number of Probe-Headings
-	float costMat[(int)(probeNum)];
+	float potMat[(int)(probeNum)];
 	float headMat[(int)(probeNum)];
 
 	uint8_t ind = 0;	//Index for addressing costMat-Elements
@@ -37,34 +79,120 @@ float pm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 		float seg_compass = fmod(seg,(2*PI));
 
 		//Get the cost and save it in the matrix
-		costMat[ind] = total_cost(seg_compass,state,field);
-		headMat[ind] = seg_compass;
+		NEDpoint probe;
+		probe.northx = cosf(seg) * Config.search_dist + state->position.northx;
+	    probe.easty = sinf(seg) * Config.search_dist + state->position.easty;
 
-		#if C_DEBUG == 1
-			//printf("Total Cost: %f, %f\n",seg_compass*RAD2DEG,costMat[ind]);
-		#endif
+	    potMat[ind] = total_potential(probe, seg, field, state);
 
 		//Update Index
 		ind++;
 	}
 
-	//Smooth Cost-Matrix
-	float mat[probeNum];
-	smooth(costMat,probeNum,Config.WindowSize,mat);
-
-	//Print the two arrays
-	#if C_DEBUG == 1
-	print_array(costMat,probeNum);
-	print_array(mat,probeNum);
-	#endif
-
-
 	//Find minimum Index
-	uint8_t minIndex = nh_findMin(costMat,probeNum);
+	uint8_t minIndex = nh_findMin(potMat,probeNum);
 
 	//Get corresponding minimum Heading
 	float optHeading = headMat[minIndex];
 
 	return optHeading;
 }
+
+
+/**
+ * Calcualte the total potential at a given Test-Point
+ */
+float total_potential(NEDpoint probe, float seg, struct nav_field_s *field, struct nav_state_s *state) {
+
+	//** Target Potential
+	float target_p = target_potential(probe, field, state);
+
+
+	//** Wind Potential
+	float wind_p = wind_potential(seg, state);
+
+
+	//** Obstacle Potential
+	float obst_p = obstacle_potential(probe, field);
+
+
+	return target_p + wind_p + obst_p;
+}
+
+
+/**
+ * Calculate the target Potential
+ */
+float target_potential(NEDpoint probe, struct nav_field_s *field, struct nav_state_s *state) {
+	return Config.G_target * nh_ned_dist(probe, field->targets[state->targetNum]);
+}
+
+
+
+/**
+ * Calculate the wind Potential
+ */
+float wind_potential(float seg, struct nav_state_s *state) {
+
+	float alpha_app = nh_appWindDir(seg,state->wind_dir);
+
+	float p_wind = Config.G_wind/pol_polardiagram(alpha_app,state->wind_speed);
+
+
+	//Punish Tacks
+	float p_maneuver = 0;
+	if(fabs(seg-state->heading_cur) >= 2*Config.upwind_dir) {
+		p_maneuver = Config.G_tack;
+	}
+
+	return (p_maneuver + Config.G_wind * p_wind);
+}
+
+
+/**
+ * Calculate the obstacle Potential
+ */
+float obstacle_potential(NEDpoint probe, struct nav_field_s *field) {
+
+	float p_obst_tot = 0;
+
+	//Loop over all Obstacles
+	uint8_t i;
+	for (i = 0; i < field->NumberOfObstacles; i++) {
+
+	    //Take Gaussian distance
+	    float obst_dist = gaussian_ned_distance(field->obstacles[i],probe);
+	    p_obst_tot = p_obst_tot + Config.G_obstacle * obst_dist;
+	}
+
+	 return p_obst_tot;
+}
+
+
+/**
+ * Modulate the distance to obstacles as a Gaussian
+ * The distance from a Point to an obstacle is modulated as a Gaussian.
+ * Therefore the size of the obstacle can be modulated.
+ */
+float gaussian_ned_distance(NEDpoint obst_pos, NEDpoint pos) {
+
+	//Set Parameters
+	float A = 150;     //Height of Peak
+	float dx = 30;     //Width of the Peak in x-Direction
+	float dy = 30;     //Width of the Peak in x-Direction
+
+
+	//SET POSITIONS
+	float x = pos.northx;
+	float y = pos.easty;
+
+	float x0 = obst_pos.northx;
+	float y0 = obst_pos.easty;
+
+	//CALCUALTE DISTANCE
+	return A*exp(-((((x-x0)*(x-x0))/(2*dx*dx))+(((y-y0)*(y-y0))/(2*dy*dy))));
+}
+
+
+
 
