@@ -62,7 +62,10 @@ static struct nav_field_s field;
 
 
 /** Variable for enabling communication with autonomous sailing app
- * if true, the pathplanner is communicating with autonomous sailing app*/
+ * if true, the pathplanner is communicating with autonomous sailing app
+ * Note: The pathplanner is running all the time in background. But as soon
+ * 		 as this variable is set to true, it communicates the outputs to the
+ * 		 helsman (autonomous sailing app) */
 static bool enable_pathplanner = false;
 
 /** If true, a quick_target is set and when switching to autonomous mode the next time
@@ -219,12 +222,20 @@ void nav_navigator(void) {
 			smq_send_log_info("Quick Target was set!");
 			cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
 
-			//Enable the pathplanner
-			enable_pathplanner = true;
-
 		}
 	}
 
+
+	/** Enable the pathplanner when we are in autonomous mode */
+	if(cb_is_autonomous_mode() == true) {
+		//The remote control is in autonomous mode now => we can enable the pathplanner
+
+		enable_pathplanner = true;
+	} else {
+		//The remote control is NOT in autonomous mode => we disable the pathplanner
+
+		enable_pathplanner = false;
+	}
 
 
 
@@ -240,11 +251,11 @@ void nav_navigator(void) {
 
 
 		//** Check if new information is available and change the state accordingly */
-		#if P_DEBUG == 0
+		#if SIMULATION_FLAG == 0
 		//Note: This information is only available, when the boat is not in test-mode
-		//nav_heading_update();   	//New Heading-Data TODO: Uncomment this
-		//nav_position_update();  	//New Position-Data TODO: Uncomment this
-		//nav_wind_update();		//New Wind-Data TODO: Uncomment this
+		nav_heading_update();   	//New Heading-Data
+		nav_position_update();  	//New Position-Data
+		nav_wind_update();			//New Wind-Data
 		#endif
 
 
@@ -260,7 +271,6 @@ void nav_navigator(void) {
 			//Use Cost-Function-Method
 
 			state.heading_ref = cm_NewHeadingReference(&state,&field);
-			//cb_new_wind(state.heading_ref); //TODO: DEBUG, set Wind as the calculated reference heading
 		}
 
 		if(config.method == 2) {
