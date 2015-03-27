@@ -201,7 +201,7 @@ void nav_navigator(void) {
 	/** A quick-target is set.  We wait for the remote control to be switched to autonomous mode and then
 	 * set the target.
 	 */
-	if(quick_target == true) {
+	if(false && quick_target == true) { //TODO: Remove false
 		//A quick-target was set.
 
 		if(cb_is_autonomous_mode() == true) {
