@@ -260,7 +260,7 @@ int pp_thread_main(int argc, char *argv[]) {
                 if(fds[3].revents & POLLIN){
                     // copy commands from remote control
                     orb_copy(ORB_ID(rc_channels), subs.rc_channels, &(strs.rc_channels));
-                    //update pp_communication_buffer with this informaion
+                    //update pp_communication_buffer with this information
                     cb_new_rc_data(&strs);
                 }
 			}

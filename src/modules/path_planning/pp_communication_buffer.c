@@ -51,7 +51,7 @@
 //state variables
 static struct path_planning_s pp;
 static bool pp_updated = false;//has pp been updated ?
-static bool manual_mode = false; //is remote control in manual mode?
+static bool manual_mode = false; //is remote control in manual mode?, true, if in manual mode
 static uint8_t last_haul = HAUL_PORT;//dummy initial guess
 
 static bool change_alpha_star = false;//use it only after reaced last grid line
@@ -67,6 +67,23 @@ static uint64_t now = 0;
 static float downwind_alpha_star_abs = 2.7925268f;
 static char txt_msg[70]; ///used to send messages to QGC
 #endif
+
+
+/**
+ * Get the mode we are in at the moment (manual/autonomous)
+ *
+ * @return true, if we are in autonomous mode
+ */
+bool cb_is_autonomous_mode(void) {
+	if(manual_mode == true) {
+		//we are in autonomous mode => return true
+		return false;
+	} else {
+		//we are in manual mode => return false
+		return true;
+	}
+}
+
 
 
 
@@ -324,6 +341,9 @@ void cb_new_rc_data(const struct structs_topics_s *strs_p){
         //update manual_mode variable
         manual_mode = false;
     }
+
+
+
 }
 
 /**

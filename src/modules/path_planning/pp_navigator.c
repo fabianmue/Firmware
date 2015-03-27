@@ -20,9 +20,7 @@
  * - add Potentialfield Method
  * - Winddirection => how's the definition? Wind from North = 0°/ Wind from South = 180° (Sensor-Frame)
  *
- * - Check ESSC-Loging....
  * - Test if Upwind Course is possible...
- * - Log Pathplanning - Constants on SD-Card
  *
  */
 
@@ -46,7 +44,7 @@ static struct {
 	 	 	 	 	 	 	/* Chooses a path-planning algorithm
 	 	 	 	 	 	 	 * 1 = Cost-Function-Method
 	 	 	 	 	 	 	 * 2 = Potential-Field-Method */
-	bool reset; 			//Resets all local varables to a predefined state (init-state), if true
+	bool reset; 			//Resets all local variables to a predefined state (init-state), if true
 } config = {
 	.period = 1000000,
 	.max_headchange = 0.1745329f, //~10°/s
@@ -66,6 +64,11 @@ static struct nav_field_s field;
 /** Variable for enabling communication with autonomous sailing app
  * if true, the pathplanner is communicating with autonomous sailing app*/
 static bool enable_pathplanner = false;
+
+/** If true, a quick_target is set and when switching to autonomous mode the next time
+ * the target is set. */
+static bool quick_target = false;
+static NEDpoint ntarget;	//Target that should be reached when quick_target is set
 
 
 #if SIMULATION_FLAG == 1
@@ -130,6 +133,9 @@ void nav_init(void) {
 
 	//Disable the Pathplanner by default
 	enable_pathplanner = false;
+	quick_target = false;
+	ntarget = state.position;
+
 
 
 	//For Debug only
@@ -155,6 +161,9 @@ void nav_navigator(void) {
 
 	uint64_t systime = hrt_absolute_time();
 
+
+	/** Listen to Navigator if a maneuver is in progress.
+	 * The Navigator needs to wait until the helsman has finished the maneuver */
 	if(state.maneuver == true) {
 		//A maneuver is in progress
 
@@ -186,7 +195,27 @@ void nav_navigator(void) {
 			#endif
 
 		}
+	}
 
+
+	/** A quick-target is set.  We wait for the remote control to be switched to autonomous mode and then
+	 * set the target.
+	 */
+	if(quick_target == true) {
+		//A quick-target was set.
+
+		if(cb_is_autonomous_mode() == true) {
+			//The remote control is in autonomous mode now => we can set the quick target
+
+			quick_target = false;	//Reset the flag
+
+			field.targets[0] = ntarget;
+			state.targetNum = 0;
+			field.NumberOfTargets = 1;
+
+			smq_send_log_info("Quick Target was set!");
+
+		}
 	}
 
 
@@ -555,6 +584,8 @@ void nav_set_configuration(uint64_t period, uint32_t turnrate) {
 
 	//Store the period
 	if(period > 0) {
+		//The period can only be changed if it is bigger than zero. Otherwise the navigator is called in every loop and
+		//the computational cost increases rapidly, what leads to a total system failure!
 		config.period = period*1000000.0f;
 	} else {
 		config.period = 1000000.0f;	//Set default value
@@ -615,10 +646,9 @@ void nav_set_method(uint8_t method) {
  * autonomous mode. The pathplanner should then guide the boat back to this position.
  */
 void nav_set_quick_target(void) {
-	field.targets[0] = state.position;
+	ntarget = state.position;
 
-	state.targetNum = 0;
-	field.NumberOfTargets = 1;
+	quick_target = true;
 }
 
 

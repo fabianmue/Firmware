@@ -310,7 +310,7 @@ PARAM_DEFINE_INT32(PP_NAV_METH,1);
  * Set the current position as the next target position. As soon as it is switched to
  * autonomous mode the pathplanner guides the boat towards this target
  */
-PARAM_DEFINE_INT32(PP_NAV_SETAR,1);
+PARAM_DEFINE_INT32(PP_NAV_SETAR,0);
 
 
 static struct pointers_param_qgc_s{
