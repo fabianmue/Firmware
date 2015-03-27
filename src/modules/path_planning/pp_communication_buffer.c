@@ -75,7 +75,7 @@ static char txt_msg[70]; ///used to send messages to QGC
  * @return true, if we are in autonomous mode
  */
 bool cb_is_autonomous_mode(void) {
-	if(manual_mode == false) {
+	if(manual_mode == true) {
 		//we are in autonomous mode => return true
 		return false;
 	} else {

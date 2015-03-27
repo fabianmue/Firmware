@@ -207,13 +207,20 @@ void nav_navigator(void) {
 		if(cb_is_autonomous_mode() == true) {
 			//The remote control is in autonomous mode now => we can set the quick target
 
-			quick_target = false;	//Reset the flag
+			//Reset the flag
+			quick_target = false;
 
+			//Set the target
 			field.targets[0] = ntarget;
 			state.targetNum = 0;
 			field.NumberOfTargets = 1;
 
+			//Inform QGround Control
 			smq_send_log_info("Quick Target was set!");
+			cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
+
+			//Enable the pathplanner
+			enable_pathplanner = true;
 
 		}
 	}
