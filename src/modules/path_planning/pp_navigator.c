@@ -201,7 +201,7 @@ void nav_navigator(void) {
 	/** A quick-target is set.  We wait for the remote control to be switched to autonomous mode and then
 	 * set the target.
 	 */
-	if(false && quick_target == true) { //TODO: Remove false
+	if(quick_target == true) { //TODO: Remove false
 		//A quick-target was set.
 
 		if(cb_is_autonomous_mode() == true) {
@@ -396,7 +396,9 @@ void nav_speak2helsman() {
 		if(cb_is_maneuver_completed()==true) {
 			//Check if the previous maneuver is completed before commanding a maneuver
 
-			cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
+			if(enable_pathplanner == true) {
+				cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
+			}
 
 			smq_send_log_info("HELSMAN: Do maneuver! JW");
 		} else {
@@ -410,7 +412,9 @@ void nav_speak2helsman() {
 		if(cb_is_maneuver_completed()==true) {
 			//Check if the previous maneuver is completed before commanding a maneuver
 
-			cb_set_alpha_star(alpha_star);		//Send the new reference to autonomous sailing app
+			if(enable_pathplanner == true) {
+				cb_set_alpha_star(alpha_star);		//Send the new reference to autonomous sailing app
+			}
 
 			//smq_send_log_info("Do normal sailing... JW");
 

@@ -715,7 +715,7 @@ void p_param_update(bool update_path_param){
 
    	nav_set_startline(start[0],start[1]);
    	//**RESET THE NAVIGTOR PARAMETERS
-   	uint8_t reset;
+   	uint8_t reset = 0;
    	param_get(pointers_param_qgc.nav_reset, &reset);
    	if(reset == 1) {
    		//Reset the parameters for the pathplanning to the default values.
@@ -725,18 +725,18 @@ void p_param_update(bool update_path_param){
 
 
    	//**ENABLE THE USE OF THE NAVIGATOR
-   	uint8_t pathp_on;
+   	uint8_t pathp_on = 0;
    	param_get(pointers_param_qgc.nav_pathp_on, &pathp_on);
    	nav_enable_navigator(pathp_on);
 
    	//**SET METHOD USED FOR PATHPLANNING
-   	uint8_t pathp_meth;
+   	uint8_t pathp_meth = 1;
    	param_get(pointers_param_qgc.nav_meth, &pathp_meth);
    	nav_set_method(pathp_meth);
 
 
    	//**SET THE CURRENT POSITION OF THE BOAT AS THE NEXT TARGET POSITION
-   	uint8_t pathp_settar;
+   	uint8_t pathp_settar = 0;
    	param_get(pointers_param_qgc.nav_setar, &pathp_settar);
    	if(pathp_settar == 1) {
    		nav_set_quick_target();

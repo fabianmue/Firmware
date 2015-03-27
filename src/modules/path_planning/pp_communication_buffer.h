@@ -57,6 +57,9 @@
 
 // ----- usefull functions to control the boat
 
+/** @brief return true, if the boat is in autonomous mode */
+bool cb_is_autonomous_mode(void);
+
 /** @brief store the current NED-Position in the pathplanning-topic */
 bool cb_new_position(float north, float east);
 
