@@ -6,6 +6,7 @@
  * @author Jonas Wirz <wirzjo@student.ethz.ch>
  */
 
+#include <math.h>
 #include "pp_config.h"
 #include "pp_potentialfield_method.h"
 #include "pp_navigation_helper.h"
@@ -25,7 +26,6 @@ struct {
 		.G_obstacle = 0.1,
 		.G_wind = 1,
 		.G_tack = 2,
-		.G_upwind = 1,
 
 		.search_dist = 20,
 		.upwind_dir = 0.785398163397f
@@ -80,10 +80,11 @@ float pm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 
 		//Get the cost and save it in the matrix
 		NEDpoint probe;
-		probe.northx = cosf(seg) * Config.search_dist + state->position.northx;
-	    probe.easty = sinf(seg) * Config.search_dist + state->position.easty;
+		probe.northx = cosf(seg_compass) * Config.search_dist + state->position.northx;
+	    probe.easty = sinf(seg_compass) * Config.search_dist + state->position.easty;
 
-	    potMat[ind] = total_potential(probe, seg, field, state);
+	    //Calcualte the total Potential at the given probe-Point
+	    potMat[ind] = total_potential(probe, seg_compass, field, state);
 
 		//Update Index
 		ind++;
@@ -141,7 +142,7 @@ float wind_potential(float seg, struct nav_state_s *state) {
 
 	//Punish Tacks
 	float p_maneuver = 0;
-	if(fabs(seg-state->heading_cur) >= 2*Config.upwind_dir) {
+	if(abs(seg-state->heading_cur) >= 2*Config.upwind_dir) {
 		p_maneuver = Config.G_tack;
 	}
 

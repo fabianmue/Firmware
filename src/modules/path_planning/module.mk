@@ -45,6 +45,7 @@ SRCS	= path_planning.c\
           pp_navigation_helper.c\
           pp_polardiagram.c\
           pp_navigator.c\
-          pp_cost_method.c
+          pp_cost_method.c\
+          pp_potentialfield_method.c
 
 #add here all additional c-Files by using \ at the end of each line

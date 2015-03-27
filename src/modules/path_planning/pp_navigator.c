@@ -28,6 +28,7 @@
 #include "pp_config.h"
 #include "pp_navigator.h"
 #include "pp_cost_method.h"
+#include "pp_potentialfield_method.h"
 
 #include "pp_communication_buffer.h"
 #include <drivers/drv_hrt.h>
@@ -222,7 +223,8 @@ void nav_navigator(void) {
 			smq_send_log_info("Quick Target was set!");
 			cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
 
-			//enable_pathplanner = true;
+			//TODO: If the software crashes on monday, this is the problem => comment this out!
+			enable_pathplanner = true;
 
 		}
 	}
@@ -278,7 +280,7 @@ void nav_navigator(void) {
 		if(config.method == 2) {
 			//Use Potential-Field-Method
 
-			//TODO add the Potential-Field Reference Heading here
+			state.heading_ref = pm_NewHeadingReference(&state,&field);
 		}
 
 
