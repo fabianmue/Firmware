@@ -248,7 +248,7 @@ void nav_navigator(void) {
 	/** FAILSAFE
 	 * When failsafe is enabled, the next target is always forced to be the HOME position
 	 */
-	#if USE_FAILSAFE
+	#if USE_FAILSAFE == 1
 		if(fs_is_failsafe_active() == true) {
 
 			//We force the next target to be the HOME position
