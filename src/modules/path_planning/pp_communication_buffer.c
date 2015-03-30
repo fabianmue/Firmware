@@ -70,6 +70,22 @@ static char txt_msg[70]; ///used to send messages to QGC
 
 
 
+/**
+ * Set Failsafe state
+ * Communiate to Autonomous Sailing app, that we need to go into failsafe mode
+ */
+bool cb_set_failsafe(bool state) {
+
+	pp.failsafe = state;
+
+	pp_updated = true;
+
+	return true;
+}
+
+
+
+
 
 /**
  * Get the mode we are in at the moment (manual/autonomous)

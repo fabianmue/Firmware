@@ -57,6 +57,9 @@
 
 // ----- usefull functions to control the boat
 
+/** @brief Set the failsafe-flag in path planning-topic */
+bool cb_set_failsafe(bool state);
+
 /** @brief return true, if the boat is in autonomous mode */
 bool cb_is_autonomous_mode(void);
 

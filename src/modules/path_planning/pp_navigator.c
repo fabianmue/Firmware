@@ -250,6 +250,7 @@ void nav_navigator(void) {
 	 */
 	#if USE_FAILSAFE
 		if(fs_is_failsafe_active() == true) {
+
 			//We force the next target to be the HOME position
 			Point home;
 			home.lat = HOMELAT;
@@ -261,6 +262,10 @@ void nav_navigator(void) {
 
 			state.targetNum = 0;
 
+			//Communicate Failsafe to autonomous sailing app
+			cb_set_failsafe(true);
+
+			smq_send_log_info("FAILSAFE: Navigating HOME... (JW)!");
 		}
 	#endif
 
