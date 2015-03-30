@@ -53,7 +53,6 @@ bool fs_is_failsafe_active(void) {
 	} else {
 		return false;
 	}
-
 }
 
 

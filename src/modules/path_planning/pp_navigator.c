@@ -29,6 +29,7 @@
 #include "pp_navigator.h"
 #include "pp_cost_method.h"
 #include "pp_potentialfield_method.h"
+#include "pp_failsafe.h"
 
 #include "pp_communication_buffer.h"
 #include <drivers/drv_hrt.h>
@@ -166,7 +167,8 @@ void nav_navigator(void) {
 	uint64_t systime = hrt_absolute_time();
 
 
-	/** Listen to Navigator if a maneuver is in progress.
+	/** MANEUVER IS IN PROGRESS
+	 * Listen to Navigator if a maneuver is in progress.
 	 * The Navigator needs to wait until the helsman has finished the maneuver */
 	if(state.maneuver == true) {
 		//A maneuver is in progress
@@ -202,7 +204,8 @@ void nav_navigator(void) {
 	}
 
 
-	/** A quick-target is set.  We wait for the remote control to be switched to autonomous mode and then
+	/** SET A QUICK TARGET
+	 * A quick-target is set.  We wait for the remote control to be switched to autonomous mode and then
 	 * set the target.
 	 */
 	if(quick_target == true) {
@@ -230,7 +233,7 @@ void nav_navigator(void) {
 	}
 
 
-	/** Enable the pathplanner when we are in autonomous mode */
+	/** ENABLE PATHPLANNER WHEN IN AUTONOMOUS MODE */
 	if(cb_is_autonomous_mode() == true) {
 		//The remote control is in autonomous mode now => we can enable the pathplanner
 
@@ -242,9 +245,30 @@ void nav_navigator(void) {
 	}
 
 
+	/** FAILSAFE
+	 * When failsafe is enabled, the next target is always forced to be the HOME position
+	 */
+	#if USE_FAILSAFE
+		if(fs_is_failsafe_active() == true) {
+			//We force the next target to be the HOME position
+			Point home;
+			home.lat = HOMELAT;
+			home.lon = HOMELON;
+			home.alt = HOMEALT;
+
+			field.targets[0] = nh_geo2ned(home);
+			field.NumberOfTargets = 1;
+
+			state.targetNum = 0;
+
+		}
+	#endif
 
 
-	/** Pathplanning is only done with a certain frequency AND if no maneuver is under progress
+
+
+	/** MAIN PATHPLANNING
+	 *  Pathplanning is only done with a certain frequency AND if no maneuver is under progress
 	 *  Therefore, check the systemtime.
 	 *  Note: When the Computer-Debug-Mode is on Pathplanning is done in every loop!*/
 
