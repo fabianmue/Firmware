@@ -85,6 +85,7 @@ float pm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 
 	    //Calcualte the total Potential at the given probe-Point
 	    potMat[ind] = total_potential(probe, seg_compass, field, state);
+	    headMat[ind] = seg_compass;
 
 		//Update Index
 		ind++;
