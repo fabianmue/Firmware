@@ -231,7 +231,7 @@ void nav_navigator(void) {
 
 
 	/** Enable the pathplanner when we are in autonomous mode */
-	/*if(cb_is_autonomous_mode() == true) {
+	if(cb_is_autonomous_mode() == true) {
 		//The remote control is in autonomous mode now => we can enable the pathplanner
 
 		enable_pathplanner = true;
@@ -239,7 +239,7 @@ void nav_navigator(void) {
 		//The remote control is NOT in autonomous mode => we disable the pathplanner
 
 		enable_pathplanner = false;
-	}*/
+	}
 
 
 
