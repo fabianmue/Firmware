@@ -69,6 +69,8 @@ static char txt_msg[70]; ///used to send messages to QGC
 #endif
 
 
+
+
 /**
  * Get the mode we are in at the moment (manual/autonomous)
  *
