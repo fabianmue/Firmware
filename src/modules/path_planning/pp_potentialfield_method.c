@@ -142,7 +142,7 @@ float wind_potential(float seg, struct nav_state_s *state) {
 
 	//Punish Tacks
 	float p_maneuver = 0;
-	if(abs(seg-state->heading_cur) >= 2*Config.upwind_dir) {
+	if(fabsf(seg-state->heading_cur) >= (2.0f*Config.upwind_dir)) {
 		p_maneuver = Config.G_tack;
 	}
 
@@ -187,11 +187,11 @@ float gaussian_ned_distance(NEDpoint obst_pos, NEDpoint pos) {
 	float x = pos.northx;
 	float y = pos.easty;
 
-	float x0 = obst_pos.northx;
-	float y0 = obst_pos.easty;
+	float x00 = obst_pos.northx;
+	float y00 = obst_pos.easty;
 
 	//CALCUALTE DISTANCE
-	return A*exp(-((((x-x0)*(x-x0))/(2*dx*dx))+(((y-y0)*(y-y0))/(2*dy*dy))));
+	return A*expf(-((((x-x00)*(x-x00))/(2*dx*dx))+(((y-y00)*(y-y00))/(2*dy*dy))));
 }
 
 
