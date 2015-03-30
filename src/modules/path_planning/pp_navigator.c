@@ -185,7 +185,7 @@ void nav_navigator(void) {
 			//another maneuver...and another...and another... endless-while!
 
 			//Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
-			//Compass-Frame. heading = alpha + twd
+			//Compass-Frame. heading = last_alpha + twd
 			float alpha = last_alpha + state.wind_dir;
 
 			if(alpha < 0) {
@@ -194,7 +194,7 @@ void nav_navigator(void) {
 
 			alpha = fmod(alpha,2*PI);
 
-			state.heading_cur = 270 * DEG2RAD; //alpha;
+			state.heading_cur = alpha; //270 * DEG2RAD; //alpha;
 
 			#endif
 
@@ -698,7 +698,7 @@ void DEBUG_nav_set_fake_state(NEDpoint pos, float heading) {
 	state.position = pos;
 
 	//Set Environmental conditions
-	state.wind_dir = 0*DEG2RAD;
+	state.wind_dir = 90*DEG2RAD;
 	state.wind_speed = 3;
 
 	//Always take the first Target
