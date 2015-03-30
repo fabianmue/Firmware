@@ -14,6 +14,7 @@
 
 #include "pp_navigator.h"
 #include "pp_cost_method.h"
+#include "pp_potentialfield_method.h"
 
 #define M_PI_F 3.14159265358979323846f
 
@@ -196,6 +197,16 @@ PARAM_DEFINE_INT32(ASPS_ALT_E3, 406000);
 #endif //USE_GRID_LINES == 1
 #endif //SIMULATION_FLAG == 1
 
+
+/**
+ * pp_potentialfield_method: Weighting factors and other
+ * configuration parameters for potentialfield method
+ */
+PARAM_DEFINE_FLOAT(PP_PM_W_GT, 0.7f);
+PARAM_DEFINE_FLOAT(PP_PM_W_GO, 0.4f);
+PARAM_DEFINE_FLOAT(PP_PM_W_GW, 1.0f);
+PARAM_DEFINE_FLOAT(PP_PM_W_GM, 0.3f);
+PARAM_DEFINE_FLOAT(PP_PM_W_SDIST, 20.0f);
 
 
 
@@ -394,6 +405,14 @@ static struct pointers_param_qgc_s{
 	param_t sim_heading;
 
 
+	//**POTENTIALFIELD METHOD
+	param_t pm_weight_gt_pointer;
+	param_t pm_weight_go_pointer;
+	param_t pm_weight_gw_pointer;
+	param_t pm_weight_gm_pointer;
+	param_t pm_weight_sdist_pointer;
+
+
 }pointers_param_qgc;
 
 
@@ -489,6 +508,14 @@ void p_param_init(void){
     pointers_param_qgc.nav_pathp_on = param_find("PP_APATHP_ON");
     pointers_param_qgc.nav_meth = param_find("PP_NAV_METH");
     pointers_param_qgc.nav_setar = param_find("PP_NAV_SETAR");
+
+
+    //**POTENTIALFIELD METHOD
+    pointers_param_qgc.pm_weight_gt_pointer = param_find("PP_PM_W_GT");
+	pointers_param_qgc.pm_weight_go_pointer = param_find("PP_PM_W_GO");
+	pointers_param_qgc.pm_weight_gw_pointer = param_find("PP_PM_W_GW");
+	pointers_param_qgc.pm_weight_gm_pointer = param_find("PP_PM_W_GM");
+	pointers_param_qgc.pm_weight_sdist_pointer = param_find("PP_PM_W_SDIST");
 
 
     //get parameters but do not add any grid lines at start up
@@ -752,5 +779,15 @@ void p_param_update(bool update_path_param){
    	param_get(pointers_param_qgc.sim_heading,&head);
 
    	DEBUG_nav_set_fake_state(p, head);
+
+
+   	//**SET CONFIGURATION FOR POTENTIALFIELD METHOD
+   	float Gt, Go, Gm, Gw, SearchDist;
+   	param_get(pointers_param_qgc.pm_weight_gt_pointer, &Gt);
+   	param_get(pointers_param_qgc.pm_weight_go_pointer, &Go);
+   	param_get(pointers_param_qgc.pm_weight_gw_pointer, &Gm);
+   	param_get(pointers_param_qgc.pm_weight_gm_pointer, &Gw);
+   	param_get(pointers_param_qgc.pm_weight_sdist_pointer, &SearchDist);
+   	pm_set_configuration(Gt, Go, Gm, Gw, SearchDist);
 
 }

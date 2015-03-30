@@ -10,8 +10,12 @@
 
 #include "pp_navigator.h"
 
-/* @brief Calculate the optimal heading and give corresponding command to helsman*/
+/* @brief Calculate the optimal heading and give corresponding command to helsman */
 float pm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *field);
+
+
+/* @brief Set weighting factors and Configuration from QGround Control */
+void pm_set_configuration(float Gt, float Go, float Gm, float Gw, float SearchDist);
 
 
 #endif /* PP_POTENTIALFIELD_METHOD_H_ */

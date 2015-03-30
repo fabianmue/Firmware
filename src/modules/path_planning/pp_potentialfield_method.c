@@ -22,13 +22,13 @@ struct {
 	float search_dist;    //Distance wrt. the boat, where the probe-charge is placed [m]
 	float upwind_dir; 	  //Maximum angle the boat can go upwind
 } Config = {
-		.G_target = 0.3,
-		.G_obstacle = 0.1,
-		.G_wind = 1,
-		.G_tack = 2,
+		.G_target = 0.7f,
+		.G_obstacle = 0.4f,
+		.G_wind = 1.0f,
+		.G_tack = 0.3f,
 
-		.search_dist = 20,
-		.upwind_dir = 0.785398163397f
+		.search_dist = 20.0f,
+		.upwind_dir = 0.785398163397f //<=> 45°
 };
 
 
@@ -193,6 +193,28 @@ float gaussian_ned_distance(NEDpoint obst_pos, NEDpoint pos) {
 
 	//CALCUALTE DISTANCE
 	return A*expf(-((((x-x00)*(x-x00))/(2*dx*dx))+(((y-y00)*(y-y00))/(2*dy*dy))));
+}
+
+
+
+/**
+ * Set the configuration parameters of the potentialfield method by QGround Control
+ * Note: This function is called by QGroundControl, when changing parameters!
+ *
+ * @param: Gt: Weight for distance to target minimization
+ * @param: Go: Weight for distance to obstacles maximization
+ * @param: Gw: Weight for Speed/Wind optimization
+ * @param: Gm: Weight for avoiding maneuvers (tacks/gybes)
+ * @param: search_dist: Simulated distance from the boat's bow for placing the probe-charges
+ */
+void pm_set_configuration(float Gt, float Go, float Gm, float Gw, float SearchDist) {
+
+	Config.G_target = Gt;
+	Config.G_obstacle = Go;
+	Config.G_wind = Gw;
+	Config.G_tack = Gm;
+
+	Config.search_dist = SearchDist;
 }
 
 
