@@ -205,7 +205,7 @@ void nav_navigator(void) {
 	/** A quick-target is set.  We wait for the remote control to be switched to autonomous mode and then
 	 * set the target.
 	 */
-	if(quick_target == true) { //TODO: Remove false
+	if(quick_target == true) {
 		//A quick-target was set.
 
 		if(cb_is_autonomous_mode() == true) {
@@ -223,7 +223,7 @@ void nav_navigator(void) {
 			smq_send_log_info("Quick Target was set!");
 			cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
 
-			//TODO: If the software crashes on monday, this is the problem => comment this out!
+			//Enable the Pathplanner
 			enable_pathplanner = true;
 
 		}
@@ -698,7 +698,7 @@ void DEBUG_nav_set_fake_state(NEDpoint pos, float heading) {
 	state.position = pos;
 
 	//Set Environmental conditions
-	state.wind_dir = 0;
+	state.wind_dir = 0*DEG2RAD;
 	state.wind_speed = 3;
 
 	//Always take the first Target
