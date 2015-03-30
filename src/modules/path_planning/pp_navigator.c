@@ -406,9 +406,14 @@ void nav_speak2helsman() {
 	float alpha_star = nh_appWindDir(state.heading_ref, state.wind_dir);
 
 	#if SIMULATION_FLAT == 1
-		//Store the current Alpha
+		//Store the current Alpha (this is neede to set a new current alpha star, after the boat has "virtually" done a maneuver
 		last_alpha = alpha_star;
 	#endif
+
+
+	//Display the new reference heading in QGround Control
+	cb_new_refheading(alpha_star);
+
 
 	/* Tell the Helsman to tack/gybe as soon as possible, if pathplanning wants to tack/gybe */
 	if(state.command_maneuver == true) {

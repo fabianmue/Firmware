@@ -66,6 +66,9 @@ bool cb_new_position(float north, float east);
 /** @brief store the current Heading known by the Navigator in the pathplanning-topic */
 bool cb_new_heading(float heading);
 
+/** @brief Store the current reference Heading in the pathplanning-topic */
+bool cb_new_refheading(float ref_heading);
+
 /** @brief store the current Wind Direction known by the Navigator in the pathplanning-topic */
 bool cb_new_wind(float wind);
 

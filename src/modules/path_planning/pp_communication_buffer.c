@@ -106,7 +106,7 @@ bool cb_new_position(float north, float east) {
  * Store the current Heading of the boat in Pathplanning Topic
  * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
  *
- * @param
+ * @param heading: The heading in Radians
  */
 bool cb_new_heading(float heading) {
 	pp.heading = heading;
@@ -115,6 +115,22 @@ bool cb_new_heading(float heading) {
 
 	return true;
 }
+
+
+/**
+ * Store the current Reference Heading of the boat in Pathplanning Topic => For DEBUG purposes
+ * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
+ *
+ * @param ref_heading: The reference heading in Radians
+ */
+bool cb_new_refheading(float ref_heading) {
+	pp.ref_heading = ref_heading;
+
+	pp_updated = true;
+
+	return true;
+}
+
 
 /**
  * Store the current Heading of the boat in Pathplanning Topic

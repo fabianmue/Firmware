@@ -25,6 +25,7 @@ struct path_planning_s {
     float ned_north;	/**< North-Coordinate in NED-Frame of the Boat => for debugging*/
     float ned_east;		/**< East-Coordinate in NED-Frame of the Boat  => for debugging*/
     float heading; 		/**< Current heading of the boat known by the Navigator => for debugging*/
+    float ref_heading;  /**< Reference heading from the pathplanning (Note: This heading is not necessarily sent to autonomous_sailing app) */
     float wind; 		/**< Current Wind Direction known by the Navigator => for debugging */
     float target_north; /**< NED-North Coordinate of the next Target */
     float target_east;  /**< NED-East Coordinate of the next Target */
