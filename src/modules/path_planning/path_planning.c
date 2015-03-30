@@ -72,6 +72,7 @@
 #include "pp_parameters.h"
 
 #include "pp_navigator.h"
+#include "pp_failsafe.h"
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
@@ -209,6 +210,12 @@ int pp_thread_main(int argc, char *argv[]) {
 	#endif
 
 
+    //init the failsafe-mode
+	#if USE_FAILSAFE == 1
+    fs_init();
+	#endif
+
+
 
 	//**SET THE THREAD-STATUS TO RUNNING
 	thread_running = true;
@@ -262,6 +269,11 @@ int pp_thread_main(int argc, char *argv[]) {
                     orb_copy(ORB_ID(rc_channels), subs.rc_channels, &(strs.rc_channels));
                     //update pp_communication_buffer with this information
                     cb_new_rc_data(&strs);
+
+                    //Tell the state to the failsafe-mode
+					#if USE_FAILSAFE
+                    fs_check_rc_signal(&strs);
+					#endif
                 }
 			}
 		}
@@ -273,6 +285,13 @@ int pp_thread_main(int argc, char *argv[]) {
 		#if USE_GRID_LINES == 0
         nav_navigator();
 		#endif
+
+
+        /* Call the Failsafe state-machine */
+		#if USE_FAILSAFE == 1
+        fs_state_machine();
+		#endif
+
 
 
 

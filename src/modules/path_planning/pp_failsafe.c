@@ -14,6 +14,7 @@
 #include <drivers/drv_hrt.h>
 
 #include "pp_failsafe.h"
+#include "pp_send_msg_qgc.h"
 
 
 #define SAFETYTIME_US  10e6 	//Time for which the RC-Signal must be lost before the failsafe is switched to ACTIVE [us]
@@ -67,7 +68,12 @@ void fs_check_rc_signal(struct structs_topics_s *strs_p) {
 	if(strs_p->rc_channels.signal_lost == true) {
 		//We lost the signal => update internal signal state
 		lost_signal = true;
+
+		//Report to QGround-Control
+		smq_send_log_info("RC-Signal lost => entering FAILSAFE soon! JW");
+
 	} else {
+		//We have a valid RC-Signal => update interal signal state
 		lost_signal = false;
 	}
 
@@ -80,7 +86,7 @@ void fs_check_rc_signal(struct structs_topics_s *strs_p) {
  *
  * Note: This function should be executed in every main-while-loop cycle
  */
-void fs_state_machine() {
+void fs_state_machine(void) {
 	//**** INACTIVE - state
 	if(SM_State == INACTIVE) {
 		if(lost_signal == true) {
