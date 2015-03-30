@@ -1903,6 +1903,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_PP.alpha_star = buf.path_planning.alpha_star;
             log_msg.body.log_PP.do_maneuver = buf.path_planning.do_maneuver;
             log_msg.body.log_PP.id_cmd = buf.path_planning.id_cmd;
+            log_msg.body.log_PP.heading_ref = buf.path_planning.ref_heading;
             LOGBUFFER_WRITE_AND_COUNT(PP);
         }
 
