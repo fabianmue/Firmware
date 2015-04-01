@@ -146,7 +146,6 @@ void nav_init(void) {
 	//For Debug only
 	//Set a fake-field, as it is used in matlab for the competition-task
 	#if P_DEBUG == 0
-	//TODO: Set this to 1
 	NEDpoint target;
 	target.northx = 0;
 	target.easty = 300;
@@ -263,7 +262,7 @@ void nav_navigator(void) {
 			state.targetNum = 0;
 
 			//Communicate Failsafe to autonomous sailing app
-			//cb_set_failsafe(true);
+			//cb_set_failsafe(true); //As soon as we comment this in, the software crashes...don't know why...
 
 			smq_send_log_info("FAILSAFE: Navigating HOME... (JW)!");
 		}

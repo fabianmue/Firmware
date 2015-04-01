@@ -50,7 +50,7 @@
  * As soon as it leaves this circle the failsafe mode is activated and the boat should return to its
  * home position automatically.
  */
-#define USE_FAILSAFE 1 //1, if failsafe mode is enabled
+#define USE_FAILSAFE 0 //1, if failsafe mode is enabled
 
 
 /*POLLING TIMEOUT
