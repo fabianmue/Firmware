@@ -292,11 +292,6 @@ void nav_navigator(void) {
 		#endif
 
 
-		//DEBUG: Send the current heading and Position known by the Navigator to QGroundControl
-		cb_new_heading(state.heading_cur);
-		cb_new_position(state.position.northx, state.position.easty);
-
-
 
 		/****FIND A NEW REFERENCE HEADING
 		 * Different algorithms can be used. */
@@ -508,6 +503,9 @@ void nav_heading_update(void) {
 
 	state.heading_cur = alpha;
 
+	//Send current Heading to QGround control for debugging
+	cb_new_heading(state.heading_cur);
+
 } //end of nav_heading_update
 
 
@@ -524,6 +522,9 @@ void nav_wind_update(void) {
 	cb_get_tw_info(&(state.wind_dir),&(state.wind_speed));
 
 	state.wind_dir = nh_sensor2compass(state.wind_dir);
+
+	//Send current Wind-Value to QGround Control for debugging
+	cb_new_wind(state.wind_dir);
 
 } //end of nav_heading_update
 
@@ -572,6 +573,9 @@ void nav_position_update(void) {
 
 	//Update the state to the new Position
 	state.position = newPos;
+
+	//Send new Position-Value to QGround Control for debugging
+	cb_new_position(state.position.northx, state.position.easty);
 
 } //end of nav_heading_update
 
