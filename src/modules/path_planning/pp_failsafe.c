@@ -68,9 +68,6 @@ void fs_check_rc_signal(struct structs_topics_s *strs_p) {
 		//We lost the signal => update internal signal state
 		lost_signal = true;
 
-		//Report to QGround-Control
-		smq_send_log_info("RC-Signal lost => entering FAILSAFE soon! JW");
-
 	} else {
 		//We have a valid RC-Signal => update interal signal state
 		lost_signal = false;
@@ -92,6 +89,9 @@ void fs_state_machine(void) {
 			//The signal is lost => we switch to SAFETYTIME - state
 			SM_State = SAFETYTIME;
 			on_time = hrt_absolute_time();
+
+			//Report to QGround-Control
+			smq_send_log_info("RC-Signal lost => entering FAILSAFE soon! JW");
 		}
 	}
 
