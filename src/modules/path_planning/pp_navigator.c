@@ -252,15 +252,15 @@ void nav_navigator(void) {
 		if(fs_is_failsafe_active() == true) {
 
 			//We force the next target to be the HOME position
-			//Point home;
-			//home.lat = HOMELAT;
-			//home.lon = HOMELON;
-			//home.alt = HOMEALT;
+			Point home;
+			home.lat = HOMELAT;
+			home.lon = HOMELON;
+			home.alt = HOMEALT;
 
-			//field.targets[0] = nh_geo2ned(home);
-			//field.NumberOfTargets = 1;
+			field.targets[0] = nh_geo2ned(home);
+			field.NumberOfTargets = 1;
 
-			//state.targetNum = 0;
+			state.targetNum = 0;
 
 			//Communicate Failsafe to autonomous sailing app
 			//cb_set_failsafe(true);
