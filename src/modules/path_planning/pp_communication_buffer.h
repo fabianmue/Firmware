@@ -78,6 +78,9 @@ bool cb_new_wind(float wind);
 /** @brief Send the new target position to the Pathplanning Topic */
 bool cb_new_target(float north, float east);
 
+/** @brief Store the current obstacle position in the pathplanning-topic */
+bool cb_new_obstacle(float o_north, float o_east);
+
 /** @brief command a tack or a jybe */
 bool cb_do_maneuver(float new_alpha_star);
 

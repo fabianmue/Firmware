@@ -611,6 +611,9 @@ void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos) {
 
 	field.NumberOfObstacles = ObstNumber;
 	#endif
+
+	//Send new Obstacle Position to QGround Control for debugging
+	cb_new_obstacle(field.obstacles[0].northx, field.obstacles[0].easty);
 }
 
 

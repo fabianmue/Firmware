@@ -136,6 +136,22 @@ bool cb_new_heading(float heading) {
 
 
 /**
+ * Store the current Position of the obstacle in Pathplanning Topic
+ * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
+ *
+ * @param obst_pos: position of the obstacle
+ */
+bool cb_new_obstacle(float o_north, float o_east) {
+	pp.obst_north = o_north;
+	pp.obst_east = o_east;
+
+	pp_updated = true;
+
+	return true;
+}
+
+
+/**
  * Store the current Reference Heading of the boat in Pathplanning Topic => For DEBUG purposes
  * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
  *
