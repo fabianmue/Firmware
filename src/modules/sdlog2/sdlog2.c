@@ -1904,6 +1904,12 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_PP.do_maneuver = buf.path_planning.do_maneuver;
             log_msg.body.log_PP.id_cmd = buf.path_planning.id_cmd;
             log_msg.body.log_PP.heading_ref = buf.path_planning.ref_heading;
+            log_msg.body.log_PP.pos_n = buf.path_planning.ned_north;
+            log_msg.body.log_PP.pos_e = buf.path_planning.ned_east;
+            log_msg.body.log_PP.tar_n = buf.path_planning.target_north;
+            log_msg.body.log_PP.tar_e = buf.path_planning.target_east;
+            log_msg.body.log_PP.obst_n = buf.path_planning.obst_north;
+            log_msg.body.log_PP.obst_e = buf.path_planning.obst_east;
             LOGBUFFER_WRITE_AND_COUNT(PP);
         }
 

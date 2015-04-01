@@ -517,6 +517,12 @@ struct log_PP_s{
     uint16_t do_maneuver;
     uint8_t  id_cmd;
     float    heading_ref;
+    float 	 pos_n;	//North position of the boat
+    float    pos_e; //East position of the boat
+    float    tar_n;	//Target position
+    float    tar_e;
+    float    obst_n; //Obstacle position
+    float    obst_e;
 };
 
 /* --- BOAT LOCAL POSITION -------------------------------------------*/
@@ -636,7 +642,7 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(QGC2, "LLiLLif", "Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
     LOG_FORMAT(OPTM, "fffffffffff", "K1,K2,K3,H1,H2,H3,H4,Lb1,Lb2,Ub1,Ub2"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC3, "iiffffffHHHii", "LqrTs,MpcTs,A11,A12,A21,A22,B1,B2,WAlT,WTdT,PH,TT,OnlyY"), //Added by Marco Tranzatto
-    LOG_FORMAT(PP, "fHBf", "AlphaStr,DoMan,IdCmd,HeadRef"), //Added by Marco Tranzatto/Jonas Wirz
+    LOG_FORMAT(PP, "fHBfffffff", "AlphaStr,DoMan,IdCmd,HeadRef,Npos,Epos,Ntar,Etar,Nob,Eob"), //Added by Marco Tranzatto/Jonas Wirz
     LOG_FORMAT(BLP, "fff", "X,Y,D"), //Added by Marco Tranzatto
     LOG_FORMAT(PWS, "iHfH", "ByteR,Mask,DB1,ComMsg"), //Added by Marco Tranzatto
 	LOG_FORMAT(QGC4, "fBf", "k,Windo,Period"), //Added by Jonas Wirz

@@ -29,6 +29,8 @@ struct path_planning_s {
     float wind; 		  /**< Current Wind Direction known by the Navigator => for debugging */
     float target_north;   /**< NED-North Coordinate of the next Target */
     float target_east;    /**< NED-East Coordinate of the next Target */
+    float obst_north; 	  /**< NED-North Coordinate for the obstacle */
+    float obst_east;      /**< NED-East Coordinate for the obstacle */
 
     bool failsafe; 		  /**< Failsafe-Flag. true, iff the Pathplanning detected a failsafe condition */
 };
