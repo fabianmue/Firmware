@@ -20,7 +20,7 @@
  * - add Potentialfield Method
  * - Winddirection => how's the definition? Wind from North = 0°/ Wind from South = 180° (Sensor-Frame)
  *
- * - Test if Upwind Course is possible...
+ * - Allow entering NED-Target coordinates instead of GPS coordinates
  *
  */
 

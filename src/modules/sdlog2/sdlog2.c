@@ -1910,6 +1910,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_PP.tar_e = buf.path_planning.target_east;
             log_msg.body.log_PP.obst_n = buf.path_planning.obst_north;
             log_msg.body.log_PP.obst_e = buf.path_planning.obst_east;
+            log_msg.body.log_PP.wind = buf.path_planning.wind;
             LOGBUFFER_WRITE_AND_COUNT(PP);
         }
 
