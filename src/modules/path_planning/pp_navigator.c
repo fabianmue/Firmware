@@ -489,14 +489,20 @@ void nav_heading_update(void) {
 	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
 	float alpha =  cb_get_alpha();
 
+	/* Added after first Lake-Test => should fix the yaw-problem */
+	//Conver from Dumas to Sensor Frame
+	alpha = nh_dumas2sensor(alpha);
+
 
 	/* Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
-	 * Compass-Frame. heading = alpha + twd */
+	 * Compass-Frame. heading = alpha + twd
+	 * The wind direction is in compass frame, since it gets converted when a new wind-direction is available! */
 	alpha = alpha + state.wind_dir;
 
-	if(alpha < 0) {
-		alpha = 2*PI + alpha;
-	}
+	/* Commented out after first Lake-Test => should fix the yaw-problem */
+	//if(alpha < 0) {
+	//	alpha = 2*PI + alpha;
+	//}
 
 	alpha = fmod(alpha,2*PI);
 

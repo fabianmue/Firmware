@@ -524,6 +524,7 @@ struct log_PP_s{
     float    obst_n; //Obstacle position
     float    obst_e;
     float    wind;   //Log Wind direction
+    float    head; 	 //Log the heading calculated from alpha and true wind
 };
 
 /* --- BOAT LOCAL POSITION -------------------------------------------*/
