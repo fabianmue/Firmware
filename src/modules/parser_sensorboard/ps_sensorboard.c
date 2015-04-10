@@ -20,9 +20,20 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <systemlib/err.h>
+
+#include "config.h"
+
 
 /* Buffer for data from UART */
 static char com_buffer[500];
+
+static struct {		//Struct holding the state of the ps_sensorboard
+	float heading;	//Heading of the boat [rad]
+} state = {
+	.heading = 0
+}
+
 
 
 /* @brief Set baudrate for communication */
@@ -63,10 +74,25 @@ bool sb_init(int *com_port) {
 /*
  * Write a command to the Sensorboard using the serial interface
  *
+ * Note: The message always starts with 0x02, 0x02 and ends with 0x03
+ *
  * @param command as a uint8_t
  */
-bool sb_write(int *com_port) {
+bool sb_write(const int *com_port, const uint8_t cmd) {
 	//int nr_of_bytes = write(*com_port,0x02,1);
+
+	//Convert Heading from radian to degrees
+	uint16_t head = RAD2DEG * state.heading;
+
+	//Split up Heading into two uint8_t values
+	uint8_t head0 = head&(0x1100);
+	uint8_t head1 = head&(0x0011);
+
+	//Create the String that has to be sent
+	uint8_t msg[6] = {0x02, 0x02, cmd, head0, head1, 0x03};
+
+	//Send the message to the Sensorboard
+	write(*com_port, &msg, 6);
 
 	return true;
 }
@@ -112,6 +138,16 @@ bool sb_set_baudrate(int com_port, int baudrate) {
 	tcsetattr(com_port, TCSANOW, &wx_port_config); // Set the new configuration
 
 	return true;
+}
+
+
+/*
+ * Update the internal state
+ *
+ * @param heading: Heading of the boat wrt. true North [rad]
+ */
+bool sb_update_state(float heading) {
+	state.heading = heading;
 }
 
 

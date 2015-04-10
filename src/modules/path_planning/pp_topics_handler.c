@@ -8,7 +8,6 @@
 #include "pp_topics_handler.h"
 #include "pp_send_msg_qgc.h"
 
-
 //Stuct of all topic-Advertisements
 static struct{
     orb_advert_t path_planning;        //output of path_planning topic
@@ -16,6 +15,7 @@ static struct{
     orb_advert_t boat_local_position; // local position of the boat
     orb_advert_t boat_pp_debug1;		//Data from Pathplanning (Costfunction)
 }pubs;
+
 
 /**
  * Subscribe to all Topics in the Topic-Subscription Struct

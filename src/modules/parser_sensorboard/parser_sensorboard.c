@@ -9,6 +9,9 @@
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
 
+#include "config.h"
+#include "ps_sensorboard.h"
+
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;		/**< daemon status flag */
 static int daemon_task;				/**< Handle of daemon task / thread */
@@ -21,7 +24,7 @@ __EXPORT int parser_sensorboard_main(int argc, char *argv[]);
 /**
  * Mainloop of daemon.
  */
-int px4_daemon_thread_main(int argc, char *argv[]);
+int parser_sb_thread_main(int argc, char *argv[]);
 
 /**
  * Print the correct usage.
@@ -65,7 +68,7 @@ int parser_sensorboard_main(int argc, char *argv[])
 					     SCHED_DEFAULT,
 					     SCHED_PRIORITY_DEFAULT,
 					     2000,
-					     px4_daemon_thread_main,
+					     parser_sb_thread_main,
 					     (argv) ? (char * const *)&argv[2] : (char * const *)NULL);
 		exit(0);
 	}
@@ -90,19 +93,67 @@ int parser_sensorboard_main(int argc, char *argv[])
 	exit(1);
 }
 
-int px4_daemon_thread_main(int argc, char *argv[])
+int parser_sb_thread_main(int argc, char *argv[])
 {
 
-	warnx("[daemon] starting\n");
+	warnx("[parser_sensorboard] starting\n");
 
+
+	//**HANDLE TOPICS
+	struct subscribtion_fd_s subs;   //File-Descriptors of subscribed topics
+	struct structs_topics_s strs;    //Struct of Interested Topics
+
+	th_subscribe(&subs,&strs);       //Subscribe to interested Topics
+	th_advertise();                  //Advertise Topics
+
+	//**POLL FOR CHANGES IN SUBSCRIBED TOPICS
+	struct pollfd fds[] = {			 // Polling Management
+	       { .fd = subs.path_planning,       .events = POLLIN }
+	};
+
+	int poll_return;				//Return Value of the polling.
+
+	//**INIT FUNCTIONS HERE
+
+
+	//**SET THE THREAD-STATUS TO RUNNING
 	thread_running = true;
 
+
+	/**MAIN THREAD-LOOP
+	 * This is the main Thread Loop. It loops until the Process is killed.*/
 	while (!thread_should_exit) {
+
 		warnx("Hello daemon!\n");
 		sleep(10);
+
+		//**POLL FOR CHANGES IN THE SUBSCRIBED TOPICS
+		poll_return = poll(fds, (sizeof(fds) / sizeof(fds[0])), TIMEOUT_POLL);
+
+		if(poll_return == 0) {
+			//No Topic contains changed data <=> no new Data available
+			warnx("No new Data available\n");
+		} else {
+			//New Data is available
+
+			if(poll_return < 0) {
+				//An error occured during polling
+				warnx("POLL ERR %d, %d", poll_return, errno);
+				continue;
+			} else {
+				//Everything is OK and new Data is available
+	            if(fds[0].revents & POLLIN){
+	            	//copy new Pathplanning data
+	            	orb_copy(ORB_ID(path_planning), subs.path_planning, &(strs.path_planning));
+
+	            	//Update the state of sensorboard communication module
+	            	sb_update_state(strs.path_planning.heading);
+	            }
+			}
+		}
 	}
 
-	warnx("[daemon] exiting.\n");
+	warnx("[parser_sensorboard] exiting.\n");
 
 	thread_running = false;
 
