@@ -508,6 +508,8 @@ void nav_heading_update(void) {
 	//Commented out after frist Lake-Test
 	//alpha = fmod(alpha,2*PI);
 
+	//fmod() of the yaw
+	//Note: fmod() from <math.h> does NOT work, since it needs positive values!
 	if(alpha > 2*PI) {
 		alpha = alpha - 2*PI;
 	}
