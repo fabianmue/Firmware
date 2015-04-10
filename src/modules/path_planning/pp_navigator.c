@@ -21,6 +21,7 @@
  * - Winddirection => how's the definition? Wind from North = 0°/ Wind from South = 180° (Sensor-Frame)
  *
  * - Allow entering NED-Target coordinates instead of GPS coordinates
+ * - Introduce option for using magnetic bearing only
  *
  */
 
@@ -504,7 +505,16 @@ void nav_heading_update(void) {
 	//	alpha = 2*PI + alpha;
 	//}
 
-	alpha = fmod(alpha,2*PI);
+	//Commented out after frist Lake-Test
+	//alpha = fmod(alpha,2*PI);
+
+	if(alpha > 2*PI) {
+		alpha = alpha - 2*PI;
+	}
+
+	if(alpha < 0) {
+		alpha = 2*PI + alpha;
+	}
 
 	state.heading_cur = alpha;
 
