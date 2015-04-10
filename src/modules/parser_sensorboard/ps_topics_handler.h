@@ -25,7 +25,7 @@ struct subscribtion_fd_s{
 
 //Structs of interested topics
 struct structs_topics_s{
-	struct path_planning;
+	struct path_planning_s path_planning;
 };
 
 

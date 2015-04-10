@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
+#include <errno.h>
 
 #include <nuttx/config.h>
 #include <nuttx/sched.h>
@@ -11,10 +13,15 @@
 
 #include "config.h"
 #include "ps_sensorboard.h"
+#include "ps_topics_handler.h"
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;		/**< daemon status flag */
 static int daemon_task;				/**< Handle of daemon task / thread */
+
+//thread priority
+#define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 20 ///daemon priority
+
 
 /**
  * daemon management function.
@@ -66,7 +73,7 @@ int parser_sensorboard_main(int argc, char *argv[])
 		thread_should_exit = false;
 		daemon_task = task_spawn_cmd("daemon",
 					     SCHED_DEFAULT,
-					     SCHED_PRIORITY_DEFAULT,
+					     DAEMON_PRIORITY,
 					     2000,
 					     parser_sb_thread_main,
 					     (argv) ? (char * const *)&argv[2] : (char * const *)NULL);
@@ -106,6 +113,8 @@ int parser_sb_thread_main(int argc, char *argv[])
 	th_subscribe(&subs,&strs);       //Subscribe to interested Topics
 	th_advertise();                  //Advertise Topics
 
+
+
 	//**POLL FOR CHANGES IN SUBSCRIBED TOPICS
 	struct pollfd fds[] = {			 // Polling Management
 	       { .fd = subs.path_planning,       .events = POLLIN }
@@ -113,11 +122,15 @@ int parser_sb_thread_main(int argc, char *argv[])
 
 	int poll_return;				//Return Value of the polling.
 
+
+
 	//**INIT FUNCTIONS HERE
+
 
 
 	//**SET THE THREAD-STATUS TO RUNNING
 	thread_running = true;
+
 
 
 	/**MAIN THREAD-LOOP

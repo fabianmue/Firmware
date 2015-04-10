@@ -32,7 +32,7 @@ static struct {		//Struct holding the state of the ps_sensorboard
 	float heading;	//Heading of the boat [rad]
 } state = {
 	.heading = 0
-}
+};
 
 
 

@@ -5,13 +5,13 @@
  *      Author: Jonas
  */
 
-#include "pp_topics_handler.h"
+#include "ps_topics_handler.h"
 
 
 //Stuct of all topic-Advertisements
-static struct{
+/*static struct{
     //orb_advert_t path_planning;        //output of path_planning topic
-}pubs;
+}pubs;*/
 
 /**
  * Subscribe to all Topics in the Topic-Subscription Struct
