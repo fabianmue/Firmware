@@ -254,7 +254,10 @@ int pp_thread_main(int argc, char *argv[]) {
                     gh_gridlines_handler();
                     #endif //USE_GRID_LINES == 1
 
-                    //nav_navigator();
+                    #if USE_GRID_LINES == 0
+                    yaw_update(&strs);
+					#endif
+
 
                 }
                 if(fds[2].revents & POLLIN){

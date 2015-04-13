@@ -48,11 +48,13 @@ static struct {
 	 	 	 	 	 	 	 * 1 = Cost-Function-Method
 	 	 	 	 	 	 	 * 2 = Potential-Field-Method */
 	bool reset; 			//Resets all local variables to a predefined state (init-state), if true
+	bool use_yaw; 			//If set to true, the yaw from the weather station is used unfiltered for the Heading calculation
 } config = {
 	.period = 1000000,
 	.max_headchange = 0.1745329f, //~10°/s
 	.method = 1,
 	.reset = false,
+	.use_yaw = false
 };
 
 
@@ -128,6 +130,8 @@ void nav_init(void) {
 	config.period = 1000000;			// = 1s
 	config.max_headchange = 2.5f*0.17453292f; // = 12°/period
 	config.method = 1; //As a default use the Cost-Function-Method
+	config.reset = false;
+	config.use_yaw = false;
 
 
 	//Update the state by requesting the values from the communication Buffer
@@ -194,7 +198,11 @@ void nav_navigator(void) {
 				alpha = 2*PI + alpha;
 			}
 
-			alpha = fmod(alpha,2*PI);
+			if(alpha > 2*PI) {
+				alpha = alpha - 2*PI;
+			}
+
+			//alpha = fmod(alpha,2*PI);
 
 			state.heading_cur = alpha; //270 * DEG2RAD; //alpha;
 
@@ -286,9 +294,9 @@ void nav_navigator(void) {
 		//** Check if new information is available and change the state accordingly */
 		#if SIMULATION_FLAG == 0
 		//Note: This information is only available, when the boat is not in test-mode
+		nav_wind_update();			//New Wind-Data
 		nav_heading_update();   	//New Heading-Data
 		nav_position_update();  	//New Position-Data
-		nav_wind_update();			//New Wind-Data
 		#endif
 
 
@@ -485,45 +493,73 @@ void nav_speak2helsman() {
  */
 void nav_heading_update(void) {
 
-	/* Get the new alpha Value
-	 * alpha = yaw-twd => yaw = alpha + twd;
-	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
-	float alpha =  cb_get_alpha();
+	if(config.use_yaw == false) {
+		//If we do not use the yaw from the magnetic compass, we use the alpha provided by the autonomous sailing app
+		//for the heading calculation! => Note: this is standard, we use the alpha as a standard
 
-	/* Added after first Lake-Test => should fix the yaw-problem */
-	//Conver from Dumas to Sensor Frame
-	alpha = nh_dumas2sensor(alpha);
+		/* Get the new alpha Value
+		 * alpha = yaw-twd => yaw = alpha + twd;
+		 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
+		float alpha =  cb_get_alpha();
+
+		/* Added after first Lake-Test => should fix the yaw-problem */
+		//Convert from Dumas to Sensor Frame
+		alpha = nh_dumas2sensor(alpha);
 
 
-	/* Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
-	 * Compass-Frame. heading = alpha + twd
-	 * The wind direction is in compass frame, since it gets converted when a new wind-direction is available! */
-	alpha = alpha + state.wind_dir;
+		/* Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
+		 * Compass-Frame. heading = alpha + twd
+		 * The wind direction is in compass frame, since it gets converted when a new wind-direction is available! */
+		alpha = alpha + state.wind_dir;
 
-	/* Commented out after first Lake-Test => should fix the yaw-problem */
-	//if(alpha < 0) {
-	//	alpha = 2*PI + alpha;
-	//}
+		/* Commented out after first Lake-Test => should fix the yaw-problem */
+		//if(alpha < 0) {
+		//	alpha = 2*PI + alpha;
+		//}
 
-	//Commented out after frist Lake-Test
-	//alpha = fmod(alpha,2*PI);
+		//Commented out after frist Lake-Test
+		//alpha = fmod(alpha,2*PI);
 
-	//fmod() of the yaw
-	//Note: fmod() from <math.h> does NOT work, since it needs positive values!
-	if(alpha > 2*PI) {
-		alpha = alpha - 2*PI;
+		//fmod() of the yaw
+		//Note: fmod() from <math.h> does NOT work, since it needs positive values!
+		if(alpha > 4*PI) {
+			alpha = alpha - 4*PI;
+		}
+
+		if(alpha > 2*PI) {
+			alpha = alpha - 2*PI;
+		}
+
+		if(alpha < 0) {
+			alpha = 2*PI + alpha;
+		}
+
+		state.heading_cur = alpha;
+
+		//Send current Heading to QGround control for debugging
+		cb_new_heading(state.heading_cur);
+
 	}
-
-	if(alpha < 0) {
-		alpha = 2*PI + alpha;
-	}
-
-	state.heading_cur = alpha;
-
-	//Send current Heading to QGround control for debugging
-	cb_new_heading(state.heading_cur);
 
 } //end of nav_heading_update
+
+
+
+/**
+ * Use only yaw for calculating the current heading of the boat
+ *
+ * @param Pointer to the struct of the topic
+ */
+void yaw_update(struct structs_topics_s *strs) {
+
+	if(config.use_yaw == true) {
+		state.heading_cur = nh_sensor2compass(strs->vehicle_global_position.yaw);
+
+		//Send current Heading to QGround control for debugging
+		cb_new_heading(state.heading_cur);
+	}
+
+}
 
 
 
@@ -743,6 +779,21 @@ void nav_set_method(uint8_t method) {
 	}
 }
 
+/*
+ * Enable/Disable the use of the yaw only for heading measurement of the boat
+ * Note: This function is called by QGroundControl
+ *
+ * @param state: 1 = enable, 0 = disable
+ */
+void nav_set_use_yaw(uint8_t state) {
+	if(state == 1) {
+		config.use_yaw = true;
+	} else {
+		config.use_yaw = false;
+	}
+}
+
+
 
 /*
  * Set the current position of the boat as the next target position.
@@ -777,6 +828,8 @@ void DEBUG_nav_set_fake_state(NEDpoint pos, float heading) {
 
 	//Always take the first Target
 	state.targetNum = 0;
+
+
 }
 
 

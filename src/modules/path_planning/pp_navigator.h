@@ -73,6 +73,10 @@ void nav_wind_update(void);
 void nav_heading_update(void);
 
 
+/** @brief Use the Yaw for calculating the heading */
+void yaw_update(struct structs_topics_s *strs);
+
+
 /** @brief Set Obstacles */
 void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos);
 
@@ -103,6 +107,10 @@ void nav_enable_navigator(uint8_t enable);
 
 /** @brief Set the method that is used for pathplanning */
 void nav_set_method(uint8_t method);
+
+
+/** @brief Use Yaw instead of alpha from autonomous sailing app for Heading calcualtion of the boat */
+void nav_set_use_yaw(uint8_t state);
 
 
 /* FUNCTIONS FOR DEBUGGING */

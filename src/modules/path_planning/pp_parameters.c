@@ -319,6 +319,12 @@ PARAM_DEFINE_INT32(PP_NAV_METH,1);
 
 
 /**
+ * pp_nav_useyaw: Uses the unfiltered yaw as the heading update for the pathplanning
+ */
+PARAM_DEFINE_INT32(PP_NAV_USEYAW,0);
+
+
+/**
  * pp_nav_setar
  * Set the current position as the next target position. As soon as it is switched to
  * autonomous mode the pathplanner guides the boat towards this target
@@ -401,6 +407,7 @@ static struct pointers_param_qgc_s{
 	param_t nav_pathp_on;
 	param_t nav_meth;
 	param_t nav_setar;
+	param_t nav_useyaw;
 
 
 	//**SIMULATION FOR DEBUGGING
@@ -503,6 +510,7 @@ void p_param_init(void){
     pointers_param_qgc.nav_altitude = param_find("PP_NAV_ALTITUDE");
 
     pointers_param_qgc.nav_reset = param_find("PP_NAV_RESET");
+    pointers_param_qgc.nav_useyaw = param_find("PP_NAV_USEYAW");
 
 
     //**SIMULATION DEBUG
@@ -751,6 +759,7 @@ void p_param_update(bool update_path_param){
    	start[1].alt = altitude;
 
    	nav_set_startline(start[0],start[1]);
+
    	//**RESET THE NAVIGTOR PARAMETERS
    	uint8_t reset = 0;
    	param_get(pointers_param_qgc.nav_reset, &reset);
@@ -770,6 +779,11 @@ void p_param_update(bool update_path_param){
    	uint8_t pathp_meth = 1;
    	param_get(pointers_param_qgc.nav_meth, &pathp_meth);
    	nav_set_method(pathp_meth);
+
+   	//**USE THE YAW ONLY FOR HEADING
+   	uint8_t pathp_useyaw = 0;
+   	param_get(pointers_param_qgc.nav_useyaw, &pathp_useyaw);
+   	nav_set_use_yaw(pathp_useyaw);
 
 
    	//**SET THE CURRENT POSITION OF THE BOAT AS THE NEXT TARGET POSITION
