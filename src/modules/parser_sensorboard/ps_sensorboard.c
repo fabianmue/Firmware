@@ -117,7 +117,10 @@ int sb_read(int *com_port) {
 	size = read(*com_port,com_buffer,sizeof(com_buffer));
 
 	if(size > 0) {
-		printf("***Received data\n");
+		printf("***Received data: %d \n",(int)com_buffer[0]);
+		com_buffer[size+1] = '\0';
+		printf(com_buffer);
+		printf("\n...End of Message (%d)\n",size);
 	} else {
 		printf("   No data received!\n");
 	}
@@ -137,7 +140,7 @@ bool sb_set_baudrate(int com_port, int baudrate) {
 
 	if(in_return == -1 || out_return == -1){
 		//error
-		errx(1, "failed to set speed of: /dev/ttyS4");
+		errx(1, "failed to set speed of: /dev/ttyS6");
 		return false;
 	}
 	tcsetattr(com_port, TCSANOW, &wx_port_config); // Set the new configuration
@@ -153,6 +156,8 @@ bool sb_set_baudrate(int com_port, int baudrate) {
  */
 bool sb_update_state(float heading) {
 	state.heading = heading;
+
+	return true;
 }
 
 

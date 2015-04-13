@@ -174,7 +174,7 @@ int parser_sb_thread_main(int argc, char *argv[])
 
 
 		//Check if we received data over the serial interface
-		//sb_read(&COMport);
+		sb_read(&COMport);
 
 
 
