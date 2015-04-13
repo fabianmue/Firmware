@@ -81,6 +81,10 @@ void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos);
 void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos);
 
 
+/** @brief Set Targets in NED-Coordinates */
+void nav_set_target_ned(uint8_t TargetNumber, NEDpoint TargetPos);
+
+
 /** @brief Set the Start-Line */
 void nav_set_startline(PointE7 buoy1, PointE7 buoy2);
 

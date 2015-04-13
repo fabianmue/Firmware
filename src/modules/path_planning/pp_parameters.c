@@ -267,6 +267,8 @@ PARAM_DEFINE_INT32(PP_NAV_TURNRATE, 10);
  */
 PARAM_DEFINE_INT32(PP_NAV_TAR_LAT, HOMELAT);
 PARAM_DEFINE_INT32(PP_NAV_TAR_LON, HOMELON);
+PARAM_DEFINE_FLOAT(PP_NAV_TAR_NEDN,0);
+PARAM_DEFINE_FLOAT(PP_NAV_TAR_NEDE,0);
 
 PARAM_DEFINE_INT32(PP_NAV_TAR_NUM, 1);	//Number of Target currently set
 
@@ -383,6 +385,8 @@ static struct pointers_param_qgc_s{
 	param_t nav_turnrate;
 	param_t nav_target_lat;
 	param_t nav_target_lon;
+	param_t nav_target_nedn;
+	param_t nav_target_nede;
 	param_t nav_target_number;
 	param_t nav_obstacle_lat;
 	param_t nav_obstacle_lon;
@@ -485,6 +489,8 @@ void p_param_init(void){
     pointers_param_qgc.nav_turnrate = param_find("PP_NAV_TURNRATE");
     pointers_param_qgc.nav_target_lat = param_find("PP_NAV_TAR_LAT");
     pointers_param_qgc.nav_target_lon = param_find("PP_NAV_TAR_LON");
+    pointers_param_qgc.nav_target_nedn = param_find("PP_NAV_TAR_NEDN");
+    pointers_param_qgc.nav_target_nede = param_find("PP_NAV_TAR_NEDE");
     pointers_param_qgc.nav_target_number = param_find("PP_NAV_TAR_NUM");
     pointers_param_qgc.nav_obstacle_lat = param_find("PP_NAV_OBST_LAT");
     pointers_param_qgc.nav_obstacle_lon = param_find("PP_NAV_OBST_LON");
@@ -713,6 +719,7 @@ void p_param_update(bool update_path_param){
     nav_set_configuration(period, turnrate);
 
     PointE7 target;
+    NEDpoint target_ned;
     PointE7 obstacle;
     uint8_t t_num, o_num;
     int32_t altitude;
@@ -720,6 +727,8 @@ void p_param_update(bool update_path_param){
     param_get(pointers_param_qgc.nav_altitude, &altitude);
    	param_get(pointers_param_qgc.nav_target_lat,&(target.lat));
    	param_get(pointers_param_qgc.nav_target_lon,&(target.lon));
+   	param_get(pointers_param_qgc.nav_target_nedn,&(target_ned.northx));
+   	param_get(pointers_param_qgc.nav_target_nede,&(target_ned.easty));
    	param_get(pointers_param_qgc.nav_target_number,&t_num);
    	param_get(pointers_param_qgc.nav_obstacle_lat,&(obstacle.lat));
    	param_get(pointers_param_qgc.nav_obstacle_lon,&(obstacle.lon));
@@ -729,6 +738,7 @@ void p_param_update(bool update_path_param){
    	obstacle.alt = altitude;
 
    	nav_set_target(t_num,target);
+   	nav_set_target_ned(t_num,target_ned);	//NOTE: Because of this the target is alway set in NED-Coordinates
    	nav_set_obstacle(o_num,obstacle);
 
 

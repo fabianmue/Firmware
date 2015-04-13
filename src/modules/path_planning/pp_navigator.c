@@ -644,14 +644,35 @@ void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos) {
 void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos) {
 
 	#if P_DEBUG == 0
+
 	//The update of the target position should only be done, if we are not debugging
 	field.targets[TargetNumber] = nh_geo2ned(nh_e7_to_point(TargetPos));
-
-	field.NumberOfTargets = TargetNumber;
+	field.NumberOfTargets = TargetNumber + 1;
 
 	cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
 
 	#endif
+}
+
+
+/**
+ * Set a new Target in NED-Coordinates
+ * This functions is called by QGroundControl to set a new Value
+ *
+ * @param TargetNumber: The position of the target in the Array of all Targets
+ * @param TargetPos: The GPS-Position of the target represented as a Point in NED-Coordinates
+ */
+void nav_set_target_ned(uint8_t TargetNumber, NEDpoint TargetPos) {
+
+	#if P_DEBUG == 0
+	//The update of the target position should only be done, if we are not debugging
+	field.targets[TargetNumber] = TargetPos;
+	field.NumberOfTargets = TargetNumber + 1;
+
+	cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
+
+	#endif
+
 }
 
 

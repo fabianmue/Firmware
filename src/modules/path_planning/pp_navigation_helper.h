@@ -20,9 +20,9 @@ typedef struct Point_s{		 //Contains the GPS-Coordinate of a point
 } Point;
 
 typedef struct PointE7_s{		 //Contains the GPS-Coordinate of a point in E7-Convention
-	int32_t lat;			 //Latitude of a point [deg] in E7
-	int32_t lon;			 //Longitude of a point [deg] in E7
-	float alt;				 //Altitude [m]
+	int32_t lat;			 	 //Latitude of a point [deg] in E7
+	int32_t lon;			     //Longitude of a point [deg] in E7
+	float alt;				     //Altitude [m]
 } PointE7;
 
 
