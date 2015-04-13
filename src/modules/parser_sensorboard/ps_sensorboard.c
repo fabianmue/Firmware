@@ -48,16 +48,21 @@ bool sb_set_baudrate(int com_port, int baudrate);
  * @param wx_port_pointer: Pointer to the COM-port handler
  */
 bool sb_init(int *com_port) {
-	*com_port = open("/dev/ttyS4", O_RDWR);	//We want to use Serial4 for the connection
+
+	//Open the COM-Port
+	//Note: /dev/ttyS6 is the UART8 <=> SERIAL4 of the Pixhawk. Further details can be found on https://pixhawk.org/users/wiring
+	printf("Try to open COM4...");
+	*com_port = open("/dev/ttyS6", O_RDWR);	//We want to use Serial4 for the connection
+	printf("...COM4 is open!\n");
 
 	/* The port could not be opened due to some reasons */
 	if (*com_port < 0) {
-		errx(1, "failed to open port: /dev/ttyS4");
+		errx(1, "failed to open port: /dev/ttyS6");
 	    return false;
 	}
 
 	//Wait before sending commands
-	sleep(5); //wait 5s
+	sleep(2); //wait 2s
 
 	//Set baudrate
 	sb_set_baudrate(*com_port,9600);

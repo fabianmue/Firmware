@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <poll.h>
 #include <errno.h>
+#include <sys/types.h>
 
 #include <nuttx/config.h>
 #include <nuttx/sched.h>
@@ -21,6 +22,8 @@ static int daemon_task;				/**< Handle of daemon task / thread */
 
 //thread priority
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 20 ///daemon priority
+
+
 
 
 /**
@@ -71,12 +74,12 @@ int parser_sensorboard_main(int argc, char *argv[])
 		}
 
 		thread_should_exit = false;
-		daemon_task = task_spawn_cmd("daemon",
+		daemon_task = task_spawn_cmd("parser_sensorboard",
 					     SCHED_DEFAULT,
 					     DAEMON_PRIORITY,
 					     2000,
 					     parser_sb_thread_main,
-					     (argv) ? (char * const *)&argv[2] : (char * const *)NULL);
+					     (argv) ? (const char **)&argv[2] : (const char **)NULL);
 		exit(0);
 	}
 
@@ -114,6 +117,8 @@ int parser_sb_thread_main(int argc, char *argv[])
 	th_advertise();                  //Advertise Topics
 
 
+	warnx("[parser_sensorboard] After topics\n");
+
 
 	//**POLL FOR CHANGES IN SUBSCRIBED TOPICS
 	struct pollfd fds[] = {			 // Polling Management
@@ -125,7 +130,10 @@ int parser_sb_thread_main(int argc, char *argv[])
 
 
 	//**INIT FUNCTIONS HERE
+	int COMport;
+	sb_init(&COMport);
 
+	warnx("[parser_sensorboard] COM PORT open!\n");
 
 
 	//**SET THE THREAD-STATUS TO RUNNING
@@ -136,9 +144,6 @@ int parser_sb_thread_main(int argc, char *argv[])
 	/**MAIN THREAD-LOOP
 	 * This is the main Thread Loop. It loops until the Process is killed.*/
 	while (!thread_should_exit) {
-
-		warnx("Hello daemon!\n");
-		sleep(10);
 
 		//**POLL FOR CHANGES IN THE SUBSCRIBED TOPICS
 		poll_return = poll(fds, (sizeof(fds) / sizeof(fds[0])), TIMEOUT_POLL);
@@ -161,10 +166,19 @@ int parser_sb_thread_main(int argc, char *argv[])
 
 	            	//Update the state of sensorboard communication module
 	            	sb_update_state(strs.path_planning.heading);
+
+	            	printf("Received new Heading!\n (JW) ");
 	            }
 			}
 		}
-	}
+
+
+		//Check if we received data over the serial interface
+		//sb_read(&COMport);
+
+
+
+	} //END OF MAIN LOOP
 
 	warnx("[parser_sensorboard] exiting.\n");
 

@@ -58,6 +58,7 @@
 #include <unistd.h>
 #include <poll.h>
 #include <errno.h>
+//#include <types.h>
 
 #include <nuttx/config.h>
 #include <nuttx/sched.h>
@@ -224,6 +225,9 @@ int pp_thread_main(int argc, char *argv[]) {
 	/**MAIN THREAD-LOOP
 	 * This is the main Thread Loop. It loops until the Process is killed.*/
 	while (!thread_should_exit) {
+
+
+		printf("Pathplanning is running JW! \n");
 
 		//**POLL FOR CHANGES IN THE SUBSCRIBED TOPICS
 		poll_return = poll(fds, (sizeof(fds) / sizeof(fds[0])), TIMEOUT_POLL);

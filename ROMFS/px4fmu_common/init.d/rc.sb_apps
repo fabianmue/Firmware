@@ -25,4 +25,10 @@ parser_200WX start
 path_planning start
 
 
+#
+# start the paser_sensorboard.c script 
+#
+parser_sensorboard start
+
+
 # [commented out 06/03/2015]
