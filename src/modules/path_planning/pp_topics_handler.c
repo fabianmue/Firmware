@@ -31,6 +31,7 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
 	subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
     subs_p->boat_guidance_debug = orb_subscribe(ORB_ID(boat_guidance_debug));
     subs_p->rc_channels = orb_subscribe(ORB_ID(rc_channels));
+    subs_p->vehicle_attitude = orb_subscribe(ORB_ID(vehicle_attitude));
 
 	//Check correct subscription
     if(subs_p->vehicle_global_position == -1){

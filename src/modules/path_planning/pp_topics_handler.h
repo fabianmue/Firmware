@@ -17,6 +17,7 @@
 #include <uORB/topics/rc_channels.h>
 #include <uORB/topics/boat_local_position.h>
 #include <uORB/topics/boat_pp_debug.h>
+#include <uORB/topics/vehicle_attitude.h>
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -30,6 +31,7 @@ struct subscribtion_fd_s{
     int parameter_update;					//Update of Parameters from QGroundControl
     int boat_guidance_debug;                //Values from guidance_module from autonomous_sailing app
     int rc_channels;                        //Remote Control commands
+    int vehicle_attitude;					//Raw Yaw-Angle
 };
 
 
@@ -38,6 +40,7 @@ struct structs_topics_s{
 	struct vehicle_global_position_s vehicle_global_position;
 	struct parameter_update_s parameter_update;
     struct rc_channels_s rc_channels;
+    struct vehicle_attitude_s vehicle_attitude;
 };
 
 

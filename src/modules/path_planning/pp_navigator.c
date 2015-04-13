@@ -553,7 +553,7 @@ void nav_heading_update(void) {
 void yaw_update(struct structs_topics_s *strs) {
 
 	if(config.use_yaw == true) {
-		state.heading_cur = nh_sensor2compass(strs->vehicle_global_position.yaw);
+		state.heading_cur = nh_sensor2compass(strs->vehicle_attitude.yaw);
 
 		//Send current Heading to QGround control for debugging
 		cb_new_heading(state.heading_cur);

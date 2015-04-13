@@ -183,7 +183,8 @@ int pp_thread_main(int argc, char *argv[]) {
             { .fd = subs.boat_guidance_debug,       .events = POLLIN },//MUST BE THE FIRST ONE!
             { .fd = subs.vehicle_global_position,   .events = POLLIN },
             { .fd = subs.parameter_update,          .events = POLLIN },
-            { .fd = subs.rc_channels,               .events = POLLIN }
+            { .fd = subs.rc_channels,               .events = POLLIN },
+            { .fd = subs.vehicle_attitude,          .events = POLLIN }
     };
 
     int poll_return;				//Return Value of the polling.
@@ -254,10 +255,6 @@ int pp_thread_main(int argc, char *argv[]) {
                     gh_gridlines_handler();
                     #endif //USE_GRID_LINES == 1
 
-                    #if USE_GRID_LINES == 0
-                    yaw_update(&strs);
-					#endif
-
 
                 }
                 if(fds[2].revents & POLLIN){
@@ -276,6 +273,15 @@ int pp_thread_main(int argc, char *argv[]) {
                     //Tell the state to the failsafe-mode
 					#if USE_FAILSAFE
                     fs_check_rc_signal(&strs);
+					#endif
+                }
+                if(fds[4].revents & POLLIN){
+                	//New data in vehicle_attitude topic
+                	orb_copy(ORB_ID(vehicle_attitude), subs.vehicle_attitude, &(strs.vehicle_attitude));
+
+                	//Set the new value for the yaw-angle
+					#if USE_GRID_LINES == 0
+                	yaw_update(&strs);
 					#endif
                 }
 			}
