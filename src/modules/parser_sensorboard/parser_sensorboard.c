@@ -26,6 +26,15 @@ static int daemon_task;				/**< Handle of daemon task / thread */
 
 
 
+/*
+ * TODO:
+ * 	- specify timeout for read => if no data is received, skip the request and terminate
+ */
+
+
+
+
+
 /**
  * daemon management function.
  */
@@ -167,13 +176,14 @@ int parser_sb_thread_main(int argc, char *argv[])
 	            	//Update the state of sensorboard communication module
 	            	sb_update_state(strs.path_planning.heading);
 
-	            	printf("Received new Heading!\n (JW) ");
+	            	//printf("Received new Heading!\n (JW) ");
 	            }
 			}
 		}
 
 
 		//Check if we received data over the serial interface
+		sb_write(&COMport,0x4A);
 		sb_read(&COMport);
 
 
