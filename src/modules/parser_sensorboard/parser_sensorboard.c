@@ -15,6 +15,7 @@
 #include "config.h"
 #include "ps_sensorboard.h"
 #include "ps_topics_handler.h"
+#include "ps_data_update.h"
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;		/**< daemon status flag */
@@ -183,8 +184,11 @@ int parser_sb_thread_main(int argc, char *argv[])
 
 
 		//Check if we received data over the serial interface
-		sb_write(&COMport,0x4A);
-		sb_read(&COMport);
+		//sb_write(&COMport,0x4A);
+		//sb_read(&COMport);
+
+		//Do updates of the variables
+		du_handler(&COMport);
 
 
 

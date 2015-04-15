@@ -22,5 +22,11 @@ int sb_read(int *com_port);
 /* Update the state */
 bool sb_update_state(float heading);
 
+/* Check, if new data is available */
+uint8_t sb_is_new_data(void);
+
+/* Read the data from the buffer */
+bool sb_read_data(uint8_t *buffer);
+
 
 #endif /* SENSORBOARD_H_ */

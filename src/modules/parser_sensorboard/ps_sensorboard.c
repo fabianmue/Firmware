@@ -221,6 +221,44 @@ bool sb_update_state(float heading) {
 }
 
 
+/*
+ * Is new data available?
+ *
+ * @return last command numbe, 0x00 if no new data is present
+ */
+uint8_t sb_is_new_data(void) {
+
+	if(state.newdata) {
+		//New data is present => we return the command number
+
+		return state.cmd;
+	} else {
+		//No new data is present => we return 0x00
+
+		return 0x00;
+	}
+}
+
+
+/*
+ * Read new Data from Buffer and flag that the data is read
+ *
+ * @return
+ */
+bool sb_read_data(uint8_t *buffer) {
+
+	//Return the data from the buffer
+	if(state.newdata) {
+		buffer = state.data;
+		//buffer[0] = state.data[0];
+		//buffer[1] = state.data[1];
+		return true;
+	} else {
+		return false;
+	}
+}
+
+
 
 /***********************************************************************************/
 /*****  P R I V A T E    F U N C T I O N S  ****************************************/
