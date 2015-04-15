@@ -99,7 +99,7 @@ bool sb_init(int *com_port) {
 	sleep(2); //wait 2s
 
 	//Set baudrate
-	sb_set_baudrate(*com_port,9600);
+	sb_set_baudrate(*com_port,38400);
 
 	//Wait for stability
 	sleep(2); //wait 2s
@@ -163,7 +163,7 @@ int sb_read(int *com_port) {
 	if(size > 0) {
 		//The buffer contains some data => call the parser and try to find the message
 
-		printf("***Received data: %d ",(int)com_buffer[0]);
+		printf("***Received data: %d \n",(int)com_buffer[0]);
 
 		//Parse the buffer starting at the first element
 		uint8_t i;
@@ -278,9 +278,9 @@ bool parse_message(uint8_t data) {
 
 					state.cmd = data;
 
-					printf("   Received Command: %d",data);
+					printf("   Received Command: %d\n",data);
 
-					rx_state = DATA;
+					rx_state = NUMOFBYTES;
 				}
 
 				break;
@@ -290,7 +290,7 @@ bool parse_message(uint8_t data) {
 
 				state.nrofbytes = data;
 
-				printf("   Received Num Bytes: %d",data);
+				printf("   Received Num Bytes: %d\n",data);
 
 				state.dataindex = 0;
 				rx_state = DATA;
@@ -303,10 +303,12 @@ bool parse_message(uint8_t data) {
 				//Read the Data byte and store it
 				state.data[state.dataindex] = data;
 
+				printf("   Read byte number %d\n",state.dataindex);
+
 				//Increment the index
 				state.dataindex++;
 
-				if(state.dataindex > state.nrofbytes) {
+				if(state.dataindex > (state.nrofbytes-1)) {
 					//All data Bytes are read => expect to read the ENDCHAR
 
 					rx_state = ENDCHAR;
@@ -323,7 +325,7 @@ bool parse_message(uint8_t data) {
 					//Flag that new data is available
 					state.newdata = true;
 
-					printf("   Received ENDCHAR");
+					printf("   Received ENDCHAR\n");
 
 					rx_state = IDLE;
 
