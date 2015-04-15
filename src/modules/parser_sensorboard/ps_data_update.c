@@ -21,7 +21,7 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-static uint8_t global_buffer[255];		//global buffer holding the data received from the UART
+static uint8_t global_buffer[255];		//global buffer holding the data received from the UART (actually only the pointer to the UART data buffer)
 
 
 /***********************************************************************************/
@@ -54,9 +54,8 @@ bool du_handler(int *comport) {
 
 
 	//*** READ DATA FROM THE SERIAL INTERFACE
-
 	uint8_t cmd = sb_is_new_data();
-	printf("     -- Command: %d",cmd);
+	//printf("     -- Command: %d",cmd);
 
 	if(cmd == 0x00) {
 		//No new valid data is received => might flag unhappy
@@ -71,12 +70,12 @@ bool du_handler(int *comport) {
 			case CMD_LASTDIST: {
 				//The last known distance from the sensor was received
 
-				printf("     -- Buffer 0,1: %d,%d",global_buffer[0],global_buffer[1]);
+				//printf("     -- Buffer 0,1: %d,%d",global_buffer[0],global_buffer[1]);
 
 				uint16_t dist = 0;
 				dist = (((uint16_t)global_buffer[0])<<8) | ((uint16_t)global_buffer[1]);
 
-				printf("     -- New Distance: %d cm",dist);
+				printf("     -- New Distance: %d cm\n",dist);
 
 				break;
 			}

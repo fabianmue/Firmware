@@ -163,7 +163,7 @@ int sb_read(int *com_port) {
 	if(size > 0) {
 		//The buffer contains some data => call the parser and try to find the message
 
-		printf("***Received data: %d \n",(int)com_buffer[0]);
+		//printf("***Received data: %d \n",(int)com_buffer[0]);
 
 		//Parse the buffer starting at the first element
 		uint8_t i;
@@ -174,7 +174,7 @@ int sb_read(int *com_port) {
 		//Something could go wrong while receiving the data => reset the state machine
 		rx_state = IDLE;
 
-		printf("...End of Message (%d)\n",size);
+		//printf("...End of Message (%d)\n",size);
 	} else {
 		printf("   No data received!\n");
 	}
@@ -249,7 +249,11 @@ bool sb_read_data(uint8_t *buffer) {
 
 	//Return the data from the buffer
 	if(state.newdata) {
-		buffer = state.data;
+		memcpy(buffer,state.data,state.nrofbytes);
+		//uint8_t i;
+		//for(i=0; i<state.nrofbytes; i++) {
+		//	buffer[i] = state.data[i];
+		//}
 		//buffer[0] = state.data[0];
 		//buffer[1] = state.data[1];
 		return true;
@@ -316,7 +320,7 @@ bool parse_message(uint8_t data) {
 
 					state.cmd = data;
 
-					printf("   Received Command: %d\n",data);
+					//printf("   Received Command: %d\n",data);
 
 					rx_state = NUMOFBYTES;
 				}
@@ -328,7 +332,7 @@ bool parse_message(uint8_t data) {
 
 				state.nrofbytes = data;
 
-				printf("   Received Num Bytes: %d\n",data);
+				//printf("   Received Num Bytes: %d\n",data);
 
 				state.dataindex = 0;
 				rx_state = DATA;
@@ -341,7 +345,7 @@ bool parse_message(uint8_t data) {
 				//Read the Data byte and store it
 				state.data[state.dataindex] = data;
 
-				printf("   Read byte number %d\n",state.dataindex);
+				//printf("   Read byte number %d\n",state.dataindex);
 
 				//Increment the index
 				state.dataindex++;
@@ -363,7 +367,7 @@ bool parse_message(uint8_t data) {
 					//Flag that new data is available
 					state.newdata = true;
 
-					printf("   Received ENDCHAR\n");
+					//printf("   Received ENDCHAR\n");
 
 					rx_state = IDLE;
 
