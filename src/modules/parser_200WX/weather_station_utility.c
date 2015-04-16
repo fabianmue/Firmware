@@ -133,6 +133,12 @@ bool weather_station_init(int *wx_port_pointer){
     encode_msg_200WX(wx_port_pointer, "PAMTC,EN,XDRC,1,1");
     #endif //PARSE_VEHICLE_STATUS_MSG == 1
 
+
+    //16.04.15 added remotely by Marco
+    //This enables taking "raw wind data" from the weather station without using the filter implemented in the weather station
+    //encode_msg_200WX(wx_port_pointer, "PAMTC,WIND,FILTER,SET,0,0");
+
+
     warnx(" clean UART buffer before start.\n");
 
     // erase received but not read yet data from serial buffer
