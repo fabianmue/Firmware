@@ -644,7 +644,7 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(QGC2, "LLiLLif", "Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
     LOG_FORMAT(OPTM, "fffffffffff", "K1,K2,K3,H1,H2,H3,H4,Lb1,Lb2,Ub1,Ub2"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC3, "iiffffffHHHii", "LqrTs,MpcTs,A11,A12,A21,A22,B1,B2,WAlT,WTdT,PH,TT,OnlyY"), //Added by Marco Tranzatto
-    LOG_FORMAT(PP, "fHBfffffffff", "AlpStr,DoMan,IdCmd,HeadRef,Npos,Epos,Ntar,Etar,Nob,Eob,wind,head"), //Added by Marco Tranzatto/Jonas Wirz
+    LOG_FORMAT(PP, "fHBfffffffff", "AlpStr,DoMan,IdCmd,Here,Npos,Epos,Ntar,Etar,Nob,Eob,wi,he"), //Added by Marco Tranzatto/Jonas Wirz
     LOG_FORMAT(BLP, "fff", "X,Y,D"), //Added by Marco Tranzatto
     LOG_FORMAT(PWS, "iHfH", "ByteR,Mask,DB1,ComMsg"), //Added by Marco Tranzatto
 	LOG_FORMAT(QGC4, "fBf", "k,Windo,Period"), //Added by Jonas Wirz
