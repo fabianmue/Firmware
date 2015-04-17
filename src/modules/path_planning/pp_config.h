@@ -13,13 +13,13 @@
 #include <stdint.h>
 
 
-/*DEBUG ON THE COMPUTERgit
+/*DEBUG ON THE COMPUTER
  * If this flag is set to 1, the pathplanning module can be debugged using
  * an external C-Program simulating the parameter updates. This way it
  * is possible checking the algorithms and the inputs/outputs of the
  * different functions.
  * Note: With C_DEBUG = 1 it is NOT possible to compile for the Pixhawk!*/
-#define C_DEBUG 0
+#define C_DEBUG 1
 
 #if C_DEBUG == 1 //Include some h-files for Computer Simulation (PC-Debugging)
 	#include "PCDebug/pixhawk_variables.h"

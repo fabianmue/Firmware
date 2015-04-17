@@ -94,4 +94,8 @@ float nh_compass2sensor(float compass);
 Point nh_e7_to_point(PointE7 geoE7);
 
 
+/* @brief Return the modulo 360° of an angle */
+float nh_mod(float angle);
+
+
 #endif /* NAVIGATION_HELPER_H_ */

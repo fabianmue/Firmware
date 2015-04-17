@@ -344,5 +344,33 @@ Point nh_e7_to_point(PointE7 geoE7) {
 }
 
 
+/**
+ * Calculate the modulo for 360°
+ *
+ * @param number: Angle the modulo should be taken of [rad]
+ * @return Modulo 360° of the given Number [rad]
+ */
+float nh_mod(float angle) {
+
+	if(angle>4*PI) {
+		angle = 4*PI - angle;
+	}
+
+	if(angle>2*PI) {
+		angle = 2*PI - angle;
+	}
+
+	if(angle<(-2*PI)) {
+		angle = angle + 2*PI;
+	}
+
+	if(angle<0) {
+		angle = 2*PI + angle;
+	}
+
+	return angle;
+}
+
+
 
 

@@ -15,11 +15,10 @@
 #include <stdint.h>
 
 #include "pp_config.h"
-#include "pp_navigator.h"
-//#include "pp_navigation_helper.h"
 
 #if C_DEBUG != 1
 	#include "pp_topics_handler.h"
+	#include "pp_navigator.h"
 #endif
 
 

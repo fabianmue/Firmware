@@ -94,6 +94,7 @@ void smooth(const float signal[], int SignalLen, int KernelLen,float result[]);
  *
  * @param Pointer to the State-Struct
  * @param Pointer to the Field-Struct
+ * @return Reference Angle in Compass Frame [rad]
  */
 float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *field) {
 
@@ -111,7 +112,8 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 
 	float seg;
 	for(seg = seg_start; seg <= seg_end; seg += HEADRESOLUTION) {
-		float seg_compass = fmod(seg,(2*PI));
+		//float seg_compass = fmod(seg,(2*PI));
+		float seg_compass = nh_mod(seg);
 
 		//Get the cost and save it in the matrix
 		costMat[ind] = total_cost(seg_compass,state,field);
@@ -172,6 +174,7 @@ void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, floa
 	Config.ObstHorizon = ObstHorizon;
 	Config.WindowSize = WindowSize;
 
+#if C_DEBUG == 0
 	//Publish new values to boat_pp_debug1 topic in order to Log them on SD-Card
 	struct boat_pp_debug1_s temp;
 	temp.gw = Config.Gw;
@@ -185,6 +188,7 @@ void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, floa
 	temp.windowsize = Config.WindowSize;
 
 	th_publish_boat_pp_debug1(&temp);
+#endif
 }
 
 

@@ -30,11 +30,14 @@
 #include "pp_navigator.h"
 #include "pp_cost_method.h"
 #include "pp_potentialfield_method.h"
-#include "pp_failsafe.h"
 
-#include "pp_communication_buffer.h"
-#include <drivers/drv_hrt.h>
 #include <stdbool.h>
+
+#if C_DEBUG == 0
+#include "pp_communication_buffer.h"
+#include "pp_failsafe.h"
+#include <drivers/drv_hrt.h>
+#endif
 
 //static char txt_msg[150]; ///used to send messages to QGC
 
@@ -168,7 +171,12 @@ void nav_init(void) {
  */
 void nav_navigator(void) {
 
+	#if C_DEBUG == 0
 	uint64_t systime = hrt_absolute_time();
+	#else
+	uint64_t systime = 0;
+	#endif
+
 
 
 	/** MANEUVER IS IN PROGRESS

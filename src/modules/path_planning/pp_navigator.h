@@ -17,7 +17,9 @@
 #include "pp_config.h"
 #include "pp_navigation_helper.h"
 
+#if C_DEBUG == 0
 #include "pp_topics_handler.h"
+#endif
 
 
 /**Struct containing the status of the Navigator */
