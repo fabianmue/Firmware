@@ -451,7 +451,7 @@ void nav_speak2helsman() {
 		//No maneuver is necessary => command the course the helsman should sail at
 
 		if(cb_is_maneuver_completed()==true) {
-			//Check if the previous maneuver is completed before commanding a maneuver
+			//Check if the previous maneuver is completed before commanding a new alpha
 
 			if(enable_pathplanner == true) {
 				cb_set_alpha_star(alpha_star);		//Send the new reference to autonomous sailing app
