@@ -55,10 +55,6 @@ void nav_init(void);
 void nav_navigator(void);
 
 
-/** @brief Listen to the helsman */
-void nav_listen2helsman(void);
-
-
 /** @brief Speak to the helsman */
 void nav_speak2helsman(void);
 

@@ -20,8 +20,6 @@
  * - add Potentialfield Method
  * - Winddirection => how's the definition? Wind from North = 0°/ Wind from South = 180° (Sensor-Frame)
  *
- * - Allow entering NED-Target coordinates instead of GPS coordinates
- * - Introduce option for using magnetic bearing only
  *
  */
 
@@ -324,6 +322,11 @@ void nav_navigator(void) {
 		}
 
 
+		//****SEND THE TARGET DATA USED FOR PATHPLANNING TO QGROUND CONTROL
+		//TODO: Added on Friday 17.04.
+		cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
+
+
 		//****DECISION MAKING
 		/* In the following section the decisions based on the optimal Heading are made. In particular
 		 * the the Navigator decides if the boat should tack */
@@ -402,34 +405,6 @@ void nav_navigator(void) {
 
 
 /**
- * The "autonomous_sailing module" has changed the topic "path_planning", because a maneuver was finished.
- * Therefore, the Helsman speaks to the Navigator => the Navigator has to listen.
- *
- * @param *strs_p: Pointer to the topics-struct
- */
-void nav_listen2helsman(void) {
-
-	if(cb_is_maneuver_completed()) {
-		//The ongoing maneuver is completed and therefore the state can be reseted.
-
-		state.maneuver = false;
-	}
-
-	/** A maneuver is under progress. A maneuver is normally completed after a certain time => reset the maneuver flag in this case.
-	 * Note: This is very ugly, but it hopefully helps...*/
-	/*if(state.maneuver) {
-		if(hrt_absolute_time()-state.maneuver_start >= config.maneuverduration) {
-			//state.maneuver = false;
-
-			smq_send_log_info("Safety Reset of the maneuver flag!");
-		}
-	}*/
-
-} //end of nav_listen2helsman
-
-
-
-/**
  * A new heading reference is available. Communicate this new information to the "autonomous_sailing module".
  * Therefore, speak to the Helsman.
  *
@@ -446,7 +421,7 @@ void nav_speak2helsman() {
 	float alpha_star = nh_appWindDir(state.heading_ref, state.wind_dir);
 
 	#if SIMULATION_FLAT == 1
-		//Store the current Alpha (this is neede to set a new current alpha star, after the boat has "virtually" done a maneuver
+		//Store the current Alpha (this is needed to set a new current alpha star, after the boat has "virtually" done a maneuver
 		last_alpha = alpha_star;
 	#endif
 

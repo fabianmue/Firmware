@@ -47,7 +47,7 @@ struct boat_guidance_debug_s {
     float alpha;                ///actual measurements of alpha [rad], Dumas' convention
     float rudder_action;        ///input for rudder servo motor
     float sail_action;          ///input for sail servo motor
-    float twd_mean;             /// True wind diretion mean value
+    float twd_mean;             /// True wind diretion mean value (in Sensor Frame)
     float tws_mean;             /// True wind speed mean value
     uint16_t maneuver_completed;    /// last tack or jybe maneuver completed
     uint8_t  id_maneuver; /**< ID last commanded maneuver */
