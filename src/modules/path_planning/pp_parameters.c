@@ -332,6 +332,9 @@ PARAM_DEFINE_INT32(PP_NAV_USEYAW,0);
 PARAM_DEFINE_INT32(PP_NAV_SETAR,0);
 
 
+PARAM_DEFINE_INT32(PP_DBG_MINUS,0);
+
+
 static struct pointers_param_qgc_s{
 
 
@@ -384,6 +387,8 @@ static struct pointers_param_qgc_s{
 	param_t cm_obstsafetyradius_pointer;
 	param_t cm_obsthorizon_pointer;
 	param_t cm_windowsize_pointer;
+
+	param_t cm_dbg_minus;
 
 
 	//**NAVIGATION
@@ -489,6 +494,8 @@ void p_param_init(void){
     pointers_param_qgc.cm_obstsafetyradius_pointer = param_find("PP_CM_OBSTSAFRAD");
     pointers_param_qgc.cm_obsthorizon_pointer = param_find("PP_CM_OBSTHORIZN");
     pointers_param_qgc.cm_windowsize_pointer = param_find("PP_CM_WINDOWSIZE");
+
+    pointers_param_qgc.cm_dbg_minus = param_find("PP_DBG_MINUS");
 
 
     //**NAVIGATION
@@ -718,6 +725,10 @@ void p_param_update(bool update_path_param){
     param_get(pointers_param_qgc.cm_windowsize_pointer, &windowsize);
 
     cm_set_configuration(gw, go, gm, gs, gt, glee, obstsafetyradius, obsthorizon, windowsize);
+
+    uint8_t dbg_minus;
+    param_get(pointers_param_qgc.cm_dbg_minus, &dbg_minus);
+    DEBUG_minus(dbg_minus);
 
 
     //**NAVIGATOR

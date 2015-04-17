@@ -33,7 +33,8 @@ void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, floa
 float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *field);
 
 
-
+/* @brief Set a minus for the Target Vector */
+void DEBUG_set_minus(uint8_t status);
 
 
 #endif /* PATHPLANNING_COSTFUNCTION_H_ */

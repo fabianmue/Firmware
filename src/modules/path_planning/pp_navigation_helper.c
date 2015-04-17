@@ -353,11 +353,11 @@ Point nh_e7_to_point(PointE7 geoE7) {
 float nh_mod(float angle) {
 
 	if(angle>4*PI) {
-		angle = 4*PI - angle;
+		angle = angle - 4*PI;
 	}
 
 	if(angle>2*PI) {
-		angle = 2*PI - angle;
+		angle = angle -  2*PI;
 	}
 
 	if(angle<(-2*PI)) {

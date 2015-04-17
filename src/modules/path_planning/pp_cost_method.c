@@ -52,6 +52,8 @@ static struct {
 		.WindowSize = 5 //5
 };
 
+static bool DEBUG_minus = false;
+
 
 /* @brief Calculate the total cost for a given simulated heading */
 float total_cost(float seg, struct nav_state_s *state, struct nav_field_s *field);
@@ -192,6 +194,16 @@ void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, floa
 #endif
 }
 
+void DEBUG_set_minus(uint8_t status) {
+	//Set a minus for the Target Cost => reverses the target vector (does not make sense, but still...)
+
+	if(status == 1) {
+		DEBUG_minus = true;
+	} else {
+		DEBUG_minus = false;
+	}
+}
+
 
 
 
@@ -276,6 +288,12 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 
 	float tgx = dx/distToTarget;			//Vector pointing towards the target
 	float tgy = dy/distToTarget;
+
+	if(DEBUG_minus) {
+		tgx = -tgx;
+		tgy = -tgy;
+	}
+
 
 	//Get the Boatspeed from the Polardiagram
 	float boatspeed = pol_polardiagram(appWind,state->wind_speed);
