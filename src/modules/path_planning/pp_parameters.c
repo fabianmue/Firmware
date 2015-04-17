@@ -728,7 +728,7 @@ void p_param_update(bool update_path_param){
 
     uint8_t dbg_minus;
     param_get(pointers_param_qgc.cm_dbg_minus, &dbg_minus);
-    DEBUG_minus(dbg_minus);
+    DEBUG_set_minus(dbg_minus);
 
 
     //**NAVIGATOR
