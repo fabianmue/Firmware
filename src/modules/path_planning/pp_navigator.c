@@ -136,10 +136,9 @@ void nav_init(void) {
 
 
 	//Update the state by requesting the values from the communication Buffer
-	nav_listen2helsman();	//Check, if a maneuver is completed
+	nav_wind_update();		//Check for new Wind measurements
 	nav_heading_update();	//Check for a new Heading (alpha)
 	nav_position_update();  //Check for a new Position update
-	nav_wind_update();		//Check for new Wind measurements
 
 
 	//Disable the Pathplanner by default
@@ -306,6 +305,13 @@ void nav_navigator(void) {
 		#endif
 
 
+		//****SEND THE DATA USED FOR PATHPLANNING TO QGROUND CONTROL
+		//TODO: Added on Friday 17.04.
+		cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
+		cb_new_obstacle(field.obstacles[0].northx, field.obstacles[0].easty);
+
+
+
 
 		/****FIND A NEW REFERENCE HEADING
 		 * Different algorithms can be used. */
@@ -321,10 +327,8 @@ void nav_navigator(void) {
 			state.heading_ref = pm_NewHeadingReference(&state,&field);
 		}
 
-
-		//****SEND THE TARGET DATA USED FOR PATHPLANNING TO QGROUND CONTROL
-		//TODO: Added on Friday 17.04.
-		cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
+		//Display the new reference heading in QGround Control
+		cb_new_refheading(state.heading_ref);
 
 
 		//****DECISION MAKING
@@ -424,10 +428,6 @@ void nav_speak2helsman() {
 		//Store the current Alpha (this is needed to set a new current alpha star, after the boat has "virtually" done a maneuver
 		last_alpha = alpha_star;
 	#endif
-
-
-	//Display the new reference heading in QGround Control
-	cb_new_refheading(alpha_star);
 
 
 	/* Tell the Helsman to tack/gybe as soon as possible, if pathplanning wants to tack/gybe */
@@ -766,10 +766,10 @@ void nav_set_method(uint8_t method) {
  * Enable/Disable the use of the yaw only for heading measurement of the boat
  * Note: This function is called by QGroundControl
  *
- * @param state: 1 = enable, 0 = disable
+ * @param status: 1 = enable, 0 = disable
  */
-void nav_set_use_yaw(uint8_t state) {
-	if(state == 1) {
+void nav_set_use_yaw(uint8_t status) {
+	if(status == 1) {
 		config.use_yaw = true;
 	} else {
 		config.use_yaw = false;

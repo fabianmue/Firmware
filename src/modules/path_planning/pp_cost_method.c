@@ -113,6 +113,7 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 	float seg;
 	for(seg = seg_start; seg <= seg_end; seg += HEADRESOLUTION) {
 		//float seg_compass = fmod(seg,(2*PI));
+		//TODO: Friday 17.04.
 		float seg_compass = nh_mod(seg);
 
 		//Get the cost and save it in the matrix

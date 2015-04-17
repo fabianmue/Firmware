@@ -64,7 +64,11 @@ float pol_polardiagram(float wind_dir, float wind_speed) {
 
 	/* The sign of the Wind Direction is not important, since
 	 * the polardiagram is assumed to be symmetric. */
-	wind_dir = fabsf(wind_dir);
+	//wind_dir = fabsf(wind_dir);
+	//TODO:Changed Friday 17.04.15
+	if(wind_dir<0) {
+		wind_dir = (-1.0f)*wind_dir;
+	}
 
 	/* Get Index that belongs to the given angle */
 	if(wind_dir < STARTANG) {
@@ -93,7 +97,7 @@ float pol_polardiagram(float wind_dir, float wind_speed) {
 		if(wind_speed > 0) {
 			//The mean Speed is 3m/s
 
-			return ((float)polar_3_0[ind]/170);
+			return ((float)polar_3_0[ind]/170.0f);
 		} else {
 			//printf("WSpeed: %f\n",wind_speed);
 			return -1;
