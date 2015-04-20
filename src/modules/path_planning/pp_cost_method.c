@@ -299,8 +299,8 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 	tgx = dx/distToTarget;
 	tgy = dy/distToTarget;
 
-	tgx = dx;
-	tgy = dy;
+	//tgx = dx;
+	//tgy = dy;
 	//***END NEW VERSION
 
 	if(DEBUG_minus) {
