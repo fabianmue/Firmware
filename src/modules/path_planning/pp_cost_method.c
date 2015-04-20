@@ -54,6 +54,7 @@ static struct {
 };
 
 static bool DEBUG_minus = false;
+static bool DEBUG_noDist = false;
 
 
 /* @brief Calculate the total cost for a given simulated heading */
@@ -195,13 +196,19 @@ void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, floa
 #endif
 }
 
-void DEBUG_set_minus(uint8_t status) {
+void DEBUG_set_minus(uint8_t MinusStatus, uint8_t DistStatus) {
 	//Set a minus for the Target Cost => reverses the target vector (does not make sense, but still...)
 
-	if(status == 1) {
+	if(MinusStatus == 1) {
 		DEBUG_minus = true;
 	} else {
 		DEBUG_minus = false;
+	}
+
+	if(DistStatus == 1) {
+		DEBUG_noDist = true;
+	} else {
+		DEBUG_noDist = false;
 	}
 }
 
@@ -299,8 +306,10 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 	tgx = dx/distToTarget;
 	tgy = dy/distToTarget;
 
-	//tgx = dx;
-	//tgy = dy;
+	if(DEBUG_noDist) {
+		tgx = dx;
+		tgy = dy;
+	}
 	//***END NEW VERSION
 
 	if(DEBUG_minus) {

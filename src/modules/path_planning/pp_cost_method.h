@@ -34,7 +34,7 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 
 
 /* @brief Set a minus for the Target Vector */
-void DEBUG_set_minus(uint8_t status);
+void DEBUG_set_minus(uint8_t MinusStatus, uint8_t DistStatus) ;
 
 
 #endif /* PATHPLANNING_COSTFUNCTION_H_ */

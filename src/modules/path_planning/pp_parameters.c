@@ -333,6 +333,7 @@ PARAM_DEFINE_INT32(PP_NAV_SETAR,0);
 
 
 PARAM_DEFINE_INT32(PP_DBG_MINUS,0);
+PARAM_DEFINE_INT32(PP_DBG_NODIST,0);
 
 
 static struct pointers_param_qgc_s{
@@ -389,6 +390,7 @@ static struct pointers_param_qgc_s{
 	param_t cm_windowsize_pointer;
 
 	param_t cm_dbg_minus;
+	param_t cm_dbg_nodist;
 
 
 	//**NAVIGATION
@@ -496,7 +498,7 @@ void p_param_init(void){
     pointers_param_qgc.cm_windowsize_pointer = param_find("PP_CM_WINDOWSIZE");
 
     pointers_param_qgc.cm_dbg_minus = param_find("PP_DBG_MINUS");
-
+    pointers_param_qgc.cm_dbg_nodist = param_find("PP_DBG_NODIST");
 
     //**NAVIGATION
     pointers_param_qgc.nav_period = param_find("PP_NAV_PERIOD");
@@ -726,9 +728,11 @@ void p_param_update(bool update_path_param){
 
     cm_set_configuration(gw, go, gm, gs, gt, glee, obstsafetyradius, obsthorizon, windowsize);
 
-    uint8_t dbg_minus;
+    uint8_t dbg_minus = 0;
+    uint8_t dbg_nodist = 0;
     param_get(pointers_param_qgc.cm_dbg_minus, &dbg_minus);
-    DEBUG_set_minus(dbg_minus);
+    param_get(pointers_param_qgc.cm_dbg_nodist, &dbg_nodist);
+    DEBUG_set_minus(dbg_minus, dbg_nodist);
 
 
     //**NAVIGATOR
