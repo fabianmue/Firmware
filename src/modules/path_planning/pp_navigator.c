@@ -327,7 +327,7 @@ void nav_navigator(void) {
 			state.heading_ref = pm_NewHeadingReference(&state,&field);
 		}
 
-		//Display the new reference heading in QGround Control
+		//Display the new reference heading in QGround Control (also Log this on SD-Card)
 		cb_new_refheading(state.heading_ref);
 
 

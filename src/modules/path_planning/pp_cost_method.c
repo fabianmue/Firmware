@@ -13,6 +13,7 @@
 
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "pp_cost_method.h"
 
 #include "pp_polardiagram.h"
@@ -288,6 +289,19 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 
 	float tgx = dx/distToTarget;			//Vector pointing towards the target
 	float tgy = dy/distToTarget;
+
+
+	//***START: THIS IS ANOTHER VERSION FOR CALCULTING THE SAME!
+	float bearing = nh_ned_bearing(state->position,field->targets[state->targetNum]);
+	dx = cosf(bearing);
+	dy = sinf(bearing);
+
+	tgx = dx/distToTarget;
+	tgy = dy/distToTarget;
+
+	tgx = dx;
+	tgy = dy;
+	//***END NEW VERSION
 
 	if(DEBUG_minus) {
 		tgx = -tgx;
