@@ -19,7 +19,7 @@
  * is possible checking the algorithms and the inputs/outputs of the
  * different functions.
  * Note: With C_DEBUG = 1 it is NOT possible to compile for the Pixhawk!*/
-#define C_DEBUG 0
+#define C_DEBUG 1
 
 #if C_DEBUG == 1 //Include some h-files for Computer Simulation (PC-Debugging)
 	#include "PCDebug/pixhawk_variables.h"
@@ -42,6 +42,14 @@
  * If this flag is enabled (set to 1) the module is in Debug-Mode
  * and outputs comments onto the console.*/
 #define DEBUG 0
+
+
+/*LAKE DEBUG
+ * The following variables are introduced in order to quickly switch between different Versions while on the lake
+ *
+ */
+#define LDEBUG_POLARDIAGRAM 0 //Uses an easy Polardiagram that only contains the Upwind No-Go-Zone and has the same velocity everywhere else
+
 
 
 /*FAILSAFE MODE

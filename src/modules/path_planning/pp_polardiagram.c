@@ -17,6 +17,8 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "pp_config.h"
+
 
 
 
@@ -36,12 +38,26 @@
 
 //Lookup Table for 3.0m/s mean Windspeed
 static const uint8_t polar_3_0[33] =
-/*25°  30°  35°  45°  50°  55°  60°  65° */
-{  0,   0,   0,  94, 102, 111, 122, 123,
- 126, 133, 138,	143, 144, 146, 150,	149,
- 147, 145, 144,	142, 136, 128, 128,	121,
- 113, 108, 108,	105, 100,  93,	88,	 82,
-  77};
+/*20°  25°  30°  35°  45°  50°  55°  60° */
+{ 76,  91, 106, 116, 125, 139, 145, 150,
+/*65°  70°  75°  80°  85°  90°  95° 100° */
+ 156, 161, 163,	165, 167, 168, 166,	163,
+/*105 110° 115° 120° 125° 130° 135° 140° */
+ 162, 160, 153,	145, 141, 137, 130,	123,
+/*145 150° 155° 160° 165° 170° 175° 180° 185° (Note: 185 exists because of easy rounding function!)*/
+ 121, 119, 112,	105,  99,  93,	90,	 87, 87};
+
+//ORIGINALLY USED!
+//static const uint8_t polar_3_0[33] =
+/*20°  25°  30°  35°  45°  50°  55°  60° */
+//{  0,   0,   0,  94, 102, 111, 122, 123,
+/*65°  70°  75°  80°  85°  90°  95° 100° */
+// 126, 133, 138,	143, 144, 146, 150,	149,
+/*105 110° 115° 120° 125° 130° 135° 140° */
+// 147, 145, 144,	142, 136, 128, 128,	121,
+/*145 150° 155° 160° 165° 170° 175° 180° */
+// 113, 108, 108,	105, 100,  93,	88,	 82,
+//  77};
 
 
 
@@ -56,22 +72,36 @@ static const uint8_t polar_3_0[33] =
  * Return the speed of the boat at a given relative Wind direction for
  * a given mean Windspeed.
  *
- * @param wind_dir: realtive Winddirection wrt. the boat's middel axis [rad]
+ * @param alpha: realtive Winddirection wrt. the boat's middel axis (=> alpha angle) [rad]
  * @param wind_speed: mean Windspeed [m/s]
  * @return expected Boatspeed [m/s] (-1 is returned in case of an error)
  */
-float pol_polardiagram(float wind_dir, float wind_speed) {
+float pol_polardiagram(float alpha, float wind_speed) {
 
 	/* The sign of the Wind Direction is not important, since
 	 * the polardiagram is assumed to be symmetric. */
-	//wind_dir = fabsf(wind_dir);
+	//alpha = fabsf(alpha);
 	//TODO:Changed Friday 17.04.15
-	if(wind_dir<0) {
-		wind_dir = (-1.0f)*wind_dir;
+	if(alpha<0) {
+		alpha = (-1.0f)*alpha;
 	}
 
+
+	//DEBUG: Use a simplified version of the Polardiagram. It only specifies the No-Go-Zone and does not
+	//       assume a speed that depends on the heading with respect to the wind.
+#if LDEBUG_POLARDIAGRAM == 1
+	if(alpha < 0.6981f) {
+		return 0;
+	} else {
+		return 1;
+	}
+#endif
+
+
+
+
 	/* Get Index that belongs to the given angle */
-	if(wind_dir < STARTANG) {
+	if(alpha < STARTANG) {
 		/* The Lookup Table only contains values for the range of
 		 * [20°...180°]. Therefore an expected speed of zero can be
 		 * returned for angles outside of this region */
@@ -84,8 +114,10 @@ float pol_polardiagram(float wind_dir, float wind_speed) {
 		//Get the index of the angle in the Lookup table
 		uint8_t ind = 0;
 
-		wind_dir = roundf(wind_dir / INTERVAL)*INTERVAL;
-		ind = (uint8_t)((wind_dir-STARTANG)/INTERVAL);
+		printf("Alpha real: %f, ",alpha*RAD2DEG);
+		alpha = roundf(alpha / INTERVAL)*INTERVAL;
+		ind = (uint8_t)((alpha-STARTANG)/INTERVAL);
+		printf("Alpha round: %f, Index: %d\n",alpha*RAD2DEG,ind);
 
 		//Check if the requested Index exists
 		if(ind > 32) {
@@ -97,7 +129,7 @@ float pol_polardiagram(float wind_dir, float wind_speed) {
 		if(wind_speed > 0) {
 			//The mean Speed is 3m/s
 
-			return ((float)polar_3_0[ind]/170.0f);
+			return (((float)polar_3_0[ind])/170.0f);
 		} else {
 			//printf("WSpeed: %f\n",wind_speed);
 			return -1;

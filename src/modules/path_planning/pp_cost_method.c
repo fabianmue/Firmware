@@ -148,6 +148,8 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 	//Get corresponding minimum Heading
 	float optHeading = headMat[minIndex];
 
+	printf("optimal Heading: %f",RAD2DEG*optHeading);
+
 	return optHeading;
 }
 
@@ -287,31 +289,33 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 	float appWind = nh_appWindDir(seg,state->wind_dir);
 
 	//Calcualte x and y Differences
-	/*float dx = state->position.northx-field->targets[state->targetNum].northx;
+	float dx = state->position.northx-field->targets[state->targetNum].northx;
 	float dy = state->position.easty-field->targets[state->targetNum].easty;
 
 	//Distance to target
 	float distToTarget = nh_ned_dist(state->position,field->targets[state->targetNum]);
 
 	float tgx = dx/distToTarget;			//Vector pointing towards the target
-	float tgy = dy/distToTarget;*/
+	float tgy = dy/distToTarget;
 
 
 	//***START: THIS IS ANOTHER VERSION FOR CALCULTING THE SAME!
-	float bearing = nh_ned_bearing(state->position,field->targets[state->targetNum]);
+	/*float bearing = nh_ned_bearing(state->position,field->targets[state->targetNum]);
 	float distToTarget = nh_ned_dist(state->position,field->targets[state->targetNum]);
 	float dx = cosf(bearing);
 	float dy = sinf(bearing);
 
-	float tgx = dx/distToTarget;
-	float tgy = dy/distToTarget;
+	float tgx = -dx/distToTarget;
+	float tgy = -dy/distToTarget;*/
 
+	//DEBUG_noDist = true;
 	if(DEBUG_noDist) {
 		tgx = dx;
 		tgy = dy;
 	}
 	//***END NEW VERSION
 
+	//DEBUG_minus = true;
 	if(DEBUG_minus) {
 		tgx = -tgx;
 		tgy = -tgy;
@@ -320,6 +324,8 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 
 	//Get the Boatspeed from the Polardiagram
 	float boatspeed = pol_polardiagram(appWind,state->wind_speed);
+
+	printf("Boatspeed C: %f\n",boatspeed);
 
 	//Calcualte Direction and Speed of the Boat
 	float vhx = cosf(seg)*boatspeed;
