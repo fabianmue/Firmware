@@ -117,7 +117,6 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 	float seg;
 	for(seg = seg_start; seg <= seg_end; seg += HEADRESOLUTION) {
 		//float seg_compass = fmod(seg,(2*PI));
-		//TODO: Friday 17.04.
 		float seg_compass = nh_mod(seg);
 
 		//Get the cost and save it in the matrix
@@ -288,23 +287,24 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 	float appWind = nh_appWindDir(seg,state->wind_dir);
 
 	//Calcualte x and y Differences
-	float dx = state->position.northx-field->targets[state->targetNum].northx;
+	/*float dx = state->position.northx-field->targets[state->targetNum].northx;
 	float dy = state->position.easty-field->targets[state->targetNum].easty;
 
 	//Distance to target
 	float distToTarget = nh_ned_dist(state->position,field->targets[state->targetNum]);
 
 	float tgx = dx/distToTarget;			//Vector pointing towards the target
-	float tgy = dy/distToTarget;
+	float tgy = dy/distToTarget;*/
 
 
 	//***START: THIS IS ANOTHER VERSION FOR CALCULTING THE SAME!
 	float bearing = nh_ned_bearing(state->position,field->targets[state->targetNum]);
-	dx = cosf(bearing);
-	dy = sinf(bearing);
+	float distToTarget = nh_ned_dist(state->position,field->targets[state->targetNum]);
+	float dx = cosf(bearing);
+	float dy = sinf(bearing);
 
-	tgx = dx/distToTarget;
-	tgy = dy/distToTarget;
+	float tgx = dx/distToTarget;
+	float tgy = dy/distToTarget;
 
 	if(DEBUG_noDist) {
 		tgx = dx;

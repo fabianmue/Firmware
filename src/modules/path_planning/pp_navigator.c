@@ -194,7 +194,7 @@ void nav_navigator(void) {
 			state.maneuver = false;				//The maneuver flag can be reseted and pathplanning can be done again...
 			state.command_maneuver = false;
 
-			smq_send_log_info("Maneuver is completed! JW");
+			//smq_send_log_info("Maneuver is completed! JW");
 
 
 			#if SIMULATION_FLAG == 1
@@ -312,7 +312,6 @@ void nav_navigator(void) {
 
 
 		//****SEND THE DATA USED FOR PATHPLANNING TO QGROUND CONTROL
-		//TODO: Added on Friday 17.04.
 		cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
 		cb_new_obstacle(field.obstacles[0].northx, field.obstacles[0].easty);
 
@@ -609,6 +608,10 @@ void nav_position_update(void) {
 			//This is not the last target => set new Target
 
 			state.targetNum += 1;
+			//TODO: DEBUG For the moment we assume that we always have the same Target
+			// => we do not increase the target number
+			state.targetNum = 0;
+			smq_send_log_info("Target reached!");
 
 			//Send the new target to QGround Control
 			cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
