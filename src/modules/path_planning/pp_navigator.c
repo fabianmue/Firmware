@@ -87,8 +87,6 @@ static NEDpoint ntarget;	//Target that should be reached when quick_target is se
 
 
 
-
-
 /**
  * Init a new Navigator by creating all necessary variables.
  *
@@ -441,9 +439,9 @@ void nav_speak2helsman() {
 				cb_do_maneuver(alpha_star);			//Tell the helsman to do a maneuver
 			}
 
-			smq_send_log_info("HELSMAN: Do maneuver! JW");
+			//smq_send_log_info("HELSMAN: Do maneuver! JW");
 		} else {
-			smq_send_log_info("HELSMAN: Finish the maneuver! JW");
+			//smq_send_log_info("HELSMAN: Finish the maneuver! JW");
 		}
 		state.command_maneuver = false;		//The command has been sent to the navigator => no need to tell it any more
 		state.maneuver = true;				//A maneuver is in progress => wait for maneuver completed
@@ -835,8 +833,6 @@ void DEBUG_nav_set_fake_state(NEDpoint pos, float heading) {
 
 			cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
 		}
-
-
 
 
 

@@ -303,8 +303,8 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 	dx = cosf(bearing);
 	dy = sinf(bearing);
 
-	tgx = dx/distToTarget;
-	tgy = dy/distToTarget;
+	tgx = -dx/distToTarget;
+	tgy = -dy/distToTarget;
 
 	if(DEBUG_noDist) {
 		tgx = dx;

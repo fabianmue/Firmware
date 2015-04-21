@@ -336,6 +336,7 @@ PARAM_DEFINE_INT32(PP_DBG_MINUS,0);
 PARAM_DEFINE_INT32(PP_DBG_NODIST,0);
 
 
+
 static struct pointers_param_qgc_s{
 
 
@@ -415,6 +416,7 @@ static struct pointers_param_qgc_s{
 	param_t nav_meth;
 	param_t nav_setar;
 	param_t nav_useyaw;
+
 
 
 	//**SIMULATION FOR DEBUGGING
@@ -520,7 +522,6 @@ void p_param_init(void){
 
     pointers_param_qgc.nav_reset = param_find("PP_NAV_RESET");
     pointers_param_qgc.nav_useyaw = param_find("PP_NAV_USEYAW");
-
 
     //**SIMULATION DEBUG
     pointers_param_qgc.sim_ned_northx = param_find("SIM_NED_NORTHX");
@@ -828,5 +829,6 @@ void p_param_update(bool update_path_param){
    	param_get(pointers_param_qgc.pm_weight_gm_pointer, &Gw);
    	param_get(pointers_param_qgc.pm_weight_sdist_pointer, &SearchDist);
    	pm_set_configuration(Gt, Go, Gm, Gw, SearchDist);
+
 
 }

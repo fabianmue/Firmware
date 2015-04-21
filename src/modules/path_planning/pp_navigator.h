@@ -120,5 +120,8 @@ void DEBUG_nav_set_fake_state(NEDpoint pos, float heading);
 /* @brief Set a fake-field for debugging */
 void DEBUG_nav_set_fake_field(NEDpoint target, NEDpoint obstacle);
 
+/* @brief Set the alpha-reference for Autonomous Sailing App manually */
+
+
 
 #endif /* PP_NAVIGATOR_H_ */
