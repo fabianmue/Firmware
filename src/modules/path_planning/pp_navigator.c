@@ -85,6 +85,9 @@ static NEDpoint ntarget;	//Target that should be reached when quick_target is se
 #endif
 
 
+static float dbg_alpha = 0;
+static bool dbg_alpha_status = false;
+
 
 
 /**
@@ -157,6 +160,11 @@ void nav_init(void) {
 	obstacle.easty = 150;
 	DEBUG_nav_set_fake_field(target,obstacle);
 	#endif
+
+
+	//DEBUG ONLY
+	dbg_alpha = 0;
+	dbg_alpha_status = false;
 }
 
 
@@ -413,6 +421,14 @@ void nav_navigator(void) {
  */
 void nav_speak2helsman() {
 
+	//***DEBUG ONLY
+	//If we entered an alpha manually, we send this alpha to the autonomous sailing app
+	if(dbg_alpha_status) {
+		cb_set_alpha_star(dbg_alpha);
+		return;
+	}
+
+
 	/* Set the new alpha reference Value
 	 * alpha = yaw-twd;
 	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
@@ -461,6 +477,7 @@ void nav_speak2helsman() {
 			state.maneuver = false;
 		}
 	}
+
 }
 
 
@@ -833,6 +850,21 @@ void DEBUG_nav_set_fake_state(NEDpoint pos, float heading) {
 
 			cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
 		}
+
+
+/**
+ * Set alpha manually. => in order to check correct working of low-level controller
+ */
+void DEBUG_nav_setalpha(uint8_t status, float alpha) {
+
+	if(status == 1) {
+		dbg_alpha = DEG2RAD*alpha;
+		dbg_alpha_status = true;
+	} else {
+		dbg_alpha_status = false;
+	}
+
+}
 
 
 

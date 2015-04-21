@@ -335,6 +335,9 @@ PARAM_DEFINE_INT32(PP_NAV_SETAR,0);
 PARAM_DEFINE_INT32(PP_DBG_MINUS,0);
 PARAM_DEFINE_INT32(PP_DBG_NODIST,0);
 
+PARAM_DEFINE_INT32(PP_DBG_SETALP,0);
+PARAM_DEFINE_FLOAT(PP_DBG_ALPHA,0);
+
 
 
 static struct pointers_param_qgc_s{
@@ -416,6 +419,9 @@ static struct pointers_param_qgc_s{
 	param_t nav_meth;
 	param_t nav_setar;
 	param_t nav_useyaw;
+
+	param_t nav_dbg_setalp;
+	param_t nav_dbg_alpha;
 
 
 
@@ -522,6 +528,9 @@ void p_param_init(void){
 
     pointers_param_qgc.nav_reset = param_find("PP_NAV_RESET");
     pointers_param_qgc.nav_useyaw = param_find("PP_NAV_USEYAW");
+
+    pointers_param_qgc.nav_dbg_alpha = param_find("PP_DBG_ALPHA");
+    pointers_param_qgc.nav_dbg_setalp = param_find("PP_DBG_SETALP");
 
     //**SIMULATION DEBUG
     pointers_param_qgc.sim_ned_northx = param_find("SIM_NED_NORTHX");
@@ -784,6 +793,15 @@ void p_param_update(bool update_path_param){
    		nav_init();
    		smq_send_log_info("NAVIGATOR RESET! switch back to 0!");
    	}
+
+
+   	//**SET ARTIFICIAL ALPHA PARAMETERS
+   	uint8_t dbg_setalp = 0;
+   	float dbg_alpha = 0;
+   	param_get(pointers_param_qgc.nav_dbg_setalp, &dbg_setalp);
+   	param_get(pointers_param_qgc.nav_dbg_alpha, &dbg_alpha);
+   	DEBUG_nav_setalpha(dbg_setalp, dbg_alpha);
+
 
 
    	//**ENABLE THE USE OF THE NAVIGATOR
