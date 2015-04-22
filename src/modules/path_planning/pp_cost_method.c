@@ -148,7 +148,9 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
 	//Get corresponding minimum Heading
 	float optHeading = headMat[minIndex];
 
+#if C_DEBUG == 1
 	printf("optimal Heading: %f",RAD2DEG*optHeading);
+#endif
 
 	return optHeading;
 }
@@ -325,7 +327,7 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 	//Get the Boatspeed from the Polardiagram
 	float boatspeed = pol_polardiagram(appWind,state->wind_speed);
 
-	printf("Boatspeed C: %f\n",boatspeed);
+	//printf("Boatspeed C: %f\n",boatspeed);
 
 	//Calcualte Direction and Speed of the Boat
 	float vhx = cosf(seg)*boatspeed;

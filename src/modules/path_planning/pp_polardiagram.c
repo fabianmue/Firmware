@@ -38,14 +38,14 @@
 
 //Lookup Table for 3.0m/s mean Windspeed
 static const uint8_t polar_3_0[33] =
-/*20°  25°  30°  35°  45°  50°  55°  60° */
-{ 76,  91, 106, 116, 125, 139, 145, 150,
-/*65°  70°  75°  80°  85°  90°  95° 100° */
- 156, 161, 163,	165, 167, 168, 166,	163,
-/*105 110° 115° 120° 125° 130° 135° 140° */
- 162, 160, 153,	145, 141, 137, 130,	123,
-/*145 150° 155° 160° 165° 170° 175° 180° 185° (Note: 185 exists because of easy rounding function!)*/
- 121, 119, 112,	105,  99,  93,	90,	 87, 87};
+/*20°  25°  30°  35°  40°  45°  50°  55° */
+{  0,   0, 106, 116, 126, 132, 140, 145, //was 76,91,106,116,126,132,140,145
+/*60°  65°  70°  75°  80°  85°  90°  95° */
+ 150, 156, 161,	163, 166, 167, 169,	166,
+/*100 105° 110° 115° 120° 125° 130° 135° */
+ 164, 162, 160,	153, 145, 141, 137,	129,
+/*140 145° 150° 155° 160° 165° 170° 175° 180° */
+ 122, 121, 119,	112, 105,  99,	93,	 90,  87};
 
 //ORIGINALLY USED!
 //static const uint8_t polar_3_0[33] =
@@ -81,7 +81,6 @@ float pol_polardiagram(float alpha, float wind_speed) {
 	/* The sign of the Wind Direction is not important, since
 	 * the polardiagram is assumed to be symmetric. */
 	//alpha = fabsf(alpha);
-	//TODO:Changed Friday 17.04.15
 	if(alpha<0) {
 		alpha = (-1.0f)*alpha;
 	}
@@ -114,10 +113,11 @@ float pol_polardiagram(float alpha, float wind_speed) {
 		//Get the index of the angle in the Lookup table
 		uint8_t ind = 0;
 
-		printf("Alpha real: %f, ",alpha*RAD2DEG);
+		//TODO: Check this function! => here must be the error!!!
+		//printf("Alpha real: %f, ",alpha*RAD2DEG);
 		alpha = roundf(alpha / INTERVAL)*INTERVAL;
 		ind = (uint8_t)((alpha-STARTANG)/INTERVAL);
-		printf("Alpha round: %f, Index: %d\n",alpha*RAD2DEG,ind);
+		//printf("Alpha round: %f, Index: %d\n",alpha*RAD2DEG,ind);
 
 		//Check if the requested Index exists
 		if(ind > 32) {
@@ -129,7 +129,7 @@ float pol_polardiagram(float alpha, float wind_speed) {
 		if(wind_speed > 0) {
 			//The mean Speed is 3m/s
 
-			return (((float)polar_3_0[ind])/170.0f);
+			return (((float)polar_3_0[ind])/160.0f);
 		} else {
 			//printf("WSpeed: %f\n",wind_speed);
 			return -1;
