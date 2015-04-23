@@ -51,4 +51,6 @@
 
 #define DEBUGGING_CODE 0
 
+#define LDEBUG_USE_ESSC 1 //1, ESSC is used for non Upwind-Courses
+
 #endif // SETTINGS_H
