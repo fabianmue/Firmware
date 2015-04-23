@@ -1171,6 +1171,10 @@ float sail_controller(float alpha){
     else //alpha > sail_controller_data.alpha_sail_opened_r
         sail = SAIL_FULLY_OPENED;
 
+
+    //ESSC for Sails
+
+
     return sail;
 }
 

@@ -87,6 +87,7 @@ static NEDpoint ntarget;	//Target that should be reached when quick_target is se
 
 static float dbg_alpha = 0;
 static bool dbg_alpha_status = false;
+static bool dbg_alpha_minus = false;
 
 
 
@@ -437,10 +438,19 @@ void nav_speak2helsman() {
 
 	float alpha_star = nh_appWindDir(state.heading_ref, state.wind_dir);
 
-	#if SIMULATION_FLAT == 1
+	#if SIMULATION_FLAG == 1
 		//Store the current Alpha (this is needed to set a new current alpha star, after the boat has "virtually" done a maneuver
 		last_alpha = alpha_star;
 	#endif
+
+
+	/* DEBUG:
+	 * If the Debug Flag for inverted Signs for alpha is set, the sign of alpha is inverted here
+	 */
+	if(dbg_alpha_minus == true) {
+		alpha_star = -alpha_star;
+	}
+
 
 
 	/* Tell the Helsman to tack/gybe as soon as possible, if pathplanning wants to tack/gybe */
@@ -867,6 +877,18 @@ void DEBUG_nav_setalpha(uint8_t status, float alpha) {
 		dbg_alpha_status = false;
 	}
 
+}
+
+
+/**
+ * Invert Sign of alpha, if QGround-Control Variable is set
+ */
+void DEBUG_nav_alpha_minus(uint8_t status) {
+	if(status == 1) {
+		dbg_alpha_minus = true;
+	} else {
+		dbg_alpha_minus = false;
+	}
 }
 
 

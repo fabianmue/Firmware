@@ -123,5 +123,8 @@ void DEBUG_nav_set_fake_field(NEDpoint target, NEDpoint obstacle);
 /* @brief Set the alpha-reference for Autonomous Sailing App manually */
 void DEBUG_nav_setalpha(uint8_t status, float alpha);
 
+/* @brief Invert Alpha, before it is sent to the autonomous Sailing App */
+void DEBUG_nav_alpha_minus(uint8_t status);
+
 
 #endif /* PP_NAVIGATOR_H_ */

@@ -338,6 +338,8 @@ PARAM_DEFINE_INT32(PP_DBG_NODIST,0);
 PARAM_DEFINE_INT32(PP_DBG_SETALP,0);
 PARAM_DEFINE_FLOAT(PP_DBG_ALPHA,0);
 
+PARAM_DEFINE_INT32(PP_DBG_INVALP,0);
+
 
 
 static struct pointers_param_qgc_s{
@@ -422,6 +424,8 @@ static struct pointers_param_qgc_s{
 
 	param_t nav_dbg_setalp;
 	param_t nav_dbg_alpha;
+
+	param_t nav_dbg_invalp;
 
 
 
@@ -531,6 +535,8 @@ void p_param_init(void){
 
     pointers_param_qgc.nav_dbg_alpha = param_find("PP_DBG_ALPHA");
     pointers_param_qgc.nav_dbg_setalp = param_find("PP_DBG_SETALP");
+
+    pointers_param_qgc.nav_dbg_invalp = param_find("PP_DBG_INVALP");
 
     //**SIMULATION DEBUG
     pointers_param_qgc.sim_ned_northx = param_find("SIM_NED_NORTHX");
@@ -801,6 +807,12 @@ void p_param_update(bool update_path_param){
    	param_get(pointers_param_qgc.nav_dbg_setalp, &dbg_setalp);
    	param_get(pointers_param_qgc.nav_dbg_alpha, &dbg_alpha);
    	DEBUG_nav_setalpha(dbg_setalp, dbg_alpha);
+
+
+   	//**INVERT ALPHA BEFORE SENDING TO AUTONOMOUS SAILING APP
+   	uint8_t dbg_invalp = 0;
+   	param_get(pointers_param_qgc.nav_dbg_invalp, &dbg_invalp);
+   	DEBUG_nav_alpha_minus(dbg_invalp);
 
 
 
