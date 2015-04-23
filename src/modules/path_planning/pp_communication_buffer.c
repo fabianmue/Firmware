@@ -124,7 +124,7 @@ bool cb_new_position(float north, float east) {
  * Store the current Heading of the boat in Pathplanning Topic
  * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
  *
- * @param heading: The heading in Radians
+ * @param heading: Current heading of the boat in Compass Frame [rad]
  */
 bool cb_new_heading(float heading) {
 	pp.heading = heading;
@@ -139,7 +139,7 @@ bool cb_new_heading(float heading) {
  * Store the current Position of the obstacle in Pathplanning Topic
  * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
  *
- * @param obst_pos: position of the obstacle
+ * @param obst_pos: position of the obstacle (NED) [m]
  */
 bool cb_new_obstacle(float o_north, float o_east) {
 	pp.obst_north = o_north;
@@ -155,7 +155,7 @@ bool cb_new_obstacle(float o_north, float o_east) {
  * Store the current Reference Heading of the boat in Pathplanning Topic => For DEBUG purposes
  * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
  *
- * @param ref_heading: The reference heading in Radians
+ * @param ref_heading: The reference heading in compass frame [rad]
  */
 bool cb_new_refheading(float ref_heading) {
 	pp.ref_heading = ref_heading;
@@ -170,7 +170,7 @@ bool cb_new_refheading(float ref_heading) {
  * Store the current Heading of the boat in Pathplanning Topic
  * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
  *
- * @param
+ * @param wind in compass frame [rad]
  */
 bool cb_new_wind(float wind) {
 	pp.wind = wind;
@@ -408,6 +408,7 @@ uint8_t cb_get_haul(void){
 
 /**
  * Get the last alpha angle provided by autonomous_sailing app.
+ * In Duma's convention ?? (most probably, JW)
  *
  * @return alpha angle in rads, range [-pi, pi]
 */
@@ -417,7 +418,7 @@ float cb_get_alpha(void){
 
 /**
  * Get the last true wind direction (TWD) and speed (TWS) provided
- * by autonomous_sailing app.
+ * by autonomous_sailing app. (In Sensor convention)
  *
  * @param  *twd_p <-- true wind direction [rad] in our sensor convention
  * @param  *tws_p <-- true wind speed [m/s]

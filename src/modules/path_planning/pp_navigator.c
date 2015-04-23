@@ -417,6 +417,7 @@ void nav_navigator(void) {
 /**
  * A new heading reference is available. Communicate this new information to the "autonomous_sailing module".
  * Therefore, speak to the Helsman.
+ * NOTE: The helsman needs to know if he/she has to do a maneuver or just sailing at a given alpha (angle wrt. true wind) angle
  *
  */
 void nav_speak2helsman() {
@@ -509,23 +510,14 @@ void nav_heading_update(void) {
 		 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
 		float alpha =  cb_get_alpha();
 
-		/* Added after first Lake-Test => should fix the yaw-problem */
 		//Convert from Dumas to Sensor Frame
-		alpha = nh_dumas2sensor(alpha);
+		alpha = nh_dumas2sensor(alpha); //This is nothing else than a change of Sign!
 
 
 		/* Alpha is given in Duma's Frame. Therefore, it needs to be converted to the
 		 * Compass-Frame. heading = alpha + twd
 		 * The wind direction is in compass frame, since it gets converted when a new wind-direction is available! */
 		alpha = alpha + state.wind_dir;
-
-		/* Commented out after first Lake-Test => should fix the yaw-problem */
-		//if(alpha < 0) {
-		//	alpha = 2*PI + alpha;
-		//}
-
-		//Commented out after frist Lake-Test
-		//alpha = fmod(alpha,2*PI);
 
 		//fmod() of the yaw
 		//Note: fmod() from <math.h> does NOT work, since it needs positive values!
