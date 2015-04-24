@@ -1174,7 +1174,7 @@ float sail_controller(float alpha){
 
     //ESSC for Sails
 	#if LDEBUG_USE_ESSC == 1
-    if(use_essc) {
+    if(use_essc == true) {
     	//ESSC is used, if the boat is not sailing on an Upwind-Course. On upwind courses the sails
         //should be fully closed.
 
