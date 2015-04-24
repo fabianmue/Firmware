@@ -1354,7 +1354,7 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
     else{
         //Autonomous mode
 
-        if(use_essc){
+        if(use_essc == true && LDEBUG_USE_ESSC == 0){
             //Get sail command using extremum sail seeking
         	sail_command = essc_sail_control_value();
 
