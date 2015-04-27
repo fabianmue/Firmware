@@ -53,7 +53,6 @@ static struct {
 		.WindowSize = 5 //5
 };
 
-static bool DEBUG_minus = false;
 static bool DEBUG_noDist = false;
 
 
@@ -199,14 +198,8 @@ void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, floa
 #endif
 }
 
-void DEBUG_set_minus(uint8_t MinusStatus, uint8_t DistStatus) {
-	//Set a minus for the Target Cost => reverses the target vector (does not make sense, but still...)
-
-	if(MinusStatus == 1) {
-		DEBUG_minus = true;
-	} else {
-		DEBUG_minus = false;
-	}
+void DEBUG_set_minus(uint8_t DistStatus) {
+	//Do not include any Distance Measurement in Target Cost
 
 	if(DistStatus == 1) {
 		DEBUG_noDist = true;
@@ -318,10 +311,10 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 	//***END NEW VERSION
 
 	//DEBUG_minus = true;
-	if(DEBUG_minus) {
+	/*if(DEBUG_minus) {
 		tgx = -tgx;
 		tgy = -tgy;
-	}
+	}*/
 
 
 	//Get the Boatspeed from the Polardiagram

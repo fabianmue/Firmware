@@ -332,12 +332,14 @@ PARAM_DEFINE_INT32(PP_NAV_USEYAW,0);
 PARAM_DEFINE_INT32(PP_NAV_SETAR,0);
 
 
-PARAM_DEFINE_INT32(PP_DBG_MINUS,0);
+/**
+ * pp_nav_nodist
+ * Do not include a distance to target dependency in Target-Cost
+ */
 PARAM_DEFINE_INT32(PP_DBG_NODIST,0);
 
-PARAM_DEFINE_INT32(PP_DBG_SETALP,0);
-PARAM_DEFINE_FLOAT(PP_DBG_ALPHA,0);
 
+/* Invert alpha star before sending it to the Helsman */
 PARAM_DEFINE_INT32(PP_DBG_INVALP,0);
 
 
@@ -395,7 +397,6 @@ static struct pointers_param_qgc_s{
 	param_t cm_obsthorizon_pointer;
 	param_t cm_windowsize_pointer;
 
-	param_t cm_dbg_minus;
 	param_t cm_dbg_nodist;
 
 
@@ -421,9 +422,6 @@ static struct pointers_param_qgc_s{
 	param_t nav_meth;
 	param_t nav_setar;
 	param_t nav_useyaw;
-
-	param_t nav_dbg_setalp;
-	param_t nav_dbg_alpha;
 
 	param_t nav_dbg_invalp;
 
@@ -509,7 +507,6 @@ void p_param_init(void){
     pointers_param_qgc.cm_obsthorizon_pointer = param_find("PP_CM_OBSTHORIZN");
     pointers_param_qgc.cm_windowsize_pointer = param_find("PP_CM_WINDOWSIZE");
 
-    pointers_param_qgc.cm_dbg_minus = param_find("PP_DBG_MINUS");
     pointers_param_qgc.cm_dbg_nodist = param_find("PP_DBG_NODIST");
 
     //**NAVIGATION
@@ -532,9 +529,6 @@ void p_param_init(void){
 
     pointers_param_qgc.nav_reset = param_find("PP_NAV_RESET");
     pointers_param_qgc.nav_useyaw = param_find("PP_NAV_USEYAW");
-
-    pointers_param_qgc.nav_dbg_alpha = param_find("PP_DBG_ALPHA");
-    pointers_param_qgc.nav_dbg_setalp = param_find("PP_DBG_SETALP");
 
     pointers_param_qgc.nav_dbg_invalp = param_find("PP_DBG_INVALP");
 
@@ -744,11 +738,9 @@ void p_param_update(bool update_path_param){
 
     cm_set_configuration(gw, go, gm, gs, gt, glee, obstsafetyradius, obsthorizon, windowsize);
 
-    uint8_t dbg_minus = 0;
     uint8_t dbg_nodist = 0;
-    param_get(pointers_param_qgc.cm_dbg_minus, &dbg_minus);
     param_get(pointers_param_qgc.cm_dbg_nodist, &dbg_nodist);
-    DEBUG_set_minus(dbg_minus, dbg_nodist);
+    DEBUG_set_minus(dbg_nodist);
 
 
     //**NAVIGATOR
@@ -799,14 +791,6 @@ void p_param_update(bool update_path_param){
    		nav_init();
    		smq_send_log_info("NAVIGATOR RESET! switch back to 0!");
    	}
-
-
-   	//**SET ARTIFICIAL ALPHA PARAMETERS
-   	uint8_t dbg_setalp = 0;
-   	float dbg_alpha = 0;
-   	param_get(pointers_param_qgc.nav_dbg_setalp, &dbg_setalp);
-   	param_get(pointers_param_qgc.nav_dbg_alpha, &dbg_alpha);
-   	DEBUG_nav_setalpha(dbg_setalp, dbg_alpha);
 
 
    	//**INVERT ALPHA BEFORE SENDING TO AUTONOMOUS SAILING APP
