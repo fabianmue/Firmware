@@ -278,6 +278,8 @@ PARAM_DEFINE_INT32(PP_NAV_TAR_NUM, 1);	//Number of Target currently set
  */
 PARAM_DEFINE_INT32(PP_NAV_OBST_LAT, HOMELAT);
 PARAM_DEFINE_INT32(PP_NAV_OBST_LON, HOMELON);
+PARAM_DEFINE_FLOAT(PP_NAV_OBST_NEDN,0);
+PARAM_DEFINE_FLOAT(PP_NAV_OBST_NEDE,0);
 
 PARAM_DEFINE_INT32(PP_NAV_OBST_NUM, 1);	//Number of Obstacle currently set
 
@@ -410,6 +412,8 @@ static struct pointers_param_qgc_s{
 	param_t nav_target_number;
 	param_t nav_obstacle_lat;
 	param_t nav_obstacle_lon;
+	param_t nav_obstacle_nedn;
+	param_t nav_obstacle_nede;
 	param_t nav_obstacle_number;
 	param_t nav_start1_lat;
 	param_t nav_start1_lon;
@@ -519,6 +523,8 @@ void p_param_init(void){
     pointers_param_qgc.nav_target_number = param_find("PP_NAV_TAR_NUM");
     pointers_param_qgc.nav_obstacle_lat = param_find("PP_NAV_OBST_LAT");
     pointers_param_qgc.nav_obstacle_lon = param_find("PP_NAV_OBST_LON");
+    pointers_param_qgc.nav_obstacle_nedn = param_find("PP_NAV_OBST_NEDN");
+    pointers_param_qgc.nav_obstacle_nede = param_find("PP_NAV_OBST_NEDE");
     pointers_param_qgc.nav_obstacle_number = param_find("PP_NAV_OBST_NUM");
 
     pointers_param_qgc.nav_start1_lat = param_find("PP_NAV_STRT1_LAT");
@@ -752,6 +758,7 @@ void p_param_update(bool update_path_param){
     PointE7 target;
     NEDpoint target_ned;
     PointE7 obstacle;
+    NEDpoint obstacle_ned;
     uint8_t t_num, o_num;
     int32_t altitude;
 
@@ -763,14 +770,17 @@ void p_param_update(bool update_path_param){
    	param_get(pointers_param_qgc.nav_target_number,&t_num);
    	param_get(pointers_param_qgc.nav_obstacle_lat,&(obstacle.lat));
    	param_get(pointers_param_qgc.nav_obstacle_lon,&(obstacle.lon));
+   	param_get(pointers_param_qgc.nav_obstacle_nedn, &(obstacle_ned.northx));
+   	param_get(pointers_param_qgc.nav_obstacle_nede, &(obstacle_ned.easty));
    	param_get(pointers_param_qgc.nav_obstacle_number,&o_num);
 
    	target.alt = altitude;
    	obstacle.alt = altitude;
 
    	nav_set_target(t_num,target);
-   	nav_set_target_ned(t_num,target_ned);	//NOTE: Because of this the target is alway set in NED-Coordinates
+   	nav_set_target_ned(t_num,target_ned);	//NOTE: Because of this the target is always set in NED-Coordinates
    	nav_set_obstacle(o_num,obstacle);
+   	nav_set_obstacle_ned(o_num,obstacle_ned);	//NOTE: Because of this the obstacle always set in NED-Coordinates
 
 
    	PointE7 start[2];

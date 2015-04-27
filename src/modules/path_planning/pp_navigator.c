@@ -662,7 +662,28 @@ void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos) {
 	//The update of the target position should only be done, if we are not debugging
 	field.obstacles[ObstNumber] = nh_geo2ned(nh_e7_to_point(ObstPos));
 
-	field.NumberOfObstacles = ObstNumber;
+	field.NumberOfObstacles = ObstNumber+1;
+	#endif
+
+	//Send new Obstacle Position to QGround Control for debugging
+	cb_new_obstacle(field.obstacles[0].northx, field.obstacles[0].easty);
+}
+
+
+/**
+ * Set a new Obstacle in NED-Coordinates
+ * This functions is called by QGroundControl to set a new Value
+ *
+ * @param ObstNumber: The position of the obstacle in the Array of all Obstacles
+ * @param ObstPos: The GPS-Position of the obstacle represented as a Point in NED-Coordinates
+ */
+void nav_set_obstacle_ned(uint8_t ObstNumber, NEDpoint ObstPos) {
+
+	#if P_DEBUG == 0
+	//The update of the target position should only be done, if we are not debugging
+	field.obstacles[ObstNumber] = ObstPos;
+
+	field.NumberOfObstacles = ObstNumber+1;
 	#endif
 
 	//Send new Obstacle Position to QGround Control for debugging

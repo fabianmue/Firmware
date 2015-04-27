@@ -78,6 +78,9 @@ void yaw_update(struct structs_topics_s *strs);
 /** @brief Set Obstacles */
 void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos);
 
+/** @brief Set Obstacles in NED-Coordinates */
+void nav_set_obstacle_ned(uint8_t ObstNumber, NEDpoint ObstPos);
+
 
 /** @brief Set Targets */
 void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos);

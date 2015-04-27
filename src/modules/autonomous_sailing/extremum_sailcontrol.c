@@ -85,7 +85,7 @@ static struct {
 } Config = {
 		.k = 2.0f,					//Init the values of the struct with the default values
 		.period = 1000000.0f,		//Start with 1s Period-Time
-		.windowSize = 8,			//8 Samples for Mean calculation
+		.windowSize = 2,			//8 Samples for Mean calculation
 		.speed_threshold = 0.5		//0.5m/s
 };
 
@@ -146,11 +146,17 @@ void essc_speed_update(const struct structs_topics_s *strs_p) {
 */
 float essc_sail_control_value(float ds_pwm) {
 
+	/* Assign the current PWM-Sail-Control Value to the local state variable
+	 * This value is changed dependent on the speed. If the speed is above the
+	 * threshold level, ESSC calculates a new PWM value, otherwise the PWM value
+	 * from the input (from linear controller) is returned.
+	 */
+	State.ActDs = ds_pwm;
+
+
 	/* The Sail Control should not change the value of the sail every time it is called.
 	 * Therefore, the system-time is called to adjust the sail only in intervals specified by the
 	 * QGroundControl Variable ESSC_frequency.
-	 *
-	 * Note: The following statement limits the frequency to a value of 2.3e-7 Hz
 	 */
 	uint64_t ActTime = hrt_absolute_time();
 
@@ -207,7 +213,8 @@ float essc_sail_control_value(float ds_pwm) {
 			State.meanSpeeds[0] = State.meanSpeeds[1];
 			State.meanSpeeds[1] = mean_speed();
 
-			return ds_pwm; //Just return the PWM Value calculated by the linear Controller
+			//Note: We do not change the value for State.ActDs, because we want to use
+			//      the value from the linear controller.
 		}
 	}
 
@@ -250,7 +257,7 @@ void essc_set_qground_values(float k, int windowSize, float period, float min_sp
 		buffer_updateSize(&(State.buffer), windowSize);
 	} else {
 		//Set the default Value
-		Config.windowSize = 8;
+		Config.windowSize = 2;
 	}
 
 	//Assign the Speed Threshold => ESSC is not activated, if the value is below the threshold
