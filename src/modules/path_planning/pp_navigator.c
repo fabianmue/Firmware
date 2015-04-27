@@ -19,7 +19,7 @@
 /* TODO:
  * - Winddirection => how's the definition? Wind from North = 0°/ Wind from South = 180° (Sensor-Frame)
  *
- *
+ * -
  */
 
 
@@ -720,7 +720,7 @@ void nav_set_target_ned(uint8_t TargetNumber, NEDpoint TargetPos) {
  * @param period: Time between two calls to pathplanning [s]
  * @param turnrate: Maximum Turnrate of the boat [°/s]
  */
-void nav_set_configuration(uint64_t period, uint32_t turnrate) {
+void nav_set_configuration(float period, uint32_t turnrate) {
 
 	//Store the period
 	if(period > 0) {

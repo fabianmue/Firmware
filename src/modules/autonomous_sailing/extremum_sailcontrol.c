@@ -80,11 +80,13 @@ static struct {
 static struct {
 	float k;						//Stepsize in Degrees
 	unsigned int windowSize;		//Windowsize for building the mean over the speeds (window-averaging)
-	float period	;				//Timeinterval between two changes in the sail control value [us]
+	float period;			    	//Timeinterval between two changes in the sail control value [us]
+	float speed_threshold;			//Boatspeed above which ESSC is used [m/s]
 } Config = {
 		.k = 2.0f,					//Init the values of the struct with the default values
 		.period = 1000000.0f,		//Start with 1s Period-Time
-		.windowSize = 8
+		.windowSize = 8,			//8 Samples for Mean calculation
+		.speed_threshold = 0.5		//0.5m/s
 };
 
 
@@ -139,9 +141,10 @@ void essc_speed_update(const struct structs_topics_s *strs_p) {
  * Return a control signal for the sail actuator. This function is called by the guidance_module in irregular
  * timeintervals (due to scheduling).
  *
+ * @param   ds_pwm: Current Sail-control value as a PWM-Signal value
  * @return	Signal for the sail actuator
 */
-float essc_sail_control_value() {
+float essc_sail_control_value(float ds_pwm) {
 
 	/* The Sail Control should not change the value of the sail every time it is called.
 	 * Therefore, the system-time is called to adjust the sail only in intervals specified by the
@@ -157,35 +160,55 @@ float essc_sail_control_value() {
 		//Store the current time as the last time a new Sailvalue was calcualted
 		State.lastCall = ActTime;
 
-		//Calculate change in Speed (forward Speed)
-		float du = State.meanSpeeds[1] - State.meanSpeeds[0];
+		if(State.meanSpeeds[1] >= Config.speed_threshold) {
+			/* The speed of the boat must be bigger than a certain threshold in order to use ESSC.
+			 * Therefore only output a new ESSC-Value, if the speed is above the threshold. */
 
-		//Calculate change in Sailangle (State.ds = [t-2,t-1,t])
-		float ds = State.ds[1] - State.ds[0];
+			//Calculate change in Speed (forward Speed)
+			float du = State.meanSpeeds[1] - State.meanSpeeds[0];
 
-		//Actual Control Law <=> Calculate new Sail-Control-Value
-		float newDs = State.ds[2] + Config.k * sign(ds) * sign(du);
+			//Calculate change in Sailangle (State.ds = [t-2,t-1,t])
+			float ds = State.ds[1] - State.ds[0];
 
-		//Saturate the Sail-Command
-        if(newDs > SAIL_OPEN_DEG) {
-        	newDs = SAIL_OPEN_DEG;
-        }
+			//Actual Control Law <=> Calculate new Sail-Control-Value
+			float newDs = State.ds[2] + Config.k * sign(ds) * sign(du);
 
-        if(newDs < SAIL_CLOSED_DEG) {
-        	newDs = SAIL_CLOSED_DEG;
-        }
+			//Saturate the Sail-Command
+			if(newDs > SAIL_OPEN_DEG) {
+				newDs = SAIL_OPEN_DEG;
+			}
 
-        //Update the Sailcontrol-History (not nice, but should be fine here...)
-        State.ds[0] = State.ds[1];
-        State.ds[1] = State.ds[2];
-        State.ds[2] = newDs;
+			if(newDs < SAIL_CLOSED_DEG) {
+				newDs = SAIL_CLOSED_DEG;
+			}
 
-        //Update the meanSpeeds-History (not nice, but should be fine here...)
-    	State.meanSpeeds[0] = State.meanSpeeds[1];
-    	State.meanSpeeds[1] = mean_speed();
+			//Update the Sailcontrol-History (not nice, but should be fine here...)
+			State.ds[0] = State.ds[1];
+			State.ds[1] = State.ds[2];
+			State.ds[2] = newDs;
 
-        //Set the new Control-Value
-        State.ActDs = deg2pwm(newDs);
+			//Update the meanSpeeds-History (not nice, but should be fine here...)
+			State.meanSpeeds[0] = State.meanSpeeds[1];
+			State.meanSpeeds[1] = mean_speed();
+
+			//Set the new Control-Value
+			State.ActDs = deg2pwm(newDs);
+
+		} else {
+			/* The speed of the boat is not big enough to use ESSC => we just store the Sail control-value in order to be
+			 * prepared, when the speed gets big enough */
+
+			//Update the Sailcontrol-History (not nice, but should be fine here...)
+			State.ds[0] = State.ds[1];
+			State.ds[1] = State.ds[2];
+			State.ds[2] = pwm2deg(ds_pwm);
+
+			//Update the meanSpeeds-History (not nice, but should be fine here...)
+			State.meanSpeeds[0] = State.meanSpeeds[1];
+			State.meanSpeeds[1] = mean_speed();
+
+			return ds_pwm; //Just return the PWM Value calculated by the linear Controller
+		}
 	}
 
 	return State.ActDs;
@@ -299,7 +322,8 @@ float deg2pwm(float degSail) {
  * @return  sailangle in degrees
  */
 float pwm2deg(float pwmSail) {
-	return (SAIL_CLOSED_DEG-SAIL_OPEN_DEG) / (SAIL_OPEN_PWM-SAIL_CLOSED_PWM) * (SAIL_OPEN_PWM-pwmSail);
+	return (pwmSail*(SAIL_CLOSED_DEG-SAIL_OPEN_DEG)/(SAIL_CLOSED_PWM-SAIL_OPEN_PWM)) + SAIL_OPEN_DEG;
+	//return (SAIL_CLOSED_DEG-SAIL_OPEN_DEG) / (SAIL_OPEN_PWM-SAIL_CLOSED_PWM) * (SAIL_OPEN_PWM-pwmSail);
 } //End of pwm2deg
 
 

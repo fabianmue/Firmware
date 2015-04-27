@@ -92,7 +92,7 @@ void nav_set_startline(PointE7 buoy1, PointE7 buoy2);
 
 
 /** @brief Set Configuration Parameters for the Navigator */
-void nav_set_configuration(uint64_t period, uint32_t turnrate);
+void nav_set_configuration(float period, uint32_t turnrate);
 
 
 /** @brief Set the current position of the boat as the next target position*/

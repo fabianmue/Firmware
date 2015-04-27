@@ -38,7 +38,7 @@ void essc_speed_update(const struct structs_topics_s *strs_p);
 
 
 /** @brief Return a Control-Value for the Sail Actuator*/
-float essc_sail_control_value(void);
+float essc_sail_control_value(float ds_pwm);
 
 
 /** @brief Set Configuration Parameters from QGround Control */

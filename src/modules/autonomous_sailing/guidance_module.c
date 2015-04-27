@@ -1188,7 +1188,9 @@ float sail_controller(float alpha){
     		sail = sail_controller_data.sail_closed_cmd;
     	} else {
     		//We are not sailing upwind => we use ESSC for controlling the sails
-    		sail = essc_sail_control_value();
+    		//ESSC will only act, if the speed is big enough => we hand over the sail value from the linear
+    		//controller
+    		sail = essc_sail_control_value(sail);
     	}
 
 
@@ -1356,7 +1358,7 @@ void gm_guidance_module(const struct parameters_qgc *param_qgc_p,
 
         if(use_essc == true && LDEBUG_USE_ESSC == 0){
             //Get sail command using extremum sail seeking
-        	sail_command = essc_sail_control_value();
+        	sail_command = essc_sail_control_value(0);
 
             //rudder controlled by RC, even if in autonomous mode
             rudder_command = strs_p->rc_channels.channels[RC_RUD_INDEX];

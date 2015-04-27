@@ -251,7 +251,7 @@ PARAM_DEFINE_INT32(PP_CM_WINDOWSIZE, 5);
  *
  * @min 0
  */
-PARAM_DEFINE_INT32(PP_NAV_PERIOD, 1);
+PARAM_DEFINE_FLOAT(PP_NAV_PERIOD, 1);
 
 
 /**
@@ -744,7 +744,7 @@ void p_param_update(bool update_path_param){
 
 
     //**NAVIGATOR
-    uint32_t period, turnrate;
+    float period, turnrate;
     param_get(pointers_param_qgc.nav_period, &period);
     param_get(pointers_param_qgc.nav_turnrate, &turnrate);
     nav_set_configuration(period, turnrate);
