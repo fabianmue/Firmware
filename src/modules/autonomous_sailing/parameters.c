@@ -476,6 +476,12 @@ PARAM_DEFINE_INT32(ESSC_WINDOWSIZE,8);
  */
 PARAM_DEFINE_FLOAT(ESSC_PERIOD,1.0f);
 
+/**
+ * Minimum Speed such that ESSC is activated [m/s]
+ *
+ * @min >0
+ */
+PARAM_DEFINE_FLOAT(ESSC_MINSPEED,0.5);
 
 
 
@@ -585,7 +591,8 @@ static struct pointers_param_qgc_s{
     //-- Extremum Seeking Sail Control (ESSC) parameters (JW)
     param_t ESSC_k;				/**< pointer to param ESSC_K */
     param_t ESSC_windowSize; 	/**< pointer to param ESSC_buffersize */
-    param_t ESSC_period;     /**< pointer to param ESSC_frequency */
+    param_t ESSC_period;        /**< pointer to param ESSC_frequency */
+    param_t ESSC_minspeed;       /**< pointer to param ESSC_minspeed */
 
 
 }pointers_param_qgc;
@@ -704,6 +711,7 @@ void p_param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.ESSC_k = param_find("ESSC_K");
     pointers_param_qgc.ESSC_windowSize = param_find("ESSC_WINDOWSIZE");
     pointers_param_qgc.ESSC_period = param_find("ESSC_PERIOD");
+    pointers_param_qgc.ESSC_minspeed = param_find("ESSC_MINSPEED");
 
 
 
@@ -992,9 +1000,11 @@ void p_param_update(struct parameters_qgc *params_p,
     float ESSC_k = 0.0f;
     int32_t ESSC_windowSize = 0;
     float ESSC_period = 0.0f;
+    float ESSC_minspeed = 0.0f;
     param_get(pointers_param_qgc.ESSC_k, &ESSC_k);
     param_get(pointers_param_qgc.ESSC_windowSize, &ESSC_windowSize);
     param_get(pointers_param_qgc.ESSC_period, &ESSC_period);
-    essc_set_qground_values(ESSC_k,ESSC_windowSize,ESSC_period);
+    param_get(pointers_param_qgc.ESSC_minspeed, &ESSC_minspeed);
+    essc_set_qground_values(ESSC_k,ESSC_windowSize,ESSC_period,ESSC_minspeed);
 
 }

@@ -223,8 +223,9 @@ float essc_sail_control_value(float ds_pwm) {
  * @param k:Stepsize in Degrees [°]
  * @param windowSize: Size of the window for Speed-Averaging
  * @param period: Time between two changes of the sailcontrol value [s]
+ * @param min_speed: Minimum Speed for ESSC (Speed-threshold) [m/s]
 */
-void essc_set_qground_values(float k, int windowSize, float period) {
+void essc_set_qground_values(float k, int windowSize, float period, float min_speed) {
 
 	//Assign the Stepsize (make sure the stepsize is bigger than zero, else set a default value)
 	if(k > 0) {
@@ -250,6 +251,14 @@ void essc_set_qground_values(float k, int windowSize, float period) {
 	} else {
 		//Set the default Value
 		Config.windowSize = 8;
+	}
+
+	//Assign the Speed Threshold => ESSC is not activated, if the value is below the threshold
+	if(min_speed > 0) {
+		Config.speed_threshold = min_speed;
+	} else {
+		//Set the default Value
+		Config.speed_threshold = 0.5;
 	}
 
 	//The parameters are updated => add these parameters to the SD-Log

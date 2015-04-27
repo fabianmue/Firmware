@@ -42,7 +42,7 @@ float essc_sail_control_value(float ds_pwm);
 
 
 /** @brief Set Configuration Parameters from QGround Control */
-void essc_set_qground_values(float k, int buffersize, float frequency);
+void essc_set_qground_values(float k, int buffersize, float frequency, float min_speed);
 
 
 
