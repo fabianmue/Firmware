@@ -17,7 +17,6 @@
  */
 
 /* TODO:
- * - add Potentialfield Method
  * - Winddirection => how's the definition? Wind from North = 0°/ Wind from South = 180° (Sensor-Frame)
  *
  *
@@ -433,11 +432,9 @@ void nav_speak2helsman() {
 	/* Set the new alpha reference Value
 	 * alpha = yaw-twd;
 	 * alpha is either computed using the yaw-angle or the COG (Course over Ground) */
-	//float alpha_star = 0;
-	//alpha_star = fmod(state.heading_ref - state.wind_dir,2*PI); //In Compass-Frame
-	//alpha_star = nh_compass2dumas(alpha_star);					//Convert to Duma's convention for Autonomous Sailing Module
 
 	float alpha_star = nh_appWindDir(state.heading_ref, state.wind_dir);
+	alpha_star = -alpha_star;	//Invert alpha, because of Duma's convention
 
 	#if SIMULATION_FLAG == 1
 		//Store the current Alpha (this is needed to set a new current alpha star, after the boat has "virtually" done a maneuver
@@ -448,9 +445,9 @@ void nav_speak2helsman() {
 	/* DEBUG:
 	 * If the Debug Flag for inverted Signs for alpha is set, the sign of alpha is inverted here
 	 */
-	if(dbg_alpha_minus == true) {
+	/*if(dbg_alpha_minus == true) {
 		alpha_star = -alpha_star;
-	}
+	}*/
 
 
 
