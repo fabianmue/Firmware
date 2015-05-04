@@ -780,7 +780,7 @@ void p_param_update(bool update_path_param){
    	nav_set_target(t_num,target);
    	nav_set_target_ned(t_num,target_ned);	//NOTE: Because of this the target is always set in NED-Coordinates
    	nav_set_obstacle(o_num,obstacle);
-   	nav_set_obstacle_ned(o_num,obstacle_ned);	//NOTE: Because of this the obstacle always set in NED-Coordinates
+   	nav_set_obstacle_ned(0,obstacle_ned);	//NOTE: Because of this the obstacle always set in NED-Coordinates
 
 
    	PointE7 start[2];

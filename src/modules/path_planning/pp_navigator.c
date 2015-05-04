@@ -684,6 +684,7 @@ void nav_set_obstacle_ned(uint8_t ObstNumber, NEDpoint ObstPos) {
 	field.obstacles[ObstNumber] = ObstPos;
 
 	field.NumberOfObstacles = ObstNumber+1;
+	field.NumberOfObstacles = 1;	//TODO: This is for debug only. We assume that we have only one obstacle!
 	#endif
 
 	//Send new Obstacle Position to QGround Control for debugging
