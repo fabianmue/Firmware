@@ -496,7 +496,7 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
  */
 float cost_heading_change(float seg,struct nav_state_s *state) {
 
-	return Config.Gs * fabsf(seg-state->heading_cur)/12.57f;
+	return Config.Gs * nh_heading_diff(seg,state->heading_cur)/12.57f;
 
 } //end of cost_heading_change
 
