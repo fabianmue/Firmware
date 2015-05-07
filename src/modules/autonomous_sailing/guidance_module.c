@@ -44,7 +44,6 @@
 
 #include "extremum_sailcontrol.h"
 
-
 //constant for tack_type
 #define TACK_IMPLICIT     0
 #define TACK_LQR    1

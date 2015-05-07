@@ -67,12 +67,14 @@ static struct {
 	float ds[3];					//Last three Sail Control-Values a times t,t-1,t-2 <=> ds = [t-2,t-1,t] (in [°])
 	float ActDs;					//Current Sail Control-Value (as a PWM-Value)
 	uint64_t lastCall; 		    	//Timestamp of the last Functioncall (in [us])
+	bool active; 					//Is ESSC active? set true, if speed is above threshold
 } State = {
 		.buffer = {0},				//Init the Buffer with all zeros
 		.meanSpeeds = {0, 0},			//Init the Array with all zeros
 		.ds = {SAIL_INIT,SAIL_INIT,SAIL_INIT},	//Init the Array with all zeros
 		.ActDs = 0,
-		.lastCall = 0
+		.lastCall = 0,
+		.active = false
 };
 
 
@@ -146,13 +148,6 @@ void essc_speed_update(const struct structs_topics_s *strs_p) {
 */
 float essc_sail_control_value(float ds_pwm) {
 
-	/* Assign the current PWM-Sail-Control Value to the local state variable
-	 * This value is changed dependent on the speed. If the speed is above the
-	 * threshold level, ESSC calculates a new PWM value, otherwise the PWM value
-	 * from the input (from linear controller) is returned.
-	 */
-	State.ActDs = ds_pwm;
-
 
 	/* The Sail Control should not change the value of the sail every time it is called.
 	 * Therefore, the system-time is called to adjust the sail only in intervals specified by the
@@ -169,6 +164,9 @@ float essc_sail_control_value(float ds_pwm) {
 		if(State.meanSpeeds[1] >= Config.speed_threshold) {
 			/* The speed of the boat must be bigger than a certain threshold in order to use ESSC.
 			 * Therefore only output a new ESSC-Value, if the speed is above the threshold. */
+
+			//Set ESSC active
+			State.active = true;
 
 			//Calculate change in Speed (forward Speed)
 			float du = State.meanSpeeds[1] - State.meanSpeeds[0];
@@ -204,6 +202,9 @@ float essc_sail_control_value(float ds_pwm) {
 			/* The speed of the boat is not big enough to use ESSC => we just store the Sail control-value in order to be
 			 * prepared, when the speed gets big enough */
 
+			//Set ESSC inactive
+			State.active = false;
+
 			//Update the Sailcontrol-History (not nice, but should be fine here...)
 			State.ds[0] = State.ds[1];
 			State.ds[1] = State.ds[2];
@@ -218,7 +219,19 @@ float essc_sail_control_value(float ds_pwm) {
 		}
 	}
 
-	return State.ActDs;
+
+	//Decide what we should return
+	if(State.active == true) {
+		//The ESSC is active and we return the State.ActDs
+		return State.ActDs;
+	} else {
+		/* Assign the current PWM-Sail-Control Value as the output. The PWM-Sail-Control value is
+		 * calculated by the linear controller, because the speed of the boat is below the threshold*/
+
+		return ds_pwm;
+	}
+
+	//return State.ActDs;
 
 } //End of ESSC_SailControlValue
 
