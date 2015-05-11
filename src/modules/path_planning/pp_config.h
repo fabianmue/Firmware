@@ -108,7 +108,7 @@
 /* TARGET TOLERANCE
  * Radius of a circle around the target, inside which the target is counted as reached. This radius depends
  * on the GPS Accuracy. [m]*/
-#define TARGETTOLERANCE 1
+#define TARGETTOLERANCE 2
 
 
 /* ALGORITHM FLAG
