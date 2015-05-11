@@ -78,6 +78,9 @@ static bool enable_pathplanner = false;
 static bool quick_target = false;
 static NEDpoint ntarget;	//Target that should be reached when quick_target is set
 
+static bool quick_obstacle = false;
+static NEDpoint nobstacle;  //Obstacle set by Quick_obstacle
+
 
 #if SIMULATION_FLAG == 1
 	static float last_alpha = 0;
@@ -249,6 +252,14 @@ void nav_navigator(void) {
 			enable_pathplanner = true;
 
 		}
+	}
+
+
+	/** SET A QUICK OBSTACLE
+	 * A quick-obstacle is set.
+	 */
+	if(quick_obstacle == true) {
+		nav_set_obstacle_ned(0,nobstacle);
 	}
 
 
@@ -826,6 +837,21 @@ void nav_set_quick_target(void) {
 	ntarget = state.position;
 
 	quick_target = true;
+}
+
+
+/*
+ * Set the current position of the boat as the obstacle.
+ *
+ */
+void nav_set_quick_obstacle(void) {
+
+	//Set Boolean to true
+	quick_obstacle = true;
+
+	//Set the Current Position as the next obstacle
+	nobstacle = state.position;
+
 }
 
 

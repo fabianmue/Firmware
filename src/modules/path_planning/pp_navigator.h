@@ -102,6 +102,10 @@ void nav_set_configuration(float period, uint32_t turnrate);
 void nav_set_quick_target(void);
 
 
+/** @brief Set the current position of the boat as the "zero"-th obstacle */
+void nav_set_quick_obstacle(void);
+
+
 /** @brief Enable the communication between pathplanner and autonomous sailing app */
 void nav_enable_navigator(uint8_t enable);
 

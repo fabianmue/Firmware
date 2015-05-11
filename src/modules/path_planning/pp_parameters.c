@@ -327,11 +327,13 @@ PARAM_DEFINE_INT32(PP_NAV_USEYAW,0);
 
 
 /**
- * pp_nav_setar
- * Set the current position as the next target position. As soon as it is switched to
+ * pp_nav_setar/pp_nav_setobst
+ * Set the current position as the next target or obstacle position. As soon as it is switched to
  * autonomous mode the pathplanner guides the boat towards this target
  */
 PARAM_DEFINE_INT32(PP_NAV_SETAR,0);
+PARAM_DEFINE_INT32(PP_NAV_SETOBST,0);
+
 
 
 /**
@@ -425,6 +427,7 @@ static struct pointers_param_qgc_s{
 	param_t nav_pathp_on;
 	param_t nav_meth;
 	param_t nav_setar;
+	param_t nav_setobst;
 	param_t nav_useyaw;
 
 	param_t nav_dbg_invalp;
@@ -547,6 +550,7 @@ void p_param_init(void){
     pointers_param_qgc.nav_pathp_on = param_find("PP_APATHP_ON");
     pointers_param_qgc.nav_meth = param_find("PP_NAV_METH");
     pointers_param_qgc.nav_setar = param_find("PP_NAV_SETAR");
+    pointers_param_qgc.nav_setobst = param_find("PP_NAV_SETOBST");
 
 
     //**POTENTIALFIELD METHOD
@@ -832,6 +836,15 @@ void p_param_update(bool update_path_param){
    	if(pathp_settar == 1) {
    		nav_set_quick_target();
    		smq_send_log_info("Set quick Target Position! switch back to 0!");
+   	}
+
+
+   	//**SET THE CURRENT POSITION OF THE BOAT AS THE ZERO-th OBSTACLE
+   	uint8_t pathp_setobst = 0;
+   	param_get(pointers_param_qgc.nav_setobst, &pathp_setobst);
+   	if(pathp_setobst == 1) {
+   		nav_set_quick_obstacle();
+   		smq_send_log_info("Set quick Obstacle! switch back to 0!");
    	}
 
 
