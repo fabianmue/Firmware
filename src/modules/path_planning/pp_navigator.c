@@ -258,9 +258,11 @@ void nav_navigator(void) {
 	/** SET A QUICK OBSTACLE
 	 * A quick-obstacle is set.
 	 */
-	if(quick_obstacle == true) {
-		nav_set_obstacle_ned(0,nobstacle);
-	}
+	//if(quick_obstacle == true) {
+	//	nav_set_obstacle_ned(0,nobstacle);
+
+	//	quick_obstacle = false;
+	//}
 
 
 	/** ENABLE PATHPLANNER WHEN IN AUTONOMOUS MODE */
@@ -695,7 +697,7 @@ void nav_set_obstacle_ned(uint8_t ObstNumber, NEDpoint ObstPos) {
 	field.obstacles[ObstNumber] = ObstPos;
 
 	field.NumberOfObstacles = ObstNumber+1;
-	field.NumberOfObstacles = 1;	//TODO: This is for debug only. We assume that we have only one obstacle!
+	//field.NumberOfObstacles = 1;	//TODO: This is for debug only. We assume that we have only one obstacle!
 	#endif
 
 	//Send new Obstacle Position to QGround Control for debugging
@@ -851,6 +853,8 @@ void nav_set_quick_obstacle(void) {
 
 	//Set the Current Position as the next obstacle
 	nobstacle = state.position;
+
+	nav_set_obstacle_ned(0,state.position);
 
 }
 
