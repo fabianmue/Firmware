@@ -622,7 +622,7 @@ void nav_position_update(void) {
 			state.targetNum += 1;
 			//TODO: DEBUG For the moment we assume that we always have the same Target
 			// => we do not increase the target number
-			state.targetNum = 0;
+			//state.targetNum = 0;
 			smq_send_log_info("Target reached!");
 
 			//Send the new target to QGround Control
