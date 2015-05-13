@@ -360,6 +360,8 @@ void cb_init(void){
     //default alpha_star = 45 deg
     cb_set_alpha_star(M_PI_F / 4.0f);
     pp.id_cmd = PP_NORMAL_CMD;
+
+    pp.target_num = 0;
 }
 
 /**
