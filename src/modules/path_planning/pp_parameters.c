@@ -271,6 +271,7 @@ PARAM_DEFINE_FLOAT(PP_NAV_TAR_NEDN,0);
 PARAM_DEFINE_FLOAT(PP_NAV_TAR_NEDE,0);
 
 PARAM_DEFINE_INT32(PP_NAV_TAR_NUM, 1);	//Number of Target currently set
+PARAM_DEFINE_INT32(PP_NAV_TAR_NEXT,1);	//Number of the next Target to be reached
 
 
 /**
@@ -326,15 +327,6 @@ PARAM_DEFINE_INT32(PP_NAV_METH,1);
 PARAM_DEFINE_INT32(PP_NAV_USEYAW,0);
 
 
-/**
- * pp_nav_setar/pp_nav_setobst
- * Set the current position as the next target or obstacle position. As soon as it is switched to
- * autonomous mode the pathplanner guides the boat towards this target
- */
-PARAM_DEFINE_INT32(PP_NAV_SETAR,0);
-PARAM_DEFINE_INT32(PP_NAV_SETOBST,0);
-
-
 
 /**
  * pp_nav_nodist
@@ -345,6 +337,7 @@ PARAM_DEFINE_INT32(PP_DBG_NODIST,0);
 
 /* Invert alpha star before sending it to the Helsman */
 PARAM_DEFINE_INT32(PP_DBG_INVALP,0);
+
 
 
 
@@ -412,6 +405,7 @@ static struct pointers_param_qgc_s{
 	param_t nav_target_nedn;
 	param_t nav_target_nede;
 	param_t nav_target_number;
+	param_t nav_target_next;
 	param_t nav_obstacle_lat;
 	param_t nav_obstacle_lon;
 	param_t nav_obstacle_nedn;
@@ -427,7 +421,6 @@ static struct pointers_param_qgc_s{
 	param_t nav_pathp_on;
 	param_t nav_meth;
 	param_t nav_setar;
-	param_t nav_setobst;
 	param_t nav_useyaw;
 
 	param_t nav_dbg_invalp;
@@ -524,6 +517,7 @@ void p_param_init(void){
     pointers_param_qgc.nav_target_nedn = param_find("PP_NAV_TAR_NEDN");
     pointers_param_qgc.nav_target_nede = param_find("PP_NAV_TAR_NEDE");
     pointers_param_qgc.nav_target_number = param_find("PP_NAV_TAR_NUM");
+    pointers_param_qgc.nav_target_next = param_find("PP_NAV_TAR_NEXT");
     pointers_param_qgc.nav_obstacle_lat = param_find("PP_NAV_OBST_LAT");
     pointers_param_qgc.nav_obstacle_lon = param_find("PP_NAV_OBST_LON");
     pointers_param_qgc.nav_obstacle_nedn = param_find("PP_NAV_OBST_NEDN");
@@ -550,7 +544,6 @@ void p_param_init(void){
     pointers_param_qgc.nav_pathp_on = param_find("PP_APATHP_ON");
     pointers_param_qgc.nav_meth = param_find("PP_NAV_METH");
     pointers_param_qgc.nav_setar = param_find("PP_NAV_SETAR");
-    pointers_param_qgc.nav_setobst = param_find("PP_NAV_SETOBST");
 
 
     //**POTENTIALFIELD METHOD
@@ -784,7 +777,7 @@ void p_param_update(bool update_path_param){
    	nav_set_target(t_num,target);
    	nav_set_target_ned(t_num,target_ned);	//NOTE: Because of this the target is always set in NED-Coordinates
    	nav_set_obstacle(o_num,obstacle);
-   	nav_set_obstacle_ned(0,obstacle_ned);	//NOTE: Because of this the obstacle always set in NED-Coordinates
+   	nav_set_obstacle_ned(o_num,obstacle_ned);	//NOTE: Because of this the obstacle is always set in NED-Coordinates
 
 
    	PointE7 start[2];
@@ -802,9 +795,15 @@ void p_param_update(bool update_path_param){
    	param_get(pointers_param_qgc.nav_reset, &reset);
    	if(reset == 1) {
    		//Reset the parameters for the pathplanning to the default values.
-   		nav_init();
+   		nav_reset();
    		smq_send_log_info("NAVIGATOR RESET! switch back to 0!");
    	}
+
+
+   	//**SET THE NUMBER OF THE TARGET THAT SHOULD BE REACHED NEXT
+   	uint8_t targetnumber = 0;
+   	param_get(pointers_param_qgc.nav_target_next, &targetnumber);
+   	nav_set_targetnumber(targetnumber);
 
 
    	//**INVERT ALPHA BEFORE SENDING TO AUTONOMOUS SAILING APP
@@ -836,15 +835,6 @@ void p_param_update(bool update_path_param){
    	if(pathp_settar == 1) {
    		nav_set_quick_target();
    		smq_send_log_info("Set quick Target Position! switch back to 0!");
-   	}
-
-
-   	//**SET THE CURRENT POSITION OF THE BOAT AS THE ZERO-th OBSTACLE
-   	uint8_t pathp_setobst = 0;
-   	param_get(pointers_param_qgc.nav_setobst, &pathp_setobst);
-   	if(pathp_setobst == 1) {
-   		nav_set_quick_obstacle();
-   		smq_send_log_info("Set quick Obstacle! switch back to 0!");
    	}
 
 

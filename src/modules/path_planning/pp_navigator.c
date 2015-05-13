@@ -78,9 +78,6 @@ static bool enable_pathplanner = false;
 static bool quick_target = false;
 static NEDpoint ntarget;	//Target that should be reached when quick_target is set
 
-static bool quick_obstacle = false;
-static NEDpoint nobstacle;  //Obstacle set by Quick_obstacle
-
 
 #if SIMULATION_FLAG == 1
 	static float last_alpha = 0;
@@ -154,7 +151,7 @@ void nav_init(void) {
 
 	//For Debug only
 	//Set a fake-field, as it is used in matlab for the competition-task
-	#if P_DEBUG == 0
+	#if P_DEBUG == 1
 	NEDpoint target;
 	target.northx = 0;
 	target.easty = 300;
@@ -168,6 +165,13 @@ void nav_init(void) {
 	//DEBUG ONLY
 	dbg_alpha = 0;
 	dbg_alpha_status = false;
+}
+
+/**
+ * Reset the Pathplanner to restart the path => start again with the first target
+ */
+void nav_reset(void) {
+	state.targetNum = 0;
 }
 
 
@@ -255,16 +259,6 @@ void nav_navigator(void) {
 	}
 
 
-	/** SET A QUICK OBSTACLE
-	 * A quick-obstacle is set.
-	 */
-	//if(quick_obstacle == true) {
-	//	nav_set_obstacle_ned(0,nobstacle);
-
-	//	quick_obstacle = false;
-	//}
-
-
 	/** ENABLE PATHPLANNER WHEN IN AUTONOMOUS MODE */
 	if(cb_is_autonomous_mode() == true) {
 		//The remote control is in autonomous mode now => we can enable the pathplanner
@@ -327,6 +321,9 @@ void nav_navigator(void) {
 		//****SEND THE DATA USED FOR PATHPLANNING TO QGROUND CONTROL
 		cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
 		cb_new_obstacle(field.obstacles[0].northx, field.obstacles[0].easty);
+
+		//TODO: Use the Heading information in QGround Control, to display the current Target number
+		cb_new_heading((float)state.targetNum);
 
 
 
@@ -623,7 +620,7 @@ void nav_position_update(void) {
 			//TODO: DEBUG For the moment we assume that we always have the same Target
 			// => we do not increase the target number
 			//state.targetNum = 0;
-			smq_send_log_info("Target reached!");
+			smq_send_log_info("Waypoint reached!");
 
 			//Send the new target to QGround Control
 			cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
@@ -633,6 +630,9 @@ void nav_position_update(void) {
 
 			//Don't know what to do here...just be happy?... maybe report to QGround Control?
 			smq_send_log_info("Final target reached!");
+
+			//We set again the first target as the next target => ensures that the boat alway has a target position to reach
+			state.targetNum = 0;
 
 		}
 	}
@@ -814,7 +814,7 @@ void nav_set_method(uint8_t method) {
 	}
 }
 
-/*
+/**
  * Enable/Disable the use of the yaw only for heading measurement of the boat
  * Note: This function is called by QGroundControl
  *
@@ -842,20 +842,11 @@ void nav_set_quick_target(void) {
 }
 
 
-/*
- * Set the current position of the boat as the obstacle.
- *
+/**
+ * Set the current number of target to be reached.
  */
-void nav_set_quick_obstacle(void) {
-
-	//Set Boolean to true
-	quick_obstacle = true;
-
-	//Set the Current Position as the next obstacle
-	nobstacle = state.position;
-
-	nav_set_obstacle_ned(0,state.position);
-
+void nav_set_targetnumber(uint8_t tar_num) {
+	state.targetNum = tar_num;
 }
 
 

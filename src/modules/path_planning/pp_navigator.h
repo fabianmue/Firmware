@@ -51,6 +51,10 @@ struct nav_field_s {
 void nav_init(void);
 
 
+/** @brief Reset the navigator to start again with the first target */
+void nav_reset(void);
+
+
 /** @brief Calculate a new optimal heading reference */
 void nav_navigator(void);
 
@@ -88,6 +92,10 @@ void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos);
 
 /** @brief Set Targets in NED-Coordinates */
 void nav_set_target_ned(uint8_t TargetNumber, NEDpoint TargetPos);
+
+
+/** @brief Set the number out of the stored targets should be reached */
+void nav_set_targetnumber(uint8_t tar_num);
 
 
 /** @brief Set the Start-Line */
