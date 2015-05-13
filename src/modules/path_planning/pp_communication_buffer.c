@@ -196,6 +196,20 @@ bool cb_new_target(float north, float east) {
 }
 
 
+/**
+ * Send the current Target Number that is set as the next Waypoint ot QGround Control
+ *
+ * @param tar_num: Number of the next Waypoint
+ */
+bool cb_new_targetnum(uint8_t tar_num) {
+	pp.target_num = tar_num;
+
+	pp_updated = true;
+
+	return true;
+}
+
+
 
 
 /**

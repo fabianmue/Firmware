@@ -322,8 +322,7 @@ void nav_navigator(void) {
 		cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
 		cb_new_obstacle(field.obstacles[0].northx, field.obstacles[0].easty);
 
-		//TODO: Use the Heading information in QGround Control, to display the current Target number
-		cb_new_heading((float)state.targetNum);
+		cb_new_targetnum(state.targetNum);
 
 
 
@@ -543,7 +542,8 @@ void nav_heading_update(void) {
 		state.heading_cur = alpha;
 
 		//Send current Heading to QGround control for debugging
-		cb_new_heading(state.heading_cur);
+		//TODO: Commented out, because is used for debugging of target-number
+		//cb_new_heading(state.heading_cur);
 
 	}
 
@@ -562,7 +562,8 @@ void yaw_update(struct structs_topics_s *strs) {
 		state.heading_cur = nh_sensor2compass(strs->vehicle_attitude.yaw);
 
 		//Send current Heading to QGround control for debugging
-		cb_new_heading(state.heading_cur);
+		//TOOD: Commented out, because is used for targetnumber
+		//cb_new_heading(state.heading_cur);
 	}
 
 }
@@ -610,32 +611,34 @@ void nav_position_update(void) {
 
 
 	//Check, if we reached a target
-	if(nh_ned_dist(newPos,field.targets[state.targetNum]) <= TARGETTOLERANCE) {
-		//We are inside the tolerance => target is counted as reached
+	if(enable_pathplanner == true)
+		//We only check, if we have reached the target, when the pathplanner is on <=> we are in autonomous mode
+		if(nh_ned_dist(newPos,field.targets[state.targetNum]) <= TARGETTOLERANCE) {
+			//We are inside the tolerance => target is counted as reached
 
-		if(state.targetNum != (field.NumberOfTargets-1)) {
-			//This is not the last target => set new Target
+			if(state.targetNum != (field.NumberOfTargets-1)) {
+				//This is not the last target => set new Target
 
-			state.targetNum += 1;
-			//TODO: DEBUG For the moment we assume that we always have the same Target
-			// => we do not increase the target number
-			//state.targetNum = 0;
-			smq_send_log_info("Waypoint reached!");
+				state.targetNum += 1;
+				//TODO: DEBUG For the moment we assume that we always have the same Target
+				// => we do not increase the target number
+				//state.targetNum = 0;
+				smq_send_log_info("Waypoint reached!");
 
-			//Send the new target to QGround Control
-			cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
+				//Send the new target to QGround Control
+				cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
 
-		} else {
-			//This was the last target
+			} else {
+				//This was the last target
 
-			//Don't know what to do here...just be happy?... maybe report to QGround Control?
-			smq_send_log_info("Final target reached!");
+				//Don't know what to do here...just be happy?... maybe report to QGround Control?
+				smq_send_log_info("Final target reached!");
 
-			//We set again the first target as the next target => ensures that the boat alway has a target position to reach
-			state.targetNum = 0;
+				//We set again the first target as the next target => ensures that the boat alway has a target position to reach
+				state.targetNum = 0;
 
+			}
 		}
-	}
 
 	//Update the state to the new Position
 	state.position = newPos;

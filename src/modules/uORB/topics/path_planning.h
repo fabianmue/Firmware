@@ -31,6 +31,7 @@ struct path_planning_s {
     float target_east;    /**< NED-East Coordinate of the next Target */
     float obst_north; 	  /**< NED-North Coordinate for the obstacle */
     float obst_east;      /**< NED-East Coordinate for the obstacle */
+    uint8_t target_num;   /**< Number of the Target currently set as the next waypoint */
 
     bool failsafe; 		  /**< Failsafe-Flag. true, iff the Pathplanning detected a failsafe condition */
 };
