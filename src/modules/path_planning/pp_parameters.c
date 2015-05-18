@@ -735,7 +735,7 @@ void p_param_update(bool update_path_param){
 
 
     //**COST METHOD
-    float gw, go, gm, gs, gt, glee, obstsafetyradius, obsthorizon, windowsize;
+    float gw, go, gm, gs, gt, glee, gsensor, obstsafetyradius, obsthorizon, windowsize;
     param_get(pointers_param_qgc.cm_weight_gw_pointer, &gw);
     param_get(pointers_param_qgc.cm_weight_go_pointer, &go);
     param_get(pointers_param_qgc.cm_weight_gm_pointer, &gm);
@@ -747,7 +747,7 @@ void p_param_update(bool update_path_param){
     param_get(pointers_param_qgc.cm_obsthorizon_pointer, &obsthorizon);
     param_get(pointers_param_qgc.cm_windowsize_pointer, &windowsize);
 
-    cm_set_configuration(gw, go, gm, gs, gt, glee, obstsafetyradius, obsthorizon, windowsize);
+    cm_set_configuration(gw, go, gm, gs, gt, glee, gsensor, obstsafetyradius, obsthorizon, windowsize);
 
     uint8_t dbg_nodist = 0;
     param_get(pointers_param_qgc.cm_dbg_nodist, &dbg_nodist);

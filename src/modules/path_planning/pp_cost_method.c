@@ -38,6 +38,7 @@ static struct {
 	float Gs;         		//Weighting factor for prefering courses that need no change in course
 	float Gt;          		//Weighting factor for tactical considerations
 	float GLee;       		//Weighting factor for passing Obstacles in Lee. (higher value <=> force boat to pass in Lee)
+	float GSensor; 			//Weighting factor for Sensor readings
 	float ObstSafetyRadius; //Safety Radius around an obstacle [m]
 	float ObstHorizon; 		//Obstacle Horizon <=> inside this horizon obstacles are recognized [m]
 	uint8_t WindowSize; 	//Size of the window for smoothing the Costfunction
@@ -48,6 +49,7 @@ static struct {
 		.Gs = 0.05f,//0.05
 		.Gt = 0.1f, //0.1
 		.GLee = 0.15f,//0.15
+		.GSensor = 0.5f, //9.5
 		.ObstSafetyRadius = 10.0f, //10
 		.ObstHorizon = 100.0f, //100
 		.WindowSize = 5 //5
@@ -175,7 +177,7 @@ float cm_NewHeadingReference(struct nav_state_s *state, struct nav_field_s *fiel
  * @param ObstSafetyRadius
  * @param ObstHorizon
 */
-void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float ObstSafetyRadius, float ObstHorizon, float WindowSize) {
+void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, float GLee, float GSensor, float ObstSafetyRadius, float ObstHorizon, float WindowSize) {
 
 	Config.Gw = Gw;
 	Config.Go = Go;
@@ -183,6 +185,7 @@ void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, floa
 	Config.Gs = Gs;
 	Config.Gt = Gt;
 	Config.GLee = GLee;
+	Config.GSensor = GSensor;
 	Config.ObstSafetyRadius = ObstSafetyRadius;
 	Config.ObstHorizon = ObstHorizon;
 	Config.WindowSize = WindowSize;
