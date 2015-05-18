@@ -55,6 +55,8 @@ static struct {
 
 static bool DEBUG_noDist = false;
 
+static float sensor_dist[360/SENSOR_STEPSIZE]; //Distance Matrix from the Sensor. Distances in [m]
+
 
 /* @brief Calculate the total cost for a given simulated heading */
 float total_cost(float seg, struct nav_state_s *state, struct nav_field_s *field);
@@ -74,8 +76,12 @@ float cost_heading_change(float seg,struct nav_state_s *state);
 /* @brief Get the cost for avoiding obstacles and pass obstacles in lee */
 float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *field);
 
+/* @brief Get the Sensor Cost */
+float cost_sensor(float seg);
+
 /* @brief Smooth an Array of variable size and with a variable windowSize */
 void smooth(const float signal[], int SignalLen, int KernelLen,float result[]);
+
 
 #if C_DEBUG == 1
 	void print_array(float array[], size_t length);
@@ -206,6 +212,24 @@ void DEBUG_set_minus(uint8_t DistStatus) {
 	} else {
 		DEBUG_noDist = false;
 	}
+}
+
+
+
+/**
+ * Store one entry from the Distance Matrix obtained by the Sensor to the local sensor_distance Matrix
+ * This distance Matrix can then be used to calculate the sensor_cost.
+ *
+ * @param angle: Angle for which the distance is valid [°]
+ * @param distance: Measured Distance from the Sensor [cm]
+ */
+void cm_sensor_dist(uint16_t angle, uint16_t distance) {
+
+	//Index in the Matrix
+	uint16_t ind = angle/SENSOR_STEPSIZE;
+
+	//Store the distance to this entry in the Matrix
+	sensor_dist[ind] = (float)(distance)/100.0f;
 }
 
 
@@ -591,6 +615,24 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 
 
 
+/**
+ * Sensor Cost
+ * This cost takes into consideration the measurements from the sensor.
+ *
+ * @param seg: simulated heading for which the cost should be returned [rad]
+ * @return Sensor cost for the simulated Heading "seg"
+ */
+float cost_sensor(float seg) {
+
+	uint16_t ind = seg*RAD2DEG/SENSOR_STEPSIZE;
+
+	return (SENSOR_MAXDIST-sensor_dist[ind])/SENSOR_MAXDIST;
+
+}
+
+
+
+
 
 /**
  * Smooths an array of variable size using a moving averaging window of variable size
@@ -628,6 +670,11 @@ void smooth(const float signal[], int SignalLen, int KernelLen,
 	}
 
 } //end of smooth
+
+
+
+
+
 
 
 #if C_DEBUG == 1

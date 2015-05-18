@@ -74,7 +74,7 @@
 #include "pp_navigator.h"
 #include "pp_failsafe.h"
 
-#include "parser_sensorboard/ps_data_update.h"
+//#include "parser_sensorboard/ps_data_update.h"
 #include "parser_sensorboard/ps_sensorboard.h"
 
 static bool thread_should_exit = false;		/**< daemon exit flag */

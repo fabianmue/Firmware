@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "ps_sensorboard.h"
-#include "ps_data_update.h"
+//#include "ps_data_update.h"
 
 //for baud rate selection of the UART port:
 #include <termios.h>
@@ -309,9 +309,9 @@ bool sb_handler(void) {
 
 		state.last_call = systime;
 
-		//*** SEND A COMMAND
-			sb_write(CMD_DISTMAT1);		//Send the command to the Sensorboard
-			sb_read();					//Read and parse the data
+		//*** SEND A COMMAND HERE
+		sb_write(CMD_DISTMAT1);		//Send the command to the Sensorboard for receiving the
+		sb_read();					//Read and parse the data
 
 
 		//*** READ DATA FROM THE SERIAL INTERFACE
@@ -340,14 +340,18 @@ bool sb_handler(void) {
 				case CMD_DISTMAT1: {
 					//Get the first half of the distance Matrix 0-179° in Steps of 2°
 
-					/*uint16_t i;
-					for(i=0; i < 180/STEPSIZE; i++) {
-						uint16_t ind1 = i;
-						uint16_t ind2 = i+1;
+					printf("     -- New Distance Matrix received!");
+
+					uint16_t numOfBytes = 180/STEPSIZE * 2;
+
+					uint16_t i;
+					for(i=0; i < numOfBytes; i++) {
+						uint16_t ind1 = 2*i;
+						uint16_t ind2 = 2*i+1;
 						uint16_t dist = (((uint16_t)state.data[ind1])<<8) | ((uint16_t)state.data[ind2]);
 
 						printf("Dist %d: %d\n",i,dist);
-					}*/
+					}
 
 					break;
 				}

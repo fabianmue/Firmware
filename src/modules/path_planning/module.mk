@@ -48,7 +48,6 @@ SRCS	= path_planning.c\
           pp_cost_method.c\
           pp_potentialfield_method.c\
           pp_failsafe.c\
-          parser_sensorboard/ps_data_update.c\
           parser_sensorboard/ps_sensorboard.c
 
 #add here all additional c-Files by using \ at the end of each line

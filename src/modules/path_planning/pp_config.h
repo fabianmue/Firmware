@@ -18,7 +18,7 @@
  * an external C-Program simulating the parameter updates. This way it
  * is possible checking the algorithms and the inputs/outputs of the
  * different functions.
- * Note: With C_DEBUG = 1 it is NOT possible to compile for the Pixhawk!*/
+ * Note: With C_DEBUG = 1 it is NOT possible to compile for the Pixhawk! */
 #define C_DEBUG 0
 
 #if C_DEBUG == 1 //Include some h-files for Computer Simulation (PC-Debugging)
@@ -27,8 +27,7 @@
 
 
 /* PIXHAWK DEBUG FLAG
- * The development on the Pixhawk is on, if set to 1. It displays additional messages in QGround-Control then.
- */
+ * The development on the Pixhawk is on, if set to 1. It displays additional messages in QGround-Control then. */
 #define P_DEBUG 0
 
 
@@ -57,8 +56,7 @@
  * If this flag is enabled (set to 1) a failsafe mode is used. A circle is defined in which the boat
  * may have its position.
  * As soon as it leaves this circle the failsafe mode is activated and the boat should return to its
- * home position automatically.
- */
+ * home position automatically. */
 #define USE_FAILSAFE 0 //1, if failsafe mode is enabled
 
 
@@ -66,6 +64,13 @@
  * Timeout, if no change in the polled topics is detected
  * Value is in MilliSeconds */
 #define TIMEOUT_POLL 1000
+
+
+/*SENSOR CONFIGURATION
+ * Configuration for the Sensor. Values like maximum measurement distance and stepsize are
+ * defined here. */
+#define SENSOR_STEPSIZE 2 //Stepsize the Sensor uses for making Distance Measurements [°]
+#define SENSOR_MAXDIST 40 //Maximum measurement distance [m]
 
 
 /* CONVERT FROM DEGREES TO RADIANS
@@ -123,6 +128,9 @@ extern uint8_t pp_algorithm;
 //remote control usefull value
 #define RC_MODE_INDEX 4             ///index of the type of mode in rc_channels struct
 #define RC_MANUAL_MODE -1.0f        ///Rc_Ch4 == RC_MANUAL_MODE if manual mode selected
+
+
+
 
 
 #endif /* CONFIG_H_ */
