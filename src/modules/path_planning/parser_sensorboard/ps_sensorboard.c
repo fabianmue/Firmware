@@ -25,6 +25,7 @@
 #include <drivers/drv_hrt.h>
 
 #include "../pp_config.h"
+#include "../pp_cost_method.h"
 
 
 /***********************************************************************************/
@@ -91,14 +92,6 @@ bool parse_message(uint8_t data);
 #define CMD_DISTMAT1    0x4B    //Return the distance Matrix for 0-179
 #define CMD_DISTMAT2    0x4C    //Return the distance Matrix for 180-355
 #define CMD_RESET       0x20    //Reset the Sensor to initial conditions
-
-
-
-/***********************************************************************************/
-/*****  P A R A M E T E R S  *******************************************************/
-/***********************************************************************************/
-
-#define STEPSIZE 2 					//Stepsize of the LIDAR between two distance measurements [°]
 
 
 
@@ -338,11 +331,11 @@ bool sb_handler(void) {
 					break;
 				}
 				case CMD_DISTMAT1: {
-					//Get the first half of the distance Matrix 0-179° in Steps of 2°
+					//Get the first half of the distance Matrix 0-179° in Steps of SENSOR_STEPSIZE°
 
 					printf("     -- New Distance Matrix received!");
 
-					uint16_t numOfBytes = 180/STEPSIZE * 2;
+					uint16_t numOfBytes = 180/SENSOR_STEPSIZE * 2; //For every measured bearing, we receive two Bytes (uint16_t).
 
 					uint16_t i;
 					for(i=0; i < numOfBytes; i++) {
@@ -351,6 +344,10 @@ bool sb_handler(void) {
 						uint16_t dist = (((uint16_t)state.data[ind1])<<8) | ((uint16_t)state.data[ind2]);
 
 						printf("Dist %d: %d\n",i,dist);
+
+						//Note: The distance is in Centimeters!
+						//cm_sensor_dist(i*SENSOR_STEPSIZE,dist);
+
 					}
 
 					break;
