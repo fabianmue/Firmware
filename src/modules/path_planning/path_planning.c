@@ -74,6 +74,9 @@
 #include "pp_navigator.h"
 #include "pp_failsafe.h"
 
+#include "parser_sensorboard/ps_data_update.h"
+#include "parser_sensorboard/ps_sensorboard.h"
+
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
 static int daemon_task;						/**< Handle of daemon task / thread */
@@ -211,6 +214,12 @@ int pp_thread_main(int argc, char *argv[]) {
 	#endif
 
 
+    //init communication with sensorboard
+	#if LDEBUG_SENSORBOARD == 0
+    sb_init();
+	#endif
+
+
     //init the failsafe-mode
 	#if USE_FAILSAFE == 1
     fs_init();
@@ -293,6 +302,12 @@ int pp_thread_main(int argc, char *argv[]) {
          * time-based interval. */
 		#if USE_GRID_LINES == 0
         nav_navigator();
+		#endif
+
+
+        /* Communicate with the Sensorboard */
+		#if LDEBUG_SENSORBOARD == 0
+		//sb_handler();
 		#endif
 
 
