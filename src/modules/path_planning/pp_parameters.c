@@ -222,6 +222,7 @@ PARAM_DEFINE_FLOAT(PP_CM_W_GM, 0.4f);
 PARAM_DEFINE_FLOAT(PP_CM_W_GS, 0.05f);
 PARAM_DEFINE_FLOAT(PP_CM_W_GT, 0.1f);
 PARAM_DEFINE_FLOAT(PP_CM_W_GLEE, 0.15f);
+PARAM_DEFINE_FLOAT(PP_CM_W_GSEN, 0.5f);
 
 
 /**
@@ -397,6 +398,7 @@ static struct pointers_param_qgc_s{
 	param_t cm_weight_gs_pointer;
 	param_t cm_weight_gt_pointer;
 	param_t cm_weight_glee_pointer;
+	param_t cm_weight_gsensor_pointer;
 
 	param_t cm_obstsafetyradius_pointer;
 	param_t cm_obsthorizon_pointer;
@@ -510,6 +512,7 @@ void p_param_init(void){
     pointers_param_qgc.cm_weight_gs_pointer = param_find("PP_CM_W_GS");
     pointers_param_qgc.cm_weight_gt_pointer = param_find("PP_CM_W_GT");
     pointers_param_qgc.cm_weight_glee_pointer = param_find("PP_CM_W_GLEE");
+    pointers_param_qgc.cm_weight_gsensor_pointer = param_find("PP_CM_W_GSEN");
 
     pointers_param_qgc.cm_obstsafetyradius_pointer = param_find("PP_CM_OBSTSAFRAD");
     pointers_param_qgc.cm_obsthorizon_pointer = param_find("PP_CM_OBSTHORIZN");
@@ -742,6 +745,7 @@ void p_param_update(bool update_path_param){
     param_get(pointers_param_qgc.cm_weight_gs_pointer, &gs);
     param_get(pointers_param_qgc.cm_weight_gt_pointer, &gt);
     param_get(pointers_param_qgc.cm_weight_glee_pointer, &glee);
+    param_get(pointers_param_qgc.cm_weight_gsensor_pointer, &gsensor);
 
     param_get(pointers_param_qgc.cm_obstsafetyradius_pointer, &obstsafetyradius);
     param_get(pointers_param_qgc.cm_obsthorizon_pointer, &obsthorizon);
