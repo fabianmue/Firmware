@@ -22,6 +22,7 @@
 #include <fcntl.h>
 
 #include <systemlib/err.h>
+#include <drivers/drv_hrt.h>
 
 #include "../pp_config.h"
 
@@ -33,13 +34,13 @@
 /* Buffer for data from UART */
 static char com_buffer[500];
 
-static struct {		//Struct holding the state of the ps_sensorboard
-	float heading;	//Heading of the boat [rad]
-	uint8_t cmd; 	//Last received command
-	uint8_t nrofbytes; //Number of data bytes that will be sent in the current message
-	uint8_t dataindex; //Current index of the data byte to be read
+static struct {			//Struct holding the state of the ps_sensorboard
+	float heading;		//Heading of the boat [rad]
+	uint8_t cmd; 		//Last received command
+	uint8_t nrofbytes; 	//Number of data bytes that will be sent in the current message
+	uint8_t dataindex; 	//Current index of the data byte to be read
 	uint8_t data[255]; 	//Data bytes received with the last command
-	bool newdata; 	//Flag that signals new data (true, if new data is present, false else)
+	bool newdata; 		//Flag that signals new data (true, if new data is present, false else)
 	uint64_t last_call; //Time, when the Sensorboard was queried for new data the last time
 } state = {
 	.heading = 0,
@@ -63,6 +64,10 @@ static int comport = -1;		//COM-Port Object
 
 
 
+/***********************************************************************************/
+/*****  F U N C T I O N   P R O T O T Y P E S **************************************/
+/***********************************************************************************/
+
 /* @brief Set baudrate for communication */
 bool sb_set_baudrate(int baudrate);
 
@@ -79,6 +84,21 @@ bool parse_message(uint8_t data);
 #define MSG_END			0x03	//End character for a message
 
 
+#define CMD_OBSTACLES	0x4F	//Send the bearings and distances to every obstacle in range
+								//Note: bearing (high/low byte) and then the distance is sent
+#define CMD_NUMOBSTACLES 0x4E   //Number of obstacles currently in range
+#define CMD_LASTDIST    0x4A    //Latest known distance from the LIDAR
+#define CMD_DISTMAT1    0x4B    //Return the distance Matrix for 0-179
+#define CMD_DISTMAT2    0x4C    //Return the distance Matrix for 180-355
+#define CMD_RESET       0x20    //Reset the Sensor to initial conditions
+
+
+
+/***********************************************************************************/
+/*****  P A R A M E T E R S  *******************************************************/
+/***********************************************************************************/
+
+#define STEPSIZE 2 					//Stepsize of the LIDAR between two distance measurements [°]
 
 
 
@@ -125,7 +145,10 @@ bool sb_init(void) {
 	state.cmd = 0x00;
 	state.nrofbytes = 0x00;
 	state.dataindex = 0x00;
-	memset(state.data, 0, sizeof(state.data));
+
+	for (uint8_t i=0; i<255; i++){
+		state.data[i] = 0;
+	}
 	state.newdata = false;
 
 	//Everything is OK and we can return true
@@ -286,10 +309,59 @@ bool sb_handler(void) {
 
 		state.last_call = systime;
 
-		du_handler();
+		//*** SEND A COMMAND
+			sb_write(CMD_DISTMAT1);		//Send the command to the Sensorboard
+			sb_read();					//Read and parse the data
 
-	}
 
+		//*** READ DATA FROM THE SERIAL INTERFACE
+		uint8_t cmd = sb_is_new_data();
+		//printf("     -- Command: %d",cmd);
+
+		if(cmd == 0x00) {
+			//No new valid data is received => might flag unhappy
+
+		} else {
+			//New data is received => check, to which command the data belongs and act accordingly
+
+			switch(cmd) {
+				case CMD_LASTDIST: {
+					//The last known distance from the sensor was received
+
+					//printf("     -- Buffer 0,1: %d,%d",global_buffer[0],global_buffer[1]);
+
+					uint16_t dist = 0;
+					dist = (((uint16_t)state.data[0])<<8) | ((uint16_t)state.data[1]);
+
+					printf("     -- New Distance: %d cm\n",dist);
+
+					break;
+				}
+				case CMD_DISTMAT1: {
+					//Get the first half of the distance Matrix 0-179° in Steps of 2°
+
+					/*uint16_t i;
+					for(i=0; i < 180/STEPSIZE; i++) {
+						uint16_t ind1 = i;
+						uint16_t ind2 = i+1;
+						uint16_t dist = (((uint16_t)state.data[ind1])<<8) | ((uint16_t)state.data[ind2]);
+
+						printf("Dist %d: %d\n",i,dist);
+					}*/
+
+					break;
+				}
+				default: {
+					//Undesirable, but nothing we can do about it
+
+					return false;
+				}
+
+			} //end of switch(cmd)
+		} //end of if(valid command received)
+	} //end of if(time)
+
+	//Everything seems ok and we return "true"
 	return true;
 
 }
