@@ -380,8 +380,10 @@ bool request_data(uint8_t cmd_inp) {
 					//dist = dist + 1;
 
 					printf("Dist %d: %d\n",i*SENSOR_STEPSIZE,dist);
+
 					//Note: The distance is in Centimeters!
-					//cm_sensor_dist(i*SENSOR_STEPSIZE,dist);
+					//Send the Distance Value to the Cost-Function Pathplanning
+					cm_sensor_dist(i*SENSOR_STEPSIZE,dist);
 				}
 
 				break;
@@ -404,7 +406,8 @@ bool request_data(uint8_t cmd_inp) {
 					printf("Dist %d: %d\n",i*SENSOR_STEPSIZE+180,dist);
 
 					//Note: The distance is in Centimeters!
-					//cm_sensor_dist(i*SENSOR_STEPSIZE+180,dist);
+					//Send the Distance Value to the Cost-Function Pathplanning
+					cm_sensor_dist(i*SENSOR_STEPSIZE+180,dist);
 
 				}
 
