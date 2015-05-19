@@ -307,7 +307,7 @@ int pp_thread_main(int argc, char *argv[]) {
 
         /* Communicate with the Sensorboard */
 		#if LDEBUG_SENSORBOARD == 0
-		//sb_handler();
+		sb_handler();
 		#endif
 
 

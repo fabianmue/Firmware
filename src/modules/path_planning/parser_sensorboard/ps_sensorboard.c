@@ -75,6 +75,9 @@ bool sb_set_baudrate(int baudrate);
 /* @brief Parse a received message */
 bool parse_message(uint8_t data);
 
+/* @brief Request data from the Sensorboard by sending a command */
+bool request_data(uint8_t cmd_inp);
+
 
 
 /***********************************************************************************/
@@ -106,8 +109,6 @@ bool parse_message(uint8_t data);
  * @param wx_port_pointer: Pointer to the COM-port handler
  */
 bool sb_init(void) {
-
-	comport = -1;
 
 	//Open the COM-Port
 	//Note: /dev/ttyS6 is the UART8 <=> SERIAL4 of the Pixhawk. Further details can be found on https://pixhawk.org/users/wiring
@@ -166,6 +167,10 @@ bool sb_write(const uint8_t cmd) {
 	uint8_t head0 = (uint8_t)(head>>8);
 	uint8_t head1 = (uint8_t)head;
 
+	//TODO: DEBUG only
+	head0 = 0;
+	head1 = 0;
+
 	//Create the String that has to be sent
 	uint8_t msg[6] = {MSG_START, MSG_START, cmd, head0, head1, MSG_END};
 
@@ -192,7 +197,7 @@ int sb_read(void) {
 	if(size > 0) {
 		//The buffer contains some data => call the parser and try to find the message
 
-		//printf("***Received data: %d \n",(int)com_buffer[0]);
+		printf("***Received data: %d Bytes\n",size);
 
 		//Parse the buffer starting at the first element
 		uint8_t i;
@@ -302,64 +307,11 @@ bool sb_handler(void) {
 
 		state.last_call = systime;
 
-		//*** SEND A COMMAND HERE
-		sb_write(CMD_DISTMAT1);		//Send the command to the Sensorboard for receiving the
-		sb_read();					//Read and parse the data
+		request_data(CMD_DISTMAT1);
+		request_data(CMD_DISTMAT2);
 
 
-		//*** READ DATA FROM THE SERIAL INTERFACE
-		uint8_t cmd = sb_is_new_data();
-		//printf("     -- Command: %d",cmd);
 
-		if(cmd == 0x00) {
-			//No new valid data is received => might flag unhappy
-
-		} else {
-			//New data is received => check, to which command the data belongs and act accordingly
-
-			switch(cmd) {
-				case CMD_LASTDIST: {
-					//The last known distance from the sensor was received
-
-					//printf("     -- Buffer 0,1: %d,%d",global_buffer[0],global_buffer[1]);
-
-					uint16_t dist = 0;
-					dist = (((uint16_t)state.data[0])<<8) | ((uint16_t)state.data[1]);
-
-					printf("     -- New Distance: %d cm\n",dist);
-
-					break;
-				}
-				case CMD_DISTMAT1: {
-					//Get the first half of the distance Matrix 0-179° in Steps of SENSOR_STEPSIZE°
-
-					printf("     -- New Distance Matrix received!");
-
-					uint16_t numOfBytes = 180/SENSOR_STEPSIZE * 2; //For every measured bearing, we receive two Bytes (uint16_t).
-
-					uint16_t i;
-					for(i=0; i < numOfBytes; i++) {
-						uint16_t ind1 = 2*i;
-						uint16_t ind2 = 2*i+1;
-						uint16_t dist = (((uint16_t)state.data[ind1])<<8) | ((uint16_t)state.data[ind2]);
-
-						printf("Dist %d: %d\n",i,dist);
-
-						//Note: The distance is in Centimeters!
-						//cm_sensor_dist(i*SENSOR_STEPSIZE,dist);
-
-					}
-
-					break;
-				}
-				default: {
-					//Undesirable, but nothing we can do about it
-
-					return false;
-				}
-
-			} //end of switch(cmd)
-		} //end of if(valid command received)
 	} //end of if(time)
 
 	//Everything seems ok and we return "true"
@@ -368,9 +320,115 @@ bool sb_handler(void) {
 }
 
 
+
+
+
 /***********************************************************************************/
 /*****  P R I V A T E    F U N C T I O N S  ****************************************/
 /***********************************************************************************/
+
+/**
+ * Request Data from the Sensorboard
+ *
+ * @param cmd_inp: Command to be used for the data-request
+ * @return true, if data was requested without error
+ */
+bool request_data(uint8_t cmd_inp) {
+
+	//*** SEND A COMMAND HERE
+	sb_write(cmd_inp);		//Send the command to the Sensorboard for receiving the
+	sleep(4);
+	sb_read();				//Read and parse the data
+
+
+	//*** READ DATA FROM THE SERIAL INTERFACE
+	uint8_t cmd = sb_is_new_data();
+	//printf("     -- Command: %d",cmd);
+
+	if(cmd == 0x00) {
+		//No new valid data is received => might flag unhappy
+
+	} else {
+		//New data is received => check, to which command the data belongs and act accordingly
+
+		switch(cmd) {
+			case CMD_LASTDIST: {
+				//The last known distance from the sensor was received
+
+				//printf("     -- Buffer 0,1: %d,%d",global_buffer[0],global_buffer[1]);
+
+				uint16_t dist = 0;
+				dist = (((uint16_t)state.data[0])<<8) | ((uint16_t)state.data[1]);
+
+				printf("     -- New Distance: %d cm\n",dist);
+
+				break;
+			}
+			case CMD_DISTMAT1: {
+				//Get the first half of the distance Matrix 0-179° in Steps of SENSOR_STEPSIZE
+
+				printf("     -- New Distance Matrix 1 received!\n");
+
+				uint16_t numOfBytes = 180/SENSOR_STEPSIZE * 2; //For every measured bearing, we receive two Bytes (uint16_t).
+
+				uint16_t i;
+				for(i=0; i < numOfBytes/2; i++) {
+					uint16_t ind1 = 2*i;
+					uint16_t ind2 = 2*i+1;
+					uint16_t dist = (((uint16_t)state.data[ind1])<<8) | ((uint16_t)state.data[ind2]);
+
+					//dist = dist + 1;
+
+					printf("Dist %d: %d\n",i*SENSOR_STEPSIZE,dist);
+					//Note: The distance is in Centimeters!
+					//cm_sensor_dist(i*SENSOR_STEPSIZE,dist);
+				}
+
+				break;
+			}
+			case CMD_DISTMAT2: {
+				//Get the second half of the distance Matrix 180-355° in Steps of SENSOR_STEPSIZE
+
+				printf("     -- New Distance Matrix 2 received!\n");
+
+				uint16_t numOfBytes = 180/SENSOR_STEPSIZE * 2; //For every measured bearing, we receive two Bytes (uint16_t).
+
+				uint16_t i;
+				for(i=0; i < numOfBytes/2; i++) {
+					uint16_t ind1 = 2*i;
+					uint16_t ind2 = 2*i+1;
+					uint16_t dist = (((uint16_t)state.data[ind1])<<8) | ((uint16_t)state.data[ind2]);
+
+					dist = dist + 1;
+
+					printf("Dist %d: %d\n",i*SENSOR_STEPSIZE+180,dist);
+
+					//Note: The distance is in Centimeters!
+					//cm_sensor_dist(i*SENSOR_STEPSIZE+180,dist);
+
+				}
+
+				break;
+			}
+			default: {
+				//Undesirable, but nothing we can do about it
+
+				return false;
+			}
+
+		} //end of switch(cmd)
+	} //end of if(valid command received)
+
+
+	//Everything is OK and we can return true
+	return true;
+
+} //end of function
+
+
+
+
+
 
 /**
  * Parse a message received from the Sensorboard
@@ -449,7 +507,7 @@ bool parse_message(uint8_t data) {
 				//Read the Data byte and store it
 				state.data[state.dataindex] = data;
 
-				//printf("   Read byte number %d\n",state.dataindex);
+				//printf("   Read byte number %d, Data: %d\n",state.dataindex,data);
 
 				//Increment the index
 				state.dataindex++;

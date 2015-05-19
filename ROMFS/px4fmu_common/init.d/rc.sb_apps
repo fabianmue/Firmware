@@ -22,7 +22,7 @@ parser_200WX start
 #
 # start the path_planning.c script:
 #
-path_planning start
+# path_planning start
 
 
 # [commented out 06/03/2015]
