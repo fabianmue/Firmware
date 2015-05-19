@@ -136,6 +136,21 @@ bool cb_new_heading(float heading) {
 
 
 /**
+ * Return the current Heading of the boat from the Pathplanning Topic
+ * Note: The heading is calculated in navigator.c
+ * The heading is a convex combination from the COG and the Yaw-Angle dependent on the update rate
+ *
+ * @return heading in Compass Frame [rad]
+ */
+float cb_get_heading(void) {
+
+	return pp.heading;
+}
+
+
+
+
+/**
  * Store the current Position of the obstacle in Pathplanning Topic
  * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
  *

@@ -69,6 +69,9 @@ bool cb_new_position(float north, float east);
 /** @brief store the current Heading known by the Navigator in the pathplanning-topic */
 bool cb_new_heading(float heading);
 
+/** @brief Return the heading of the boat in compass frame */
+float cb_get_heading(void);
+
 /** @brief Store the current reference Heading in the pathplanning-topic */
 bool cb_new_refheading(float ref_heading);
 

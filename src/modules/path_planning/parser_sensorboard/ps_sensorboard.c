@@ -26,6 +26,7 @@
 
 #include "../pp_config.h"
 #include "../pp_cost_method.h"
+#include "../pp_communication_buffer.h"
 
 
 /***********************************************************************************/
@@ -36,7 +37,6 @@
 static char com_buffer[500];
 
 static struct {			//Struct holding the state of the ps_sensorboard
-	float heading;		//Heading of the boat [rad]
 	uint8_t cmd; 		//Last received command
 	uint8_t nrofbytes; 	//Number of data bytes that will be sent in the current message
 	uint8_t dataindex; 	//Current index of the data byte to be read
@@ -44,7 +44,6 @@ static struct {			//Struct holding the state of the ps_sensorboard
 	bool newdata; 		//Flag that signals new data (true, if new data is present, false else)
 	uint64_t last_call; //Time, when the Sensorboard was queried for new data the last time
 } state = {
-	.heading = 0,
 	.cmd = 0x00,
 	.nrofbytes = 0x00,
 	.dataindex = 0x00,
@@ -135,7 +134,6 @@ bool sb_init(void) {
 	rx_state = IDLE;
 
 	//Initialize State Variables
-	state.heading = 0x00;
 	state.cmd = 0x00;
 	state.nrofbytes = 0x00;
 	state.dataindex = 0x00;
@@ -161,15 +159,12 @@ bool sb_init(void) {
 bool sb_write(const uint8_t cmd) {
 
 	//Convert Heading from radian to degrees
-	uint16_t head = RAD2DEG * state.heading;
+	uint16_t head = RAD2DEG * cb_get_heading();
 
 	//Split up Heading into two uint8_t values
 	uint8_t head0 = (uint8_t)(head>>8);
 	uint8_t head1 = (uint8_t)head;
 
-	//TODO: DEBUG only
-	head0 = 0;
-	head1 = 0;
 
 	//Create the String that has to be sent
 	uint8_t msg[6] = {MSG_START, MSG_START, cmd, head0, head1, MSG_END};
@@ -241,17 +236,6 @@ bool sb_set_baudrate(int baudrate) {
 	return true;
 }
 
-
-/*
- * Update the internal state
- *
- * @param heading: Heading of the boat wrt. true North [rad]
- */
-bool sb_update_state(float heading) {
-	state.heading = heading;
-
-	return true;
-}
 
 
 /*

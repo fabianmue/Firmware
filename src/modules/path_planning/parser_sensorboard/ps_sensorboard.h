@@ -19,9 +19,6 @@ bool sb_write(const uint8_t cmd);
 /* Read from the COM-Port */
 int sb_read(void);
 
-/* Update the state */
-bool sb_update_state(float heading);
-
 /* Check, if new data is available */
 uint8_t sb_is_new_data(void);
 
