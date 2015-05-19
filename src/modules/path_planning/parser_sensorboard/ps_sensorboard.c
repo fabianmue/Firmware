@@ -337,7 +337,7 @@ bool request_data(uint8_t cmd_inp) {
 
 	//*** SEND A COMMAND HERE
 	sb_write(cmd_inp);		//Send the command to the Sensorboard for receiving the
-	sleep(4);
+	sleep(1);
 	sb_read();				//Read and parse the data
 
 
