@@ -8,6 +8,9 @@
 #ifndef KT_TRACKER_H_
 #define KT_TRACKER_H_
 
+/* @brief Init the use of the Kalman Tracker */
+bool tr_init(void);
+
 
 
 

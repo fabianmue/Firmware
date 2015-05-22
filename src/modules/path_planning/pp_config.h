@@ -71,6 +71,7 @@
  * defined here. */
 #define SENSOR_STEPSIZE 2 //Stepsize the Sensor uses for making Distance Measurements [°]
 #define SENSOR_MAXDIST 40 //Maximum measurement distance [m]
+#define SENSOR_RANGE 90   //Range of the Sensor [°] (Note: to the left and to the right)
 
 
 /* CONVERT FROM DEGREES TO RADIANS

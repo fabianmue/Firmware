@@ -24,10 +24,10 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-#define NULL 0
+//#define NULL 0
 
 //State of the Linked list
-struct {
+static struct {
 	uint8_t size;	//Current Size of the List
 	track_obj *root; //Root of the tracking object list (pointer to the root)
 	track_obj *conductor; //Pointer to track_obj when traversing the list
@@ -45,6 +45,8 @@ struct {
 /*****  F U N C T I O N   P R O T O T Y P E S **************************************/
 /***********************************************************************************/
 
+/* @brief Flush the list */
+bool tl_flush(void);
 
 
 
@@ -121,7 +123,7 @@ bool tl_add(float x_cog, float y_cog) {
 			state.conductor = state.conductor->next;
 		}
 
-		state.conductor->next = temp;
+		state.conductor->next = &temp;
 
 		state.size += 1; //An object was added => increase the size of the list
 	}
@@ -129,17 +131,6 @@ bool tl_add(float x_cog, float y_cog) {
 	return true;
 }
 
-
-
-/**
- * Flush the list
- * Delete the list from memory.
- *
- */
-bool tl_flush(void) {
-
-	return true;
-}
 
 
 
@@ -150,7 +141,15 @@ bool tl_flush(void) {
 /*****  P R I V A T E    F U N C T I O N S  ****************************************/
 /***********************************************************************************/
 
+/**
+ * Flush the list
+ * Delete the list from memory.
+ *
+ */
+bool tl_flush(void) {
 
+	return true;
+}
 
 
 
