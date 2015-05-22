@@ -48,6 +48,9 @@ SRCS	= path_planning.c\
           pp_cost_method.c\
           pp_potentialfield_method.c\
           pp_failsafe.c\
-          parser_sensorboard/ps_sensorboard.c
+          parser_sensorboard/ps_sensorboard.c\
+          kalman_tracker/kt_track_list.c\
+          kalman_tracker/kt_tracker.c
+          
 
 #add here all additional c-Files by using \ at the end of each line
