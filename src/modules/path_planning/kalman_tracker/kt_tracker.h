@@ -12,6 +12,10 @@
 bool tr_init(void);
 
 
+/* @brief Hanlder funciton for the Kalman Tracker */
+bool tr_handler(void);
+
+
 
 
 #endif /* KT_TRACKER_H_ */

@@ -18,6 +18,7 @@
 #include <drivers/drv_hrt.h>
 
 #include "kt_track_list.h"
+#include "kt_cog_list.h"
 #include "../pp_config.h"
 #include "../pp_communication_buffer.h"
 
@@ -28,15 +29,8 @@
 /***********************************************************************************/
 
 uint16_t dist_mat[2*SENSOR_RANGE/SENSOR_STEPSIZE];	//Matrix holding the distances measured for the given angles
+uint16_t dist_heading; 	//Heading for which the dist_mat is valid (is transferred with the distance matrix)
 uint16_t seg_mat[2*SENSOR_RANGE/SENSOR_STEPSIZE];   //Matrix holding the segment numbers
-
-//Definition of a COG (Center of Gravity)
-typedef struct cog{
-	float x;
-	float y;
-} cog;
-
-cog *cog_mat;	//Matrix holding the found cog's of the segments
 
 
 static struct {
@@ -52,6 +46,7 @@ static struct {
 } state = {
 	.segnum = 0
 };
+
 
 
 
@@ -71,17 +66,44 @@ bool segment_COG(void);
 /*****  P U B L I C    F U N C T I O N S  ******************************************/
 /***********************************************************************************/
 
-/*
+/**
  * Init the Kalman Tracker
  *
- * @param wx_port_pointer: Pointer to the COM-port handler
  */
 bool tr_init(void) {
 
 	//Create a linked list with the tracking-objects
 	tl_init();
 
+	//Create a linked list with the newly found COGs
+	cl_init();
+
 	//Everything is OK and we can return true
+	return true;
+}
+
+
+/**
+ * Handler for the Kalman Tracking
+ *
+ */
+bool tr_handler(void) {
+
+	//Calcualte the time difference since the last measurement was done [s]
+	float dt = 1; //TODO
+
+	//Segment the distance matrix into segments with similar properties
+	segment();
+
+	//Find the COG for each segment
+	segment_COG();
+
+	//Update the linked list with the predicted Kalman states
+	tl_kalman_predict(dt);
+
+	//NNSF (Try to relate already tracked objects with the newly detected COGs)
+
+
 	return true;
 }
 
@@ -152,24 +174,52 @@ bool segment(void) {
  */
 bool segment_COG(void) {
 
-	//Delete the old COG's
-	free(cog_mat);
-
-	//Allocate Memory for the new COG's
-	cog_mat = malloc(sizeof(cog) * (state.segnum+1));
-
+	//Delete the old COGs if there are any
+	cl_flush();
 
 	//Iterate over the distance Matrix and calculate the COG's
+	uint16_t seg = 0; //Segment Number
+	float x_sum = 0;
+	float y_sum = 0;
+	uint16_t seg_length = 0; //Length of the Segment
+
 	for (uint16_t ind = 0; ind < 2*SENSOR_RANGE/SENSOR_STEPSIZE-1; ind++) {
 
-		if()
+		float angle = 1; //Angle of the current measurement [rad] TODO
+
+		if(seg_mat[ind] == seg) {
+			//We still calculate the COG of one segment
+
+			//Increase the sum for the mean
+			x_sum += cosf(angle)*dist_mat[ind];
+			y_sum += sinf(angle)*dist_mat[ind];
+
+			//Increase the number of measurement points by one
+			seg_length++;
+
+
+		} else {
+			//A new segment is detected => store the COG in the matrix and restart the mean calculation
+
+			//Store the COG of the Segment in the Matrix
+			cl_add(x_sum/seg_length,y_sum/seg_length);
+
+			//Take the new segment number as the reference
+			seg = seg_mat[ind];
+
+			//Reinit the calculation of the sum
+			x_sum = cosf(angle)*dist_mat[ind];
+			y_sum = sinf(angle)*dist_mat[ind];
+			seg_length = 1;
+		}
 
 	}
 
-
-
 	return true;
 }
+
+
+
 
 
 
