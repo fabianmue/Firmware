@@ -63,6 +63,9 @@ bool tl_flush(void);
 /* @brief Delete a tracked object from the list */
 bool tl_delete_obj(track_obj *ptr);
 
+/* @brief Update the State by using Kalman-Update */
+bool tl_kalman_update(track_obj *ptr, float x_meas, float y_meas);
+
 
 
 
@@ -114,6 +117,8 @@ bool tl_add(float x_cog, float y_cog) {
 
 	temp.type = 0; 	//We assume that the potential obstacle is static => type = 0
 
+	temp.timestamp = hrt_absolute_time();
+
 	//Set the next object in the list
 	temp.next = NULL;
 
@@ -154,18 +159,23 @@ bool tl_add(float x_cog, float y_cog) {
  *
  * @param
  */
-bool tl_kalman_predict(uint64_t dt) {
-
-	//Calculate the Q-Matrix for Kalman
-	Q[0] = dt*dt*dt/2;
-	Q[1] = dt*dt/2;
-	Q[2] = dt*dt/2;
-	Q[3] = dt;
+bool tl_kalman_predict(void) {
 
 	//Iterate over the whole list
 	state.conductor = state.root;
 
 	while(state.conductor->next != NULL) {
+
+		//Time since the object was last tracked [s]
+		uint64_t dt = (hrt_absolute_time() - state.conductor->timestamp)/1e6;
+
+
+		//Calculate the Q-Matrix for Kalman
+		Q[0] = dt*dt*dt/2;
+		Q[1] = dt*dt/2;
+		Q[2] = dt*dt/2;
+		Q[3] = dt;
+
 
 		//Update the estimate of the current object  (x_hat(t+1) = F*x_hat(t))
 		state.conductor->xhat[0] = state.conductor->xhat[0]+dt*state.conductor->xhat[1];
@@ -178,6 +188,8 @@ bool tl_kalman_predict(uint64_t dt) {
 		//z_hat[1] = state.conductor->xhat[2];
 
 		//Update the P-Matrix
+
+		//TODO: Check this P41 is missing!!!
 		state.conductor->P[0] = state.conductor->P[0] + state.conductor->P[4]*dt + dt*(state.conductor->P[1] + state.conductor->P[5]*dt) + Q[0]; //state.conductor->P11
 		state.conductor->P[1] = state.conductor->P[1] + state.conductor->P[5]*dt + Q[1]; //state.conductor->P12
 		state.conductor->P[2] = state.conductor->P[2] + state.conductor->P[6]*dt + dt*(state.conductor->P[3] + state.conductor->P[4]*dt); //state.conductor->P13
@@ -232,9 +244,7 @@ bool tl_nnsf(void) {
 		if(result == true){
 			//A COG that fits the estimate was found => we have a new measurement and can do the Kalman Update-State
 
-
-
-
+			tl_kalman_update(state.conductor, x_meas, y_meas);
 
 		} else {
 			//No COG matched the estimate => the object is possibly hidden by another object
@@ -255,6 +265,92 @@ bool tl_nnsf(void) {
 	}
 
 	return true;
+}
+
+
+
+/**
+ * Kalman Update Step
+ *
+ * @param ptr: Pointer to the Object that needs to be updated
+ * @param x_meas/y_meas: Measured x and y-Poistion of the object
+ */
+bool tl_kalman_update(track_obj *ptr, float x_meas, float y_meas) {
+
+	//x (the new measured state-difference)
+    float v0, v1;
+    v0 = x_meas - ptr->xhat[0];
+    v1 = y_meas - ptr->xhat[3];
+
+
+    //Calcualte the W-Matrix
+    float P11 = ptr->P[0];
+    float P12 = ptr->P[1];
+    float P13 = ptr->P[2];
+    float P14 = ptr->P[3];
+    float P21 = ptr->P[4];
+    float P22 = ptr->P[5];
+    float P23 = ptr->P[6];
+    float P24 = ptr->P[7];
+    float P31 = ptr->P[8];
+    float P32 = ptr->P[9];
+    float P33 = ptr->P[10];
+    float P34 = ptr->P[11];
+    float P41 = ptr->P[12];
+    float P42 = ptr->P[13];
+    float P43 = ptr->P[14];
+    float P44 = ptr->P[15];
+
+
+    float W0 = (P11*(P33 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P13*P31)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
+	float W1 = (P13*(P11 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P11*P13)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
+	float W2 = (P21*(P33 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P23*P31)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
+	float W3 = (P23*(P11 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P13*P21)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
+	float W4 = (P31*(P33 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P31*P33)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
+	float W5 = (P33*(P11 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P13*P31)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
+	float W6 = (P41*(P33 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P31*P43)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
+	float W7 = (P43*(P11 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P13*P41)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
+
+
+    //Update the state xhat
+    ptr->xhat[0] = ptr->xhat[0] + W0*v0 + W1*v1;
+    ptr->xhat[1] = ptr->xhat[1] + W2*v0 + W3*v1;
+    ptr->xhat[2] = ptr->xhat[2] + W4*v0 + W5*v1;
+    ptr->xhat[3] = ptr->xhat[3] + W6*v0 + W7*v1;
+
+
+    //Update P
+    float S0 = ptr->S[0];
+    float S1 = ptr->S[1];
+    float S2 = ptr->S[2];
+    float S3 = ptr->S[3];
+
+    ptr->P[0] = P11 -  W0*(S0*W0 + S2*W1) -  W1*(S1*W0 + S3*W1);
+    ptr->P[1] = P12 -  W2*(S0*W0 + S2*W1) -  W3*(S1*W0 + S3*W1);
+    ptr->P[2] = P13 -  W4*(S0*W0 + S2*W1) -  W5*(S1*W0 + S3*W1);
+    ptr->P[3] = P14 -  W6*(S0*W0 + S2*W1) -  W7*(S1*W0 + S3*W1);
+    ptr->P[4] = P21 -  W0*(S0*W2 + S2*W3) -  W1*(S1*W2 + S3*W3);
+    ptr->P[5] = P22 -  W2*(S0*W2 + S2*W3) -  W3*(S1*W2 + S3*W3);
+    ptr->P[6] = P23 -  W4*(S0*W2 + S2*W3) -  W5*(S1*W2 + S3*W3);
+    ptr->P[7] = P24 -  W6*(S0*W2 + S2*W3) -  W7*(S1*W2 + S3*W3);
+    ptr->P[8] = P31 -  W0*(S0*W4 + S2*W5) -  W1*(S1*W4 + S3*W5);
+    ptr->P[9] = P32 -  W2*(S0*W4 + S2*W5) -  W3*(S1*W4 + S3*W5);
+    ptr->P[10] = P33 -  W4*(S0*W4 + S2*W5) -  W5*(S1*W4 + S3*W5);
+    ptr->P[11] = P34 -  W6*(S0*W4 + S2*W5) -  W7*(S1*W4 + S3*W5);
+    ptr->P[12] = P41 -  W0*(S0*W6 + S2*W7) -  W1*(S1*W6 + S3*W7);
+    ptr->P[13] = P42 -  W2*(S0*W6 + S2*W7) -  W3*(S1*W6 + S3*W7);
+    ptr->P[14] = P43 -  W4*(S0*W6 + S2*W7) -  W5*(S1*W6 + S3*W7);
+    ptr->P[15] = P44 -  W6*(S0*W6 + S2*W7) -  W7*(S1*W6 + S3*W7);
+
+	return true;
+}
+
+
+/**
+ * Add untracked, new objects to the list of tracked objects
+ */
+bool tl_add_untracked(void) {
+	return cl_add_untracked();
 }
 
 

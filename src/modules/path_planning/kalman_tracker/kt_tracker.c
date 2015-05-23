@@ -89,9 +89,6 @@ bool tr_init(void) {
  */
 bool tr_handler(void) {
 
-	//Calcualte the time difference since the last measurement was done [s]
-	float dt = 1; //TODO
-
 	//Segment the distance matrix into segments with similar properties
 	segment();
 
@@ -99,10 +96,14 @@ bool tr_handler(void) {
 	segment_COG();
 
 	//Update the linked list with the predicted Kalman states
-	tl_kalman_predict(dt);
+	tl_kalman_predict();
 
 	//NNSF (Try to relate already tracked objects with the newly detected COGs)
+	//Note: This step includes the Kalman-Update too
+	tl_nnsf();
 
+	//Add the newly detected Tracking Objects to the list
+	tl_add_untracked();
 
 	return true;
 }

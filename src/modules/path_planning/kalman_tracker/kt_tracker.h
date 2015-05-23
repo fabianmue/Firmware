@@ -16,6 +16,4 @@ bool tr_init(void);
 bool tr_handler(void);
 
 
-
-
 #endif /* KT_TRACKER_H_ */

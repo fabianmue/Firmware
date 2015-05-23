@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "kt_cog_list.h"
+#include "kt_track_list.h"
 
 #include <systemlib/err.h>
 #include <drivers/drv_hrt.h>
@@ -175,6 +176,31 @@ bool cl_find_nn(float x_pos, float y_pos, float *x_meas, float *y_meas) {
 
 		return false;
 	}
+}
+
+
+/**
+ * Add the untracked cog objects as new tracks to the list
+ */
+bool cl_add_untracked() {
+
+	//Set the conductor to the root
+	state.conductor = state.root;
+
+	while(state.conductor != NULL) {
+
+		//Let the conductor point to the next object
+		state.conductor = state.conductor->next;
+
+		//Add the untracked element to the list of tracked objects
+		tl_add(state.conductor->x_cog, state.conductor->y_cog);
+
+		//Delete the object that was just added for tracking
+		cl_delete(state.conductor);
+	}
+
+
+
 }
 
 

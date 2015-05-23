@@ -17,6 +17,8 @@ typedef struct track_obj{
 
 	uint8_t type; 		//Type of Object (0 == static, 1 == moving)
 
+	uint64_t timestamp; //Time, when the Object was last seen and tracked
+
 	struct track_obj *next;
 } track_obj;
 
@@ -28,10 +30,13 @@ bool tl_init(void);
 bool tl_add(float x_cog, float y_cog);
 
 /* @brief Prediction Step of the Kalman tracker */
-bool tl_kalman_predict(uint64_t dt);
+bool tl_kalman_predict(void);
 
 /* @brief Relate the tracking objects to the measurements */
 bool tl_nnsf(void);
+
+/* @brief Add untracked COGs to the list of tracked objects */
+bool tl_add_untracked(void);
 
 
 
