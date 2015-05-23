@@ -41,13 +41,12 @@ static struct {
 
 static struct {
 	uint8_t unseen_threshold; //Number of times the object must be unseen, before it gets deleted
+	float sigma; 			  //Variance for the Kalman Matrix R
 } config = {
-	.unseen_threshold = 2
+	.unseen_threshold = 2,
+	.sigma = 2.0f
 };
 
-
-static float Q[4];
-static float sigma = 2.0f;	//variance for Kalman R
 
 
 
@@ -171,10 +170,10 @@ bool tl_kalman_predict(void) {
 
 
 		//Calculate the Q-Matrix for Kalman
-		Q[0] = dt*dt*dt/2;
-		Q[1] = dt*dt/2;
-		Q[2] = dt*dt/2;
-		Q[3] = dt;
+		float Q11 = dt*dt*dt/2;
+		float Q12 = dt*dt/2;
+		float Q21 = dt*dt/2;
+		float Q22 = dt;
 
 
 		//Update the estimate of the current object  (x_hat(t+1) = F*x_hat(t))
@@ -188,31 +187,46 @@ bool tl_kalman_predict(void) {
 		//z_hat[1] = state.conductor->xhat[2];
 
 		//Update the P-Matrix
+		float P11 = state.conductor->P[0];
+		float P12 = state.conductor->P[1];
+		float P13 = state.conductor->P[2];
+		float P14 = state.conductor->P[3];
+		float P21 = state.conductor->P[4];
+		float P22 = state.conductor->P[5];
+		float P23 = state.conductor->P[6];
+		float P24 = state.conductor->P[7];
+		float P31 = state.conductor->P[8];
+		float P32 = state.conductor->P[9];
+		float P33 = state.conductor->P[10];
+		float P34 = state.conductor->P[11];
+		float P41 = state.conductor->P[12];
+		float P42 = state.conductor->P[13];
+		float P43 = state.conductor->P[14];
+		float P44 = state.conductor->P[15];
 
-		//TODO: Check this P41 is missing!!!
-		state.conductor->P[0] = state.conductor->P[0] + state.conductor->P[4]*dt + dt*(state.conductor->P[1] + state.conductor->P[5]*dt) + Q[0]; //state.conductor->P11
-		state.conductor->P[1] = state.conductor->P[1] + state.conductor->P[5]*dt + Q[1]; //state.conductor->P12
-		state.conductor->P[2] = state.conductor->P[2] + state.conductor->P[6]*dt + dt*(state.conductor->P[3] + state.conductor->P[4]*dt); //state.conductor->P13
-		state.conductor->P[3] = state.conductor->P[3] + state.conductor->P[4]*dt; //state.conductor->P14
-		state.conductor->P[4] = state.conductor->P[4] + state.conductor->P[5]*dt + Q[2]; //state.conductor->P24
-		state.conductor->P[5] = state.conductor->P[5] + Q[3]; //state.conductor->P22
-		state.conductor->P[6] = state.conductor->P[6] + state.conductor->P[7]*dt; //state.conductor->P23
-		//state.conductor->P[7] = state.conductor->P[7]; //state.conductor->P24
-		state.conductor->P[8] = state.conductor->P[8] + state.conductor->P[8]*dt + dt*(state.conductor->P[9] + state.conductor->P[13]*dt); //state.conductor->P31
-		state.conductor->P[9] = state.conductor->P[9] + state.conductor->P[13]*dt; //state.conductor->P32
-		state.conductor->P[10] = state.conductor->P[10] + state.conductor->P[14]*dt + dt*(state.conductor->P[11] + state.conductor->P[15]*dt) + Q[0]; //state.conductor->P33
-		state.conductor->P[11] = state.conductor->P[11] + state.conductor->P[15]*dt + Q[1]; //state.conductor->P34
-		state.conductor->P[12] = state.conductor->P[12] + state.conductor->P[13]*dt; //state.conductor->P41
-		//state.conductor->P[13] = state.conductor->P[13]; //state.conductor->P42
-		state.conductor->P[14] = state.conductor->P[14] + state.conductor->P[15]*dt + Q[2]; //state.conductor->P43
-		state.conductor->P[15] = state.conductor->P[15] + Q[3]; //state.conductor->P44
+		state.conductor->P[0] = P11 + Q11 + P21*dt + dt*(P12 + P22*dt);
+		state.conductor->P[1] = P12 + Q12 + P22*dt;
+		state.conductor->P[2] = P13 + P23*dt + dt*(P14 + P24*dt);
+		state.conductor->P[3] = P14 + P24*dt;
+		state.conductor->P[4] = P21 + Q21 + P22*dt;
+		state.conductor->P[5] = P22 + Q22;
+		state.conductor->P[6] = P23 + P24*dt;
+		state.conductor->P[7] = P24;
+		state.conductor->P[8] = P31 + P41*dt + dt*(P32 + P42*dt);
+		state.conductor->P[9] = P32 + P42*dt;
+		state.conductor->P[10] = P33 + Q11 + P43*dt + dt*(P34 + P44*dt);
+		state.conductor->P[11] = P34 + Q12 + P44*dt;
+		state.conductor->P[12] = P41 + P42*dt;
+		state.conductor->P[13] = P42;
+		state.conductor->P[14] = P43 + Q21 + P44*dt;
+		state.conductor->P[15] = P44 + Q22;
 
 
 		//Update the S-Matrix
-		state.conductor->S[0] = state.conductor->P[0] + sigma;
+		state.conductor->S[0] = state.conductor->P[0] + config.sigma;
 		state.conductor->S[1] = state.conductor->P[2];
 		state.conductor->S[2] = state.conductor->P[8];
-		state.conductor->S[3] = state.conductor->P[10] + sigma;
+		state.conductor->S[3] = state.conductor->P[10] + config.sigma;
 
 
 		//Set the Conductor to the next element in the list
@@ -302,14 +316,14 @@ bool tl_kalman_update(track_obj *ptr, float x_meas, float y_meas) {
     float P44 = ptr->P[15];
 
 
-    float W0 = (P11*(P33 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P13*P31)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
-	float W1 = (P13*(P11 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P11*P13)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
-	float W2 = (P21*(P33 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P23*P31)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
-	float W3 = (P23*(P11 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P13*P21)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
-	float W4 = (P31*(P33 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P31*P33)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
-	float W5 = (P33*(P11 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P13*P31)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
-	float W6 = (P41*(P33 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P31*P43)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
-	float W7 = (P43*(P11 + sigma))/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31) - (P13*P41)/(P11*sigma + P33*sigma + sigma*sigma + P11*P33 - P13*P31);
+    float W0 = (P11*(P33 + config.sigma))/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31) - (P13*P31)/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31);
+	float W1 = (P13*(P11 + config.sigma))/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31) - (P11*P13)/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31);
+	float W2 = (P21*(P33 + config.sigma))/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31) - (P23*P31)/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31);
+	float W3 = (P23*(P11 + config.sigma))/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31) - (P13*P21)/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31);
+	float W4 = (P31*(P33 + config.sigma))/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31) - (P31*P33)/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31);
+	float W5 = (P33*(P11 + config.sigma))/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31) - (P13*P31)/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31);
+	float W6 = (P41*(P33 + config.sigma))/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31) - (P31*P43)/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31);
+	float W7 = (P43*(P11 + config.sigma))/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31) - (P13*P41)/(P11*config.sigma + P33*config.sigma + config.sigma*config.sigma + P11*P33 - P13*P31);
 
 
     //Update the state xhat
