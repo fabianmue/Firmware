@@ -17,10 +17,12 @@
 #include <systemlib/err.h>
 #include <drivers/drv_hrt.h>
 
-#include "kt_track_list.h"
 #include "kt_cog_list.h"
+#include "kt_track_list.h"
 #include "../pp_config.h"
 #include "../pp_communication_buffer.h"
+#include "../pp_navigation_helper.h"
+
 
 
 
@@ -28,9 +30,12 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-uint16_t dist_mat[2*SENSOR_RANGE/SENSOR_STEPSIZE];	//Matrix holding the distances measured for the given angles
-uint16_t dist_heading; 	//Heading for which the dist_mat is valid (is transferred with the distance matrix)
-uint16_t seg_mat[2*SENSOR_RANGE/SENSOR_STEPSIZE];   //Matrix holding the segment numbers
+static uint16_t dist_mat[2*SENSOR_RANGE/SENSOR_STEPSIZE];	//Matrix holding the distances measured for the given angles
+static uint16_t dist_heading; 	//Heading for which the dist_mat is valid (is transferred with the distance matrix) [°] (compass frame)
+static uint16_t seg_mat[2*SENSOR_RANGE/SENSOR_STEPSIZE];   //Matrix holding the segment numbers
+
+
+//#define C1 //sqrtf(2.0f*(1.0f-cosf(DEG2RAD*SENSOR_STEPSIZE)))
 
 
 static struct {
@@ -38,13 +43,15 @@ static struct {
 	float c1;   //Configuration Parameter 1 in Calculation of Dlim
 } config = {
 	.c0 = 10,
-	.c1 = sqrtf(2.0f*(1.0f-cosf(DEG2RAD*SENSOR_STEPSIZE)))
+	.c1 = 0.034904812874445f //sqrtf(2.0f*(1.0f-cosf(DEG2RAD*SENSOR_STEPSIZE)))
 };
 
 static struct {
 	uint16_t segnum;	//Number of the Segment (increased by one every time, when a new segment is detected
+	bool newdata; 		//Flag that signals that new data is present
 } state = {
-	.segnum = 0
+	.segnum = 0,
+	.newdata = false
 };
 
 
@@ -78,6 +85,9 @@ bool tr_init(void) {
 	//Create a linked list with the newly found COGs
 	cl_init();
 
+	//Init Variables
+	state.newdata = false;
+
 	//Everything is OK and we can return true
 	return true;
 }
@@ -89,25 +99,58 @@ bool tr_init(void) {
  */
 bool tr_handler(void) {
 
-	//Segment the distance matrix into segments with similar properties
-	segment();
+	if(state.newdata == true) {
+		//New measurement Data is present => we can do a Kalman Update
 
-	//Find the COG for each segment
-	segment_COG();
+		printf("Tracker Handler called!");
 
-	//Update the linked list with the predicted Kalman states
-	tl_kalman_predict();
+		//Segment the distance matrix into segments with similar properties
+		//segment();
 
-	//NNSF (Try to relate already tracked objects with the newly detected COGs)
-	//Note: This step includes the Kalman-Update too
-	tl_nnsf();
+		//Find the COG for each segment
+		//segment_COG();
 
-	//Add the newly detected Tracking Objects to the list
-	tl_add_untracked();
+		//Update the linked list with the predicted Kalman states
+		//tl_kalman_predict();
+
+		//NNSF (Try to relate already tracked objects with the newly detected COGs)
+		//Note: This step includes the Kalman-Update too
+		//tl_nnsf();
+
+		//Add the newly detected Tracking Objects to the list
+		//tl_add_untracked();
+
+		//Reset the new data flag
+		state.newdata = false;
+	}
+
+	return true;
+
+}
+
+
+/**
+ * Signal the module that new data is present such that a further Kalman-Step can be performed
+ *
+ * @param: new_dist_mat: Matrix containing the measured distances
+ * @param: heading: Heading for which the measured distances are valid
+ */
+bool tr_newdata(uint16_t new_dist_mat[],uint16_t heading) {
+
+	printf("Tracker: Got new data!\n");
+
+	for(uint8_t i=0; i<2*SENSOR_RANGE/SENSOR_STEPSIZE; i++) {
+		printf("%d, ",i);
+		//dist_mat[i] = new_dist_mat[i];
+	}
+
+	printf("Tracker: Data stored locally!\n");
+
+	state.newdata = true;
+	dist_heading = heading;
 
 	return true;
 }
-
 
 
 
@@ -186,7 +229,8 @@ bool segment_COG(void) {
 
 	for (uint16_t ind = 0; ind < 2*SENSOR_RANGE/SENSOR_STEPSIZE-1; ind++) {
 
-		float angle = 1; //Angle of the current measurement [rad] TODO
+		float ang_deg = ind*SENSOR_STEPSIZE-SENSOR_RANGE+dist_heading;
+		float angle = nh_mod(ang_deg*DEG2RAD); //Angle of the current measurement [rad]
 
 		if(seg_mat[ind] == seg) {
 			//We still calculate the COG of one segment

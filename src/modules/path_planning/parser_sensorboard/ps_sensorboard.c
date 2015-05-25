@@ -10,6 +10,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "ps_sensorboard.h"
 //#include "ps_data_update.h"
 
@@ -27,6 +28,8 @@
 #include "../pp_config.h"
 #include "../pp_cost_method.h"
 #include "../pp_communication_buffer.h"
+
+#include "../kalman_tracker/kt_tracker.h"
 
 
 /***********************************************************************************/
@@ -291,9 +294,31 @@ bool sb_handler(void) {
 
 		state.last_call = systime;
 
-		request_data(CMD_DISTMAT1);
-		request_data(CMD_DISTMAT2);
+		#if(LDEBUG_STATICDATA == 0)
 
+			request_data(CMD_DISTMAT1);
+			request_data(CMD_DISTMAT2);
+
+		#else
+
+		uint16_t distmat[90] = {162,158,156,153,152,151,148,147,146,
+			146,146,144,142,142,141,141,140,140,
+			139,140,140,141,141,142,144,145,146,
+			148,149,153,157,162,156,158,164,180,
+			216,231,239,221,208, 30, 44, 47,213,
+			208,126,129,130,126,129,129,125,123,
+			120,120,121,119,117,116,115,114,114,
+			113,114,112,112,114,115,114,116,116,
+			118,121,121,123,126,115, 75, 73, 80,
+			 80,149,156,162,170,171,178,173,169};//,166
+
+		//distmat[0] = 162;
+
+		uint16_t heading = 0; 	//Heading for which the Distance Matrix is valid
+
+		tr_newdata(distmat,heading);
+
+		#endif
 
 
 	} //end of if(time)

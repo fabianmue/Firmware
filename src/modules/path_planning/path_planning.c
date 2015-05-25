@@ -74,7 +74,8 @@
 #include "pp_navigator.h"
 #include "pp_failsafe.h"
 
-//#include "parser_sensorboard/ps_data_update.h"
+#include "kalman_tracker/kt_tracker.h"
+
 #include "parser_sensorboard/ps_sensorboard.h"
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
@@ -226,6 +227,11 @@ int pp_thread_main(int argc, char *argv[]) {
 	#endif
 
 
+    //init the Kalman tracker
+	#if LDEBUG_KALMANTRACKER == 1
+    tr_init();
+	#endif
+
 
 	//**SET THE THREAD-STATUS TO RUNNING
 	thread_running = true;
@@ -317,6 +323,10 @@ int pp_thread_main(int argc, char *argv[]) {
 		#endif
 
 
+        /* Call the Kalman Tracker Update-Function */
+		#if LDEBUG_KALMANTRACKER == 1
+        //tr_handler();
+		#endif
 
 
         /* Warning: path_planning topic should be published only ONCE for every loop iteration.

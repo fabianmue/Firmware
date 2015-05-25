@@ -1,8 +1,8 @@
 /*
- * kt_track_list.h
+ * kt_cog_list.h
  *
- *  Created on: 22.05.2015
- *      Author: Jonas Wirz <wirzjo@student.ethz.ch>
+ *  Created on: 25.05.2015
+ *      Author: Jonas
  */
 
 #ifndef KT_COG_LIST_H_
@@ -31,7 +31,6 @@ bool cl_find_nn(float x_pos, float y_pos, float *x_meas, float *y_meas);
 
 /* @brief Flush the list */
 bool cl_flush(void);
-
 
 
 #endif /* KT_COG_LIST_H_ */

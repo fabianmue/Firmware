@@ -50,6 +50,7 @@ SRCS	= path_planning.c\
           pp_failsafe.c\
           parser_sensorboard/ps_sensorboard.c\
           kalman_tracker/kt_track_list.c\
+          kalman_tracker/kt_cog_list.c\
           kalman_tracker/kt_tracker.c
           
 

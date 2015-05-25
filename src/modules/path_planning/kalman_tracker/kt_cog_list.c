@@ -182,24 +182,24 @@ bool cl_find_nn(float x_pos, float y_pos, float *x_meas, float *y_meas) {
 /**
  * Add the untracked cog objects as new tracks to the list
  */
-bool cl_add_untracked() {
+bool cl_add_untracked(void) {
 
 	//Set the conductor to the root
 	state.conductor = state.root;
 
 	while(state.conductor != NULL) {
 
-		//Let the conductor point to the next object
-		state.conductor = state.conductor->next;
-
 		//Add the untracked element to the list of tracked objects
 		tl_add(state.conductor->x_cog, state.conductor->y_cog);
 
 		//Delete the object that was just added for tracking
-		cl_delete(state.conductor);
+		cl_delete_obj(state.conductor);
+
+		//Let the conductor point to the next object
+		state.conductor = state.conductor->next;
 	}
 
-
+	return true;
 
 }
 
