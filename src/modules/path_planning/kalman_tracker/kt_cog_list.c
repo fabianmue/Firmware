@@ -218,6 +218,18 @@ bool cl_add_untracked(void) {
  */
 bool cl_flush(void) {
 
+	//Set the conductor as the root
+	state.conductor = state.root;
+
+	while(state.conductor->next != NULL) {
+
+		cog_obj *tobedeleted = state.conductor;
+
+		state.conductor = state.conductor->next;
+
+		free(tobedeleted);
+	}
+
 	return true;
 }
 

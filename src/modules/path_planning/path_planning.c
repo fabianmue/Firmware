@@ -325,7 +325,7 @@ int pp_thread_main(int argc, char *argv[]) {
 
         /* Call the Kalman Tracker Update-Function */
 		#if LDEBUG_KALMANTRACKER == 1
-        //tr_handler();
+        tr_handler();
 		#endif
 
 

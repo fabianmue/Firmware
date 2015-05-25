@@ -31,7 +31,7 @@
 /***********************************************************************************/
 
 static uint16_t dist_mat[2*SENSOR_RANGE/SENSOR_STEPSIZE];	//Matrix holding the distances measured for the given angles
-static uint16_t dist_heading; 	//Heading for which the dist_mat is valid (is transferred with the distance matrix) [°] (compass frame)
+static uint16_t dist_heading = 0; 	//Heading for which the dist_mat is valid (is transferred with the distance matrix) [°] (compass frame)
 static uint16_t seg_mat[2*SENSOR_RANGE/SENSOR_STEPSIZE];   //Matrix holding the segment numbers
 
 
@@ -102,13 +102,13 @@ bool tr_handler(void) {
 	if(state.newdata == true) {
 		//New measurement Data is present => we can do a Kalman Update
 
-		printf("Tracker Handler called!");
+		printf("Tracker Handler called!\n");
 
 		//Segment the distance matrix into segments with similar properties
-		//segment();
+		segment();
 
 		//Find the COG for each segment
-		//segment_COG();
+		segment_COG();
 
 		//Update the linked list with the predicted Kalman states
 		//tl_kalman_predict();
@@ -137,14 +137,14 @@ bool tr_handler(void) {
  */
 bool tr_newdata(uint16_t new_dist_mat[],uint16_t heading) {
 
-	printf("Tracker: Got new data!\n");
+	//printf("Tracker: Got new data!\n");
 
 	for(uint8_t i=0; i<2*SENSOR_RANGE/SENSOR_STEPSIZE; i++) {
-		printf("%d, ",i);
-		//dist_mat[i] = new_dist_mat[i];
+		//printf("%d/%d, ",i,new_dist_mat[i]);
+		dist_mat[i] = new_dist_mat[i];
 	}
 
-	printf("Tracker: Data stored locally!\n");
+	printf("Tracker: Got new data and stored them locally!\n");
 
 	state.newdata = true;
 	dist_heading = heading;
@@ -163,6 +163,7 @@ bool tr_newdata(uint16_t new_dist_mat[],uint16_t heading) {
 /**
  * Segment the Distance Matrix into Obstacles by calculating the COG of each detected Segment
  *
+ * Note: This function is validated!
  */
 bool segment(void) {
 
@@ -171,6 +172,8 @@ bool segment(void) {
 
 	for (uint16_t ind = 0; ind < 2*SENSOR_RANGE/SENSOR_STEPSIZE-1; ind++) {
 		//Loop over the whole Distance Matrix and try to identify segments
+
+		//printf("%d,",ind);
 
         uint16_t r1 = dist_mat[ind];
         uint16_t r2 = dist_mat[ind+1];
@@ -204,9 +207,11 @@ bool segment(void) {
             seg_mat[ind] = state.segnum;
             seg_mat[ind+1] = state.segnum;
 
-            newnum = 1;
+            newnum = true;
         }
 	}
+
+	printf("Segment: Found %d segments!\n",state.segnum+1);
 
 	return true;
 }
@@ -219,7 +224,7 @@ bool segment(void) {
 bool segment_COG(void) {
 
 	//Delete the old COGs if there are any
-	cl_flush();
+	//cl_flush();
 
 	//Iterate over the distance Matrix and calculate the COG's
 	uint16_t seg = 0; //Segment Number
@@ -248,6 +253,8 @@ bool segment_COG(void) {
 
 			//Store the COG of the Segment in the Matrix
 			cl_add(x_sum/seg_length,y_sum/seg_length);
+
+			printf("COG: %f/%f",(double)x_sum/seg_length,(double)y_sum/seg_length);
 
 			//Take the new segment number as the reference
 			seg = seg_mat[ind];
