@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 #include "kt_tracker.h"
 
 #include <systemlib/err.h>
@@ -87,6 +88,8 @@ bool tr_init(void) {
 
 	//Init Variables
 	state.newdata = false;
+	memset(&dist_mat,0,sizeof(dist_mat));
+	memset(&seg_mat,0,sizeof(seg_mat));
 
 	//Everything is OK and we can return true
 	return true;
@@ -224,7 +227,7 @@ bool segment(void) {
 bool segment_COG(void) {
 
 	//Delete the old COGs if there are any
-	//cl_flush();
+	cl_flush();
 
 	//Iterate over the distance Matrix and calculate the COG's
 	uint16_t seg = 0; //Segment Number
@@ -252,9 +255,9 @@ bool segment_COG(void) {
 			//A new segment is detected => store the COG in the matrix and restart the mean calculation
 
 			//Store the COG of the Segment in the Matrix
-			cl_add(x_sum/seg_length,y_sum/seg_length);
+			//cl_add(x_sum/seg_length,y_sum/seg_length);
 
-			printf("COG: %f/%f",(double)x_sum/seg_length,(double)y_sum/seg_length);
+			printf("COG: %f/%f\n",(double)x_sum/seg_length,(double)y_sum/seg_length);
 
 			//Take the new segment number as the reference
 			seg = seg_mat[ind];

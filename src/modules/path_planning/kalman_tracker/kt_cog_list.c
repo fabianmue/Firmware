@@ -11,11 +11,12 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "kt_cog_list.h"
 #include "kt_track_list.h"
 
-#include <systemlib/err.h>
-#include <drivers/drv_hrt.h>
+//#include <systemlib/err.h>
+//#include <drivers/drv_hrt.h>
 
 #include "../pp_config.h"
 //#include "../pp_communication_buffer.h"
@@ -53,8 +54,6 @@ static struct {
 /*****  F U N C T I O N   P R O T O T Y P E S **************************************/
 /***********************************************************************************/
 
-/* @brief Delete an object from the list */
-bool cl_delete_obj(cog_obj *ptr);
 
 
 
@@ -88,43 +87,23 @@ bool cl_init(void) {
 bool cl_add(float x_cog, float y_cog) {
 
 	//We create the Object
-	cog_obj temp;
+	cog_obj *temp;
+	temp = malloc(sizeof(cog_obj));
 
 	//Store the data
-	temp.x_cog = x_cog;
-	temp.y_cog = y_cog;
+	temp->x_cog = x_cog;
+	temp->y_cog = y_cog;
 
 	//Set the next object in the list
-	temp.next = NULL;
+	temp->next = state.root;
 
+	state.root = temp;
 
-
-	//Append the Object to the list
-	if(state.root == NULL) {
-		//The list is empty => we must set the root
-
-		state.root = &temp;
-
-		state.size = 1;
-
-	} else {
-		//The list contains at least one object => we append the object at the end
-
-		//Set the conductor to the root-element
-		state.conductor = state.root;
-
-		//Go to the end of the list
-		while(state.conductor->next != NULL) {
-			state.conductor = state.conductor->next;
-		}
-
-		state.conductor->next = &temp;
-
-		state.size += 1; //An object was added => increase the size of the list
-	}
+	state.size++;
 
 	return true;
 }
+
 
 
 /**
@@ -190,7 +169,7 @@ bool cl_add_untracked(void) {
 	while(state.conductor != NULL) {
 
 		//Add the untracked element to the list of tracked objects
-		tl_add(state.conductor->x_cog, state.conductor->y_cog);
+		//tl_add(state.conductor->x_cog, state.conductor->y_cog);
 
 		//Delete the object that was just added for tracking
 		cl_delete_obj(state.conductor);
@@ -221,13 +200,22 @@ bool cl_flush(void) {
 	//Set the conductor as the root
 	state.conductor = state.root;
 
-	while(state.conductor->next != NULL) {
+	if(state.conductor == NULL) {
+		//List is empty => nothing to flush
+		return true;
+	}
 
-		cog_obj *tobedeleted = state.conductor;
+	while(state.conductor != NULL) {
+
+		//cog_obj *temp = state.root;
+		//state.root = state.root->next;
+		//free(temp);
+		//state.size--;
+
+		cl_delete_obj(state.conductor);
 
 		state.conductor = state.conductor->next;
 
-		free(tobedeleted);
 	}
 
 	return true;
@@ -241,24 +229,71 @@ bool cl_flush(void) {
  */
 bool cl_delete_obj(cog_obj *ptr) {
 
-	cog_obj *next_ptr;
+	if(ptr == state.root) {
+		//We want to delete the root
 
-	//Start at the root and then search for the object before the one we want to delete
-	next_ptr = state.root;
+		state.root = ptr->next;
 
-	while(next_ptr != ptr && next_ptr != NULL) {
-		//TODO: check, if this is corret and the next_ptr points after the while to the object before the one we wnat to delet
-		next_ptr = next_ptr->next;
+		free(ptr);
+		return true;
 	}
 
-	//We reached the object that points to the one we want to delete
-	next_ptr->next = ptr->next; //Set the pointer of the object before the one we want to delete to the object after the one we want to delete
+	cog_obj *conductor;
+	cog_obj *previous;	//Object before the one we want to delete
 
-	//Delete the Object
-	free(ptr);
+	//Start at the root and then search for the object before the one we want to delete
+	conductor = state.root;
+
+	int counter;
+	counter = 0;
+	while(conductor != ptr){// && conductor != NULL) {
+		counter ++;
+		previous = conductor;
+		conductor = conductor->next;
+	}
+	//The conductor points now to the element we want to delete
+
+	cog_obj *temp = conductor;
+	previous->next = conductor->next;
+	free(temp);
+	state.size--;
 
 	return true;
 }
+
+
+/*cog_obj *get_obj(float key) {
+
+	state.conductor = state.root;
+
+	while(state.conductor != NULL) {
+
+		if(state.conductor->x_cog == key) {
+			return state.conductor;
+		} else {
+			state.conductor = state.conductor->next;
+		}
+	}
+
+	return NULL;
+}*/
+
+
+
+/*bool print_list(void) {
+	state.conductor = state.root;
+
+	while(state.conductor != NULL) {
+
+		printf("Elem: %f,\n",state.conductor->x_cog);
+
+		state.conductor = state.conductor->next;
+	}
+
+	printf("\n");
+
+	return true;
+}*/
 
 
 
