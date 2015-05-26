@@ -255,7 +255,8 @@ bool segment_COG(void) {
 			//A new segment is detected => store the COG in the matrix and restart the mean calculation
 
 			//Store the COG of the Segment in the Matrix
-			cl_add(x_sum/seg_length,y_sum/seg_length);
+			//TODO: HERE MUST BE THE PROBLEM!
+			//cl_add(x_sum/seg_length,y_sum/seg_length);
 
 			printf("COG: %f/%f\n",(double)x_sum/seg_length,(double)y_sum/seg_length);
 
