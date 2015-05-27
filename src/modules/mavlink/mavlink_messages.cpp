@@ -79,6 +79,7 @@
 #include <uORB/topics/boat_guidance_debug.h>//Added by Marco Tranzatto
 #include <uORB/topics/boat_local_position.h>//Added by Marco Tranzatto
 #include <uORB/topics/path_planning.h>//Added by Jonas Wirz
+#include <uORB/topics/path_planning_kalman.h> //Added by Jonas Wirz
 
 #include "mavlink_messages.h"
 #include "mavlink_main.h"
@@ -2274,6 +2275,74 @@ protected:
 };
 
 
+//--------------------------------- ADD PATHPLANNING MSG ------------------
+// by Jonas Wirz
+class MavlinkStreamPathPKalman : public MavlinkStream
+{
+public:
+    const char *get_name() const
+    {
+        return MavlinkStreamPathPKalman::get_name_static();
+    }
+
+    static const char *get_name_static()
+    {
+        return "PATH_KAL_MSG";
+    }
+
+    uint8_t get_id()
+    {
+        return 0;
+    }
+
+    static MavlinkStream *new_instance(Mavlink *mavlink)
+    {
+        return new MavlinkStreamPathPKalman(mavlink);
+    }
+
+    unsigned get_size()
+    {
+        //return 8 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        //return 6 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        //return 4 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 1 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+    }
+
+private:
+    MavlinkOrbSubscription *_path_kal_sub;
+    uint64_t _path_kal_time;
+
+    /* do not allow top copying this class */
+    MavlinkStreamPathPKalman(MavlinkStreamPathPKalman &);
+    MavlinkStreamPathPKalman& operator = (const MavlinkStreamPathPKalman &);
+
+protected:
+    explicit MavlinkStreamPathPKalman(Mavlink *mavlink) : MavlinkStream(mavlink),
+        _path_kal_sub(_mavlink->add_orb_subscription(ORB_ID(path_planning_kalman))),
+        _path_kal_time(0)
+    {}
+
+    void send(const hrt_abstime t)
+    {
+        struct path_planning_kalman_s path_kal_debug;
+
+        if (_path_kal_sub->update(&_path_kal_time, &path_kal_debug)) {
+            /* send, add spaces so that string buffer is at least 10 chars long */
+            mavlink_named_value_float_t msg;
+            mavlink_named_value_int_t msg_int;
+
+            msg.time_boot_ms = path_kal_debug.timestamp / 1000;
+            msg_int.time_boot_ms = path_kal_debug.timestamp / 1000;
+
+            snprintf(msg_int.name, sizeof(msg.name), "kt_numObj");
+            msg_int.value = ((int)(path_kal_debug.tracknum));
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg_int);
+
+        }
+    }
+};
+
+
 
 //--------------------------------- End Add -----------------------------------
 
@@ -2513,5 +2582,6 @@ StreamListItem *streams_list[] = {
     new StreamListItem(&MavlinkStreamGuidanceDebug::new_instance, &MavlinkStreamGuidanceDebug::get_name_static),//Added by Marco Tranzatto
     new StreamListItem(&MavlinkStreamBoatLocalPos::new_instance, &MavlinkStreamBoatLocalPos::get_name_static),//Added by Marco Tranzatto
     new StreamListItem(&MavlinkStreamPathP::new_instance, &MavlinkStreamPathP::get_name_static),//Added by Jonas Wirz
+    new StreamListItem(&MavlinkStreamPathPKalman::new_instance, &MavlinkStreamPathPKalman::get_name_static),//Added by Jonas Wirz
 	nullptr
 };
