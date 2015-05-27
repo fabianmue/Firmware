@@ -87,8 +87,14 @@ bool cl_init(void) {
 bool cl_add(float x_cog, float y_cog) {
 
 	//We create the Object
-	cog_obj *temp;
-	temp = malloc(sizeof(cog_obj));
+	cog_obj *temp = NULL;
+	temp = malloc(sizeof(struct cog_obj));
+
+	if(temp == NULL) {
+		printf("Could not allocate memory!");
+		return false;
+	}
+
 
 	//Store the data
 	temp->x_cog = x_cog;
@@ -100,6 +106,7 @@ bool cl_add(float x_cog, float y_cog) {
 	state.root = temp;
 
 	state.size++;
+
 
 	return true;
 }
@@ -218,6 +225,9 @@ bool cl_flush(void) {
 
 	}
 
+	//The list is now flushed => we have to reinit it
+	cl_init();
+
 	return true;
 }
 
@@ -280,12 +290,12 @@ bool cl_delete_obj(cog_obj *ptr) {
 
 
 
-/*bool print_list(void) {
+bool print_list(void) {
 	state.conductor = state.root;
 
 	while(state.conductor != NULL) {
 
-		printf("Elem: %f,\n",state.conductor->x_cog);
+		printf("Elem: %f,\n",(double)(state.conductor->x_cog));
 
 		state.conductor = state.conductor->next;
 	}
@@ -293,7 +303,7 @@ bool cl_delete_obj(cog_obj *ptr) {
 	printf("\n");
 
 	return true;
-}*/
+}
 
 
 

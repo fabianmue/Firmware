@@ -97,29 +97,29 @@ bool tl_init(void) {
 bool tl_add(float x_cog, float y_cog) {
 
 	//We create the Object
-	track_obj temp;
+	track_obj *temp;
 
 	//P is equal to the identity
-	temp.P[0] = 1; //P11
-	temp.P[1] = 0; //state.conductor->P
-	temp.P[2] = 0; //P21
-	temp.P[3] = 1; //P22
+	temp->P[0] = 1; //P11
+	temp->P[1] = 0; //state.conductor->P
+	temp->P[2] = 0; //P21
+	temp->P[3] = 1; //P22
 
 	//xhat reflects the first measurement
-	temp.xhat[0] = x_cog; //x
-	temp.xhat[1] = 1;     //vx
-	temp.xhat[2] = y_cog; //y
-	temp.xhat[3] = 1;     //vy
+	temp->xhat[0] = x_cog; //x
+	temp->xhat[1] = 1;     //vx
+	temp->xhat[2] = y_cog; //y
+	temp->xhat[3] = 1;     //vy
 
-	temp.seen = 1;	//The potential obstacle has been seen once
-	temp.unseen = 0; //The potential obstacle has never been unseen
+	temp->seen = 1;	//The potential obstacle has been seen once
+	temp->unseen = 0; //The potential obstacle has never been unseen
 
-	temp.type = 0; 	//We assume that the potential obstacle is static => type = 0
+	temp->type = 0; 	//We assume that the potential obstacle is static => type = 0
 
-	temp.timestamp = hrt_absolute_time();
+	temp->timestamp = hrt_absolute_time();
 
 	//Set the next object in the list
-	temp.next = NULL;
+	temp->next = NULL;
 
 
 

@@ -107,6 +107,23 @@ bool tr_handler(void) {
 
 		printf("Tracker Handler called!\n");
 
+		/*cl_add(1,0);
+		cl_add(2,0);
+
+		print_list();
+
+		printf("Flush list...\n");
+		cl_flush();
+		print_list();
+
+		printf("...list flushed!");
+
+		cl_add(3,4);
+		cl_add(4,5);
+
+		print_list();*/
+
+
 		//Segment the distance matrix into segments with similar properties
 		segment();
 
@@ -240,6 +257,9 @@ bool segment_COG(void) {
 		float ang_deg = ind*SENSOR_STEPSIZE-SENSOR_RANGE+dist_heading;
 		float angle = nh_mod(ang_deg*DEG2RAD); //Angle of the current measurement [rad]
 
+		//printf("Angle: %f2.2\n",(double)(angle*RAD2DEG));
+
+
 		if(seg_mat[ind] == seg) {
 			//We still calculate the COG of one segment
 
@@ -254,11 +274,17 @@ bool segment_COG(void) {
 		} else {
 			//A new segment is detected => store the COG in the matrix and restart the mean calculation
 
-			//Store the COG of the Segment in the Matrix
-			//TODO: HERE MUST BE THE PROBLEM!
-			//cl_add(x_sum/seg_length,y_sum/seg_length);
+			if(seg_length == 0) {
+				printf("Division by zero!");
+				seg_length = 1;
+			}
 
-			printf("COG: %f/%f\n",(double)x_sum/seg_length,(double)y_sum/seg_length);
+			float x_mean = x_sum/seg_length;
+			float y_mean = y_sum/seg_length;
+			cl_add(x_mean,y_mean);
+
+
+			//printf("COG: %f/%f\n",(double)x_mean,(double)y_mean);
 
 			//Take the new segment number as the reference
 			seg = seg_mat[ind];
@@ -268,8 +294,10 @@ bool segment_COG(void) {
 			y_sum = sinf(angle)*dist_mat[ind];
 			seg_length = 1;
 		}
-
 	}
+
+	//TODO: DEBUG only.
+	//print_list();
 
 	return true;
 }
