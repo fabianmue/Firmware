@@ -241,6 +241,8 @@ bool tl_nnsf(void) {
 		//Find the best matching COG
 		bool result = cl_find_nn(state.conductor->xhat[0],state.conductor->xhat[2], &x_meas, &y_meas);
 
+		//printf("Predicted COG: %f/%f\n",(double)(state.conductor->xhat[0]),(double)(state.conductor->xhat[2]));
+
 		if(result == true){
 			//A COG that fits the estimate was found => we have a new measurement and can do the Kalman Update-State
 
@@ -253,7 +255,7 @@ bool tl_nnsf(void) {
 			//Increase the unseen-flag
 			state.conductor->unseen += 1;
 
-			printf("Did not find nearest COG: %d\n",state.conductor->unseen);
+			//printf("Did not find nearest COG: %d\n",state.conductor->unseen);
 
 			if(state.conductor->unseen > config.unseen_threshold) {
 				//The object was unseen several times => we expect it to be not present => delete it
@@ -283,7 +285,7 @@ bool tl_kalman_update(track_obj *ptr, float x_meas, float y_meas) {
 	//x (the new measured state-difference)
     float v0, v1;
     v0 = x_meas - ptr->xhat[0];
-    v1 = y_meas - ptr->xhat[3];
+    v1 = y_meas - ptr->xhat[2];
 
 
     //Calcualte the W-Matrix

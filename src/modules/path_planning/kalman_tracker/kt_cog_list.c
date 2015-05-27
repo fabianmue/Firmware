@@ -137,6 +137,8 @@ bool cl_find_nn(float x_pos, float y_pos, float *x_meas, float *y_meas) {
 		float dy = y_pos-state.conductor->y_cog;
 		float dist = sqrtf(dx*dx + dy*dy);
 
+		//printf("Distance: %f5.2 (of %f5.2)\n",(double)dist,(double)config.nnsf_threshold);
+
 		if(dist < min_dist && dist < config.nnsf_threshold) {
 			//We found a new nearest COG => store it as the nearest
 
@@ -270,23 +272,6 @@ bool cl_delete_obj(cog_obj *ptr) {
 
 	return true;
 }
-
-
-/*cog_obj *get_obj(float key) {
-
-	state.conductor = state.root;
-
-	while(state.conductor != NULL) {
-
-		if(state.conductor->x_cog == key) {
-			return state.conductor;
-		} else {
-			state.conductor = state.conductor->next;
-		}
-	}
-
-	return NULL;
-}*/
 
 
 

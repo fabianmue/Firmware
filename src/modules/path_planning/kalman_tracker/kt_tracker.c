@@ -286,7 +286,6 @@ bool segment_COG(void) {
 		printf("Segment %d length: %d",seg_mat[ind],seg_length);
 		printf("COG: %f5.2/%f5.2\n",(double)x_mean,(double)y_mean);
 
-
 		return true;
 }
 
