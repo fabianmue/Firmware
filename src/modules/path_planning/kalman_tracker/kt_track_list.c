@@ -363,7 +363,13 @@ bool tl_add_untracked(void) {
 }
 
 
-
+/**
+ * Get the number of currently tracked objects <=> number of elements in the linked list
+ *
+ */
+uint16_t tl_get_size(void) {
+	return state.size;
+}
 
 
 

@@ -20,6 +20,7 @@
 
 #include "kt_cog_list.h"
 #include "kt_track_list.h"
+#include "kt_topic_handler.h"
 #include "../pp_config.h"
 #include "../pp_communication_buffer.h"
 #include "../pp_navigation_helper.h"
@@ -91,6 +92,11 @@ bool tr_init(void) {
 	memset(&dist_mat,0,sizeof(dist_mat));
 	memset(&seg_mat,0,sizeof(seg_mat));
 
+
+	//Init the topic-update for path_planning_kalman
+	th_init();
+
+
 	//Everything is OK and we can return true
 	return true;
 }
@@ -126,6 +132,13 @@ bool tr_handler(void) {
 
 		//Reset the new data flag
 		state.newdata = false;
+
+
+		//Send the number of tracked objects to QGround Control
+		th_set_nroftracks(tl_get_size());
+
+		//Publish new data to the topic path_planning_kalman
+		th_update();
 	}
 
 	return true;

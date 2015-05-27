@@ -38,9 +38,8 @@ bool tl_nnsf(void);
 /* @brief Add untracked COGs to the list of tracked objects */
 bool tl_add_untracked(void);
 
-
-
-
+/* @brief Return the number of objects currently in the tracking-list */
+uint16_t tl_get_size(void);
 
 
 #endif /* KT_TRACK_LIST_H_ */
