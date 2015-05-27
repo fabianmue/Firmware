@@ -51,6 +51,7 @@
 #define LDEBUG_SENSORBOARD  0 //Deactivate the Communication with the Sensorbaord (1 <=> deactivate communication)
 #define LDEBUG_STATICDATA   1 //Do not request new data from the sensorboar, but use predefined data
 #define LDEBUG_KALMANTRACKER 1 //Activate the Kalman tracker (1 = tracker is activated)
+#define LDEBUG_KALMANTRACKER_CMS 1 //Activate printf-messages onto console (1 = messages are activated)
 
 
 

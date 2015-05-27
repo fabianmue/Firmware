@@ -96,7 +96,9 @@ bool tl_init(void) {
  */
 bool tl_add(float x_cog, float y_cog) {
 
+	#if LDEBUG_KALMANTRACKER_CMS == 1
 	printf("Added tracking object!\n");
+	#endif
 
 	//We create the Object
 	track_obj *temp;
@@ -246,7 +248,10 @@ bool tl_nnsf(void) {
 		if(result == true){
 			//A COG that fits the estimate was found => we have a new measurement and can do the Kalman Update-State
 
+			#if LDEBUG_KALMANTRACKER_CMS == 1
 			printf("Found nearest COG!\n");
+			#endif
+
 			tl_kalman_update(state.conductor, x_meas, y_meas);
 
 		} else {
