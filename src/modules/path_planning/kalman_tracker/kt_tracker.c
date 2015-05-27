@@ -265,10 +265,12 @@ bool segment_COG(void) {
 
 			float x_mean = x_sum/seg_length;
 			float y_mean = y_sum/seg_length;
+			x_mean = 50.0f;
+			y_mean = 34.12f;
 			cl_add(x_mean,y_mean);
 
 
-			//printf("COG: %f/%f\n",(double)x_mean,(double)y_mean);
+			printf("COG: %f5.2/%f5.2\n",(double)x_mean,(double)y_mean);
 
 			//Take the new segment number as the reference
 			seg = seg_mat[ind];
