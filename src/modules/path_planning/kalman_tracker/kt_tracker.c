@@ -228,64 +228,66 @@ bool segment(void) {
 bool segment_COG(void) {
 
 	//Delete the old COGs if there are any
-	cl_flush();
+		cl_flush();
 
-	//Iterate over the distance Matrix and calculate the COG's
-	uint16_t seg = 0; //Segment Number
-	float x_sum = 0;
-	float y_sum = 0;
-	uint16_t seg_length = 0; //Length of the Segment
+		//Iterate over the distance Matrix and calculate the COG's
+		float x_sum = 0;
+		float y_sum = 0;
+		uint16_t seg_length = 0; //Length of the Segment
 
-	for (uint16_t ind = 0; ind < 2*SENSOR_RANGE/SENSOR_STEPSIZE-1; ind++) {
+		uint16_t ind;
+		for (ind = 0; ind < 2*SENSOR_RANGE/SENSOR_STEPSIZE-1; ind++) {
 
-		float ang_deg = ind*SENSOR_STEPSIZE-SENSOR_RANGE+dist_heading;
-		float angle = nh_mod(ang_deg*DEG2RAD); //Angle of the current measurement [rad]
+			//Calculate the angle in NED (sensor as center)
+			float ang_deg = ind*SENSOR_STEPSIZE-SENSOR_RANGE+dist_heading;
+			float angle = nh_mod(ang_deg*DEG2RAD); //Angle of the current measurement [rad]
 
-		//printf("Angle: %f2.2\n",(double)(angle*RAD2DEG));
 
-
-		if(seg_mat[ind] == seg) {
-			//We still calculate the COG of one segment
-
-			//Increase the sum for the mean
+			//Calcualte the Mean
 			x_sum += cosf(angle)*dist_mat[ind];
 			y_sum += sinf(angle)*dist_mat[ind];
 
-			//Increase the number of measurement points by one
 			seg_length++;
 
 
-		} else {
-			//A new segment is detected => store the COG in the matrix and restart the mean calculation
+			if(seg_mat[ind] == seg_mat[ind+1]) {
+				//We are still looking at the same segment
 
-			if(seg_length == 0) {
-				printf("Division by zero!");
-				seg_length = 1;
+			} else {
+				//The next iteration will start a new segment
+
+				if(seg_length == 0) {
+					printf("Division by zero!");
+					seg_length = 1;
+				}
+
+				printf("Segment %d length: %d",seg_mat[ind],seg_length);
+
+				float x_mean = x_sum/seg_length;
+				float y_mean = y_sum/seg_length;
+
+				cl_add(x_mean,y_mean);
+
+				printf("COG: %+f5.2/%+f5.2\n",(double)x_mean,(double)y_mean);
+
+
+				seg_length = 0;
+				x_sum = 0;
+				y_sum = 0;
 			}
-
-			float x_mean = x_sum/seg_length;
-			float y_mean = y_sum/seg_length;
-			x_mean = 50.0f;
-			y_mean = 34.12f;
-			cl_add(x_mean,y_mean);
-
-
-			printf("COG: %f5.2/%f5.2\n",(double)x_mean,(double)y_mean);
-
-			//Take the new segment number as the reference
-			seg = seg_mat[ind];
-
-			//Reinit the calculation of the sum
-			x_sum = cosf(angle)*dist_mat[ind];
-			y_sum = sinf(angle)*dist_mat[ind];
-			seg_length = 1;
 		}
-	}
 
-	//TODO: DEBUG only.
-	//print_list();
+		//Store the COG of the last segment
+		float x_mean = x_sum/seg_length;
+		float y_mean = y_sum/seg_length;
 
-	return true;
+		cl_add(x_mean,y_mean);
+
+		printf("Segment %d length: %d",seg_mat[ind],seg_length);
+		printf("COG: %f5.2/%f5.2\n",(double)x_mean,(double)y_mean);
+
+
+		return true;
 }
 
 
