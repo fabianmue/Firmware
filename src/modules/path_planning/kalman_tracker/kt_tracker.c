@@ -107,22 +107,6 @@ bool tr_handler(void) {
 
 		printf("Tracker Handler called!\n");
 
-		/*cl_add(1,0);
-		cl_add(2,0);
-
-		print_list();
-
-		printf("Flush list...\n");
-		cl_flush();
-		print_list();
-
-		printf("...list flushed!");
-
-		cl_add(3,4);
-		cl_add(4,5);
-
-		print_list();*/
-
 
 		//Segment the distance matrix into segments with similar properties
 		segment();
@@ -131,14 +115,14 @@ bool tr_handler(void) {
 		segment_COG();
 
 		//Update the linked list with the predicted Kalman states
-		//tl_kalman_predict();
+		tl_kalman_predict();
 
 		//NNSF (Try to relate already tracked objects with the newly detected COGs)
 		//Note: This step includes the Kalman-Update too
-		//tl_nnsf();
+		tl_nnsf();
 
 		//Add the newly detected Tracking Objects to the list
-		//tl_add_untracked();
+		tl_add_untracked();
 
 		//Reset the new data flag
 		state.newdata = false;

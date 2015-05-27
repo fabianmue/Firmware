@@ -27,6 +27,10 @@ bool cl_init(void);
 bool cl_add(float x_cog, float y_cog);
 
 
+/* @brief Add currently untracked COG's to the list of tracking-elements */
+bool cl_add_untracked(void);
+
+
 /* @brief Find the best fitting COG to a given estimate */
 bool cl_find_nn(float x_pos, float y_pos, float *x_meas, float *y_meas);
 

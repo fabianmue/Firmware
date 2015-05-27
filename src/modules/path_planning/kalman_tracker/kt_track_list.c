@@ -96,8 +96,11 @@ bool tl_init(void) {
  */
 bool tl_add(float x_cog, float y_cog) {
 
+	printf("Added tracking object!\n");
+
 	//We create the Object
 	track_obj *temp;
+	temp = malloc(sizeof(struct track_obj));
 
 	//P is equal to the identity
 	temp->P[0] = 1; //P11
@@ -123,29 +126,12 @@ bool tl_add(float x_cog, float y_cog) {
 
 
 
-	//Append the Object to the list
-	if(state.root == NULL) {
-		//The list is empty => we must set the root
+	//Set the next object in the list
+	temp->next = state.root;
 
-		state.root = &temp;
+	state.root = temp;
 
-		state.size = 1;
-
-	} else {
-		//The list contains at least one object => we append the object at the end
-
-		//Set the conductor to the root-element
-		state.conductor = state.root;
-
-		//Go to the end of the list
-		while(state.conductor->next != NULL) {
-			state.conductor = state.conductor->next;
-		}
-
-		state.conductor->next = &temp;
-
-		state.size += 1; //An object was added => increase the size of the list
-	}
+	state.size++;
 
 	return true;
 }
@@ -163,7 +149,7 @@ bool tl_kalman_predict(void) {
 	//Iterate over the whole list
 	state.conductor = state.root;
 
-	while(state.conductor->next != NULL) {
+	while(state.conductor != NULL) {
 
 		//Time since the object was last tracked [s]
 		uint64_t dt = (hrt_absolute_time() - state.conductor->timestamp)/1e6;
@@ -247,7 +233,7 @@ bool tl_nnsf(void) {
 	//Iterate over the whole list of tracking objects
 	state.conductor = state.root;
 
-	while(state.conductor->next != NULL) {
+	while(state.conductor != NULL) {
 
 		float x_meas = 0;
 		float y_meas = 0;
@@ -258,6 +244,7 @@ bool tl_nnsf(void) {
 		if(result == true){
 			//A COG that fits the estimate was found => we have a new measurement and can do the Kalman Update-State
 
+			printf("Found nearest COG!\n");
 			tl_kalman_update(state.conductor, x_meas, y_meas);
 
 		} else {
@@ -265,6 +252,8 @@ bool tl_nnsf(void) {
 
 			//Increase the unseen-flag
 			state.conductor->unseen += 1;
+
+			printf("Did not find nearest COG: %d\n",state.conductor->unseen);
 
 			if(state.conductor->unseen > config.unseen_threshold) {
 				//The object was unseen several times => we expect it to be not present => delete it
@@ -356,6 +345,10 @@ bool tl_kalman_update(track_obj *ptr, float x_meas, float y_meas) {
     ptr->P[14] = P43 -  W4*(S0*W6 + S2*W7) -  W5*(S1*W6 + S3*W7);
     ptr->P[15] = P44 -  W6*(S0*W6 + S2*W7) -  W7*(S1*W6 + S3*W7);
 
+
+    //Set the timestamp
+    ptr->timestamp = hrt_absolute_time();
+
 	return true;
 }
 
@@ -385,32 +378,66 @@ bool tl_add_untracked(void) {
  */
 bool tl_flush(void) {
 
+	//Set the conductor as the root
+	state.conductor = state.root;
+
+	if(state.conductor == NULL) {
+		//List is empty => nothing to flush
+		return true;
+	}
+
+	while(state.conductor != NULL) {
+
+		cl_delete_obj(state.conductor);
+
+		state.conductor = state.conductor->next;
+
+	}
+
+	//The list is now flushed => we have to reinit it
+	cl_init();
+
+	return true;
+
  	return true;
 }
 
 
 /**
- * Delete a COG-Object from the List
+ * Delete a Track-Object from the List
  *
- * @param ptr: Pointer to the cog_obj that should be deleted
+ * @param ptr: Pointer to the track_obj that should be deleted
  */
 bool tl_delete_obj(track_obj *ptr) {
 
-	track_obj *next_ptr;
+	if(ptr == state.root) {
+		//We want to delete the root
 
-	//Start at the root and then search for the object before the one we want to delete
-	next_ptr = state.root;
+		state.root = ptr->next;
 
-	while(next_ptr != ptr && next_ptr != NULL) {
-		//TODO: check, if this is corret and the next_ptr points after the while to the object before the one we wnat to delet
-		next_ptr = next_ptr->next;
+		free(ptr);
+		return true;
 	}
 
-	//We reached the object that points to the one we want to delete
-	next_ptr->next = ptr->next; //Set the pointer of the object before the one we want to delete to the object after the one we want to delete
+	track_obj *conductor;
+	track_obj *previous;	//Object before the one we want to delete
 
-	//Delete the Object
-	free(ptr);
+	//Start at the root and then search for the object before the one we want to delete
+	conductor = state.root;
+
+	int counter;
+	counter = 0;
+	while(conductor != ptr){// && conductor != NULL) {
+		counter ++;
+		previous = conductor;
+		conductor = conductor->next;
+	}
+	//The conductor points now to the element we want to delete
+
+	track_obj *temp = conductor;
+	previous->next = conductor->next;
+	free(temp);
+	state.size--;
 
 	return true;
 }

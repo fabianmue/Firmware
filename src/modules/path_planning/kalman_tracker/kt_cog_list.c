@@ -130,7 +130,7 @@ bool cl_find_nn(float x_pos, float y_pos, float *x_meas, float *y_meas) {
 	//Iterate over the whole list and try to find the nearest neighbour
 	state.conductor = state.root;
 
-	while(state.conductor->next != NULL) {
+	while(state.conductor != NULL) {
 
 		//Calculate the distance
 		float dx = x_pos-state.conductor->x_cog;
@@ -176,7 +176,7 @@ bool cl_add_untracked(void) {
 	while(state.conductor != NULL) {
 
 		//Add the untracked element to the list of tracked objects
-		//tl_add(state.conductor->x_cog, state.conductor->y_cog);
+		tl_add(state.conductor->x_cog, state.conductor->y_cog);
 
 		//Delete the object that was just added for tracking
 		cl_delete_obj(state.conductor);
