@@ -247,6 +247,8 @@ bool tl_nnsf(void) {
 
 		//printf("Predicted COG: %f/%f\n",(double)(state.conductor->xhat[0]),(double)(state.conductor->xhat[2]));
 
+		track_obj *nextptr = NULL;
+
 		if(result == true){
 			//A COG that fits the estimate was found => we have a new measurement and can do the Kalman Update-State
 
@@ -255,6 +257,10 @@ bool tl_nnsf(void) {
 			#endif
 
 			tl_kalman_update(state.conductor, x_meas, y_meas);
+
+			printf("Predicted COG: %f/%f\n",(double)(state.conductor->xhat[0]),(double)(state.conductor->xhat[2]));
+
+			nextptr = state.conductor->next;
 
 		} else {
 			//No COG matched the estimate => the object is possibly hidden by another object
@@ -267,13 +273,14 @@ bool tl_nnsf(void) {
 			if(state.conductor->unseen > config.unseen_threshold) {
 				//The object was unseen several times => we expect it to be not present => delete it
 
+				nextptr = state.conductor->next;
 				tl_delete_obj(state.conductor);
 			}
 		}
 
 
 		//Set the next conductor
-		state.conductor = state.conductor->next;
+		state.conductor = nextptr;
 	}
 
 	return true;
@@ -392,7 +399,7 @@ uint16_t tl_get_obstacles(NEDpoint *array, NEDpoint curpos) {
 	//Allocate Memory for the Obstacle Positons
 	array = malloc(tl_get_size()*sizeof(NEDpoint));
 
-	printf("Size of Array: %d\n",tl_get_size());
+	//printf("Size of Array: %d\n",tl_get_size());
 
 	//Set the conductor as the root => start at the head of the list
 	state.conductor = state.root;
@@ -406,7 +413,7 @@ uint16_t tl_get_obstacles(NEDpoint *array, NEDpoint curpos) {
 		array[index].northx = curpos.northx + (state.conductor->xhat[0])/100.0f;
 		array[index].easty = curpos.easty + (state.conductor->xhat[2])/100.0f;
 
-		printf("Added to array: %f/%f\n",(double)(curpos.northx + (state.conductor->xhat[0])/100.0f),(double)(curpos.easty + (state.conductor->xhat[2])/100.0f));
+		//printf("Added to array: %f/%f\n",(double)(curpos.northx + (state.conductor->xhat[0])/100.0f),(double)(curpos.easty + (state.conductor->xhat[2])/100.0f));
 
 		index++;
 		state.conductor = state.conductor->next;
@@ -465,9 +472,12 @@ bool tl_delete_obj(track_obj *ptr) {
 	if(ptr == state.root) {
 		//We want to delete the root
 
-		state.root = ptr->next;
+		track_obj *temp = ptr;
 
-		free(ptr);
+		state.root = ptr->next;
+		//ptr = state.root;
+
+		free(temp);
 		return true;
 	}
 
@@ -490,6 +500,8 @@ bool tl_delete_obj(track_obj *ptr) {
 	previous->next = conductor->next;
 	free(temp);
 	state.size--;
+
+	//ptr->next = previous->next;
 
 	return true;
 }

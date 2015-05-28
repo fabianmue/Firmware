@@ -92,7 +92,7 @@ bool cl_add(float x_cog, float y_cog) {
 
 	if(temp == NULL) {
 		#if LDEBUG_KALMANTRACKER_CMS == 1
-		printf("Could not allocate memory!");
+		printf("Could not allocate memory for COG!");
 		#endif
 		return false;
 	}
@@ -248,9 +248,12 @@ bool cl_delete_obj(cog_obj *ptr) {
 	if(ptr == state.root) {
 		//We want to delete the root
 
-		state.root = ptr->next;
+		cog_obj *temp = ptr;
 
-		free(ptr);
+		state.root = ptr->next;
+		//ptr = state.root;
+
+		free(temp);
 		return true;
 	}
 
@@ -273,6 +276,8 @@ bool cl_delete_obj(cog_obj *ptr) {
 	previous->next = conductor->next;
 	free(temp);
 	state.size--;
+
+	//ptr->next = previous->next;
 
 	return true;
 }
