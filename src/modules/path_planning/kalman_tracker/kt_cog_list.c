@@ -134,6 +134,8 @@ bool cl_find_nn(float x_pos, float y_pos, float *x_meas, float *y_meas) {
 
 	while(state.conductor != NULL) {
 
+		//printf("COG in find_nn: %f/%f\n ",(double)(state.conductor->x_cog),(double)(state.conductor->y_cog));
+
 		//Calculate the distance
 		float dx = x_pos-state.conductor->x_cog;
 		float dy = y_pos-state.conductor->y_cog;

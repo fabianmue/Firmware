@@ -225,14 +225,13 @@ bool kt_get_state(void) {
  *
  * @param *array: Pointer to an array of NEDpoints
  * @param size of the Array
+ *
+ * @return number of obstaclec currently tracked <=> size of array
  */
 uint16_t kt_get_obstacles(NEDpoint *array) {
 
 	//Fill the Array with the data
-	uint16_t size;
-	tl_get_obstacles(array,state.pos,&size);
-
-	return size;
+	return tl_get_obstacles(array,state.pos);
 }
 
 
@@ -336,18 +335,18 @@ bool segment_COG(void) {
 				//The next iteration will start a new segment
 
 				if(seg_length == 0) {
-					printf("Division by zero!");
+					printf("Division by zero!\n");
 					seg_length = 1;
 				}
 
-				printf("Segment %d length: %d",seg_mat[ind],seg_length);
+				//printf("Segment %d length: %d",seg_mat[ind],seg_length);
 
 				float x_mean = x_sum/seg_length;
 				float y_mean = y_sum/seg_length;
 
 				cl_add(x_mean,y_mean);
 
-				printf("COG: %+f5.2/%+f5.2\n",(double)x_mean,(double)y_mean);
+				//printf("COG: %+f5.2/%+f5.2\n",(double)x_mean,(double)y_mean);
 
 
 				seg_length = 0;
@@ -362,8 +361,8 @@ bool segment_COG(void) {
 
 		cl_add(x_mean,y_mean);
 
-		printf("Segment %d length: %d",seg_mat[ind],seg_length);
-		printf("COG: %f5.2/%f5.2\n",(double)x_mean,(double)y_mean);
+		//printf("Segment %d length: %d",seg_mat[ind],seg_length);
+		//printf("COG: %f5.2/%f5.2\n",(double)x_mean,(double)y_mean);
 
 		return true;
 }

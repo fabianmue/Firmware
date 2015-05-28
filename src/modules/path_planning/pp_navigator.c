@@ -904,11 +904,11 @@ bool get_sensor_obstacles(void) {
 		field.NumberOfSensorobstacles = kt_get_obstacles(field.sensorobstacles);
 
 		//TODO: DEBUG only: print the Array
-		printf("Sensor Obstacles %d: \n",field.NumberOfObstacles);
+		/*printf("Sensor Obstacles %d: \n",field.NumberOfObstacles);
 		for(uint16_t ind=0; ind<field.NumberOfSensorobstacles; ind++) {
 			printf("  %f/%f\n",(double)field.sensorobstacles[ind].northx, (double)field.sensorobstacles[ind].easty);
 		}
-		printf("End of Sensor Obstacles\n");
+		printf("End of Sensor Obstacles\n");*/
 	}
 
 	return true;

@@ -102,7 +102,7 @@ bool tl_add(float x_cog, float y_cog) {
 
 	//We create the Object
 	track_obj *temp;
-	temp = malloc(sizeof(struct track_obj));
+	temp = malloc(sizeof(track_obj));
 
 	//P is equal to the identity
 	temp->P[0] = 1; //P11
@@ -236,6 +236,8 @@ bool tl_nnsf(void) {
 	state.conductor = state.root;
 
 	while(state.conductor != NULL) {
+
+		//printf("Track Obj in List: %f/%f\n",(double)(state.conductor->xhat[0]),(double)(state.conductor->xhat[2]));
 
 		float x_meas = 0;
 		float y_meas = 0;
@@ -382,13 +384,15 @@ uint16_t tl_get_size(void) {
  *
  * @param *array: pointer to an array of NED-Points
  * @param curpos: Current Position of the SENSOR in global NED-Frame
- * @param *size:  Size of the Array <=> number of tracked objects (return value!)
+ *
+ * @return Size of the Array <=> number of tracked objects
  */
-bool tl_get_obstacles(NEDpoint *array, NEDpoint curpos, uint16_t *size) {
+uint16_t tl_get_obstacles(NEDpoint *array, NEDpoint curpos) {
 
 	//Allocate Memory for the Obstacle Positons
 	array = malloc(tl_get_size()*sizeof(NEDpoint));
 
+	printf("Size of Array: %d\n",tl_get_size());
 
 	//Set the conductor as the root => start at the head of the list
 	state.conductor = state.root;
@@ -399,17 +403,16 @@ bool tl_get_obstacles(NEDpoint *array, NEDpoint curpos, uint16_t *size) {
 		//Iterate over the whole List
 
 		//Store the Obstacle Position estimates in the Matrix
-		array[index].northx = curpos.northx + state.conductor->xhat[0];
-		array[index].easty = curpos.easty + state.conductor->xhat[2];
+		array[index].northx = curpos.northx + (state.conductor->xhat[0])/100.0f;
+		array[index].easty = curpos.easty + (state.conductor->xhat[2])/100.0f;
+
+		printf("Added to array: %f/%f\n",(double)(curpos.northx + (state.conductor->xhat[0])/100.0f),(double)(curpos.easty + (state.conductor->xhat[2])/100.0f));
 
 		index++;
 		state.conductor = state.conductor->next;
 	}
 
-	uint16_t nrofobstacles = tl_get_size();
-	size = &nrofobstacles;
-
-	return true;
+	return tl_get_size();
 }
 
 

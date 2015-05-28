@@ -44,7 +44,7 @@ bool tl_add_untracked(void);
 uint16_t tl_get_size(void);
 
 /* @brief Get the obstacles in global NED-Frame */
-bool tl_get_obstacles(NEDpoint *array, NEDpoint curpos, uint16_t *size);
+uint16_t tl_get_obstacles(NEDpoint *array, NEDpoint curpos);
 
 
 #endif /* KT_TRACK_LIST_H_ */
