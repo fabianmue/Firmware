@@ -97,7 +97,7 @@ bool tl_init(void) {
 bool tl_add(float x_cog, float y_cog) {
 
 	#if LDEBUG_KALMANTRACKER_CMS == 1
-	printf("Added tracking object!\n");
+	printf("Added tracking object! (%f/%f)\n",(double)x_cog,(double)y_cog);
 	#endif
 
 	//We create the Object
@@ -106,9 +106,22 @@ bool tl_add(float x_cog, float y_cog) {
 
 	//P is equal to the identity
 	temp->P[0] = 1; //P11
-	temp->P[1] = 0; //state.conductor->P
-	temp->P[2] = 0; //P21
-	temp->P[3] = 1; //P22
+	temp->P[1] = 0; //P12
+	temp->P[2] = 0; //P13
+	temp->P[3] = 0; //P14
+	temp->P[4] = 0; //P21
+	temp->P[5] = 1; //P22
+	temp->P[6] = 0; //P23
+	temp->P[7] = 0; //P24
+	temp->P[8] = 0; //P31
+	temp->P[9] = 0; //P32
+	temp->P[10] = 1; //P33
+	temp->P[11] = 0; //P34
+	temp->P[12] = 0; //P41
+	temp->P[13] = 0; //P42
+	temp->P[14] = 0; //P43
+	temp->P[15] = 1; //P44
+
 
 	//xhat reflects the first measurement
 	temp->xhat[0] = x_cog; //x
@@ -273,8 +286,9 @@ bool tl_nnsf(void) {
 			if(state.conductor->unseen > config.unseen_threshold) {
 				//The object was unseen several times => we expect it to be not present => delete it
 
-				nextptr = state.conductor->next;
+				//nextptr = state.conductor->next;
 				tl_delete_obj(state.conductor);
+				nextptr = state.conductor->next;
 			}
 		}
 
@@ -505,7 +519,7 @@ bool tl_delete_obj(track_obj *ptr) {
 	free(temp);
 	state.size--;
 
-	ptr->next = previous->next;
+	ptr->next = conductor->next;
 
 	return true;
 }

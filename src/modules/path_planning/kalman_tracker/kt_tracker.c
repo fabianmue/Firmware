@@ -131,19 +131,23 @@ bool tr_handler(void) {
 		//Update the linked list with the predicted Kalman states
 		tl_kalman_predict();
 
+		printf("\n After Kalman Predict\n");
+		tl_print_list();
+
 		//NNSF (Try to relate already tracked objects with the newly detected COGs)
 		//Note: This step includes the Kalman-Update too
 		tl_nnsf();
 
-		printf("\n Before adding untracked objects\n");
-		cl_print_list();
+		//printf("\n Before adding untracked objects\n");
+		//cl_print_list();
 
 		//Add the newly detected Tracking Objects to the list
 		tl_add_untracked();
 
 		//Show the Linked Lists
+		printf("\n After nnsf and add untracked\n");
 		tl_print_list();
-		cl_print_list();
+		//cl_print_list();
 
 
 		//Reset the new data flag
