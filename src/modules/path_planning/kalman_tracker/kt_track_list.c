@@ -97,7 +97,7 @@ bool tl_init(void) {
 bool tl_add(float x_cog, float y_cog) {
 
 	#if LDEBUG_KALMANTRACKER_CMS == 1
-	printf("Added tracking object! (%f/%f)\n",(double)x_cog,(double)y_cog);
+	//printf("Added tracking object! (%f/%f)\n",(double)x_cog,(double)y_cog);
 	#endif
 
 	//We create the Object
@@ -157,7 +157,6 @@ bool tl_add(float x_cog, float y_cog) {
 /**
  * Update the list by making use of the Kalman predict step
  *
- * @param
  */
 bool tl_kalman_predict(void) {
 
@@ -266,12 +265,12 @@ bool tl_nnsf(void) {
 			//A COG that fits the estimate was found => we have a new measurement and can do the Kalman Update-State
 
 			#if LDEBUG_KALMANTRACKER_CMS == 1
-			printf("Found nearest COG!\n");
+			//printf("Found nearest COG!\n");
 			#endif
 
 			tl_kalman_update(state.conductor, x_meas, y_meas);
 
-			printf("Predicted COG: %f/%f\n",(double)(state.conductor->xhat[0]),(double)(state.conductor->xhat[2]));
+			//printf("Predicted COG: %f/%f\n",(double)(state.conductor->xhat[0]),(double)(state.conductor->xhat[2]));
 
 			nextptr = state.conductor->next;
 
@@ -285,6 +284,10 @@ bool tl_nnsf(void) {
 
 			if(state.conductor->unseen > config.unseen_threshold) {
 				//The object was unseen several times => we expect it to be not present => delete it
+
+				#if LDEBUG_KALMANTRACKER_CMS == 1
+				//printf("Deleted Object!");
+				#endif
 
 				//nextptr = state.conductor->next;
 				tl_delete_obj(state.conductor);
@@ -402,6 +405,7 @@ uint16_t tl_get_size(void) {
 
 /**
  * Get the obstacles currently tracked as an array of NED-points
+ * Note: This function was debugged and should be OK!
  *
  * @param *array: pointer to an array of NED-Points
  * @param curpos: Current Position of the SENSOR in global NED-Frame
@@ -413,21 +417,24 @@ uint16_t tl_get_obstacles(NEDpoint *array, NEDpoint curpos) {
 	//Allocate Memory for the Obstacle Positons
 	array = malloc(tl_get_size()*sizeof(NEDpoint));
 
-	//printf("Size of Array: %d\n",tl_get_size());
+	printf("Size of Array in kt_track_list: %d\n",tl_get_size());
 
 	//Set the conductor as the root => start at the head of the list
 	state.conductor = state.root;
 
 	uint16_t index = 0; //Index in the Array
 
+	printf("The position in kt_track_list is: %f/%f\n",(double)curpos.northx,(double)curpos.easty);
+
 	while(state.conductor != NULL) {
 		//Iterate over the whole List
 
 		//Store the Obstacle Position estimates in the Matrix
-		array[index].northx = curpos.northx + (state.conductor->xhat[0])/100.0f;
-		array[index].easty = curpos.easty + (state.conductor->xhat[2])/100.0f;
+		//TODO: Add the current position here!!!
+		array[index].northx = /*curpos.northx +*/ (state.conductor->xhat[0])/100.0f;
+		array[index].easty = /*curpos.easty +*/ (state.conductor->xhat[2])/100.0f;
 
-		//printf("Added to array: %f/%f\n",(double)(curpos.northx + (state.conductor->xhat[0])/100.0f),(double)(curpos.easty + (state.conductor->xhat[2])/100.0f));
+		//printf("Added to array: %f/%f\n",(double)(array[index].northx),(double)(array[index].easty));
 
 		index++;
 		state.conductor = state.conductor->next;
@@ -519,7 +526,7 @@ bool tl_delete_obj(track_obj *ptr) {
 	free(temp);
 	state.size--;
 
-	ptr->next = conductor->next;
+	//ptr->next = conductor->next;
 
 	return true;
 }

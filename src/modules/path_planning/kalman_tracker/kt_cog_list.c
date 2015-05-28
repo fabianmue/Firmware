@@ -220,11 +220,6 @@ bool cl_flush(void) {
 
 	while(state.conductor != NULL) {
 
-		//cog_obj *temp = state.root;
-		//state.root = state.root->next;
-		//free(temp);
-		//state.size--;
-
 		cl_delete_obj(state.conductor);
 
 		state.conductor = state.conductor->next;

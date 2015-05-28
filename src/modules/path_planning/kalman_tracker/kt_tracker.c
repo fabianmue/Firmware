@@ -131,22 +131,15 @@ bool tr_handler(void) {
 		//Update the linked list with the predicted Kalman states
 		tl_kalman_predict();
 
-		printf("\n After Kalman Predict\n");
-		tl_print_list();
-
 		//NNSF (Try to relate already tracked objects with the newly detected COGs)
 		//Note: This step includes the Kalman-Update too
 		tl_nnsf();
-
-		//printf("\n Before adding untracked objects\n");
-		//cl_print_list();
 
 		//Add the newly detected Tracking Objects to the list
 		tl_add_untracked();
 
 		//Show the Linked Lists
-		printf("\n After nnsf and add untracked\n");
-		tl_print_list();
+		//tl_print_list();
 		//cl_print_list();
 
 
@@ -243,9 +236,27 @@ bool kt_get_state(void) {
 uint16_t kt_get_obstacles(NEDpoint *array) {
 
 	//Fill the Array with the data
-	return tl_get_obstacles(array,state.pos);
+	NEDpoint *array1;
+	//TODO:Here must be the error somewhere
+	uint16_t size = tl_get_obstacles(array1,state.pos);
+
+	for(uint16_t ind = 0; ind<size ; ind++) {
+		printf("Array in kt_tracker: %f/%f\n",(double)array1[ind].northx,(double)array1[ind].easty);
+	}
+
+
+	return size;
 }
 
+
+/**
+ * Get the current number of obstacles
+ */
+uint16_t kt_get_nrofobstacles(void) {
+
+	return tl_get_size();
+
+}
 
 
 

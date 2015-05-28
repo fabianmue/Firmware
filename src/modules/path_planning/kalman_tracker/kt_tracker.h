@@ -35,6 +35,10 @@ bool kt_get_state(void);
 uint16_t kt_get_obstacles(NEDpoint *array);
 
 
+/* @brief Get the number of obstacles currently tracked */
+uint16_t kt_get_nrofobstacles(void);
+
+
 
 
 #endif /* KT_TRACKER_H_ */
