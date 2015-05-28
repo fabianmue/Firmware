@@ -9,6 +9,7 @@
 #define KT_TRACKER_H_
 
 #include "../pp_config.h"
+#include "../pp_navigation_helper.h"
 
 /* @brief Init the use of the Kalman Tracker */
 bool tr_init(void);
@@ -28,6 +29,12 @@ bool kt_enable(uint8_t status);
 
 /* @brief Get the state of the Kalman Tracker (enabled/disables) */
 bool kt_get_state(void);
+
+
+/* @brief Get the Obstacles of the Kalman Tracker in global NED-Frame */
+uint16_t kt_get_obstacles(NEDpoint *array);
+
+
 
 
 #endif /* KT_TRACKER_H_ */

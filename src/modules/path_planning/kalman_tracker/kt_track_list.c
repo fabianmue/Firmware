@@ -377,6 +377,42 @@ uint16_t tl_get_size(void) {
 }
 
 
+/**
+ * Get the obstacles currently tracked as an array of NED-points
+ *
+ * @param *array: pointer to an array of NED-Points
+ * @param curpos: Current Position of the SENSOR in global NED-Frame
+ * @param *size:  Size of the Array <=> number of tracked objects (return value!)
+ */
+bool tl_get_obstacles(NEDpoint *array, NEDpoint curpos, uint16_t *size) {
+
+	//Allocate Memory for the Obstacle Positons
+	array = malloc(tl_get_size()*sizeof(NEDpoint));
+
+
+	//Set the conductor as the root => start at the head of the list
+	state.conductor = state.root;
+
+	uint16_t index = 0; //Index in the Array
+
+	while(state.conductor != NULL) {
+		//Iterate over the whole List
+
+		//Store the Obstacle Position estimates in the Matrix
+		array[index].northx = curpos.northx + state.conductor->xhat[0];
+		array[index].easty = curpos.easty + state.conductor->xhat[2];
+
+		index++;
+		state.conductor = state.conductor->next;
+	}
+
+	uint16_t nrofobstacles = tl_get_size();
+	size = &nrofobstacles;
+
+	return true;
+}
+
+
 
 
 

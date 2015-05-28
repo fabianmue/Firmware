@@ -28,6 +28,8 @@
 #include "pp_cost_method.h"
 #include "pp_potentialfield_method.h"
 
+#include "kalman_tracker/kt_tracker.h"
+
 #include <stdbool.h>
 
 #if C_DEBUG == 0
@@ -38,6 +40,10 @@
 
 //static char txt_msg[150]; ///used to send messages to QGC
 
+
+/***********************************************************************************/
+/*****  V A R I A B L E S  *********************************************************/
+/***********************************************************************************/
 
 /** Struct holding the main configuration variables of the navigator */
 static struct {
@@ -88,6 +94,20 @@ static float dbg_alpha = 0;
 static bool dbg_alpha_status = false;
 static bool dbg_alpha_minus = false;
 
+
+
+/***********************************************************************************/
+/*****  F U N C T I O N   P R O T O T Y P E S **************************************/
+/***********************************************************************************/
+
+/* @brief Get the Obstacles identified by the Kalman Tracker */
+bool get_sensor_obstacles(void);
+
+
+
+/***********************************************************************************/
+/*****  P U B L I C    F U N C T I O N S  ******************************************/
+/***********************************************************************************/
 
 
 /**
@@ -301,7 +321,7 @@ void nav_navigator(void) {
 	/** MAIN PATHPLANNING
 	 *  Pathplanning is only done with a certain frequency AND if no maneuver is under progress
 	 *  Therefore, check the systemtime.
-	 *  Note: When the Computer-Debug-Mode is on Pathplanning is done in every loop!*/
+	 *  Note: Pathplanning is NEVER done during maneuvers */
 
 	if((systime-state.last_call >= config.period) && (state.maneuver == false)) {
 
@@ -325,6 +345,9 @@ void nav_navigator(void) {
 		cb_new_targetnum(state.targetNum);
 
 
+		//****GET THE OBSTACLES IDENTIFIED BY THE SENSOR
+		//Note: This is only executed, if the Kalman Tracker is activated by QGround Control
+		get_sensor_obstacles();
 
 
 		/****FIND A NEW REFERENCE HEADING
@@ -649,6 +672,15 @@ void nav_position_update(void) {
 } //end of nav_heading_update
 
 
+/**
+ * Get the current position of the boat known as by the navigator
+ *
+ */
+NEDpoint nav_get_position(void) {
+	return state.position;
+}
+
+
 
 /**
  * The start-line is defined by two buoys. Set the two buoys in GEO-Frame and
@@ -851,6 +883,38 @@ void nav_set_quick_target(void) {
 void nav_set_targetnumber(uint8_t tar_num) {
 	state.targetNum = tar_num;
 }
+
+
+
+
+/***********************************************************************************/
+/*****  P R I V A T E    F U N C T I O N S  ****************************************/
+/***********************************************************************************/
+
+
+/**
+ * Get the Obstacles from the Sensor and store them in the Race-Field-Matrix
+ *
+ */
+bool get_sensor_obstacles(void) {
+
+	if(kt_get_state() == true) {
+		//The Kalman Tracker is active => We want to include the obstacles in the race-field
+
+		field.NumberOfSensorobstacles = kt_get_obstacles(field.sensorobstacles);
+
+		//TODO: DEBUG only: print the Array
+		printf("Sensor Obstacles %d: \n",field.NumberOfObstacles);
+		for(uint16_t ind=0; ind<field.NumberOfSensorobstacles; ind++) {
+			printf("  %f/%f\n",(double)field.sensorobstacles[ind].northx, (double)field.sensorobstacles[ind].easty);
+		}
+		printf("End of Sensor Obstacles\n");
+	}
+
+	return true;
+
+}
+
 
 
 

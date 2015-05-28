@@ -42,6 +42,9 @@ struct nav_field_s {
 	NEDpoint obstacles[MAXOBSTACLENUMBER];	//Matrix holding the obstacles (in NED-Frame)
 	uint8_t NumberOfObstacles;		//Number of obstacles currently in the Matrix
 
+	NEDpoint *sensorobstacles;		//Pointer to a dynamic array holding the sensor obstacles
+	uint8_t NumberOfSensorobstacles; //Number of Sensor Obstacles currently in the Matrix
+
 	NEDpoint startline[2]; 			//Matrix containing the start-line [buoy1, buoy2]
 };
 
@@ -65,6 +68,10 @@ void nav_speak2helsman(void);
 
 /** @brief New position information is available */
 void nav_position_update(void);
+
+
+/** @brief Return the position of the boat as known by the Navigator */
+NEDpoint nav_get_position(void);
 
 
 /** @brief New wind-information is available */

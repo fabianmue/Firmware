@@ -8,6 +8,8 @@
 #ifndef KT_TRACK_LIST_H_
 #define KT_TRACK_LIST_H_
 
+#include "../pp_navigation_helper.h"
+
 typedef struct track_obj{
 	float P[16];			//state Covariance Matrix for Kalman Tracker [P11,P12,P21,P22]
 	float xhat[4];		//Estimated State [x,vx,y,vy]
@@ -40,6 +42,9 @@ bool tl_add_untracked(void);
 
 /* @brief Return the number of objects currently in the tracking-list */
 uint16_t tl_get_size(void);
+
+/* @brief Get the obstacles in global NED-Frame */
+bool tl_get_obstacles(NEDpoint *array, NEDpoint curpos, uint16_t *size);
 
 
 #endif /* KT_TRACK_LIST_H_ */

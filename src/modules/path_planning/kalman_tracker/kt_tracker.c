@@ -24,6 +24,7 @@
 #include "../pp_config.h"
 #include "../pp_communication_buffer.h"
 #include "../pp_navigation_helper.h"
+#include "../pp_navigator.h"
 
 
 
@@ -43,15 +44,18 @@ static uint16_t seg_mat[2*SENSOR_RANGE/SENSOR_STEPSIZE];   //Matrix holding the 
 static struct {
 	float c0;	//Configuration Parameter 0 in Calculation of Dlim
 	float c1;   //Configuration Parameter 1 in Calculation of Dlim
+	float sensor_xpos; //x-Distance from the boat's COG to the Sensor in NED-Frame [m]
 } config = {
 	.c0 = 10,
-	.c1 = 0.034904812874445f //sqrtf(2.0f*(1.0f-cosf(DEG2RAD*SENSOR_STEPSIZE)))
+	.c1 = 0.034904812874445f, //sqrtf(2.0f*(1.0f-cosf(DEG2RAD*SENSOR_STEPSIZE)))
+	.sensor_xpos = 0.5 	//The sensor is placed 0.5m in front of the COG of the boat
 };
 
 static struct {
 	uint16_t segnum;	//Number of the Segment (increased by one every time, when a new segment is detected
 	bool newdata; 		//Flag that signals that new data is present
 	bool enable; 		//Flag to enable/disable the Kalman Tracker
+	NEDpoint pos; 		//Position of the SENSOR in NED-Frame, for which the data in the tracking-list is valid
 } state = {
 	.segnum = 0,
 	.newdata = false,
@@ -165,10 +169,19 @@ bool tr_newdata(uint16_t new_dist_mat[],uint16_t heading) {
 		dist_mat[i] = new_dist_mat[i];
 	}
 
+	#if LDEBUG_KALMANTRACKER_CMS == 1
 	printf("Tracker: Got new data and stored them locally!\n");
+	#endif
 
+	//Flag that new data is available
 	state.newdata = true;
+
+	//Set the Heading for which the data is valid
 	dist_heading = heading;
+
+	//Set the boat-Position for which the data is valid
+	state.pos = nav_get_position();
+	state.pos.northx += config.sensor_xpos; //Calculate the Position of the Sensor from the Boat-Position
 
 	return true;
 }
@@ -203,6 +216,23 @@ bool kt_enable(uint8_t status) {
 bool kt_get_state(void) {
 
 	return state.enable;
+}
+
+
+/**
+ * Get Obstacles in global NED-Frame
+ * Return the Obstacles identified by the Kalman Tracker in global NED-Frame
+ *
+ * @param *array: Pointer to an array of NEDpoints
+ * @param size of the Array
+ */
+uint16_t kt_get_obstacles(NEDpoint *array) {
+
+	//Fill the Array with the data
+	uint16_t size;
+	tl_get_obstacles(array,state.pos,&size);
+
+	return size;
 }
 
 
