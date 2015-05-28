@@ -160,7 +160,7 @@ bool cl_find_nn(float x_pos, float y_pos, float *x_meas, float *y_meas) {
 		*y_meas = nearest_cog->y_cog;
 
 		//Delete the COG-Value from the List
-		cl_delete_obj(nearest_cog);
+		cl_delete_obj(nearest_cog); //TODO uncomment this
 
 		return true;
 	} else {
@@ -253,6 +253,8 @@ bool cl_delete_obj(cog_obj *ptr) {
 		state.root = ptr->next;
 		//ptr = state.root;
 
+		state.size--;
+
 		free(temp);
 		return true;
 	}
@@ -284,19 +286,23 @@ bool cl_delete_obj(cog_obj *ptr) {
 
 
 
-bool print_list(void) {
+void cl_print_list(void) {
+
 	state.conductor = state.root;
 
-	while(state.conductor != NULL) {
+	printf("COG-List (%d)",state.size);
 
-		printf("Elem: %f,\n",(double)(state.conductor->x_cog));
+	while(state.conductor != NULL) {
+		//Iterate through the list
+
+		printf("%f/%f, ",(double)(state.conductor->x_cog),(double)(state.conductor->y_cog));
 
 		state.conductor = state.conductor->next;
 	}
 
+
 	printf("\n");
 
-	return true;
 }
 
 

@@ -472,10 +472,14 @@ bool tl_delete_obj(track_obj *ptr) {
 	if(ptr == state.root) {
 		//We want to delete the root
 
+		printf("Track Obj: Delete Root\n");
+
 		track_obj *temp = ptr;
 
 		state.root = ptr->next;
 		//ptr = state.root;
+
+		state.size--;
 
 		free(temp);
 		return true;
@@ -501,9 +505,28 @@ bool tl_delete_obj(track_obj *ptr) {
 	free(temp);
 	state.size--;
 
-	//ptr->next = previous->next;
+	ptr->next = previous->next;
 
 	return true;
+}
+
+
+void tl_print_list(void) {
+
+	state.conductor = state.root;
+
+	printf("Track Obj-List (%d)",tl_get_size());
+
+	while(state.conductor != NULL) {
+		//Iterate through the list
+
+		printf("%f/%f, ",(double)(state.conductor->xhat[0]),(double)(state.conductor->xhat[2]));
+
+		state.conductor = state.conductor->next;
+	}
+
+	printf("\n");
+
 }
 
 

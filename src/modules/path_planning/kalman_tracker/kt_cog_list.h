@@ -43,7 +43,7 @@ bool cl_flush(void);
 bool cl_delete_obj(cog_obj *ptr);
 
 
-bool print_list(void);
+void cl_print_list(void);
 
 //cog_obj *get_obj(float key);
 

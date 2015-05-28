@@ -46,5 +46,7 @@ uint16_t tl_get_size(void);
 /* @brief Get the obstacles in global NED-Frame */
 uint16_t tl_get_obstacles(NEDpoint *array, NEDpoint curpos);
 
+void tl_print_list(void);
+
 
 #endif /* KT_TRACK_LIST_H_ */

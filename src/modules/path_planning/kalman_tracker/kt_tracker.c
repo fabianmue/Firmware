@@ -135,8 +135,16 @@ bool tr_handler(void) {
 		//Note: This step includes the Kalman-Update too
 		tl_nnsf();
 
+		printf("\n Before adding untracked objects\n");
+		cl_print_list();
+
 		//Add the newly detected Tracking Objects to the list
 		tl_add_untracked();
+
+		//Show the Linked Lists
+		tl_print_list();
+		cl_print_list();
+
 
 		//Reset the new data flag
 		state.newdata = false;
