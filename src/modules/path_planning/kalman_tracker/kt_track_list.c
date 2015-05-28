@@ -401,7 +401,7 @@ bool tl_flush(void) {
 
 	while(state.conductor != NULL) {
 
-		cl_delete_obj(state.conductor);
+		tl_delete_obj(state.conductor);
 
 		state.conductor = state.conductor->next;
 

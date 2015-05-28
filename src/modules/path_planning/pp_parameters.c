@@ -16,6 +16,8 @@
 #include "pp_cost_method.h"
 #include "pp_potentialfield_method.h"
 
+#include "kalman_tracker/kt_tracker.h"
+
 #define M_PI_F 3.14159265358979323846f
 
 static const float deg2rad = 0.0174532925199433f; // pi / 180
@@ -348,6 +350,14 @@ PARAM_DEFINE_INT32(PP_DBG_INVALP,0);
 PARAM_DEFINE_INT32(PP_NAV_SETAR,0);
 
 
+/**
+ * kt_enable
+ * Enable the Kalman Tracker and therefore use the Tracked Obstacles in the Pathplanning
+ */
+PARAM_DEFINE_INT32(KT_ENABLE,0);
+
+
+
 
 
 static struct pointers_param_qgc_s{
@@ -450,6 +460,8 @@ static struct pointers_param_qgc_s{
 	param_t pm_weight_gm_pointer;
 	param_t pm_weight_sdist_pointer;
 
+	//**KALMAN OBSTACLE TRACKER
+	param_t kt_enable;
 
 }pointers_param_qgc;
 
@@ -563,6 +575,10 @@ void p_param_init(void){
 	pointers_param_qgc.pm_weight_gw_pointer = param_find("PP_PM_W_GW");
 	pointers_param_qgc.pm_weight_gm_pointer = param_find("PP_PM_W_GM");
 	pointers_param_qgc.pm_weight_sdist_pointer = param_find("PP_PM_W_SDIST");
+
+
+	//**KALMAN OBSTACLE TRACKER
+	pointers_param_qgc.kt_enable = param_find("KT_ENABLE");
 
 
     //get parameters but do not add any grid lines at start up
@@ -869,5 +885,10 @@ void p_param_update(bool update_path_param){
    	param_get(pointers_param_qgc.pm_weight_sdist_pointer, &SearchDist);
    	pm_set_configuration(Gt, Go, Gm, Gw, SearchDist);
 
+
+   	//**KALMAN OBSTACLE TRACKER
+   	uint8_t kt_status = 0;
+   	param_get(pointers_param_qgc.kt_enable, &kt_status);
+   	kt_enable(kt_status);
 
 }

@@ -635,6 +635,101 @@ float cost_sensor(float seg) {
 
 
 
+/**
+ *
+ * SENSOR Obstacle Cost
+ *
+ * This cost reads the Obstacle Position from the Kalman Tracker and tries to avoid them by
+ * using the well known strategy.
+ *
+ * Cost for maximising the distance to obstacles and avoid them.
+ * 	1) Avoid Obstacles by avoiding selecting headings that guide the boat too close
+ * 	   to the obstacles.
+ * 	2) Whenever possible pass obstacles in lee, since this leaves more space for maneuvers.
+ * 	   Especially on upwind courses, passing an obstacle in windward side could lead to an
+ * 	   additional maneuver that slows down the boat drastically.
+ */
+float cost_sensor_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *field) {
+
+
+	float Co = 0;
+	float CLee = 0;
+
+	//Loop over all Obstacles
+	uint8_t i;
+	for (i = 0; i < field->NumberOfObstacles; i++) {
+
+		float C = 0;	//Cost for this Obstacle
+
+		/* Only obstacles within a certain Horizon are taken into account. This means that only obstacles in our range
+		 * affect the Pathplanning. We do not care about far away obstacles. */
+		float distance = nh_ned_dist(state->position,field->obstacles[i]);
+		/*Note: the distance to the Obstacle is never zero, since this would lead to a division by zero and therefore
+		 *      an unpredictable behaviour of the Pixhawk. */
+		if(distance > Config.ObstHorizon) {
+			//Obstacle is too far away => continue with the next obstacle
+			continue;
+		}
+
+
+		/* Add the safety radius to the obstacle. An obstacle is modelled as a point on the map. To avoid the obstacle
+		 * and compensate for uncertainties (e.g. sudden changes in wind) the obstacle is made larger virtually */
+		float obst_bear = nh_ned_bearing(state->position,field->obstacles[i]);
+
+		float ang_correction = atanf((Config.ObstSafetyRadius*1.5f)/distance);
+
+		float max_obst_bear = fmod(ang_correction+obst_bear,2*PI);
+		float min_obst_bear = fmod(obst_bear-ang_correction,2*PI);
+
+
+		/* Check, if the boat is on collision course with an obstacle. It is on collision course,
+		 * min_obst_bear < seg < max_obst_bear    <=> the course to check directly guides us towards
+		 * an obstacle. */
+		if((min_obst_bear < seg) && (seg < max_obst_bear )) {
+			//Boat is on collision course
+			C = Config.Go;
+		} else {
+			//Boat is NOT on collision course
+			C = 0;
+		}
+
+		/* Update the TOTAL obstacle cost */
+		Co = Co + C;
+
+
+
+		/************************************/
+		/************ PASS IN LEE ***********/
+		/************************************/
+		/* Whenever possible pass an obstacle in Lee. This way there is more room left for accounting for windshifts
+		 * and compensating other uncertainties. This is especially important when sailing upwind, because windshifts could
+		 * force the boat to do another tack, what slows down the boat and therefore has to be avoided.*/
+
+		float appWind= nh_appWindDir(obst_bear,state->wind_dir);
+
+		if(appWind < 0) { //Prefere Sailing on min_obst_head
+			if(seg < min_obst_bear) { //The Boat will pass in Lee of the Obstacle => GOOD
+				CLee = 0;
+			} else { //The Boat will pass in Luv of the Obstacle => BAD
+		        CLee = Config.GLee * 1;
+			}
+		} else {          //Prefere Sailing on max_obst_head
+			if(seg > max_obst_bear) { //The Boat will pass in Lee of the Obstacle => GOOD
+				CLee = 0;
+		    } else {  //The Boat will pass in Luv of the Obstacle => BAD
+		        CLee = Config.GLee * 1;
+		    }
+		}
+
+	} //for
+
+	return (Co + CLee);
+
+} //end of cost_ostacle
+ */
+
+
+
 
 
 /**

@@ -51,9 +51,11 @@ static struct {
 static struct {
 	uint16_t segnum;	//Number of the Segment (increased by one every time, when a new segment is detected
 	bool newdata; 		//Flag that signals that new data is present
+	bool enable; 		//Flag to enable/disable the Kalman Tracker
 } state = {
 	.segnum = 0,
-	.newdata = false
+	.newdata = false,
+	.enable = false
 };
 
 
@@ -89,6 +91,7 @@ bool tr_init(void) {
 
 	//Init Variables
 	state.newdata = false;
+	state.enable = true; 	//TODO: Set this to false!
 	memset(&dist_mat,0,sizeof(dist_mat));
 	memset(&seg_mat,0,sizeof(seg_mat));
 
@@ -108,8 +111,9 @@ bool tr_init(void) {
  */
 bool tr_handler(void) {
 
-	if(state.newdata == true) {
+	if(state.newdata == true && state.enable == true) {
 		//New measurement Data is present => we can do a Kalman Update
+		//Note: This is only executed, if the Kalman Filter was activated by the QGroundControl Parameter kt_enable
 
 		printf("Tracker Handler called!\n");
 
@@ -167,6 +171,38 @@ bool tr_newdata(uint16_t new_dist_mat[],uint16_t heading) {
 	dist_heading = heading;
 
 	return true;
+}
+
+
+/**
+ * Enable the use of the Kalman Tracker by a QGround Control Variable
+ *
+ */
+bool kt_enable(uint8_t status) {
+
+	if(status == 1) {
+		//We want to enable the Kalman Tracker
+
+		state.enable = true;
+	} else {
+		//We want to disable the Kalman Tracker
+
+		state.enable = false;
+	}
+
+	return true;
+}
+
+
+/**
+ * Get the state of the Kalman Tracker (enabled/disabled)
+ * Note: This is used by the Pathplanner to find out, if
+ *       Obstacles found by the Kalman Tracker should be
+ *       taken into account.
+ */
+bool kt_get_state(void) {
+
+	return state.enable;
 }
 
 

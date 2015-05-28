@@ -22,4 +22,12 @@ bool tr_handler(void);
 bool tr_newdata(uint16_t new_dist_mat[],uint16_t heading);
 
 
+/* @brief Enable the use of the Kalman Tracker by QGroundControl */
+bool kt_enable(uint8_t status);
+
+
+/* @brief Get the state of the Kalman Tracker (enabled/disables) */
+bool kt_get_state(void);
+
+
 #endif /* KT_TRACKER_H_ */
