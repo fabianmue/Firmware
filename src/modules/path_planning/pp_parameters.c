@@ -17,6 +17,8 @@
 #include "pp_potentialfield_method.h"
 
 #include "kalman_tracker/kt_tracker.h"
+#include "kalman_tracker/kt_track_list.h"
+#include "kalman_tracker/kt_cog_list.h"
 
 #define M_PI_F 3.14159265358979323846f
 
@@ -356,6 +358,13 @@ PARAM_DEFINE_INT32(PP_NAV_SETAR,0);
  */
 PARAM_DEFINE_INT32(KT_ENABLE,0);
 
+/**
+ * kt_...
+ * Parameters for the Kalman Tracker
+ */
+PARAM_DEFINE_FLOAT(KT_SIGMA,2.0f);
+PARAM_DEFINE_INT32(KT_UNSEEN,2);
+
 
 
 
@@ -462,6 +471,8 @@ static struct pointers_param_qgc_s{
 
 	//**KALMAN OBSTACLE TRACKER
 	param_t kt_enable;
+	param_t kt_sigma;
+	param_t kt_unseen;
 
 }pointers_param_qgc;
 
@@ -579,6 +590,8 @@ void p_param_init(void){
 
 	//**KALMAN OBSTACLE TRACKER
 	pointers_param_qgc.kt_enable = param_find("KT_ENABLE");
+	pointers_param_qgc.kt_sigma = param_find("KT_SIGMA");
+	pointers_param_qgc.kt_unseen = param_find("KT_UNSEEN");
 
 
     //get parameters but do not add any grid lines at start up
@@ -890,5 +903,14 @@ void p_param_update(bool update_path_param){
    	uint8_t kt_status = 0;
    	param_get(pointers_param_qgc.kt_enable, &kt_status);
    	kt_enable(kt_status);
+
+   	uint8_t kt_unseen = 0;
+   	float kt_sigma = 0;
+   	param_get(pointers_param_qgc.kt_sigma, &kt_sigma);
+   	param_get(pointers_param_qgc.kt_unseen, &kt_unseen);
+   	tl_set_configuration(kt_sigma, kt_unseen);
+
+
+
 
 }

@@ -434,6 +434,22 @@ uint16_t tl_get_obstacles(NEDpoint *array, NEDpoint curpos) {
 }
 
 
+/**
+ * Set the configuration Variables by QGround Control
+ *
+ * @param: sigma: Sigma for the Kalman Tracker
+ * @param: unseen_threshold: Threshold after which unseen obstacles are deleted
+ */
+bool tl_set_configuration(float sigma, uint8_t unseen_threshold) {
+
+	config.sigma = sigma;
+
+	config.unseen_threshold = unseen_threshold;
+
+	return true;
+}
+
+
 
 
 

@@ -49,6 +49,10 @@ uint16_t tl_get_obstacles(NEDpoint *array, NEDpoint curpos);
 /* @brief Flush the List of tracked Objects */
 bool tl_flush(void);
 
+/* @brief Change configuration parameters by QGround Control */
+bool tl_set_configuration(float sigma, uint8_t unseen_threshold);
+
+
 void tl_print_list(void);
 
 

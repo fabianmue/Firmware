@@ -196,6 +196,14 @@ bool cl_add_untracked(void) {
 }
 
 
+/**
+ * Set configuration parameters by QGround Control
+ *
+ * @param nnsf_threshold: Threshold for the nnsf (nearest neighbour standard filter)
+ */
+bool
+
+
 
 
 
