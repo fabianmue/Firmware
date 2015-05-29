@@ -414,27 +414,17 @@ uint16_t tl_get_size(void) {
  */
 uint16_t tl_get_obstacles(NEDpoint *array, NEDpoint curpos) {
 
-	//Allocate Memory for the Obstacle Positons
-	array = malloc(tl_get_size()*sizeof(NEDpoint));
-
-	printf("Size of Array in kt_track_list: %d\n",tl_get_size());
-
 	//Set the conductor as the root => start at the head of the list
 	state.conductor = state.root;
 
 	uint16_t index = 0; //Index in the Array
 
-	printf("The position in kt_track_list is: %f/%f\n",(double)curpos.northx,(double)curpos.easty);
-
 	while(state.conductor != NULL) {
 		//Iterate over the whole List
 
 		//Store the Obstacle Position estimates in the Matrix
-		//TODO: Add the current position here!!!
-		array[index].northx = /*curpos.northx +*/ (state.conductor->xhat[0])/100.0f;
-		array[index].easty = /*curpos.easty +*/ (state.conductor->xhat[2])/100.0f;
-
-		//printf("Added to array: %f/%f\n",(double)(array[index].northx),(double)(array[index].easty));
+		array[index].northx = curpos.northx + (state.conductor->xhat[0])/100.0f;
+		array[index].easty = curpos.easty + (state.conductor->xhat[2])/100.0f;
 
 		index++;
 		state.conductor = state.conductor->next;

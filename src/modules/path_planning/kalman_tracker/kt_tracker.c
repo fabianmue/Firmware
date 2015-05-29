@@ -236,14 +236,7 @@ bool kt_get_state(void) {
 uint16_t kt_get_obstacles(NEDpoint *array) {
 
 	//Fill the Array with the data
-	NEDpoint *array1;
-	//TODO:Here must be the error somewhere
-	uint16_t size = tl_get_obstacles(array1,state.pos);
-
-	for(uint16_t ind = 0; ind<size ; ind++) {
-		printf("Array in kt_tracker: %f/%f\n",(double)array1[ind].northx,(double)array1[ind].easty);
-	}
-
+	uint16_t size = tl_get_obstacles(array,state.pos);
 
 	return size;
 }

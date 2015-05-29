@@ -29,8 +29,10 @@
 #include "pp_potentialfield_method.h"
 
 #include "kalman_tracker/kt_tracker.h"
+#include "kalman_tracker/kt_track_list.h"
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 #if C_DEBUG == 0
 #include "pp_communication_buffer.h"
@@ -901,10 +903,11 @@ bool get_sensor_obstacles(void) {
 	if(kt_get_state() == true) {
 		//The Kalman Tracker is active => We want to include the obstacles in the race-field
 
+		field.sensorobstacles = malloc(kt_get_nrofobstacles()*sizeof(NEDpoint));
 		field.NumberOfSensorobstacles = kt_get_obstacles(field.sensorobstacles);
 
 		//TODO: DEBUG only: print the Array
-		printf("Sensor Obstacles %d: \n",field.NumberOfObstacles);
+		printf("Sensor Obstacles %d: \n",field.NumberOfSensorobstacles);
 		for(uint16_t ind=0; ind<field.NumberOfSensorobstacles; ind++) {
 			printf("  %f/%f\n",(double)field.sensorobstacles[ind].northx, (double)field.sensorobstacles[ind].easty);
 		}
