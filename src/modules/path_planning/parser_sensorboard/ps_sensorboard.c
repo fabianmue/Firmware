@@ -330,6 +330,20 @@ bool sb_handler(void) {
 
 
 
+/**
+ * Set configuration by QGround Control
+ *
+ * @param period: Period of execution of the Sensorboard Parser [s]
+ */
+bool sb_set_configuration(float period) {
+
+	if(period>0) {
+		config.period = (uint64_t)(period * (float)1e6); //Convert from s to us
+	}
+
+	return true;
+}
+
 
 
 /***********************************************************************************/

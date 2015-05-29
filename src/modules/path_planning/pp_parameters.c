@@ -11,6 +11,7 @@
 #include "pp_parameters.h"
 #include <drivers/drv_hrt.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "pp_navigator.h"
 #include "pp_cost_method.h"
@@ -19,6 +20,8 @@
 #include "kalman_tracker/kt_tracker.h"
 #include "kalman_tracker/kt_track_list.h"
 #include "kalman_tracker/kt_cog_list.h"
+
+#include "parser_sensorboard/ps_sensorboard.h"
 
 #define M_PI_F 3.14159265358979323846f
 
@@ -356,7 +359,7 @@ PARAM_DEFINE_INT32(PP_NAV_SETAR,0);
  * kt_enable
  * Enable the Kalman Tracker and therefore use the Tracked Obstacles in the Pathplanning
  */
-PARAM_DEFINE_INT32(KT_ENABLE,0);
+PARAM_DEFINE_INT32(KT_A_ENABLE,0);
 
 /**
  * kt_...
@@ -364,6 +367,9 @@ PARAM_DEFINE_INT32(KT_ENABLE,0);
  */
 PARAM_DEFINE_FLOAT(KT_SIGMA,2.0f);
 PARAM_DEFINE_INT32(KT_UNSEEN,2);
+PARAM_DEFINE_FLOAT(KT_NNSF_THRESH,100);
+PARAM_DEFINE_FLOAT(KT_CO,10);
+PARAM_DEFINE_FLOAT(KT_PERIOD,2);
 
 
 
@@ -473,6 +479,9 @@ static struct pointers_param_qgc_s{
 	param_t kt_enable;
 	param_t kt_sigma;
 	param_t kt_unseen;
+	param_t kt_nnsf_thresh;
+	param_t kt_co;
+	param_t kt_period;
 
 }pointers_param_qgc;
 
@@ -589,9 +598,13 @@ void p_param_init(void){
 
 
 	//**KALMAN OBSTACLE TRACKER
-	pointers_param_qgc.kt_enable = param_find("KT_ENABLE");
+	pointers_param_qgc.kt_enable = param_find("KT_A_ENABLE");
 	pointers_param_qgc.kt_sigma = param_find("KT_SIGMA");
 	pointers_param_qgc.kt_unseen = param_find("KT_UNSEEN");
+	pointers_param_qgc.kt_nnsf_thresh = param_find("KT_NNSF_THRESH");
+	pointers_param_qgc.kt_co = param_find("KT_CO");
+	pointers_param_qgc.kt_period = param_find("KT_PERIOD");
+
 
 
     //get parameters but do not add any grid lines at start up
@@ -910,7 +923,17 @@ void p_param_update(bool update_path_param){
    	param_get(pointers_param_qgc.kt_unseen, &kt_unseen);
    	tl_set_configuration(kt_sigma, kt_unseen);
 
+   	float kt_nnsf_thresh = 0;
+   	param_get(pointers_param_qgc.kt_nnsf_thresh, &kt_nnsf_thresh);
+   	cl_set_configuration(kt_nnsf_thresh);
 
+   	float kt_co = 0;
+   	param_get(pointers_param_qgc.kt_co, &kt_co);
+   	kt_set_configuration(kt_co);
+
+   	float kt_period = 0;
+   	param_get(pointers_param_qgc.kt_period, &kt_period);
+   	sb_set_configuration(kt_period);
 
 
 }

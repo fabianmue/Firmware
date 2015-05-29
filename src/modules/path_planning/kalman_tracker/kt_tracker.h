@@ -39,6 +39,10 @@ uint16_t kt_get_obstacles(NEDpoint *array);
 uint16_t kt_get_nrofobstacles(void);
 
 
+/* @brief Set configuration parameters by QGround Control */
+bool kt_set_configuration(float co);
+
+
 
 
 #endif /* KT_TRACKER_H_ */

@@ -43,6 +43,10 @@ bool cl_flush(void);
 bool cl_delete_obj(cog_obj *ptr);
 
 
+/* @brief Set configuration parameters by QGround Control */
+bool cl_set_configuration(float nnsf_threshold);
+
+
 void cl_print_list(void);
 
 //cog_obj *get_obj(float key);

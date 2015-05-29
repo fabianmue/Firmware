@@ -28,5 +28,8 @@ bool sb_read_data(uint8_t *buffer);
 /* Regularely called handler-function */
 bool sb_handler(void);
 
+/* Set parameters by QGround Control */
+bool sb_set_configuration(float period);
+
 
 #endif /* SENSORBOARD_H_ */

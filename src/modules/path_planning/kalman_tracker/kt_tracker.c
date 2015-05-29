@@ -254,6 +254,19 @@ uint16_t kt_get_nrofobstacles(void) {
 }
 
 
+/**
+ * Set configuration parameters by QGround Control
+ *
+ * @param co: Parameter for Segmentation
+ */
+bool kt_set_configuration(float co) {
+
+	config.c0 = co;
+
+	return true;
+}
+
+
 
 /***********************************************************************************/
 /*****  P R I V A T E    F U N C T I O N S  ****************************************/
