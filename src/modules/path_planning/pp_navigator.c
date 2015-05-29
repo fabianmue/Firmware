@@ -900,18 +900,22 @@ void nav_set_targetnumber(uint8_t tar_num) {
  */
 bool get_sensor_obstacles(void) {
 
+	//Free the previously allocated memory, since we are going to update the number of obstacles
+	free(field.sensorobstacles);
+
 	if(kt_get_state() == true) {
 		//The Kalman Tracker is active => We want to include the obstacles in the race-field
 
+		//Allocate memory for the obstacles
 		field.sensorobstacles = malloc(kt_get_nrofobstacles()*sizeof(NEDpoint));
-		field.NumberOfSensorobstacles = kt_get_obstacles(field.sensorobstacles);
 
-		//TODO: DEBUG only: print the Array
-		printf("Sensor Obstacles %d: \n",field.NumberOfSensorobstacles);
-		for(uint16_t ind=0; ind<field.NumberOfSensorobstacles; ind++) {
-			printf("  %f/%f\n",(double)field.sensorobstacles[ind].northx, (double)field.sensorobstacles[ind].easty);
-		}
-		printf("End of Sensor Obstacles\n");
+		//Get the obstacles from the linked-list
+		field.NumberOfSensorobstacles = kt_get_obstacles(field.sensorobstacles);
+	} else {
+		//Make sure the Array for Sensor Obstacles is empty
+
+		free(field.sensorobstacles);
+		field.NumberOfSensorobstacles = 0;
 	}
 
 	return true;

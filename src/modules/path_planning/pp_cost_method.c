@@ -546,13 +546,27 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 
 	//Loop over all Obstacles
 	uint8_t i;
-	for (i = 0; i < field->NumberOfObstacles; i++) {
+	for (i = 0; i < (field->NumberOfObstacles+field->NumberOfSensorobstacles); i++) {
+
+		//Get the obstacle to treat in this step
+		NEDpoint obstacle;
+
+		if(i<field->NumberOfObstacles) {
+			//The static predefined Obstacles
+
+			obstacle = field->obstacles[i];
+		} else {
+			//The dynamic Obstacles measured by the Sensor
+
+			obstacle = field->sensorobstacles[i-field->NumberOfObstacles];
+		}
+
 
 		float C = 0;	//Cost for this Obstacle
 
 		/* Only obstacles within a certain Horizon are taken into account. This means that only obstacles in our range
 		 * affect the Pathplanning. We do not care about far away obstacles. */
-		float distance = nh_ned_dist(state->position,field->obstacles[i]);
+		float distance = nh_ned_dist(state->position,obstacle);
 		/*Note: the distance to the Obstacle is never zero, since this would lead to a division by zero and therefore
 		 *      an unpredictable behaviour of the Pixhawk. */
 		if(distance > Config.ObstHorizon) {
@@ -563,7 +577,7 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 
 		/* Add the safety radius to the obstacle. An obstacle is modelled as a point on the map. To avoid the obstacle
 		 * and compensate for uncertainties (e.g. sudden changes in wind) the obstacle is made larger virtually */
-		float obst_bear = nh_ned_bearing(state->position,field->obstacles[i]);
+		float obst_bear = nh_ned_bearing(state->position,obstacle);
 
 		float ang_correction = atanf((Config.ObstSafetyRadius*1.5f)/distance);
 

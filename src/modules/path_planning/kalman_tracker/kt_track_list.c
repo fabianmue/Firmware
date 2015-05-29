@@ -465,9 +465,7 @@ bool tl_flush(void) {
 	}
 
 	//The list is now flushed => we have to reinit it
-	cl_init();
-
-	return true;
+	tl_init();
 
  	return true;
 }

@@ -46,6 +46,9 @@ uint16_t tl_get_size(void);
 /* @brief Get the obstacles in global NED-Frame */
 uint16_t tl_get_obstacles(NEDpoint *array, NEDpoint curpos);
 
+/* @brief Flush the List of tracked Objects */
+bool tl_flush(void);
+
 void tl_print_list(void);
 
 

@@ -95,7 +95,7 @@ bool tr_init(void) {
 
 	//Init Variables
 	state.newdata = false;
-	state.enable = true; 	//TODO: Set this to false!
+	state.enable = false; 	//TODO: Set this to false!
 	memset(&dist_mat,0,sizeof(dist_mat));
 	memset(&seg_mat,0,sizeof(seg_mat));
 
@@ -206,6 +206,8 @@ bool kt_enable(uint8_t status) {
 		//We want to disable the Kalman Tracker
 
 		state.enable = false;
+
+		tl_flush();
 	}
 
 	return true;
