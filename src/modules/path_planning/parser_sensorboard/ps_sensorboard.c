@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "ps_sensorboard.h"
 //#include "ps_data_update.h"
 

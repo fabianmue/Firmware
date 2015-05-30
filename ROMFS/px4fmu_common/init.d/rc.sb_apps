@@ -22,8 +22,8 @@ parser_200WX start
 #
 # start the path_planning.c script:
 # Use sleep to give parser_200WX time to start up, before Pathplanning is started 
-# usleep 100000
-# path_planning start
+usleep 100000
+path_planning start
 
 
 # [commented out 06/03/2015]
