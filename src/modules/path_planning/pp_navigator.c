@@ -914,7 +914,15 @@ bool get_sensor_obstacles(void) {
 	} else {
 		//Make sure the Array for Sensor Obstacles is empty
 
-		free(field.sensorobstacles);
+		NEDpoint origin;
+		origin.northx = 0;
+		origin.easty = 0;
+		for (uint8_t ind = 0; ind < field.NumberOfSensorobstacles; ind++) {
+
+			field.sensorobstacles[ind] = origin;
+		}
+
+		//free(field.sensorobstacles);
 		field.NumberOfSensorobstacles = 0;
 	}
 
