@@ -66,7 +66,6 @@ static state_enum rx_state = IDLE;  //State for the receive-finite state machine
 static int comport = -1;		//COM-Port Object
 
 
-
 /***********************************************************************************/
 /*****  F U N C T I O N   P R O T O T Y P E S **************************************/
 /***********************************************************************************/
@@ -96,6 +95,7 @@ bool request_data(uint8_t cmd_inp);
 #define CMD_LASTDIST    0x4A    //Latest known distance from the LIDAR
 #define CMD_DISTMAT1    0x4B    //Return the distance Matrix for 0-179
 #define CMD_DISTMAT2    0x4C    //Return the distance Matrix for 180-355
+#define CMD_DISTMATSMALL 0x4D   //Return the distance Matrix fro -SENSOR_RANGE to +SENSOR_RANGE centered at boat-heading
 #define CMD_RESET       0x20    //Reset the Sensor to initial conditions
 
 
@@ -296,8 +296,10 @@ bool sb_handler(void) {
 
 		#if(LDEBUG_STATICDATA == 0)
 
-			request_data(CMD_DISTMAT1);
-			request_data(CMD_DISTMAT2);
+			//request_data(CMD_DISTMAT1);
+			//request_data(CMD_DISTMAT2);
+
+			request_data(CMD_DISTMATSMALL);
 
 		#else
 
@@ -424,7 +426,7 @@ bool request_data(uint8_t cmd_inp) {
 					uint16_t ind2 = 2*i+1;
 					uint16_t dist = (((uint16_t)state.data[ind1])<<8) | ((uint16_t)state.data[ind2]);
 
-					dist = dist + 1;
+					//dist = dist + 1;
 
 					printf("Dist %d: %d\n",i*SENSOR_STEPSIZE+180,dist);
 
@@ -436,6 +438,36 @@ bool request_data(uint8_t cmd_inp) {
 
 				break;
 			}
+			case CMD_DISTMATSMALL: {
+				//Get the small distance Matrix that reaches from -SENSOR_RANGE to +SENSOR_RANGE in Steps of SENSOR_STEPSIZE
+
+				//The first two bytes is the heading for which the matrix is valid
+				uint16_t heading = (((uint16_t)state.data[0])<<8) | ((uint16_t)state.data[1]);
+
+				uint16_t numOfBytes = 2*SENSOR_RANGE/SENSOR_STEPSIZE * 2; //For every measured bearing, we receive two Bytes (uint16_t).
+				uint16_t dist_mat_small[2*SENSOR_RANGE/SENSOR_STEPSIZE];
+
+
+				uint16_t i;
+					for(i=0; i < numOfBytes/2; i++) {
+						uint16_t ind1 = 2*i;
+						uint16_t ind2 = 2*i+1;
+						uint16_t dist = (((uint16_t)state.data[ind1])<<8) | ((uint16_t)state.data[ind2]);
+
+						//dist = dist + 1;
+
+						printf("Dist %d: %d\n",i*SENSOR_STEPSIZE+180,dist);
+
+						dist_mat_small[i] = dist;
+					}
+
+					//The distance-matrix is completely received => we tell that to the tracker
+					tr_newdata(dist_mat_small,heading);
+
+				break;
+			}
+
+
 			default: {
 				//Undesirable, but nothing we can do about it
 
