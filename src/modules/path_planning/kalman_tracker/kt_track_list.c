@@ -26,7 +26,7 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-//#define NULL 0
+#define MAXSIZE 7 //maximum number of tracks allowed in the memory
 
 //State of the Linked list
 static struct {
@@ -96,6 +96,13 @@ bool tl_init(void) {
  */
 bool tl_add(float x_cog, float y_cog) {
 
+	if(state.size > MAXSIZE) {
+		//Make sure we produce no memory-overflow
+
+		return false;
+	}
+
+
 	#if LDEBUG_KALMANTRACKER_CMS == 1
 	//printf("Added tracking object! (%f/%f)\n",(double)x_cog,(double)y_cog);
 	#endif
@@ -103,6 +110,14 @@ bool tl_add(float x_cog, float y_cog) {
 	//We create the Object
 	track_obj *temp;
 	temp = malloc(sizeof(track_obj));
+
+	if(temp == NULL) {
+		#if LDEBUG_KALMANTRACKER_CMS == 1
+		printf("Could not allocate memory for Track!\n");
+		#endif
+		return false;
+	}
+
 
 	//P is equal to the identity
 	temp->P[0] = 1; //P11

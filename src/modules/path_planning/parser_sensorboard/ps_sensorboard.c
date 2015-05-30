@@ -304,7 +304,8 @@ bool sb_handler(void) {
 
 		#else
 
-		uint16_t distmat[90] = {162,158,156,153,152,151,148,147,146,
+		//Eight Tracks
+		/*uint16_t distmat[90] = {162,158,156,153,152,151,148,147,146,
 			146,146,144,142,142,141,141,140,140,
 			139,140,140,141,141,142,144,145,146,
 			148,149,153,157,162,156,158,164,180,
@@ -313,7 +314,19 @@ bool sb_handler(void) {
 			120,120,121,119,117,116,115,114,114,
 			113,114,112,112,114,115,114,116,116,
 			118,121,121,123,126,115, 75, 73, 80,
-			 80,149,156,162,170,171,178,173,169};//,166
+			 80,149,156,162,170,171,178,173,169};//,166*/
+
+		//fiveteen Tracks
+		uint16_t distmat[90] = {0,  267,271,270,291,316,317,275,270,
+			239,128,123,118,109,112,108,115,137,
+			137,137,137,137,136,139,140,127,126,
+			132,133,138,164,185,187,202,193,210,
+			235,244,521,506,506,506,540,594,610,
+			556,582,518,569,561,580,541,564,597,
+			597,100,108,107,105, 93, 92,101, 95,
+			 90, 88, 84, 79, 55, 51, 50, 46, 34,
+			 33, 29, 27, 26, 25, 26, 27, 28, 27,
+			 30, 29, 31, 32, 31, 35, 44, 49, 31};
 
 		//distmat[0] = 162;
 
@@ -405,7 +418,7 @@ bool request_data(uint8_t cmd_inp) {
 
 					//dist = dist + 1;
 
-					printf("Dist %d: %d\n",i*SENSOR_STEPSIZE,dist);
+					//printf("Dist %d: %d\n",i*SENSOR_STEPSIZE,dist);
 
 					//Note: The distance is in Centimeters!
 					//Send the Distance Value to the Cost-Function Pathplanning
@@ -429,7 +442,7 @@ bool request_data(uint8_t cmd_inp) {
 
 					//dist = dist + 1;
 
-					printf("Dist %d: %d\n",i*SENSOR_STEPSIZE+180,dist);
+					//printf("Dist %d: %d\n",i*SENSOR_STEPSIZE+180,dist);
 
 					//Note: The distance is in Centimeters!
 					//Send the Distance Value to the Cost-Function Pathplanning
@@ -457,7 +470,7 @@ bool request_data(uint8_t cmd_inp) {
 
 						//dist = dist + 1;
 
-						printf("Dist %d: %d\n",i*SENSOR_STEPSIZE+180,dist);
+						//printf("Dist %d: %d\n",i*SENSOR_STEPSIZE+180,dist);
 
 						dist_mat_small[i] = dist;
 					}

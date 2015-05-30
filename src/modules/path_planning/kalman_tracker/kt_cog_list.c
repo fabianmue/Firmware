@@ -27,7 +27,7 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-//#define NULL 0
+#define MAXSIZE 7 //maximum number of tracks allowed in the memory
 
 //State of the Linked list
 static struct {
@@ -86,13 +86,20 @@ bool cl_init(void) {
  */
 bool cl_add(float x_cog, float y_cog) {
 
+	if(state.size > MAXSIZE) {
+		//Make sure, we produce no memory-overflow
+
+		return false;
+	}
+
+
 	//We create the Object
 	cog_obj *temp = NULL;
 	temp = malloc(sizeof(struct cog_obj));
 
 	if(temp == NULL) {
 		#if LDEBUG_KALMANTRACKER_CMS == 1
-		printf("Could not allocate memory for COG!");
+		printf("Could not allocate memory for COG!\n");
 		#endif
 		return false;
 	}
