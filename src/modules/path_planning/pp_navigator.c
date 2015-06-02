@@ -900,11 +900,11 @@ void nav_set_targetnumber(uint8_t tar_num) {
  */
 bool get_sensor_obstacles(void) {
 
-	//Free the previously allocated memory, since we are going to update the number of obstacles
-	free(field.sensorobstacles);
-
 	if(kt_get_state() == true) {
 		//The Kalman Tracker is active => We want to include the obstacles in the race-field
+
+		//Free the previously allocated memory, since we are going to update the number of obstacles
+		free(field.sensorobstacles);
 
 		//Allocate memory for the obstacles
 		field.sensorobstacles = malloc(kt_get_nrofobstacles()*sizeof(NEDpoint));
