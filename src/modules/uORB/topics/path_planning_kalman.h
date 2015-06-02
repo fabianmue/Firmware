@@ -21,6 +21,15 @@ struct path_planning_kalman_s {
 	uint16_t tracknum; 	  /**< Number of tracks currently available */
 	uint16_t newtracknum; /**< Number of newly added tracks in the last step */
 	uint16_t refoundnum;  /**< Number of refound tracks in the last step */
+
+	float obj0x;		  /**< Position of the tracked objects in NED-Frame */
+	float obj0y;
+	float obj1x;
+	float obj1y;
+	float obj2x;
+	float obj2y;
+	float obj3x;
+	float obj3y;
 };
 
 

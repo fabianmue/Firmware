@@ -125,3 +125,49 @@ bool th_set_nrofrefoundtracks(uint16_t refoundnum) {
 
 	return true;
 }
+
+
+/**
+ * Store the position of an obstacle in the topic
+ *
+ * @param px,py: Position of the obstacle
+ * @param num: Number of the obstacle
+ */
+bool th_set_obstacleposition(float px, float py, uint16_t num) {
+
+	switch(num) {
+		case 0: {
+			ppk.obj0x = px;
+			ppk.obj0y = py;
+
+			break;
+		}
+		case 1: {
+			ppk.obj1x = px;
+			ppk.obj1y = py;
+
+			break;
+		}
+		case 2: {
+			ppk.obj2x = px;
+			ppk.obj2y = py;
+
+			break;
+		}
+		case 3: {
+			ppk.obj3x = px;
+			ppk.obj3y = py;
+
+			break;
+		}
+		default: {
+			//Nothing we can do about this
+			return false;
+		}
+	}
+
+	//Signal that the topic contains new data and should be advertised
+	flag_update = true;
+
+	return true;
+}

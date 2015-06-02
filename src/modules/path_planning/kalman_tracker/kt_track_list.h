@@ -55,6 +55,10 @@ bool tl_set_configuration(float sigma, uint8_t unseen_threshold);
 /* @brief Set the velcity of the boat, such that new objects can be assigned a correct velocity */
 bool tl_set_velocity(float vx,float vy);
 
+/* @brief Store a predefined number of obstacles into the topic */
+bool tl_store_obstacles(void);
+
+
 
 void tl_print_list(void);
 

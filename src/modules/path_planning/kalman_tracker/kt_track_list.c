@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include "kt_track_list.h"
 #include "kt_cog_list.h"
+#include "kt_topic_handler.h"
 
 #include <systemlib/err.h>
 #include <drivers/drv_hrt.h>
@@ -464,6 +465,28 @@ uint16_t tl_get_obstacles(NEDpoint *array, NEDpoint curpos) {
 
 	return tl_get_size();
 }
+
+
+/**
+ * Store a preset number of obstacles in the topic for post processing
+ *
+ */
+bool tl_store_obstacles(void) {
+
+	state.conductor = state.root;
+
+	uint16_t obj_num = 0;
+
+	while(state.conductor != NULL && obj_num < 4) {
+		th_set_obstacleposition(state.conductor->xhat[0],state.conductor->xhat[2], obj_num);
+
+		obj_num ++;
+		state.conductor = state.conductor->next;
+	}
+
+	return true;
+}
+
 
 
 /**

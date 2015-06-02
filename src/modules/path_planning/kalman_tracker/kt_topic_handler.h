@@ -31,4 +31,8 @@ bool th_set_nrofnewtracks(uint16_t refoundnum);
 bool th_set_nrofrefoundtracks(uint16_t refoundnum);
 
 
+/* @brief Set the position of a measured obstacle */
+bool th_set_obstacleposition(float px, float py, uint16_t num);
+
+
 #endif /* KT_TOPIC_HANDLER_H_ */
