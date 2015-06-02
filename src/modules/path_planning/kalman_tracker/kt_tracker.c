@@ -115,6 +115,9 @@ bool tr_init(void) {
  */
 bool tr_handler(void) {
 
+	//DEBUG only
+	//state.enable = false;
+
 	if(state.newdata == true && state.enable == true) {
 		//New measurement Data is present => we can do a Kalman Update
 		//Note: This is only executed, if the Kalman Filter was activated by the QGroundControl Parameter kt_enable

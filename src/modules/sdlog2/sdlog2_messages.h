@@ -569,7 +569,7 @@ struct log_PPD1_s{
 	float period;			/**< Time between two consecutive executions of the Pathplanning algorithm */
 };
 
-/* --- PARSER 200WX STATUS -------------------------------------------*/
+/* --- PATHPLANNING KALMAN VARIABLES -------------------------------------------*/
 #define LOG_PPK_MSG 68 //Added by Jonas Wirz
 struct log_PPK_s{
 	uint16_t tracknum; 	  /**< Number of tracks currently available */
