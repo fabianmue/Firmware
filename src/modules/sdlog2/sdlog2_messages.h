@@ -569,6 +569,23 @@ struct log_PPD1_s{
 	float period;			/**< Time between two consecutive executions of the Pathplanning algorithm */
 };
 
+/* --- PARSER 200WX STATUS -------------------------------------------*/
+#define LOG_PPK_MSG 68 //Added by Jonas Wirz
+struct log_PPK_s{
+	uint16_t tracknum; 	  /**< Number of tracks currently available */
+	uint16_t newtracknum; /**< Number of newly added tracks in the last step */
+	uint16_t refoundnum;  /**< Number of refound tracks in the last step */
+
+	float obj0x;		  /**< Position of the tracked objects in NED-Frame */
+	float obj0y;
+	float obj1x;
+	float obj1y;
+	float obj2x;
+	float obj2y;
+	float obj3x;
+	float obj3y;
+};
+
 
 //********************** End add *******************************
 
@@ -649,6 +666,7 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(PWS, "iHfH", "ByteR,Mask,DB1,ComMsg"), //Added by Marco Tranzatto
 	LOG_FORMAT(QGC4, "fBf", "k,Windo,Period"), //Added by Jonas Wirz
 	LOG_FORMAT(PPD1, "ffffffffff", "Hori,Srad,Wsiz,Gle,Gm,Go,Gs,Gt,Gw,Per"), //Added by Jonas Wirz
+	LOG_FORMAT(PPK,"HHHffffffff", "trk,ntrk,ref,o0x,o0y,o1x,o1y,o2x,o2y,o3x,o3y"), //Added by Jonas Wirz
     /* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),
