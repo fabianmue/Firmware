@@ -2305,7 +2305,7 @@ public:
         //return 8 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
         //return 6 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
         //return 4 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
-        return 2 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 3 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
     }
 
 private:
@@ -2340,6 +2340,10 @@ protected:
 
             snprintf(msg_int.name, sizeof(msg.name), "kt_numRefound");
             msg_int.value = ((int)(path_kal_debug.refoundnum));
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg_int);
+
+            snprintf(msg_int.name, sizeof(msg.name), "kt_numNewTrack");
+            msg_int.value = ((int)(path_kal_debug.newtracknum));
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg_int);
 
         }

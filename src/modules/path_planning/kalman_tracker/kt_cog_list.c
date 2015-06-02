@@ -14,6 +14,7 @@
 #include <math.h>
 #include "kt_cog_list.h"
 #include "kt_track_list.h"
+#include "kt_topic_handler.h"
 
 //#include <systemlib/err.h>
 //#include <drivers/drv_hrt.h>
@@ -183,6 +184,9 @@ bool cl_find_nn(float x_pos, float y_pos, float *x_meas, float *y_meas) {
  */
 bool cl_add_untracked(void) {
 
+	//Count the number of newly added objects
+	uint16_t newadded;
+
 	//Set the conductor to the root
 	state.conductor = state.root;
 
@@ -196,7 +200,13 @@ bool cl_add_untracked(void) {
 
 		//Let the conductor point to the next object
 		state.conductor = state.conductor->next;
+
+		//Count the number of newly added objects
+		newadded++;
 	}
+
+	//Publish the number of newly added objects for QGround Control
+	th_set_nrofnewtracks(newadded);
 
 	return true;
 

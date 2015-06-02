@@ -271,6 +271,12 @@ int pp_thread_main(int argc, char *argv[]) {
                     #endif //USE_GRID_LINES == 1
 
 
+					#if LDEBUG_KALMANTRACKER
+                    //Provide the Kalman Tracker with the velocity of the boat
+                    kt_set_velocity(strs.vehicle_global_position.vel_n, strs.vehicle_global_position.vel_e);
+					#endif
+
+
                 }
                 if(fds[2].revents & POLLIN){
                     //copy new parameters from QGC

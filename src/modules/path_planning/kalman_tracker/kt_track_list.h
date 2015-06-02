@@ -52,6 +52,9 @@ bool tl_flush(void);
 /* @brief Change configuration parameters by QGround Control */
 bool tl_set_configuration(float sigma, uint8_t unseen_threshold);
 
+/* @brief Set the velcity of the boat, such that new objects can be assigned a correct velocity */
+bool tl_set_velocity(float vx,float vy);
+
 
 void tl_print_list(void);
 

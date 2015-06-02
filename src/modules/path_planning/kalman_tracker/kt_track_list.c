@@ -33,10 +33,14 @@ static struct {
 	uint8_t size;	//Current Size of the List
 	track_obj *root; //Root of the tracking object list (pointer to the root)
 	track_obj *conductor; //Pointer to track_obj when traversing the list
+	float vx;       //Velocity of the boat in x and y direction
+	float vy;
 } state = {
 	.size =0,
 	.root = NULL,
-	.conductor = NULL
+	.conductor = NULL,
+	.vx = 0,
+	.vy = 0
 };
 
 static struct {
@@ -83,6 +87,8 @@ bool tl_init(void) {
 	state.size = 0;
 	state.root = NULL;
 	state.conductor = NULL;
+	state.vx = 0;
+	state.vy = 0;
 
 	//Everything is OK and we can return true
 	return true;
@@ -139,10 +145,11 @@ bool tl_add(float x_cog, float y_cog) {
 
 
 	//xhat reflects the first measurement
+	//We assume that the obstacle is static and therefore moves with negative Boat-Velocity => it comes closer
 	temp->xhat[0] = x_cog; //x
-	temp->xhat[1] = 1;     //vx
+	temp->xhat[1] = -state.vx;     //vx
 	temp->xhat[2] = y_cog; //y
-	temp->xhat[3] = 1;     //vy
+	temp->xhat[3] = -state.vy;     //vy
 
 	temp->seen = 1;	//The potential obstacle has been seen once
 	temp->unseen = 0; //The potential obstacle has never been unseen
@@ -470,6 +477,21 @@ bool tl_set_configuration(float sigma, uint8_t unseen_threshold) {
 	config.sigma = sigma;
 
 	config.unseen_threshold = unseen_threshold;
+
+	return true;
+}
+
+
+/**
+ * Set the velocitiy of the boat
+ *
+ * @param vx,vy: Velocity of the boat in x and y direction
+ */
+bool tl_set_velocity(float vx,float vy) {
+
+	//Set the state accordingly
+	state.vx = vx;
+	state.vy = vy;
 
 	return true;
 }

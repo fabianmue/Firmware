@@ -43,6 +43,10 @@ uint16_t kt_get_nrofobstacles(void);
 bool kt_set_configuration(float co);
 
 
+/* @brief Set the velocity of the Boat */
+bool kt_set_velocity(float vx, float vy);
+
+
 
 
 #endif /* KT_TRACKER_H_ */

@@ -255,6 +255,15 @@ uint16_t kt_get_nrofobstacles(void) {
 
 
 /**
+ * Set the current velocity of the Boat
+ */
+bool kt_set_velocity(float vx, float vy) {
+
+	return tl_set_velocity(vx,vy);
+}
+
+
+/**
  * Set configuration parameters by QGround Control
  *
  * @param co: Parameter for Segmentation
@@ -397,6 +406,8 @@ bool segment_COG(void) {
 
 		return true;
 }
+
+
 
 
 
