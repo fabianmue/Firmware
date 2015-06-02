@@ -207,7 +207,9 @@ bool kt_enable(uint8_t status) {
 
 		state.enable = false;
 
-		//tl_flush();
+		tl_flush();
+		cl_flush();
+
 	}
 
 	return true;

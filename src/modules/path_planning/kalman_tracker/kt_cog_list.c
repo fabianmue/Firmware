@@ -28,7 +28,7 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-#define MAXSIZE 7 //maximum number of tracks allowed in the memory
+#define MAXSIZE 20 //maximum number of tracks allowed in the memory
 
 //State of the Linked list
 static struct {
@@ -87,11 +87,11 @@ bool cl_init(void) {
  */
 bool cl_add(float x_cog, float y_cog) {
 
-	if(state.size > MAXSIZE) {
+	/*if(state.size > MAXSIZE) {
 		//Make sure, we produce no memory-overflow
 
 		return false;
-	}
+	}*/
 
 
 	//We create the Object
@@ -110,12 +110,57 @@ bool cl_add(float x_cog, float y_cog) {
 	temp->x_cog = x_cog;
 	temp->y_cog = y_cog;
 
-	//Set the next object in the list
+	temp->dist = sqrtf(x_cog*x_cog + y_cog*y_cog);
+
+
+	//Insert sorted (Insert the new element such that the list remains sorted with respect to the distance
+	cog_obj *current;
+	//Special case for the head end
+	if (state.root == NULL || (state.root->dist >= temp->dist)){
+		temp->next = state.root;
+	    state.root = temp;
+	} else {
+	    //Locate the node before the point of insertion
+	    current = state.root;
+	    while (current->next!=NULL && current->next->dist < temp->dist) {
+	    	current = current->next;
+	    }
+	    temp->next = current->next;
+	    current->next = temp;
+	}
+
+	state.size++;
+
+	//When the maximum size of the List is exceeded, we delete the element with the biggest distance
+	if(state.size > MAXSIZE) {
+		//We exceed the maximum size of the linked list => we delete the last element
+
+		//printf("Exceed size\n");
+
+		state.conductor = state.root;
+		cog_obj *previous = state.conductor;
+		while(state.conductor->next != NULL) {
+			previous = state.conductor;
+			state.conductor = state.conductor->next;
+		}
+
+		//We are at the end of the list
+		//printf("End of list: %f\n",previous->x_cog);
+		previous->next = NULL;
+		free(state.conductor);
+
+		state.size--;
+
+	}
+
+
+
+	/*//Set the next object in the list
 	temp->next = state.root;
 
 	state.root = temp;
 
-	state.size++;
+	state.size++;*/
 
 
 	return true;

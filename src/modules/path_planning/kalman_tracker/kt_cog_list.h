@@ -12,8 +12,10 @@
 
 typedef struct cog_obj{
 
-	float x_cog;
-	float y_cog;
+	float x_cog;	//x-Position of the Segment in Sensor-Frame (NED)
+	float y_cog;    //y-Position of the Segment in Sensor-Frame (NED)
+
+	float dist; 	//Distance from the Sensor
 
 	struct cog_obj *next;
 } cog_obj;
