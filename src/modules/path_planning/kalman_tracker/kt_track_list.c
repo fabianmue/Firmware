@@ -259,6 +259,9 @@ bool tl_kalman_predict(void) {
  */
 bool tl_nnsf(void) {
 
+	//Count the number of refound tracks for debugging
+	uint16_t refound = 0;
+
 	//Iterate over the whole list of tracking objects
 	state.conductor = state.root;
 
@@ -289,6 +292,9 @@ bool tl_nnsf(void) {
 
 			nextptr = state.conductor->next;
 
+			//Count the number of refound tracks
+			refound++;
+
 		} else {
 			//No COG matched the estimate => the object is possibly hidden by another object
 
@@ -309,6 +315,10 @@ bool tl_nnsf(void) {
 				nextptr = state.conductor->next;
 			}
 		}
+
+
+		//Publish the number of refound tracks in the topic
+		th_set_nrofrefoundtracks(refound);
 
 
 		//Set the next conductor

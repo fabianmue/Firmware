@@ -546,7 +546,7 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
 
 	//Loop over all Obstacles
 	uint8_t i;
-	for (i = 0; i < (field->NumberOfObstacles/*+field->NumberOfSensorobstacles*/); i++) {
+	for (i = 0; i < (field->NumberOfObstacles+field->NumberOfSensorobstacles); i++) {
 
 		//Get the obstacle to treat in this step
 		NEDpoint obstacle;

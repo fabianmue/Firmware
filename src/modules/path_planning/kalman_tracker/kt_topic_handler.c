@@ -91,3 +91,37 @@ bool th_set_nroftracks(uint16_t tracknum) {
 	return true;
 
 }
+
+
+/**
+ * Set the number of tracked objects newly added to the tracking-list
+ *
+ * @param newtracknum: Number of newly added tracks
+ */
+bool th_set_nrofnewtracks(uint16_t newtracknum) {
+
+	//Update the value in the topic
+	ppk.newtracknum = newtracknum;
+
+	//Set the flag such that the topic is advertised
+	flag_update = true;
+
+	return true;
+}
+
+
+/**
+ * Set the number of tracked objects that were refound in this step
+ *
+ * @param refoundnum: Number of refound tracks in this step
+ */
+bool th_set_nrofrefoundtracks(uint16_t refoundnum) {
+
+	//Update the value in the topic
+	ppk.refoundnum = refoundnum;
+
+	//Set the flag such that the topic is advertised
+	flag_update = true;
+
+	return true;
+}

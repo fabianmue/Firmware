@@ -23,4 +23,12 @@ bool th_update(void);
 bool th_set_nroftracks(uint16_t tracknum);
 
 
+/* @brief Set the number of newly added tracks in the last step */
+bool th_set_nrofnewtracks(uint16_t refoundnum);
+
+
+/* @brief Set the number of refound tracks in the last step */
+bool th_set_nrofrefoundtracks(uint16_t refoundnum);
+
+
 #endif /* KT_TOPIC_HANDLER_H_ */
