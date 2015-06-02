@@ -291,7 +291,8 @@ bool sb_handler(void) {
 
 	uint64_t systime = hrt_absolute_time();
 
-	if((systime-state.last_call) >= config.period) {
+	//if((systime-state.last_call) >= config.period) {
+	if((systime-state.last_call) >= 2e6) {
 
 		state.last_call = systime;
 
@@ -300,7 +301,9 @@ bool sb_handler(void) {
 			//request_data(CMD_DISTMAT1);
 			//request_data(CMD_DISTMAT2);
 
+			printf("Before Request Data from Sensor \n");
 			request_data(CMD_DISTMATSMALL);
+			printf("Request Data from Sensor \n");
 
 		#else
 
