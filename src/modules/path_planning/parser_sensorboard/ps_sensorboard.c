@@ -378,7 +378,7 @@ bool sb_set_configuration(float period) {
 bool request_data(uint8_t cmd_inp) {
 
 	//*** SEND A COMMAND HERE
-	sb_write(cmd_inp);		//Send the command to the Sensorboard for receiving the
+	sb_write(cmd_inp);		//Send the command to the Sensorboard
 	sleep(1);
 	sb_read();				//Read and parse the data
 
@@ -419,13 +419,13 @@ bool request_data(uint8_t cmd_inp) {
 					uint16_t ind2 = 2*i+1;
 					uint16_t dist = (((uint16_t)state.data[ind1])<<8) | ((uint16_t)state.data[ind2]);
 
-					//dist = dist + 1;
+					dist = dist + 1;
 
 					//printf("Dist %d: %d\n",i*SENSOR_STEPSIZE,dist);
 
 					//Note: The distance is in Centimeters!
 					//Send the Distance Value to the Cost-Function Pathplanning
-					cm_sensor_dist(i*SENSOR_STEPSIZE,dist);
+					//cm_sensor_dist(i*SENSOR_STEPSIZE,dist);
 				}
 
 				break;
@@ -443,13 +443,13 @@ bool request_data(uint8_t cmd_inp) {
 					uint16_t ind2 = 2*i+1;
 					uint16_t dist = (((uint16_t)state.data[ind1])<<8) | ((uint16_t)state.data[ind2]);
 
-					//dist = dist + 1;
+					dist = dist + 1;
 
 					//printf("Dist %d: %d\n",i*SENSOR_STEPSIZE+180,dist);
 
 					//Note: The distance is in Centimeters!
 					//Send the Distance Value to the Cost-Function Pathplanning
-					cm_sensor_dist(i*SENSOR_STEPSIZE+180,dist);
+					//cm_sensor_dist(i*SENSOR_STEPSIZE+180,dist);
 
 				}
 
@@ -480,6 +480,9 @@ bool request_data(uint8_t cmd_inp) {
 
 					//The distance-matrix is completely received => we tell that to the tracker
 					tr_newdata(dist_mat_small,heading);
+
+					//The cost-function pathplanning receives a copy as well
+					cm_sensor_dist(heading,dist_mat_small);
 
 				break;
 			}

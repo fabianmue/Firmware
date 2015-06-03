@@ -855,9 +855,9 @@ void p_param_update(bool update_path_param){
 
 
    	//**SET THE NUMBER OF THE TARGET THAT SHOULD BE REACHED NEXT
-   	//uint8_t targetnumber = 0;
-   	//param_get(pointers_param_qgc.nav_target_next, &targetnumber);
-   	//nav_set_targetnumber(targetnumber);
+   	uint8_t targetnumber = 0;
+   	param_get(pointers_param_qgc.nav_target_next, &targetnumber);
+   	nav_set_targetnumber(targetnumber);
 
 
    	//**INVERT ALPHA BEFORE SENDING TO AUTONOMOUS SAILING APP

@@ -57,7 +57,20 @@ static struct {
 
 static bool DEBUG_noDist = false;
 
-static float sensor_dist[360/SENSOR_STEPSIZE]; //Distance Matrix from the Sensor. Distances in [m]
+
+//Struct holding the Sensor Measurement Data
+static struct {
+	float dist[2*SENSOR_RANGE/SENSOR_STEPSIZE]; //Distance Matrix from the Sensor. Distances in [m]
+	uint16_t heading;  //Heading for which the values in the distance Matrix are valid
+	uint16_t min_ind;  //Smallest index of the distance matrix in compass frame
+	uint16_t max_ind;  //Biggest index of the distance matrix in compass frame
+} sensor = {
+	.heading = 0,
+	.min_ind = 0,
+	.max_ind = 0
+};
+
+#define SENSOR_ZERO_INDEX 2*SENSOR_RANGE/SENSOR_STEPSIZE //The largest index in sensor-compass frame that corresponds to 0°/360°
 
 
 /* @brief Calculate the total cost for a given simulated heading */
@@ -223,16 +236,22 @@ void DEBUG_set_minus(uint8_t DistStatus) {
  * Store one entry from the Distance Matrix obtained by the Sensor to the local sensor_distance Matrix
  * This distance Matrix can then be used to calculate the sensor_cost.
  *
- * @param angle: Angle for which the distance is valid [°]
- * @param distance: Measured Distance from the Sensor [cm]
+ * @param angle: Angle (heading) for which the distance matrix is valid [°]
+ * @param dist_mat: Measured Distance from the Sensor stored as a matrix [cm]
  */
-void cm_sensor_dist(uint16_t angle, uint16_t distance) {
+void cm_sensor_dist(uint16_t angle, uint16_t new_dist_mat[]) {
 
-	//Index in the Matrix
-	uint16_t ind = angle/SENSOR_STEPSIZE;
+	//Copy the distance Matrix and transform to meters
+	for(uint8_t i=0; i<2*SENSOR_RANGE/SENSOR_STEPSIZE; i++) {
+		//printf("%d/%d, ",i,new_dist_mat[i]);
+		sensor.dist[i] = (float)new_dist_mat[i]/100.0f;
+	}
 
-	//Store the distance to this entry in the Matrix
-	sensor_dist[ind] = (float)(distance)/100.0f;
+	//Store the heading for which the distance matrix is valid
+	sensor.heading = angle;
+
+	sensor.max_ind = nh_mod(sensor.heading-SENSOR_RANGE)/SENSOR_STEPSIZE; //Start Index of the sensor matrix in Compass Frame
+	sensor.min_ind = nh_mod(sensor.heading+SENSOR_RANGE)/SENSOR_STEPSIZE; //End Index of the sensor matrix in Compass Frame
 }
 
 
@@ -288,8 +307,12 @@ float total_cost(float seg, struct nav_state_s *state, struct nav_field_s *field
 	//printf("  Obstacle Cost: %f, %f\n",seg*RAD2DEG,Co);
 	#endif
 
+
+	/*** SENSOR COST ***/
+	float Csensor = cost_sensor(seg);
+
 	/*** TOTAL COST ***/
-	return (Cw + Cm + Ct + Cs + Co);
+	return (Cw + Cm + Ct + Cs + Co + Csensor);
 }
 
 
@@ -641,9 +664,46 @@ float cost_ostacle(float seg, struct nav_state_s *state, struct nav_field_s *fie
  */
 float cost_sensor(float seg) {
 
-	uint16_t ind = seg*RAD2DEG/SENSOR_STEPSIZE;
+	uint16_t ind_compass = seg*RAD2DEG/SENSOR_STEPSIZE; //The corresponding index in Compass Frame
 
-	return (SENSOR_MAXDIST-sensor_dist[ind])/SENSOR_MAXDIST;
+	uint16_t ind_sensormat = 0;
+
+	if(sensor.max_ind < sensor.min_ind) {
+		//We include the disconitunuity at 0/360° => be careful
+
+		if(ind_compass > sensor.max_ind && ind_compass < SENSOR_ZERO_INDEX) {
+			//We are on the left side of the compass
+
+			ind_sensormat = ind_compass - sensor.max_ind;
+
+		} else {
+			//We are on the right side of the compass
+
+			ind_sensormat = ind_compass + (SENSOR_ZERO_INDEX-sensor.max_ind);
+		}
+
+	} else {
+		//The discontinuity is not included
+
+		ind_sensormat = ind_compass-sensor.min_ind;
+
+	}
+
+	//Check, if the sensor provides a value for the desired index
+	if(ind_sensormat < 2*SENSOR_RANGE/SENSOR_STEPSIZE) {
+		//We have a value stored in the distance matrix => return the distance based cost
+
+		return Config.GSensor*(SENSOR_MAXDIST-sensor.dist[ind_sensormat])/SENSOR_MAXDIST;
+
+	} else {
+		//We do not have a stored distance value => return a middle high cost
+
+		return Config.GSensor * 0.5f;
+	}
+
+
+
+
 
 }
 

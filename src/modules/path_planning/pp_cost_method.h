@@ -37,7 +37,7 @@ void DEBUG_set_minus(uint8_t DistStatus) ;
 
 
 /* @brief Store a value from the distance Matrix obtained by the sensor */
-void cm_sensor_dist(uint16_t angle, uint16_t distance);
+void cm_sensor_dist(uint16_t angle, uint16_t new_dist_mat[]);
 
 
 #endif /* PATHPLANNING_COSTFUNCTION_H_ */
