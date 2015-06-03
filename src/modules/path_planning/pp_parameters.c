@@ -279,7 +279,7 @@ PARAM_DEFINE_FLOAT(PP_NAV_TAR_NEDN,0);
 PARAM_DEFINE_FLOAT(PP_NAV_TAR_NEDE,0);
 
 PARAM_DEFINE_INT32(PP_NAV_TAR_NUM, 1);	//Number of Target currently set
-//PARAM_DEFINE_INT32(PP_NAV_TAR_NEXT,0);	//Number of the next Target to be reached
+PARAM_DEFINE_INT32(PP_NAV_TAR_NEXT,0);	//Number of the next Target to be reached
 
 
 /**
@@ -440,7 +440,7 @@ static struct pointers_param_qgc_s{
 	param_t nav_target_nedn;
 	param_t nav_target_nede;
 	param_t nav_target_number;
-	//param_t nav_target_next;
+	param_t nav_target_next;
 	param_t nav_obstacle_lat;
 	param_t nav_obstacle_lon;
 	param_t nav_obstacle_nedn;
@@ -560,7 +560,7 @@ void p_param_init(void){
     pointers_param_qgc.nav_target_nedn = param_find("PP_NAV_TAR_NEDN");
     pointers_param_qgc.nav_target_nede = param_find("PP_NAV_TAR_NEDE");
     pointers_param_qgc.nav_target_number = param_find("PP_NAV_TAR_NUM");
-    //pointers_param_qgc.nav_target_next = param_find("PP_NAV_TAR_NEXT");
+    pointers_param_qgc.nav_target_next = param_find("PP_NAV_TAR_NEXT");
     pointers_param_qgc.nav_obstacle_lat = param_find("PP_NAV_OBST_LAT");
     pointers_param_qgc.nav_obstacle_lon = param_find("PP_NAV_OBST_LON");
     pointers_param_qgc.nav_obstacle_nedn = param_find("PP_NAV_OBST_NEDN");

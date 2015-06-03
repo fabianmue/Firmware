@@ -65,6 +65,8 @@ static struct {
 	.use_yaw = false
 };
 
+uint16_t last_tar_num = 0; 	//Last changed Target number (from QGround Control)
+
 
 /** Init the Struct containing the current state of the Navigator */
 static struct nav_state_s state;
@@ -883,7 +885,17 @@ void nav_set_quick_target(void) {
  * Set the current number of target to be reached.
  */
 void nav_set_targetnumber(uint8_t tar_num) {
-	state.targetNum = tar_num;
+
+	if(tar_num != last_tar_num) {
+		//The user has changed the value of the target number
+		//Only in this case, we feed a new target number to the algorithm
+
+		state.targetNum = tar_num;
+
+		last_tar_num = tar_num;
+	}
+
+
 }
 
 
