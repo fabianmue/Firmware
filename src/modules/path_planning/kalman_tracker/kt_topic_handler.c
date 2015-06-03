@@ -52,6 +52,8 @@ bool th_init(void) {
     memset(&ppk, 0, sizeof(ppk));
     adv_ppk = orb_advertise(ORB_ID(path_planning_kalman), &ppk);
 
+    th_update();
+
 	return true;
 }
 
