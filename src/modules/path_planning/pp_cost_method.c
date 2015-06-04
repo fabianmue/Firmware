@@ -309,7 +309,10 @@ float total_cost(float seg, struct nav_state_s *state, struct nav_field_s *field
 
 
 	/*** SENSOR COST ***/
-	float Csensor = cost_sensor(seg);
+	float Csensor = 0;
+#if LDEBUG_SENSORBOARD == 0
+	//Csensor = cost_sensor(seg);
+#endif
 
 	/*** TOTAL COST ***/
 	return (Cw + Cm + Ct + Cs + Co + Csensor);
