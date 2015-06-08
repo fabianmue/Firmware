@@ -482,7 +482,7 @@ bool request_data(uint8_t cmd_inp) {
 					tr_newdata(dist_mat_small,heading);
 
 					//The cost-function pathplanning receives a copy as well
-					cm_sensor_dist(heading,dist_mat_small);
+					//cm_sensor_dist(heading,dist_mat_small);
 
 				break;
 			}
