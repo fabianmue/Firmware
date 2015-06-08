@@ -477,7 +477,7 @@ bool tl_store_obstacles(void) {
 
 	uint16_t obj_num = 0;
 
-	while(state.conductor != NULL && obj_num < 4) {
+	while(state.conductor != NULL && obj_num < 2) {
 		th_set_obstacleposition(state.conductor->xhat[0],state.conductor->xhat[2], obj_num);
 
 		obj_num ++;

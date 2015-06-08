@@ -146,7 +146,7 @@ bool tr_handler(void) {
 		//cl_print_list();
 
 		//After each step we store a limited number of obstacles for post processing
-		//tl_store_obstacles();
+		tl_store_obstacles();
 
 
 		//Reset the new data flag
