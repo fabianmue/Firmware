@@ -11,7 +11,7 @@
 #include "../pp_navigation_helper.h"
 
 typedef struct track_obj{
-	float P[16];			//state Covariance Matrix for Kalman Tracker [P11,P12,P21,P22]
+	float P[16];		//state Covariance Matrix for Kalman Tracker [P11,P12,13,14,P21,P22,P23....P44]
 	float xhat[4];		//Estimated State [x,vx,y,vy]
 	float S[4];			//innovation covariance [S11,S12,S21,S22]
 	uint16_t seen;		//How many times has the object been seen
