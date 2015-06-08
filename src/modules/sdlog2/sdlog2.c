@@ -1717,7 +1717,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 //        }
 
         /* --- ESTIMATOR STATUS --- */
-        if (copy_if_updated(ORB_ID(estimator_status), subs.estimator_status_sub, &buf.estimator_status)) {
+        /*if (copy_if_updated(ORB_ID(estimator_status), subs.estimator_status_sub, &buf.estimator_status)) {
             log_msg.msg_type = LOG_EST0_MSG;
             unsigned maxcopy0 = (sizeof(buf.estimator_status.states) < sizeof(log_msg.body.log_EST0.s)) ? sizeof(buf.estimator_status.states) : sizeof(log_msg.body.log_EST0.s);
             memset(&(log_msg.body.log_EST0.s), 0, sizeof(log_msg.body.log_EST0.s));
@@ -1733,7 +1733,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             memset(&(log_msg.body.log_EST1.s), 0, sizeof(log_msg.body.log_EST1.s));
             memcpy(&(log_msg.body.log_EST1.s), buf.estimator_status.states + maxcopy0, maxcopy1);
             LOGBUFFER_WRITE_AND_COUNT(EST1);
-        }
+        }*/ //JW: Commented out 08.06.15
 
         /* --- TECS STATUS --- */
 //        if (copy_if_updated(ORB_ID(tecs_status), subs.tecs_status_sub, &buf.tecs_status)) {
@@ -1877,10 +1877,10 @@ int sdlog2_thread_main(int argc, char *argv[])
         	log_msg.body.log_PATH_PLANNING_KALMAN.obj0y = buf.path_planning_kalman.obj0y;
         	log_msg.body.log_PATH_PLANNING_KALMAN.obj1x = buf.path_planning_kalman.obj1x;
         	log_msg.body.log_PATH_PLANNING_KALMAN.obj1y = buf.path_planning_kalman.obj1y;
-        	log_msg.body.log_PATH_PLANNING_KALMAN.obj2x = buf.path_planning_kalman.obj2x;
-        	log_msg.body.log_PATH_PLANNING_KALMAN.obj2y = buf.path_planning_kalman.obj2y;
-        //	logg_msg.body.log_PATH_PLANNING_KALMAN.obj3x = buf.path_planning_kalman.obj3x;
-        //	log_msg.body.log_PATH_PLANNING_KALMAN.obj3y = buf.path_planning_kalman.obj3y;
+        	//log_msg.body.log_PATH_PLANNING_KALMAN.obj2x = buf.path_planning_kalman.obj2x;
+        	//log_msg.body.log_PATH_PLANNING_KALMAN.obj2y = buf.path_planning_kalman.obj2y;
+        	//log_msg.body.log_PATH_PLANNING_KALMAN.obj3x = buf.path_planning_kalman.obj3x;
+        	//log_msg.body.log_PATH_PLANNING_KALMAN.obj3y = buf.path_planning_kalman.obj3y;
         	LOGBUFFER_WRITE_AND_COUNT(PPK);
         }
 
