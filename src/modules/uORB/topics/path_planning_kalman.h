@@ -36,4 +36,4 @@ struct path_planning_kalman_s {
 /* register this as object request broker structure */
 ORB_DECLARE(path_planning_kalman);
 
-#endif /* PATH_PLANNING_H_ */
+#endif /* PATH_PLANNING_KALMAN_H_ */
