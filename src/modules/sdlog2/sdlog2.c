@@ -1873,8 +1873,8 @@ int sdlog2_thread_main(int argc, char *argv[])
         	log_msg.body.log_PATH_PLANNING_KALMAN.tracknum = buf.path_planning_kalman.tracknum;
         	log_msg.body.log_PATH_PLANNING_KALMAN.newtracknum = buf.path_planning_kalman.newtracknum;
         	log_msg.body.log_PATH_PLANNING_KALMAN.refoundnum = buf.path_planning_kalman.refoundnum;
-        	//log_msg.body.log_PATH_PLANNING_KALMAN.obj0x = buf.path_planning_kalman.obj0x;
-        	//log_msg.body.log_PATH_PLANNING_KALMAN.obj0y = buf.path_planning_kalman.obj0y;
+        	log_msg.body.log_PATH_PLANNING_KALMAN.obj0x = buf.path_planning_kalman.obj0x;
+        	log_msg.body.log_PATH_PLANNING_KALMAN.obj0y = buf.path_planning_kalman.obj0y;
         	//log_msg.body.log_PATH_PLANNING_KALMAN.obj1x = buf.path_planning_kalman.obj1x;
         	//log_msg.body.log_PATH_PLANNING_KALMAN.obj1y = buf.path_planning_kalman.obj1y;
         	//log_msg.body.log_PATH_PLANNING_KALMAN.obj2x = buf.path_planning_kalman.obj2x;
