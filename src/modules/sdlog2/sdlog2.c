@@ -1795,7 +1795,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         }*/
 
         /* --- OPTIMAL CONTROLLER STATUS  */
-        if (copy_if_updated(ORB_ID(boat_opt_status), subs.boat_opt_status_sub, &buf.boat_opt_status)) {
+        /*if (copy_if_updated(ORB_ID(boat_opt_status), subs.boat_opt_status_sub, &buf.boat_opt_status)) {
             log_msg.msg_type = LOG_OPTS_MSG;
             log_msg.body.log_OPT_STATUS.x1 = buf.boat_opt_status.x1;
             log_msg.body.log_OPT_STATUS.x2 = buf.boat_opt_status.x2;
@@ -1810,7 +1810,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_OPT_STATUS.dgap = buf.boat_opt_status.dgap;
             log_msg.body.log_OPT_STATUS.rdgap = buf.boat_opt_status.rdgap;
             LOGBUFFER_WRITE_AND_COUNT(OPTS);
-        }
+        }*/ //JW: Commented out 08.06.15
 
         /* --- BOAT GUIDANCE MODULE DEBUG  */
         if (copy_if_updated(ORB_ID(boat_guidance_debug), subs.boat_guidance_sub, &buf.boat_guidance_debug)) {
@@ -1877,9 +1877,9 @@ int sdlog2_thread_main(int argc, char *argv[])
         	log_msg.body.log_PATH_PLANNING_KALMAN.obj0y = buf.path_planning_kalman.obj0y;
         	log_msg.body.log_PATH_PLANNING_KALMAN.obj1x = buf.path_planning_kalman.obj1x;
         	log_msg.body.log_PATH_PLANNING_KALMAN.obj1y = buf.path_planning_kalman.obj1y;
-        	//log_msg.body.log_PATH_PLANNING_KALMAN.obj2x = buf.path_planning_kalman.obj2x;
-        	//log_msg.body.log_PATH_PLANNING_KALMAN.obj2y = buf.path_planning_kalman.obj2y;
-        //	log_msg.body.log_PATH_PLANNING_KALMAN.obj3x = buf.path_planning_kalman.obj3x;
+        	log_msg.body.log_PATH_PLANNING_KALMAN.obj2x = buf.path_planning_kalman.obj2x;
+        	log_msg.body.log_PATH_PLANNING_KALMAN.obj2y = buf.path_planning_kalman.obj2y;
+        //	logg_msg.body.log_PATH_PLANNING_KALMAN.obj3x = buf.path_planning_kalman.obj3x;
         //	log_msg.body.log_PATH_PLANNING_KALMAN.obj3y = buf.path_planning_kalman.obj3y;
         	LOGBUFFER_WRITE_AND_COUNT(PPK);
         }

@@ -580,8 +580,8 @@ struct log_PPK_s{
 	float obj0y;
 	float obj1x;
 	float obj1y;
-	//float obj2x;
-	//float obj2y;
+	float obj2x;
+	float obj2y;
 	//float obj3x;
 	//float obj3y;
 };
