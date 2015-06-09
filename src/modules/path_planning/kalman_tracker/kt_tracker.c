@@ -175,9 +175,12 @@ bool tr_newdata(uint16_t new_dist_mat[],uint16_t heading) {
 
 	//printf("Tracker: Got new data!\n");
 
+	//NOTE: We must swap the distance matrix, because the definition of the
+	//      angle on the sensor-board is the opposite way. The angle increases
+	//      when moving to the LEFT (and not to the right as in compass-frame)
 	for(uint8_t i=0; i<2*SENSOR_RANGE/SENSOR_STEPSIZE; i++) {
 		//printf("%d/%d, ",i,new_dist_mat[i]);
-		dist_mat[i] = new_dist_mat[i];
+		dist_mat[2*SENSOR_RANGE/SENSOR_STEPSIZE-1-i] = new_dist_mat[i];
 	}
 
 	#if LDEBUG_KALMANTRACKER_CMS == 1
