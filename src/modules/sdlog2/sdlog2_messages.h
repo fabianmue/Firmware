@@ -643,7 +643,7 @@ static const struct log_format_s log_formats[] = {
 	LOG_FORMAT_S(TEL2, TEL, "BBBBHHBQ",		"RSSI,RemRSSI,Noise,RemNoise,RXErr,Fixed,TXBuf,HbTime"),
 	LOG_FORMAT_S(TEL3, TEL, "BBBBHHBQ",		"RSSI,RemRSSI,Noise,RemNoise,RXErr,Fixed,TXBuf,HbTime"),
 	LOG_FORMAT(EST0, "ffffffffffffBBBB",	"s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,nStat,fNaN,fHealth,fTOut"),
-	LOG_FORMAT(EST1, "ffffffffffffffff",	"s12,s13,s14,s15,s16,s17,s18,s19,s20,s21,s22,s23,s24,s25,s26,s27"),
+	//LOG_FORMAT(EST1, "ffffffffffffffff",	"s12,s13,s14,s15,s16,s17,s18,s19,s20,s21,s22,s23,s24,s25,s26,s27"),
 	LOG_FORMAT(PWR, "fffBBBBB",		"Periph5V,Servo5V,RSSI,UsbOk,BrickOk,ServoOk,PeriphOC,HipwrOC"),
 	LOG_FORMAT(VICN, "ffffff",		"X,Y,Z,Roll,Pitch,Yaw"),
 	LOG_FORMAT(VISN, "ffffffffff",		"X,Y,Z,VX,VY,VZ,QuatX,QuatY,QuatZ,QuatW"),
@@ -655,7 +655,7 @@ static const struct log_format_s log_formats[] = {
 	LOG_FORMAT(WIND, "ffff",	"X,Y,CovX,CovY"),
     LOG_FORMAT(WSAI, "ffff", "AngleApparent,SpeedApparent,AngleTrue,SpeedTrue"), //Added by Marco Tranzatto
     //LOG_FORMAT(BWES, "fffffffff", "AccX,AccY,AccZ,Roll,Pitch,Heading,RollRate,PitchRate,YawRate"), //Added by Marco Tranzatto
-    LOG_FORMAT(OPTS, "ffffiiffffff", "X1,X2,X3,RudStr,TypeCtr,It,SolT,ResEq,Pob,Dob,Dga,Rdga"), //Added by Marco Tranzatto
+    //JW: LOG_FORMAT(OPTS, "ffffiiffffff", "X1,X2,X3,RudStr,TypeCtr,It,SolT,ResEq,Pob,Dob,Dga,Rdga"), //Added by Marco Tranzatto
     LOG_FORMAT(BGUD, "fffffH", "Alpha,Rudder,Sail,TwdAvg,TwsAvg,ManCompl"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC1, "fffffBHHffHff", "P,I,Kaw,Cp,Ci,RudType,WinAlp,WinTWD,D1,D2,FixTwd,TckP_k,TckP_c"), //Added by Marco Tranzatto
     LOG_FORMAT(QGC2, "LLiLLif", "Lat0,Lon0,Alt0,LatT,LonT,AltT,MeanWind"), //Added by Marco Tranzatto
