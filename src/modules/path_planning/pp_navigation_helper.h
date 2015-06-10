@@ -98,4 +98,8 @@ Point nh_e7_to_point(PointE7 geoE7);
 float nh_mod(float angle);
 
 
+/* @brief Rotate a point around a center point by a given angle */
+NEDpoint nh_rotate(NEDpoint torot, NEDpoint center, float angle);
+
+
 #endif /* NAVIGATION_HELPER_H_ */

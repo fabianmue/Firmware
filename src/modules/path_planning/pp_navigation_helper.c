@@ -372,5 +372,24 @@ float nh_mod(float angle) {
 }
 
 
+/**
+ * Rotate a NEDpoint by a given angle around another NEDpoint
+ *
+ * @param torot: NEDpoint that should be rotated
+ * @param center: NEDpoint used as center
+ * @param angle: rotation angle [rad]
+ */
+NEDpoint nh_rotate(NEDpoint torot, NEDpoint center, float angle) {
+
+
+	NEDpoint result;
+
+	result.northx = center.northx + cosf(angle)*(center.northx-torot.northx) + sinf(angle)*(center.easty-torot.easty);
+	result.easty = center.easty + cosf(angle)*(center.easty - torot.easty) - sinf(angle)*(center.northx-torot.northx);
+
+	return result;
+}
+
+
 
 
