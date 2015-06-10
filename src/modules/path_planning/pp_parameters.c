@@ -23,6 +23,8 @@
 
 #include "parser_sensorboard/ps_sensorboard.h"
 
+#include "mission/mission.h"
+
 #define M_PI_F 3.14159265358979323846f
 
 static const float deg2rad = 0.0174532925199433f; // pi / 180
@@ -373,6 +375,16 @@ PARAM_DEFINE_FLOAT(KT_PERIOD,2);
 
 
 
+/**
+ * co_
+ * Parameters for the Competiton
+ */
+PARAM_DEFINE_FLOAT(MI_DIST,45.0f);
+PARAM_DEFINE_FLOAT(MI_O1N,1740.0f);
+PARAM_DEFINE_FLOAT(MI_O1E,-1170.0f);
+PARAM_DEFINE_FLOAT(MI_ROTATION,0.0f);
+PARAM_DEFINE_INT32(MI_MISSION,0);
+
 
 
 static struct pointers_param_qgc_s{
@@ -482,6 +494,13 @@ static struct pointers_param_qgc_s{
 	param_t kt_nnsf_thresh;
 	param_t kt_co;
 	param_t kt_period;
+
+	//**MISSION PLANNER (COMPETITION)
+	param_t co_dist;
+	param_t co_o1n;
+	param_t co_o1e;
+	param_t co_rotation;
+	param_t co_mission;
 
 }pointers_param_qgc;
 
@@ -605,6 +624,13 @@ void p_param_init(void){
 	pointers_param_qgc.kt_co = param_find("KT_CO");
 	pointers_param_qgc.kt_period = param_find("KT_PERIOD");
 
+
+	//**MISSION PLANNER (COMPETITON)
+	pointers_param_qgc.co_dist = param_find("MI_DIST");
+	pointers_param_qgc.co_o1n = param_find("MI_O1N");
+	pointers_param_qgc.co_o1e = param_find("MI_O1E");
+	pointers_param_qgc.co_rotation = param_find("MI_ROTATION");
+	pointers_param_qgc.co_mission = param_find("MI_MISSION");
 
 
     //get parameters but do not add any grid lines at start up
@@ -828,10 +854,12 @@ void p_param_update(bool update_path_param){
    	target.alt = altitude;
    	obstacle.alt = altitude;
 
+	#if LDEBUG_USEMISSION == 0
    	nav_set_target(t_num,target);
    	nav_set_target_ned(t_num,target_ned);	//NOTE: Because of this the target is always set in NED-Coordinates
    	nav_set_obstacle(o_num,obstacle);
    	nav_set_obstacle_ned(o_num,obstacle_ned);	//NOTE: Because of this the obstacle is always set in NED-Coordinates
+	#endif
 
 
    	PointE7 start[2];
@@ -857,7 +885,9 @@ void p_param_update(bool update_path_param){
    	//**SET THE NUMBER OF THE TARGET THAT SHOULD BE REACHED NEXT
    	uint8_t targetnumber = 0;
    	param_get(pointers_param_qgc.nav_target_next, &targetnumber);
+	#if LDEBUG_USEMISSION == 0
    	nav_set_targetnumber(targetnumber);
+	#endif
 
 
    	//**INVERT ALPHA BEFORE SENDING TO AUTONOMOUS SAILING APP
@@ -887,7 +917,9 @@ void p_param_update(bool update_path_param){
    	uint8_t pathp_settar = 0;
    	param_get(pointers_param_qgc.nav_setar, &pathp_settar);
    	if(pathp_settar == 1) {
+		#if LDEBUG_USEMISSION == 0
    		nav_set_quick_target();
+		#endif
    		smq_send_log_info("Set quick Target Position! switch back to 0!");
    	}
 
@@ -934,6 +966,25 @@ void p_param_update(bool update_path_param){
    	float kt_period = 0;
    	param_get(pointers_param_qgc.kt_period, &kt_period);
    	sb_set_configuration(kt_period);
+
+
+   	//**MISSION PLANNER (COMPETITION)
+   	float co_dist = 45;
+   	float co_o1n = 1740.0f;
+   	float co_o1e = -1170.0f;
+   	float co_rotation = 0.0f;
+   	uint8_t co_mission = 0;
+
+   	param_get(pointers_param_qgc.co_dist, &co_dist);
+   	param_get(pointers_param_qgc.co_o1n, &co_o1n);
+   	param_get(pointers_param_qgc.co_o1e, &co_o1e);
+   	param_get(pointers_param_qgc.co_rotation, &co_rotation);
+   	param_get(pointers_param_qgc.co_mission, &co_mission);
+
+	#if LDEBUG_USEMISSION == 1
+   	mi_set_configuration(co_dist,co_o1n,co_o1e,co_rotation);
+   	mi_set_new_task(co_mission);
+	#endif
 
 
 }
