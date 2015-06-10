@@ -40,6 +40,7 @@
 
 #include "../pp_navigation_helper.h"
 #include "../pp_navigator.h"
+#include "../pp_send_msg_qgc.h"
 
 
 #include "../pp_config.h"
@@ -68,6 +69,8 @@ static struct {
 	.curtask = 0
 };
 
+
+//static char txt_msg[150]; //Buffer for QGround Control Messages
 
 
 
@@ -138,6 +141,8 @@ bool mi_set_new_task(uint8_t tasknum) {
 	O4.northx = O1.northx - config.dist;
 	O4.easty = O1.easty + config.dist;
 
+	//Inform QGround Control that a new mission is started
+	smq_send_log_info("New Mission started! (JW)");
 
 
 

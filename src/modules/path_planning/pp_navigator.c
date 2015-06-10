@@ -42,7 +42,6 @@
 
 //static char txt_msg[150]; ///used to send messages to QGC
 
-
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
@@ -97,6 +96,8 @@ static NEDpoint ntarget;	//Target that should be reached when quick_target is se
 static float dbg_alpha = 0;
 static bool dbg_alpha_status = false;
 static bool dbg_alpha_minus = false;
+
+static uint8_t qground_obstnum = 0; //number, auto increasing in every step. It is used to store all obstacles in the SD-Log
 
 
 
@@ -344,7 +345,12 @@ void nav_navigator(void) {
 
 		//****SEND THE DATA USED FOR PATHPLANNING TO QGROUND CONTROL
 		cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
-		cb_new_obstacle(field.obstacles[0].northx, field.obstacles[0].easty);
+		cb_new_obstacle(field.obstacles[qground_obstnum].northx, field.obstacles[qground_obstnum].easty);
+
+		qground_obstnum++;
+		if(qground_obstnum>field.NumberOfObstacles) {
+			qground_obstnum = 0;
+		}
 
 		cb_new_targetnum(state.targetNum);
 
@@ -718,7 +724,7 @@ void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos) {
 	#endif
 
 	//Send new Obstacle Position to QGround Control for debugging
-	cb_new_obstacle(field.obstacles[0].northx, field.obstacles[0].easty);
+	cb_new_obstacle(field.obstacles[ObstNumber].northx, field.obstacles[ObstNumber].easty);
 }
 
 
