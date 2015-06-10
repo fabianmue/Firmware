@@ -643,7 +643,7 @@ static const struct log_format_s log_formats[] = {
 	LOG_FORMAT_S(TEL2, TEL, "BBBBHHBQ",		"RSSI,RemRSSI,Noise,RemNoise,RXErr,Fixed,TXBuf,HbTime"),
 	LOG_FORMAT_S(TEL3, TEL, "BBBBHHBQ",		"RSSI,RemRSSI,Noise,RemNoise,RXErr,Fixed,TXBuf,HbTime"),
 	LOG_FORMAT(EST0, "ffffffffffffBBBB",	"s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,nStat,fNaN,fHealth,fTOut"),
-	//JW: LOG_FORMAT(EST1, "ffffffffffffffff",	"s12,s13,s14,s15,s16,s17,s18,s19,s20,s21,s22,s23,s24,s25,s26,s27"),
+	LOG_FORMAT(EST1, "ffffffffffffffff",	"s12,s13,s14,s15,s16,s17,s18,s19,s20,s21,s22,s23,s24,s25,s26,s27"),
 	LOG_FORMAT(PWR, "fffBBBBB",		"Periph5V,Servo5V,RSSI,UsbOk,BrickOk,ServoOk,PeriphOC,HipwrOC"),
 	LOG_FORMAT(VICN, "ffffff",		"X,Y,Z,Roll,Pitch,Yaw"),
 	LOG_FORMAT(VISN, "ffffffffff",		"X,Y,Z,VX,VY,VZ,QuatX,QuatY,QuatZ,QuatW"),
@@ -666,7 +666,7 @@ static const struct log_format_s log_formats[] = {
     LOG_FORMAT(PWS, "iHfH", "ByteR,Mask,DB1,ComMsg"), //Added by Marco Tranzatto
 	LOG_FORMAT(QGC4, "fBf", "k,Windo,Period"), //Added by Jonas Wirz
 	LOG_FORMAT(PPD1, "ffffffffff", "Hori,Srad,Wsiz,Gle,Gm,Go,Gs,Gt,Gw,Per"), //Added by Jonas Wirz
-	LOG_FORMAT(PPK,"HHHffff"/*ff"*/, "trk,ntrk,ref,x0,y0,x1,y1"), //Added by Jonas Wirz
+	//LOG_FORMAT(PPK,"HHHffff"/*ff"*/, "trk,ntrk,ref,x0,y0,x1,y1"), //Added by Jonas Wirz
     /* system-level messages, ID >= 0x80 */
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),

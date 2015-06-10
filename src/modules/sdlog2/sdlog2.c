@@ -1717,7 +1717,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 //        }
 
         /* --- ESTIMATOR STATUS --- */
-        /*if (copy_if_updated(ORB_ID(estimator_status), subs.estimator_status_sub, &buf.estimator_status)) {
+        if (copy_if_updated(ORB_ID(estimator_status), subs.estimator_status_sub, &buf.estimator_status)) {
             log_msg.msg_type = LOG_EST0_MSG;
             unsigned maxcopy0 = (sizeof(buf.estimator_status.states) < sizeof(log_msg.body.log_EST0.s)) ? sizeof(buf.estimator_status.states) : sizeof(log_msg.body.log_EST0.s);
             memset(&(log_msg.body.log_EST0.s), 0, sizeof(log_msg.body.log_EST0.s));
@@ -1733,7 +1733,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             memset(&(log_msg.body.log_EST1.s), 0, sizeof(log_msg.body.log_EST1.s));
             memcpy(&(log_msg.body.log_EST1.s), buf.estimator_status.states + maxcopy0, maxcopy1);
             LOGBUFFER_WRITE_AND_COUNT(EST1);
-        }*/ //JW: Commented out 08.06.15
+        }
 
         /* --- TECS STATUS --- */
 //        if (copy_if_updated(ORB_ID(tecs_status), subs.tecs_status_sub, &buf.tecs_status)) {
