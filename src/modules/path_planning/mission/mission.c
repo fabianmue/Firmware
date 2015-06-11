@@ -130,12 +130,12 @@ bool mi_set_new_task(uint8_t tasknum) {
 
 	//Calcualte the positions of the Buoys
 	NEDpoint O1 = config.o1;
-	//NEDpoint O2;
+	NEDpoint O2;
 	NEDpoint O3;
 	NEDpoint O4;
 
-	//O2.northx = O1.northx;
-	//O2.easty = O1.easty + config.dist;
+	O2.northx = O1.northx;
+	O2.easty = O1.easty + config.dist;
 	O3.northx = O1.northx - config.dist;
 	O3.easty = O1.easty;
 	O4.northx = O1.northx - config.dist;
@@ -173,7 +173,7 @@ bool mi_set_new_task(uint8_t tasknum) {
 
 			//Set the configuration
 			nav_set_target_ned(0, start);
-			nav_set_target_ned(1, O3);
+			nav_set_target_ned(1, O1);
 			nav_set_target_ned(2, O4);
 			nav_set_target_ned(3, end);
 
@@ -188,7 +188,7 @@ bool mi_set_new_task(uint8_t tasknum) {
 			obst1 = nh_rotate(obst1,O1,config.rotation);
 
 			obst2.northx = O1.northx - config.dist;
-			obst2.easty = O1.easty + config.dist/2;
+			obst2.easty = O1.easty;
 			obst2 = nh_rotate(obst2,O1,config.rotation);
 
 			nav_set_obstacle_ned(0,obst1);
@@ -246,15 +246,15 @@ bool mi_set_new_task(uint8_t tasknum) {
 
 			//Config Obstacle
 			NEDpoint obst1;
-			obst1.northx = O1.northx - config.dist;
+			obst1.northx = O1.northx;
 			obst1.easty = O1.easty + config.dist/2;
 
 			//Rotate the Configuraiont
-			O3 = nh_rotate(O3, O1, config.rotation);
+			O2 = nh_rotate(O2, O1, config.rotation);
 			obst1 = nh_rotate(obst1, O1, config.rotation);
 
 			nav_set_target_ned(0, O1);
-			nav_set_target_ned(1, O3);
+			nav_set_target_ned(1, O2);
 			nav_set_obstacle_ned(0, obst1);
 
 
