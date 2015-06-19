@@ -149,4 +149,8 @@ void DEBUG_nav_setalpha(uint8_t status, float alpha);
 void DEBUG_nav_alpha_minus(uint8_t status);
 
 
+/* @brief Get the Obstacles identified by the Kalman Tracker */
+bool nav_get_sensor_obstacles(void);
+
+
 #endif /* PP_NAVIGATOR_H_ */

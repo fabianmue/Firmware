@@ -105,8 +105,7 @@ static uint8_t qground_obstnum = 0; //number, auto increasing in every step. It 
 /*****  F U N C T I O N   P R O T O T Y P E S **************************************/
 /***********************************************************************************/
 
-/* @brief Get the Obstacles identified by the Kalman Tracker */
-bool get_sensor_obstacles(void);
+
 
 
 
@@ -345,10 +344,17 @@ void nav_navigator(void) {
 
 		//****SEND THE DATA USED FOR PATHPLANNING TO QGROUND CONTROL
 		cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
-		cb_new_obstacle(field.obstacles[qground_obstnum].northx, field.obstacles[qground_obstnum].easty);
+		//cb_new_obstacle(field.obstacles[qground_obstnum].northx, field.obstacles[qground_obstnum].easty);
 
+		//qground_obstnum++;
+		//if(qground_obstnum>field.NumberOfObstacles) {
+		//	qground_obstnum = 0;
+		//}
+
+		//Log the Sensor-Obstacles
+		cb_new_obstacle(field.sensorobstacles[qground_obstnum].northx,field.sensorobstacles[qground_obstnum].easty);
 		qground_obstnum++;
-		if(qground_obstnum>field.NumberOfObstacles) {
+		if(qground_obstnum>field.NumberOfSensorobstacles) {
 			qground_obstnum = 0;
 		}
 
@@ -357,7 +363,7 @@ void nav_navigator(void) {
 
 		//****GET THE OBSTACLES IDENTIFIED BY THE SENSOR
 		//Note: This is only executed, if the Kalman Tracker is activated by QGround Control
-		get_sensor_obstacles();
+		//get_sensor_obstacles();
 
 
 		/****FIND A NEW REFERENCE HEADING
@@ -927,7 +933,7 @@ void nav_set_targetnumber(uint8_t tar_num) {
  * Get the Obstacles from the Sensor and store them in the Race-Field-Matrix
  *
  */
-bool get_sensor_obstacles(void) {
+bool nav_get_sensor_obstacles(void) {
 
 	if(kt_get_state() == true) {
 		//The Kalman Tracker is active => We want to include the obstacles in the race-field

@@ -41,6 +41,7 @@
 #include "pp_communication_buffer.h"
 #include <drivers/drv_hrt.h>
 #include <stdio.h>
+#include <string.h>
 
 #define M_PI_F 3.14159265358979323846f
 
@@ -377,6 +378,12 @@ void cb_init(void){
     pp.id_cmd = PP_NORMAL_CMD;
 
     pp.target_num = 0;
+
+    //Added 19.06.15
+    pp_updated = true;
+    cb_publish_pp_if_updated();
+
+
 }
 
 /**

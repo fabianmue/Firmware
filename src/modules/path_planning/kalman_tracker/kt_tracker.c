@@ -145,8 +145,11 @@ bool tr_handler(void) {
 		//tl_print_list();
 		//cl_print_list();
 
+		//We send the obstacles to the navigator
+		nav_get_sensor_obstacles();
+
 		//After each step we store a limited number of obstacles for post processing
-		tl_store_obstacles();
+		//tl_store_obstacles();
 
 
 		//Reset the new data flag
