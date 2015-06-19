@@ -356,18 +356,12 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 	float tgx = -dx/distToTarget;
 	float tgy = -dy/distToTarget;*/
 
-	//DEBUG_noDist = true;
-	if(DEBUG_noDist) {
+	//Changed 19.06.2015, now, the distance dependency is off by default! => remove the "!" to create the old version
+	if(!DEBUG_noDist) {
 		tgx = dx;
 		tgy = dy;
 	}
 	//***END NEW VERSION
-
-	//DEBUG_minus = true;
-	/*if(DEBUG_minus) {
-		tgx = -tgx;
-		tgy = -tgy;
-	}*/
 
 
 	//Get the Boatspeed from the Polardiagram

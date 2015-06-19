@@ -122,6 +122,11 @@
 #define TARGETTOLERANCE 2
 
 
+/* DOWNWIND COURSE
+ * alpha-angle for which the boat is considered to sail on a downwind course [rad] */
+#define DOWNWIND_COURSE 120*DEG2RAD
+
+
 /* ALGORITHM FLAG
  * Chooses a path-planning algorithm
  * 1 = Cost-Function-Method
@@ -130,7 +135,7 @@
  * DEFAULT = 1 = Cost-Function-Method */
 extern uint8_t pp_algorithm;
 
-//remote control usefull value
+//remote control useful value
 #define RC_MODE_INDEX 4             ///index of the type of mode in rc_channels struct
 #define RC_MANUAL_MODE -1.0f        ///Rc_Ch4 == RC_MANUAL_MODE if manual mode selected
 

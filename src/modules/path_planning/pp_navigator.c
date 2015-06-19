@@ -380,7 +380,7 @@ void nav_navigator(void) {
 
 		//****DECISION MAKING
 		/* In the following section the decisions based on the optimal Heading are made. In particular
-		 * the the Navigator decides if the boat should tack */
+		 * the Navigator decides if the boat should tack or gybe or just track a reference heading */
 		float NewWind = nh_appWindDir(state.heading_ref,state.wind_dir); 		//New Apparent Winddirection
 		float OldWind = nh_appWindDir(state.heading_cur,state.wind_dir);		//Current Apparent Winddirection
 
@@ -393,6 +393,17 @@ void nav_navigator(void) {
 			//A Maneuver is Necessary
 
 			state.command_maneuver = true;
+
+			//**START NEW CODE
+			if(fabsf(NewWind) > DOWNWIND_COURSE) {
+				//We are sailing on a downwind course => when we tell the low-level control to perform a maneuver,
+				//then the boat starts behaving crazy => therefore do not tell the boat to gybe and simply change the
+				//reference heading
+
+				state.command_maneuver = false;
+				state.maneuver = false;
+			}
+			//**END NEW CODE
 
 		} else {
 			//No Maneuver is necessary and we can therefore set all flags to zero
