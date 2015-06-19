@@ -576,7 +576,7 @@ void nav_heading_update(void) {
 
 		//Send current Heading to QGround control for debugging
 		//TODO: Commented out, because is used for debugging of target-number
-		//cb_new_heading(state.heading_cur);
+		cb_new_heading(state.heading_cur);
 
 	}
 
@@ -649,7 +649,7 @@ void nav_position_update(void) {
 		if(nh_ned_dist(newPos,field.targets[state.targetNum]) <= TARGETTOLERANCE) {
 			//We are inside the tolerance => target is counted as reached
 
-			if(state.targetNum != (field.NumberOfTargets-1)) {
+			if(state.targetNum != (field.NumberOfTargets)) {
 				//This is not the last target => set new Target
 
 				state.targetNum += 1;
