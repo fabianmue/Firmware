@@ -1182,16 +1182,12 @@ float sail_controller(float alpha){
     		abs_alpha = -alpha;
     	}
 
-    	if(abs_alpha <= sail_controller_data.alpha_sail_closed_r) {
-    		//We are sailing upwind => sails are fully closed
-    		sail = sail_controller_data.sail_closed_cmd;
-    	} else {
+    	if(abs_alpha >= 1.05f) {//We activate ESSC above 60° wind-angle
     		//We are not sailing upwind => we use ESSC for controlling the sails
     		//ESSC will only act, if the speed is big enough => we hand over the sail value from the linear
     		//controller
     		sail = essc_sail_control_value(sail);
     	}
-
 
     } //end if use_essc
 	#endif //LDEBUG_USE_ESSC
