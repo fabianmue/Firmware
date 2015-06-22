@@ -361,6 +361,7 @@ void nav_navigator(void) {
 		cb_new_targetnum(state.targetNum);
 
 
+
 		//****GET THE OBSTACLES IDENTIFIED BY THE SENSOR
 		//Note: This is only executed, if the Kalman Tracker is activated by QGround Control
 		//get_sensor_obstacles();
