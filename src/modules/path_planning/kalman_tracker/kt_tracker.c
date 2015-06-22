@@ -142,7 +142,7 @@ bool tr_handler(void) {
 		tl_add_untracked();
 
 		//Show the Linked Lists
-		//tl_print_list();
+		tl_print_list();
 		//cl_print_list();
 
 		//We send the obstacles to the navigator
@@ -160,7 +160,7 @@ bool tr_handler(void) {
 		th_set_nroftracks(tl_get_size());
 
 		//Publish new data to the topic path_planning_kalman
-		th_update();
+		//th_update();
 	}
 
 	return true;

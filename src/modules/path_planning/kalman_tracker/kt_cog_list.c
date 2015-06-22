@@ -28,7 +28,7 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-#define MAXSIZE 20 //maximum number of tracks allowed in the memory
+#define MAXSIZE 8 //maximum number of tracks allowed in the memory
 
 //State of the Linked list
 static struct {
