@@ -141,10 +141,6 @@ bool tr_handler(void) {
 		//Add the newly detected Tracking Objects to the list
 		tl_add_untracked();
 
-		//Show the Linked Lists
-		tl_print_list();
-		//cl_print_list();
-
 		//We send the obstacles to the navigator
 		nav_get_sensor_obstacles();
 
