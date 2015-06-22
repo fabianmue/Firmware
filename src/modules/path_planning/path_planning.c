@@ -138,7 +138,7 @@ int path_planning_main(int argc, char *argv[])
         daemon_task = task_spawn_cmd("path_planning",
 					 SCHED_DEFAULT,
                      DAEMON_PRIORITY,
-                     8192, //was 4096
+                     14000, //was 4096
 					 pp_thread_main,
 					 (argv) ? (const char **)&argv[2] : (const char **)NULL);
 		exit(0);
