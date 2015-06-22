@@ -84,6 +84,7 @@ static int daemon_task;						/**< Handle of daemon task / thread */
 
 //thread priority
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 20 ///daemon priority
+//#define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 25 ///daemon priority
 
 
 /**

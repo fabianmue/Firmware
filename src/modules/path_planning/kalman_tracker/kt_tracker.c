@@ -156,7 +156,7 @@ bool tr_handler(void) {
 		th_set_nroftracks(tl_get_size());
 
 		//Publish new data to the topic path_planning_kalman
-		//th_update();
+		th_update();
 	}
 
 	return true;

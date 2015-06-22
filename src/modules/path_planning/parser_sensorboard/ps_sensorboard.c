@@ -291,8 +291,8 @@ bool sb_handler(void) {
 
 	uint64_t systime = hrt_absolute_time();
 
-	//if((systime-state.last_call) >= config.period) {
-	if((systime-state.last_call) >= 2e6) {
+	if((systime-state.last_call) >= config.period) {
+	//if((systime-state.last_call) >= 2e6) {
 
 		state.last_call = systime;
 
