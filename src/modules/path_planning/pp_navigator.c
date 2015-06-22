@@ -352,7 +352,7 @@ void nav_navigator(void) {
 		//}
 
 		//Log the Sensor-Obstacles
-		cb_new_obstacle(field.sensorobstacles[qground_obstnum].northx,field.sensorobstacles[qground_obstnum].easty);
+		//cb_new_obstacle(field.sensorobstacles[qground_obstnum].northx,field.sensorobstacles[qground_obstnum].easty);
 		qground_obstnum++;
 		if(qground_obstnum>field.NumberOfSensorobstacles) {
 			qground_obstnum = 0;
