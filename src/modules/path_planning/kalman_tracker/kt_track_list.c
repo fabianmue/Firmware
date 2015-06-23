@@ -27,7 +27,7 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-#define MAXSIZE 3 //maximum number of tracks allowed in the memory
+#define MAXSIZE 8 //maximum number of tracks allowed in the memory
 
 //State of the Linked list
 static struct {
@@ -567,7 +567,7 @@ bool tl_delete_obj(track_obj *ptr) {
 	if(ptr == state.root) {
 		//We want to delete the root
 
-		printf("Track Obj: Delete Root\n");
+		//printf("Track Obj: Delete Root\n");
 
 		track_obj *temp = ptr;
 

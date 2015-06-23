@@ -48,9 +48,9 @@
  *
  */
 #define LDEBUG_POLARDIAGRAM 0 //Uses an easy Polardiagram that only contains the Upwind No-Go-Zone and has the same velocity everywhere else
-#define LDEBUG_SENSORBOARD  0 //Deactivate the Communication with the Sensorbaord (1 <=> deactivate communication)
+#define LDEBUG_SENSORBOARD  1 //Deactivate the Communication with the Sensorbaord (1 <=> deactivate communication)
 #define LDEBUG_STATICDATA   0 //Do not request new data from the sensorboard, but use predefined data
-#define LDEBUG_KALMANTRACKER 1 //Activate the Kalman tracker (1 = tracker is activated)
+#define LDEBUG_KALMANTRACKER 0 //Activate the Kalman tracker (1 = tracker is activated)
 #define LDEBUG_KALMANTRACKER_CMS 0 //Activate printf-messages onto console (1 = messages are activated)
 #define LDEBUG_USEMISSION   1 //Use the Mission planner instead of manual input of target and obstacles (1 = enable/0 = disable)
 

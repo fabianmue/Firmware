@@ -122,7 +122,7 @@ bool tr_handler(void) {
 		//New measurement Data is present => we can do a Kalman Update
 		//Note: This is only executed, if the Kalman Filter was activated by the QGroundControl Parameter kt_enable
 
-		printf("Tracker Handler called!\n");
+		//printf("Tracker Handler called!\n");
 
 
 		//Segment the distance matrix into segments with similar properties
@@ -343,7 +343,7 @@ bool segment(void) {
         }
 	}
 
-	printf("Segment: Found %d segments!\n",state.segnum+1);
+	//printf("Segment: Found %d segments!\n",state.segnum+1);
 
 	return true;
 }
@@ -385,7 +385,7 @@ bool segment_COG(void) {
 				//The next iteration will start a new segment
 
 				if(seg_length == 0) {
-					printf("Division by zero!\n");
+					//printf("Division by zero!\n");
 					seg_length = 1;
 				}
 
