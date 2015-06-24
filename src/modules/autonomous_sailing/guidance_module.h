@@ -111,4 +111,7 @@ void gm_set_data_by_pp(const struct structs_topics_s *strs_p);
 /** @brief set if you want to use essc for sails control */
 void gm_use_essc(int _use_essc);
 
+/** @brief Set the size of the window when sailing downwind and set the angle when the boat is sailing downwind */
+void gm_set_downwind_filter(uint8_t windowsize, float course);
+
 #endif //GUIDANCE_MODULE_H

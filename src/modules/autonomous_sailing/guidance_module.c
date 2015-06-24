@@ -127,6 +127,13 @@ static struct{
     .id_cmd = PP_NORMAL_CMD
 };
 
+
+//Variable for Downwind Filter-Window
+uint8_t dw_filter_window = 10;	//Size of the averaging filter window when sailing downwind
+float dw_course = 2.4435f;		//Courses above this value are considered to be downwind
+#define RAD2DEG      57.2957795131f			//180/pi
+
+
 /// Forces parameters
 struct forces_params_s{
     /* vector of size 3 */
@@ -1251,6 +1258,19 @@ float p_maneuver_rudder(){
 void gm_set_data_by_pp(const struct structs_topics_s *strs_p){
     reference_actions.alpha_star = strs_p->path_planning.alpha_star;
 
+    //TODO: Here I could change the filter size if we sail downwind
+    //Downwind sailing is about 140°= 2.4435
+    if(fabsf(reference_actions.alpha_star) > dw_course) {
+    	//We are sailing downwind => set the filter constant accordingly
+
+    	cd_update_k_twd(dw_filter_window,0);
+    	//cd_update_k(dw_filter_window,0); //This would change the filter size of alpha
+    }
+
+
+
+
+
     /* We must start a new manuever IFF do_maneuver is true AND
      * the last id_maneuver saved in guidance_module is not equal
      * to the one sent by path_planning. In this way, we are sure that
@@ -1273,6 +1293,7 @@ void gm_set_data_by_pp(const struct structs_topics_s *strs_p){
             break;
         case PP_SAIL_DOWNWIND_CMD:
             //we must start sailing downwind using a fixed true wind direction
+
             reference_actions.id_cmd = PP_SAIL_DOWNWIND_CMD;
             cd_set_mean_twd(cd_get_twd_sns());
             cd_use_fixed_twd(1);
@@ -1287,6 +1308,22 @@ void gm_set_data_by_pp(const struct structs_topics_s *strs_p){
         }
     }
 }
+
+
+/**
+ * Set the downwind Filter-variables
+ *
+ * @param windowsize: Size of the average window for the wind direction when sailing downwind
+ * @param course: Course above which the boat is considered to sail downwind [°]
+ */
+void gm_set_downwind_filter(uint8_t windowsize, float course) {
+
+	dw_filter_window = windowsize*RAD2DEG;
+	dw_course = course;
+
+}
+
+
 
 /**
  * Compute the "right" error between alpha_star reference set by

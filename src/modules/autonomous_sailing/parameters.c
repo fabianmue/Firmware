@@ -229,6 +229,17 @@ PARAM_DEFINE_FLOAT(AS_TCK_P_K, 0.73661977f);
 */
 PARAM_DEFINE_FLOAT(AS_TCK_P_C, 0.1f);
 
+
+
+/**
+ * Length of the moving average window when sailing downwind
+ * and Course above which the boat is considered to sail downwind [°]
+ */
+PARAM_DEFINE_INT32(AS_DW_WINDOW, 20);
+PARAM_DEFINE_FLOAT(AS_DW_COURSE, 140.0f);
+
+
+
 //------------------------------------- Parameters for optimal control ----
 
 
@@ -511,6 +522,10 @@ static struct pointers_param_qgc_s{
 
     param_t use_only_yaw_on_maneuver; /**< pointer to AS_TCK_USE_Y */
 
+    param_t as_dw_window; /**< pointer to AS_DW_WINDOW */
+    param_t as_dw_course; /**< pointer to AS_DW_COURSE */
+
+
     //-- params for LQR controller
     param_t lqr_k1_poniter; /**< pointer to  ASO_LQR_K1*/
     param_t lqr_k2_poniter; /**< pointer to  ASO_LQR_K2*/
@@ -630,6 +645,9 @@ void p_param_init(struct parameters_qgc *params_p,
     pointers_param_qgc.use_fixed_twd_pointer = param_find("AS_USE_FIXED_TWD");
 
     pointers_param_qgc.use_only_yaw_on_maneuver = param_find("AS_TCK_USE_Y");
+
+    pointers_param_qgc.as_dw_window = param_find("AS_DW_WINDOW");
+    pointers_param_qgc.as_dw_course = param_find("AS_DW_COURSE");
 
     //--- params for lqr controller
     pointers_param_qgc.lqr_k1_poniter = param_find("ASO_LQR_K1");
@@ -803,6 +821,16 @@ void p_param_update(struct parameters_qgc *params_p,
     param_get(pointers_param_qgc.twd_window_tack_pointer, &twd_window_during_tack);
     //update window size using API in controller_data.h
     cd_update_k_twd(window_twd, twd_window_during_tack);
+
+
+    //***(JW) Parameters for moving average window on downwind course
+    uint8_t dw_window = 20;
+    float dw_course = 140.0f;
+    param_get(pointers_param_qgc.as_dw_window, &dw_window);
+    param_get(pointers_param_qgc.as_dw_course, &dw_course);
+    gm_set_downwind_filter(dw_window, dw_course);
+
+
 
     //-- param for LQR controller
     float lqr_k1;
