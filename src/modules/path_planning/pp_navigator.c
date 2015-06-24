@@ -56,12 +56,14 @@ static struct {
 	 	 	 	 	 	 	 * 2 = Potential-Field-Method */
 	bool reset; 			//Resets all local variables to a predefined state (init-state), if true
 	bool use_yaw; 			//If set to true, the yaw from the weather station is used unfiltered for the Heading calculation
+	bool nogybe; 			//If set, no maneuver is commanded on downwind courses => simply change the reference
 } config = {
 	.period = 1000000,
 	.max_headchange = 0.1745329f, //~10°/s
 	.method = 1,
 	.reset = false,
-	.use_yaw = false
+	.use_yaw = false,
+	.nogybe = false
 };
 
 uint16_t last_tar_num = 0; 	//Last changed Target number (from QGround Control)
@@ -832,6 +834,22 @@ void nav_set_configuration(float period, uint32_t turnrate) {
 	//Store the maximum possible change in Heading between two consecutive
 	//executions of Path planning
 	config.max_headchange = turnrate * RAD2DEG * period;
+}
+
+
+/**
+ * Set the noGybe-Variable. If set, no gybe is commanded on downwind courses => simply change the reference
+ *
+ * @param nogybe: 1, if no gybe should be commanded
+ */
+void nav_set_nogybe(uint8_t status) {
+
+	if(status == 1) {
+		config.nogybe = true;
+	} else {
+		config.nogybe = false;
+	}
+
 }
 
 

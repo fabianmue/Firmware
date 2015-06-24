@@ -337,6 +337,12 @@ PARAM_DEFINE_INT32(PP_NAV_METH,1);
 PARAM_DEFINE_INT32(PP_NAV_USEYAW,0);
 
 
+/**
+ * Do no gybe maneuvers. When doing a gybe simply change the reference heading
+ */
+PARAM_DEFINE_INT32(PP_DBG_NOGYBE,0);
+
+
 
 /**
  * pp_nav_nodist
@@ -472,6 +478,8 @@ static struct pointers_param_qgc_s{
 
 	param_t nav_dbg_invalp;
 
+	param_t nav_dbg_nogybe;
+
 
 
 	//**SIMULATION FOR DEBUGGING
@@ -596,6 +604,7 @@ void p_param_init(void){
     pointers_param_qgc.nav_useyaw = param_find("PP_NAV_USEYAW");
 
     pointers_param_qgc.nav_dbg_invalp = param_find("PP_DBG_INVALP");
+    pointers_param_qgc.nav_dbg_nogybe = param_find("PP_DBG_NOGYBE");
 
     //**SIMULATION DEBUG
     pointers_param_qgc.sim_ned_northx = param_find("SIM_NED_NORTHX");
@@ -894,6 +903,12 @@ void p_param_update(bool update_path_param){
    	uint8_t dbg_invalp = 0;
    	param_get(pointers_param_qgc.nav_dbg_invalp, &dbg_invalp);
    	DEBUG_nav_alpha_minus(dbg_invalp);
+
+
+   	//**Do not command gybes on downwind courses => simply change reference
+   	uint8_t dbg_nogybe = 0;
+   	param_get(pointers_param_qgc.nav_dbg_nogybe, &dbg_nogybe);
+   	nav_set_nogybe(dbg_nogybe);
 
 
 

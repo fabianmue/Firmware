@@ -113,6 +113,10 @@ void nav_set_startline(PointE7 buoy1, PointE7 buoy2);
 void nav_set_configuration(float period, uint32_t turnrate);
 
 
+/** @brief Set, if a Gybe should be commanded or not (QGround Control)*/
+void nav_set_nogybe(uint8_t status);
+
+
 /** @brief Set the current position of the boat as the next target position*/
 void nav_set_quick_target(void);
 
