@@ -310,7 +310,7 @@ int pp_thread_main(int argc, char *argv[]) {
 		}
 
 
-        /* Call the navigator to calculate an new reference Heading
+        /* Call the navigator to calculate a new reference Heading
          * Note: The navigator is called in every loop, but it is only executed in a regular
          * time-based interval. */
 		#if USE_GRID_LINES == 0

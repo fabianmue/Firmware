@@ -119,6 +119,8 @@ bool tl_add(float x_cog, float y_cog) {
 	temp = malloc(sizeof(track_obj));
 
 	if(temp == NULL) {
+		smq_send_log_info("Out of Memory Tracks");
+
 		#if LDEBUG_KALMANTRACKER_CMS == 1
 		printf("Could not allocate memory for Track!\n");
 		#endif

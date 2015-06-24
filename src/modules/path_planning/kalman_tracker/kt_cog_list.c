@@ -99,6 +99,8 @@ bool cl_add(float x_cog, float y_cog) {
 	temp = malloc(sizeof(struct cog_obj));
 
 	if(temp == NULL) {
+		smq_send_log_info("Out of Memory COG");
+
 		#if LDEBUG_KALMANTRACKER_CMS == 1
 		printf("Could not allocate memory for COG!\n");
 		#endif
