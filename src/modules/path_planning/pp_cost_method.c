@@ -286,7 +286,7 @@ float total_cost(float seg, struct nav_state_s *state, struct nav_field_s *field
 	#endif
 
 	/*** TACTICAL COST ***/
-	float Ct = cost_tactical(seg,state,field);
+	float Ct = 0; //cost_tactical(seg,state,field);
 
 	#if C_DEBUG == 1
 	//printf("  Tactical Cost: %f, %f\n",seg*RAD2DEG,Ct);
