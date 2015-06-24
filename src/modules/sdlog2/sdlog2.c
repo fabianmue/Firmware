@@ -1157,6 +1157,7 @@ int sdlog2_thread_main(int argc, char *argv[])
     subs.boat_qgc_param3_sub = orb_subscribe(ORB_ID(boat_qgc_param3));
 
     subs.path_planning = orb_subscribe(ORB_ID(path_planning));
+    orb_set_interval(subs.path_planning,1000); //Make sure the logging is only done with a rate of 1Hz
 
     subs.boat_local_position = orb_subscribe(ORB_ID(boat_local_position));
 
@@ -1959,7 +1960,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         }
 
         /* --- BOAT PP DEBUG 1 (Added by Jonas Wirz)  */
-        if (copy_if_updated(ORB_ID(boat_pp_debug1), subs.boat_pp_debug1_sub, &buf.boat_pp_debug1)) {
+        /*if (copy_if_updated(ORB_ID(boat_pp_debug1), subs.boat_pp_debug1_sub, &buf.boat_pp_debug1)) {
             log_msg.msg_type = LOG_PPD1_MSG;
             log_msg.body.log_PPD1.obsthorizon = buf.boat_pp_debug1.obsthorizon;
             log_msg.body.log_PPD1.obstsafetyrad = buf.boat_pp_debug1.obstsafetyrad;
@@ -1972,7 +1973,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_PPD1.gt = buf.boat_pp_debug1.gt;
             log_msg.body.log_PPD1.gw = buf.boat_pp_debug1.gw;
             LOGBUFFER_WRITE_AND_COUNT(PPD1);
-        }
+        }*/ //Commented out JW 24.06.15
 
         //********************** End add *******************************
 

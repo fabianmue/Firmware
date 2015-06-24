@@ -69,6 +69,8 @@ static float downwind_alpha_star_abs = 2.7925268f;
 static char txt_msg[70]; ///used to send messages to QGC
 #endif
 
+//uint64_t last_update = 0;
+
 
 
 /**
@@ -330,7 +332,12 @@ void cb_publish_pp_if_updated(void){
     #endif //USE_GRID_LINES == 1
 
     //if path_planning topic has been updated, publish it
-    if(pp_updated == true){
+    //Make sure this happens not too often, otherwise the processor load is too high
+    //uint64_t utime = hrt_absolute_time();
+
+    if(pp_updated == true /*&& last_update-utime > 0.25e-6*/){
+    	//last_update = time;
+
         pp.timestamp = hrt_absolute_time();
         th_publish_path_planning(&pp);
         pp_updated = false;
