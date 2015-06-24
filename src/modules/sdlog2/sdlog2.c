@@ -790,6 +790,9 @@ int sdlog2_thread_main(int argc, char *argv[])
 		warnx("failed to open MAVLink log stream, start mavlink app first");
 	}
 
+	mavlink_log_info(mavlink_fd, "[sdlog2] thread started (JW)");
+
+
 	/* delay = 1 / rate (rate defined by -r option), default log rate: 50 Hz */
 	useconds_t sleep_delay = 20000;
 	int log_buffer_size = LOG_BUFFER_SIZE_DEFAULT;
@@ -1157,13 +1160,13 @@ int sdlog2_thread_main(int argc, char *argv[])
     subs.boat_qgc_param3_sub = orb_subscribe(ORB_ID(boat_qgc_param3));
 
     subs.path_planning = orb_subscribe(ORB_ID(path_planning));
-    orb_set_interval(subs.path_planning,1000); //Make sure the logging is only done with a rate of 1Hz
+    orb_set_interval(subs.path_planning,500); //Make sure the logging is only done with a rate of 2Hz
 
     subs.boat_local_position = orb_subscribe(ORB_ID(boat_local_position));
 
     subs.parser200wx_status = orb_subscribe(ORB_ID(parser200wx_status));
 
-    subs.boat_pp_debug1_sub = orb_subscribe(ORB_ID(boat_pp_debug1)); //Added by Jonas Wirz
+    //subs.boat_pp_debug1_sub = orb_subscribe(ORB_ID(boat_pp_debug1)); //Added by Jonas Wirz
 
     //****************** End Add by Marco Tranzatto ************
 
