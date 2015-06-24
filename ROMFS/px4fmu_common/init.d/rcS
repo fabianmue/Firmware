@@ -601,6 +601,12 @@ then
 		
 		# Start standard sailing apps
 		sh /etc/init.d/rc.sb_apps
+		
+		# Start the SD-Logging (JW)
+		# sdlog2 stop 
+		# sdlog2 start -r 50 -a -b 20 -t
+		
+		
 	fi
 	# END OF ADD by by Marco Tranzatto, 13/10/2014
 

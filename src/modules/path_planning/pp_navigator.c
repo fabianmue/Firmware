@@ -404,7 +404,7 @@ void nav_navigator(void) {
 			state.command_maneuver = true;
 
 			//**START NEW CODE
-			if(fabsf(NewWind) > DOWNWIND_COURSE) {
+			if(fabsf(NewWind) > DOWNWIND_COURSE && config.nogybe == true) {
 				//We are sailing on a downwind course => when we tell the low-level control to perform a maneuver,
 				//then the boat starts behaving crazy => therefore do not tell the boat to gybe and simply change the
 				//reference heading
