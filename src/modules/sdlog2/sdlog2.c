@@ -112,7 +112,7 @@
 //Added by Jonas Wirz
 #include <uORB/topics/boat_pp_debug.h>
 //Added by Jonas Wirz
-#include <uORB/topics/path_planning_kalman.h>
+//#include <uORB/topics/path_planning_kalman.h>
 
 
 #include <systemlib/systemlib.h>
@@ -988,7 +988,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         struct boat_qgc_param3_s boat_qgc_param3; //Added by Marco Tranzatto
         struct boat_qgc_param4_s boat_qgc_param4; //Added by Jonas Wirz
         struct path_planning_s path_planning; //Added by Marco Tranzatto
-        struct path_planning_kalman_s path_planning_kalman; //Added by Jonas Wirz
+        //struct path_planning_kalman_s path_planning_kalman; //Added by Jonas Wirz
         struct boat_local_position_s boat_local_position; //Added by Marco Tranzatto
         struct parser200wx_status_s parser200wx_status; //Added by Marco Tranzatto
         struct boat_pp_debug1_s boat_pp_debug1; //Added by Jonas Wirz
@@ -1041,7 +1041,7 @@ int sdlog2_thread_main(int argc, char *argv[])
             struct log_QGC1_s log_BOAT_QGC_PARAM1; //Added by Marco Tranzatto
             struct log_QGC2_s log_BOAT_QGC_PARAM2; //Added by Marco Tranzatto
             struct log_QGC4_s log_BOAT_QGC_PARAM4; //Added by Jonas Wirz
-            struct log_PPK_s log_PATH_PLANNING_KALMAN; //Added by Jonas Wirz
+            //struct log_PPK_s log_PATH_PLANNING_KALMAN; //Added by Jonas Wirz
             struct log_OPTM_s log_BOAT_OPT_MATRICES; //Added by Marco Tranzatto
             struct log_QGC3_s log_BOAT_QGC_PARAM3; //Added by Marco Tranzatto
             struct log_PP_s log_PP; //Added by Marco Tranzatto
@@ -1092,7 +1092,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         int boat_qgc_param1_sub; //Added by Marco Tranzatto
         int boat_qgc_param2_sub; //Added by Marco Tranzatto
         int boat_qgc_param4_sub; //Added by Jonas Wirz
-        int path_planning_kalman_sub; //Added by Jonas Wirz
+        //int path_planning_kalman_sub; //Added by Jonas Wirz
         int boat_opt_mat_sub; //Added by Marco Tranzatto
         int boat_qgc_param3_sub; //Added by Marco Tranzatto
         int path_planning; //Added by Marco Tranzatto
@@ -1149,7 +1149,7 @@ int sdlog2_thread_main(int argc, char *argv[])
     subs.boat_qgc_param1_sub = orb_subscribe(ORB_ID(boat_qgc_param1));
     subs.boat_qgc_param2_sub = orb_subscribe(ORB_ID(boat_qgc_param2));
     subs.boat_qgc_param4_sub = orb_subscribe(ORB_ID(boat_qgc_param4));	//Added by Jonas Wirz
-    subs.path_planning_kalman_sub = orb_subscribe(ORB_ID(path_planning_kalman));
+    //subs.path_planning_kalman_sub = orb_subscribe(ORB_ID(path_planning_kalman));
 
 
     subs.boat_opt_mat_sub = orb_subscribe(ORB_ID(boat_opt_mat));
@@ -1868,7 +1868,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 
         /* --- PATH PLANNING KALMAN */
         /* Added by Jonas Wirz */
-        if(copy_if_updated(ORB_ID(path_planning_kalman), subs.path_planning_kalman_sub, &buf.path_planning_kalman)) {
+        /*if(copy_if_updated(ORB_ID(path_planning_kalman), subs.path_planning_kalman_sub, &buf.path_planning_kalman)) {
         	log_msg.msg_type = LOG_PPK_MSG;
         	log_msg.body.log_PATH_PLANNING_KALMAN.tracknum = buf.path_planning_kalman.tracknum;
         	log_msg.body.log_PATH_PLANNING_KALMAN.newtracknum = buf.path_planning_kalman.newtracknum;
@@ -1882,7 +1882,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         	//log_msg.body.log_PATH_PLANNING_KALMAN.obj3x = buf.path_planning_kalman.obj3x;
         	//log_msg.body.log_PATH_PLANNING_KALMAN.obj3y = buf.path_planning_kalman.obj3y;
         	LOGBUFFER_WRITE_AND_COUNT(PPK);
-        }
+        }*/
 
 
         /* --- BOAT OPT MATRICES */
