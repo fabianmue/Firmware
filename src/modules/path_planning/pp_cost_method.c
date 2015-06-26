@@ -205,7 +205,7 @@ void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, floa
 
 #if C_DEBUG == 0
 	//Publish new values to boat_pp_debug1 topic in order to Log them on SD-Card
-	struct boat_pp_debug1_s temp;
+	/*struct boat_pp_debug1_s temp;
 	temp.gw = Config.Gw;
 	temp.go = Config.Go;
 	temp.gm = Config.Gm;
@@ -216,7 +216,7 @@ void cm_set_configuration(float Gw, float Go, float Gm, float Gs, float Gt, floa
 	temp.obsthorizon = Config.ObstHorizon;
 	temp.windowsize = Config.WindowSize;
 
-	th_publish_boat_pp_debug1(&temp);
+	th_publish_boat_pp_debug1(&temp); */
 #endif
 }
 
@@ -347,21 +347,10 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 	float tgy = dy/distToTarget;
 
 
-	//***START: THIS IS ANOTHER VERSION FOR CALCULTING THE SAME!
-	/*float bearing = nh_ned_bearing(state->position,field->targets[state->targetNum]);
-	float distToTarget = nh_ned_dist(state->position,field->targets[state->targetNum]);
-	float dx = cosf(bearing);
-	float dy = sinf(bearing);
-
-	float tgx = -dx/distToTarget;
-	float tgy = -dy/distToTarget;*/
-
-	//
 	if(DEBUG_noDist) {
 		tgx = dx;
 		tgy = dy;
 	}
-	//***END NEW VERSION
 
 
 	//Get the Boatspeed from the Polardiagram
