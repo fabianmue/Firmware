@@ -328,6 +328,8 @@ void nav_navigator(void) {
 
 
 
+
+
 	/** MAIN PATHPLANNING
 	 *  Pathplanning is only done with a certain frequency AND if no maneuver is under progress
 	 *  Therefore, check the systemtime.
