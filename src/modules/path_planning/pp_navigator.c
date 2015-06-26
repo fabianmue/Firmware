@@ -601,7 +601,6 @@ void nav_heading_update(void) {
 		state.heading_cur = alpha;
 
 		//Send current Heading to QGround control for debugging
-		//TODO: Commented out, because is used for debugging of target-number
 		cb_new_heading(state.heading_cur);
 
 	}
@@ -679,8 +678,6 @@ void nav_position_update(void) {
 				//This is not the last target => set new Target
 
 				state.targetNum += 1;
-				//TODO: DEBUG For the moment we assume that we always have the same Target
-				// => we do not increase the target number
 				//state.targetNum = 0;
 				smq_send_log_info("Waypoint reached!");
 
