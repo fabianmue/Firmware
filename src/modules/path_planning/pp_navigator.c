@@ -127,12 +127,16 @@ void nav_init(void) {
 	field.NumberOfObstacles = 1;
 
 	//Set the initial Target-Position
-	field.targets[0].northx = 0;
-	field.targets[0].easty = 0;
+	for(uint8_t i=0; i < MAXTARGETNUMBER; i++) {
+		field.targets[i].northx = 0;
+		field.targets[i].easty = 0;
+	}
 
 	//Set the initial Obstacle-Position
-	field.obstacles[0].northx = 0;
-	field.obstacles[0].easty = 0;
+	for(uint8_t i=0; i < MAXOBSTACLENUMBER; i++) {
+		field.obstacles[i].northx = 0;
+		field.obstacles[i].easty = 0;
+	}
 
 	//Set the initial Start-Line
 	field.startline[0].northx = 0;	//Buoy1

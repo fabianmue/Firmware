@@ -925,16 +925,16 @@ int sdlog2_thread_main(int argc, char *argv[])
 		err(1, "failed creating log root dir: %s", log_root);
 	}
 
-	/* copy conversion scripts */
-	const char *converter_in = "/etc/logging/conv.zip";
-	char *converter_out = malloc(64);
-	snprintf(converter_out, 64, "%s/conv.zip", log_root);
+	/* copy conversion scripts */ //JW 26.06. not necessary
+	//const char *converter_in = "/etc/logging/conv.zip";
+	//char *converter_out = malloc(64);
+	//snprintf(converter_out, 64, "%s/conv.zip", log_root);
 
-	if (file_copy(converter_in, converter_out) != OK) {
-		warn("unable to copy conversion scripts");
-	}
+	//if (file_copy(converter_in, converter_out) != OK) {
+	//	warn("unable to copy conversion scripts");
+	//}
 
-	free(converter_out);
+	//free(converter_out);
 
 	/* initialize log buffer with specified size */
 	warnx("log buffer size: %i bytes", log_buffer_size);
