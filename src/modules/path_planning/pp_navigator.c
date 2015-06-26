@@ -348,17 +348,17 @@ void nav_navigator(void) {
 		cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
 		cb_new_obstacle(field.obstacles[qground_obstnum].northx, field.obstacles[qground_obstnum].easty);
 
-		//qground_obstnum++;
-		//if(qground_obstnum>field.NumberOfObstacles) {
-		//	qground_obstnum = 0;
-		//}
-
-		//Log the Sensor-Obstacles
-		cb_new_obstacle(field.sensorobstacles[qground_obstnum].northx,field.sensorobstacles[qground_obstnum].easty);
 		qground_obstnum++;
-		if(qground_obstnum>field.NumberOfSensorobstacles) {
+		if(qground_obstnum>field.NumberOfObstacles) {
 			qground_obstnum = 0;
 		}
+
+		//Log the Sensor-Obstacles
+		//cb_new_obstacle(field.sensorobstacles[qground_obstnum].northx,field.sensorobstacles[qground_obstnum].easty);
+		//qground_obstnum++;
+		//if(qground_obstnum>field.NumberOfSensorobstacles) {
+		//	qground_obstnum = 0;
+		//}
 
 		cb_new_targetnum(state.targetNum);
 

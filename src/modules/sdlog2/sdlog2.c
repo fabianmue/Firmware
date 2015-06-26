@@ -1101,7 +1101,7 @@ int sdlog2_thread_main(int argc, char *argv[])
         int path_planning; //Added by Marco Tranzatto
         int boat_local_position; //Added by Marco Tranzatto
         int parser200wx_status; // Added by Marco Tranzatto
-        int boat_pp_debug1_sub; //Added by Jonas Wirz
+        //int boat_pp_debug1_sub; //Added by Jonas Wirz
 	} subs;
 
 	subs.cmd_sub = orb_subscribe(ORB_ID(vehicle_command));
@@ -1160,7 +1160,7 @@ int sdlog2_thread_main(int argc, char *argv[])
     subs.boat_qgc_param3_sub = orb_subscribe(ORB_ID(boat_qgc_param3));
 
     subs.path_planning = orb_subscribe(ORB_ID(path_planning));
-    orb_set_interval(subs.path_planning,500); //Make sure the logging is only done with a rate of 2Hz
+    //orb_set_interval(subs.path_planning,500); //Make sure the logging is only done with a rate of 2Hz
 
     subs.boat_local_position = orb_subscribe(ORB_ID(boat_local_position));
 
@@ -1638,25 +1638,25 @@ int sdlog2_thread_main(int argc, char *argv[])
 //            LOGBUFFER_WRITE_AND_COUNT(AIRS);
 //        }
 
-        /* --- ESCs --- */
-        if (copy_if_updated(ORB_ID(esc_status), subs.esc_sub, &buf.esc)) {
-            for (uint8_t i = 0; i < buf.esc.esc_count; i++) {
-                log_msg.msg_type = LOG_ESC_MSG;
-                log_msg.body.log_ESC.counter = buf.esc.counter;
-                log_msg.body.log_ESC.esc_count = buf.esc.esc_count;
-                log_msg.body.log_ESC.esc_connectiontype = buf.esc.esc_connectiontype;
-                log_msg.body.log_ESC.esc_num = i;
-                log_msg.body.log_ESC.esc_address = buf.esc.esc[i].esc_address;
-                log_msg.body.log_ESC.esc_version = buf.esc.esc[i].esc_version;
-                log_msg.body.log_ESC.esc_voltage = buf.esc.esc[i].esc_voltage;
-                log_msg.body.log_ESC.esc_current = buf.esc.esc[i].esc_current;
-                log_msg.body.log_ESC.esc_rpm = buf.esc.esc[i].esc_rpm;
-                log_msg.body.log_ESC.esc_temperature = buf.esc.esc[i].esc_temperature;
-                log_msg.body.log_ESC.esc_setpoint = buf.esc.esc[i].esc_setpoint;
-                log_msg.body.log_ESC.esc_setpoint_raw = buf.esc.esc[i].esc_setpoint_raw;
-                LOGBUFFER_WRITE_AND_COUNT(ESC);
-            }
-        }
+//JW 26.6.        /* --- ESCs --- */
+//        if (copy_if_updated(ORB_ID(esc_status), subs.esc_sub, &buf.esc)) {
+//            for (uint8_t i = 0; i < buf.esc.esc_count; i++) {
+//                log_msg.msg_type = LOG_ESC_MSG;
+//                log_msg.body.log_ESC.counter = buf.esc.counter;
+//                log_msg.body.log_ESC.esc_count = buf.esc.esc_count;
+//                log_msg.body.log_ESC.esc_connectiontype = buf.esc.esc_connectiontype;
+//                log_msg.body.log_ESC.esc_num = i;
+//                log_msg.body.log_ESC.esc_address = buf.esc.esc[i].esc_address;
+//                log_msg.body.log_ESC.esc_version = buf.esc.esc[i].esc_version;
+//                log_msg.body.log_ESC.esc_voltage = buf.esc.esc[i].esc_voltage;
+//                log_msg.body.log_ESC.esc_current = buf.esc.esc[i].esc_current;
+//                log_msg.body.log_ESC.esc_rpm = buf.esc.esc[i].esc_rpm;
+//                log_msg.body.log_ESC.esc_temperature = buf.esc.esc[i].esc_temperature;
+//                log_msg.body.log_ESC.esc_setpoint = buf.esc.esc[i].esc_setpoint;
+//                log_msg.body.log_ESC.esc_setpoint_raw = buf.esc.esc[i].esc_setpoint_raw;
+//                LOGBUFFER_WRITE_AND_COUNT(ESC);
+//            }
+//        }
 
         /* --- GLOBAL VELOCITY SETPOINT --- */
 //        if (copy_if_updated(ORB_ID(vehicle_global_velocity_setpoint), subs.global_vel_sp_sub, &buf.global_vel_sp)) {
@@ -1720,24 +1720,24 @@ int sdlog2_thread_main(int argc, char *argv[])
 //            LOGBUFFER_WRITE_AND_COUNT(DIST);
 //        }
 
-        /* --- ESTIMATOR STATUS --- */
-        if (copy_if_updated(ORB_ID(estimator_status), subs.estimator_status_sub, &buf.estimator_status)) {
-            log_msg.msg_type = LOG_EST0_MSG;
-            unsigned maxcopy0 = (sizeof(buf.estimator_status.states) < sizeof(log_msg.body.log_EST0.s)) ? sizeof(buf.estimator_status.states) : sizeof(log_msg.body.log_EST0.s);
-            memset(&(log_msg.body.log_EST0.s), 0, sizeof(log_msg.body.log_EST0.s));
-            memcpy(&(log_msg.body.log_EST0.s), buf.estimator_status.states, maxcopy0);
-            log_msg.body.log_EST0.n_states = buf.estimator_status.n_states;
-            log_msg.body.log_EST0.nan_flags = buf.estimator_status.nan_flags;
-            log_msg.body.log_EST0.health_flags = buf.estimator_status.health_flags;
-            log_msg.body.log_EST0.timeout_flags = buf.estimator_status.timeout_flags;
-            LOGBUFFER_WRITE_AND_COUNT(EST0);
+//JW 26.06.        /* --- ESTIMATOR STATUS --- */
+//        if (copy_if_updated(ORB_ID(estimator_status), subs.estimator_status_sub, &buf.estimator_status)) {
+//            log_msg.msg_type = LOG_EST0_MSG;
+//            unsigned maxcopy0 = (sizeof(buf.estimator_status.states) < sizeof(log_msg.body.log_EST0.s)) ? sizeof(buf.estimator_status.states) : sizeof(log_msg.body.log_EST0.s);
+//            memset(&(log_msg.body.log_EST0.s), 0, sizeof(log_msg.body.log_EST0.s));
+//            memcpy(&(log_msg.body.log_EST0.s), buf.estimator_status.states, maxcopy0);
+//            log_msg.body.log_EST0.n_states = buf.estimator_status.n_states;
+//            log_msg.body.log_EST0.nan_flags = buf.estimator_status.nan_flags;
+//            log_msg.body.log_EST0.health_flags = buf.estimator_status.health_flags;
+//            log_msg.body.log_EST0.timeout_flags = buf.estimator_status.timeout_flags;
+//            LOGBUFFER_WRITE_AND_COUNT(EST0);
 
-            log_msg.msg_type = LOG_EST1_MSG;
-            unsigned maxcopy1 = ((sizeof(buf.estimator_status.states) - maxcopy0) < sizeof(log_msg.body.log_EST1.s)) ? (sizeof(buf.estimator_status.states) - maxcopy0) : sizeof(log_msg.body.log_EST1.s);
-            memset(&(log_msg.body.log_EST1.s), 0, sizeof(log_msg.body.log_EST1.s));
-            memcpy(&(log_msg.body.log_EST1.s), buf.estimator_status.states + maxcopy0, maxcopy1);
-            LOGBUFFER_WRITE_AND_COUNT(EST1);
-        }
+//            log_msg.msg_type = LOG_EST1_MSG;
+//            unsigned maxcopy1 = ((sizeof(buf.estimator_status.states) - maxcopy0) < sizeof(log_msg.body.log_EST1.s)) ? (sizeof(buf.estimator_status.states) - maxcopy0) : sizeof(log_msg.body.log_EST1.s);
+//            memset(&(log_msg.body.log_EST1.s), 0, sizeof(log_msg.body.log_EST1.s));
+//            memcpy(&(log_msg.body.log_EST1.s), buf.estimator_status.states + maxcopy0, maxcopy1);
+//            LOGBUFFER_WRITE_AND_COUNT(EST1);
+//        }
 
         /* --- TECS STATUS --- */
 //        if (copy_if_updated(ORB_ID(tecs_status), subs.tecs_status_sub, &buf.tecs_status)) {
