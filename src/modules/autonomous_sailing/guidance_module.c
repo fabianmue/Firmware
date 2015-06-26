@@ -132,6 +132,7 @@ static struct{
 uint8_t dw_filter_window = 10;	//Size of the averaging filter window when sailing downwind
 float dw_course = 2.4435f;		//Courses above this value are considered to be downwind
 #define RAD2DEG      57.2957795131f			//180/pi
+bool dw_sail_downwind = false;
 
 
 /// Forces parameters
@@ -1263,8 +1264,16 @@ void gm_set_data_by_pp(const struct structs_topics_s *strs_p){
     if(fabsf(reference_actions.alpha_star) > dw_course) {
     	//We are sailing downwind => set the filter constant accordingly
 
-    	cd_update_k_twd(dw_filter_window,0);
-    	//cd_update_k(dw_filter_window,0); //This would change the filter size of alpha
+    	if(dw_sail_downwind == false) {
+    		//We've just started sailing downwind => increase the window-size of the moving average window
+
+    		cd_update_k_twd(dw_filter_window,0);
+
+    		dw_sail_downwind = true;
+    	}
+    } else {
+    	//We do not sail downwind anymore =>
+    	dw_sail_downwind = false;
     }
 
 

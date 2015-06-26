@@ -790,7 +790,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		warnx("failed to open MAVLink log stream, start mavlink app first");
 	}
 
-	mavlink_log_info(mavlink_fd, "[sdlog2] thread started (JW)");
+	//mavlink_log_info(mavlink_fd, "[sdlog2] thread started (JW)");
 
 
 	/* delay = 1 / rate (rate defined by -r option), default log rate: 50 Hz */

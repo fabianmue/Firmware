@@ -43,20 +43,6 @@ else
 	echo "[init] Init script not found: $RC_FILE"
 fi
 
-# if this is an APM build then there will be a rc.APM script
-# from an EXTERNAL_SCRIPTS build option
-if [ -f /etc/init.d/rc.APM ]
-then
-	if sercon
-	then
-		echo "[init] USB interface connected"
-	fi
-
-	echo "[init] Running rc.APM"
-	# if APM startup is successful then nsh will exit
-	sh /etc/init.d/rc.APM
-fi
-
 if [ $MODE == autostart ]
 then
 	echo "[init] AUTOSTART mode"
@@ -448,7 +434,7 @@ then
 	#
 	# UAVCAN
 	#
-	sh /etc/init.d/rc.uavcan
+	# sh /etc/init.d/rc.uavcan # commented out Jonas 
 
 	#
 	# Sensors, Logging, GPS
@@ -472,103 +458,6 @@ then
 		fi
 	fi
 
-	#
-	# Start up ARDrone Motor interface
-	#
-	if [ $OUTPUT_MODE == ardrone ]
-	then
-		ardrone_interface start -d /dev/ttyS1
-	fi
-
-	#
-	# Fixed wing setup
-	#
-	if [ $VEHICLE_TYPE == fw ]
-	then
-		echo "[init] Vehicle type: FIXED WING"
-
-		if [ $MIXER == none ]
-		then
-			# Set default mixer for fixed wing if not defined
-			set MIXER FMU_AERT
-		fi
-
-		if [ $MAV_TYPE == none ]
-		then
-			# Use MAV_TYPE = 1 (fixed wing) if not defined
-			set MAV_TYPE 1
-		fi
-
-		param set MAV_TYPE $MAV_TYPE
-
-		# Load mixer and configure outputs
-		sh /etc/init.d/rc.interface
-
-		# Start standard fixedwing apps
-		if [ $LOAD_DEFAULT_APPS == yes ]
-		then
-			sh /etc/init.d/rc.fw_apps
-		fi
-	fi
-
-	#
-	# Multicopters setup
-	#
-	if [ $VEHICLE_TYPE == mc ]
-	then
-		echo "[init] Vehicle type: MULTICOPTER"
-
-		if [ $MIXER == none ]
-		then
-			echo "Default mixer for multicopter not defined"
-		fi
-
-		if [ $MAV_TYPE == none ]
-		then
-			# Use mixer to detect vehicle type
-			if [ $MIXER == FMU_quad_x -o $MIXER == FMU_quad_+ ]
-			then
-				set MAV_TYPE 2
-			fi
-			if [ $MIXER == FMU_quad_w ]
-			then
-				set MAV_TYPE 2
-			fi
-			if [ $MIXER == FMU_hexa_x -o $MIXER == FMU_hexa_+ ]
-			then
-				set MAV_TYPE 13
-			fi
-			if [ $MIXER == FMU_hexa_cox ]
-			then
-				set MAV_TYPE 13
-			fi
-			if [ $MIXER == FMU_octo_x -o $MIXER == FMU_octo_+ ]
-			then
-				set MAV_TYPE 14
-			fi
-			if [ $MIXER == FMU_octo_cox ]
-			then
-				set MAV_TYPE 14
-			fi
-		fi
-
-		# Still no MAV_TYPE found
-		if [ $MAV_TYPE == none ]
-		then
-			echo "Unknown MAV_TYPE"
-		else
-			param set MAV_TYPE $MAV_TYPE
-		fi
-
-		# Load mixer and configure outputs
-		sh /etc/init.d/rc.interface
-
-		# Start standard multicopter apps
-		if [ $LOAD_DEFAULT_APPS == yes ]
-		then
-			sh /etc/init.d/rc.mc_apps
-		fi
-	fi
 	
 	
 	# ADDED by Marco Tranzatto, 13/10/2014
@@ -601,10 +490,6 @@ then
 		
 		# Start standard sailing apps
 		sh /etc/init.d/rc.sb_apps
-		
-		# Start the SD-Logging (JW)
-		# sdlog2 stop 
-		# sdlog2 start -r 50 -a -b 20 -t
 		
 		
 	fi
