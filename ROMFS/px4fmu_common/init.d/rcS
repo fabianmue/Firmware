@@ -429,8 +429,10 @@ then
 		fi
 	fi
 
-	mavlink start $MAVLINK_FLAGS
-
+	# JW: 26.06. do not start mavlink, we will start it manually 
+	# mavlink start $MAVLINK_FLAGS
+	
+	
 	#
 	# UAVCAN
 	#
@@ -443,8 +445,8 @@ then
 
 	#
 	# Start logging in all modes, including HIL
-	#
-	sh /etc/init.d/rc.logging
+	# JW: 26.06. we start that later on 
+	# sh /etc/init.d/rc.logging 
 
 	if [ $GPS == yes ]
 	then
