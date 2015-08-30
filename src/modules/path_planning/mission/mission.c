@@ -83,6 +83,19 @@ static uint64_t countdown_ms = 0; //Number of milliseconds for the countdown
 //static char txt_msg[150]; //Buffer for QGround Control Messages
 
 
+//Calcualte the positions of the Buoys
+NEDpoint O1 = config.o1;
+NEDpoint O2;
+NEDpoint O3;
+NEDpoint O4;
+
+O2.northx = O1.northx;
+O2.easty = O1.easty + config.dist;
+O3.northx = O1.northx - config.dist;
+O3.easty = O1.easty;
+O4.northx = O1.northx - config.dist;
+O4.easty = O1.easty + config.dist;
+
 
 
 /***********************************************************************************/
@@ -136,20 +149,6 @@ bool mi_set_new_task(uint8_t tasknum) {
 
 	//Assign the current Task-Number
 	state.curtask = tasknum;
-
-
-	//Calcualte the positions of the Buoys
-	NEDpoint O1 = config.o1;
-	NEDpoint O2;
-	NEDpoint O3;
-	NEDpoint O4;
-
-	O2.northx = O1.northx;
-	O2.easty = O1.easty + config.dist;
-	O3.northx = O1.northx - config.dist;
-	O3.easty = O1.easty;
-	O4.northx = O1.northx - config.dist;
-	O4.easty = O1.easty + config.dist;
 
 	//Inform QGround Control that a new mission is started
 	smq_send_log_info("New Mission started! (JW)");
@@ -322,6 +321,60 @@ bool mi_set_new_task(uint8_t tasknum) {
 			break;
 		}
 
+		case 6: {	//This is the COMPETITION STATION KEEPING CONTEST
+
+
+			countdown_ms = 300e6;	//The countdown for this mission is 5minutes
+			countdown = true; 		//Activate the countdown
+
+			NEDpoint wp1, wp2, wp3; //Predefine Waypoints
+
+			//O1--------------------O2
+			//      wp1-->----wp2   |		wp4 (this is the final waypoint)
+			//                 |    |
+			//                 v    |
+			//                 |    |
+			//                wp3   |
+
+
+
+			wp1.easty = O1.easty + 10;
+			wp1.northx = O1.northx + 10;
+
+			wp2.easty = O2.easty - 10;
+			wp2.northx = O2.northx - 10;
+
+			wp3.easty = O2.easty - 10;
+			wp3.northx = O2.northx - 20;
+
+			nh_rotate(wp1, O1, config.rotation);
+			nh_rotate(wp2, O1, config.rotation);
+			nh_rotate(wp3, O1, config.rotation);
+
+			nav_set_target_ned(0,wp1);
+			nav_set_target_ned(1,wp2);
+			nav_set_target_ned(2,wp3);
+
+
+			//Final point
+			NEDpoint wp4;
+			wp4.easty = O2.easty + 20;
+			wp4.northx = O2.northx;
+			nh_rotate(wp4, O1, config.rotation);
+
+
+			if(countdown == false) {
+				//The countdown is over (namely the 5min are over)
+				//=> leave the Area
+
+				nav_set_target_ned(0,wp4);
+				nav_set_target_ned(1,wp4);
+				nav_set_target_ned(2,wp4);
+			}
+
+			break;
+		}
+
 		default: {
 			//Nothing we can do about this
 			break;
@@ -415,4 +468,20 @@ bool mi_handler(void) {
 /***********************************************************************************/
 /*****  P R I V A T E    F U N C T I O N S  ****************************************/
 /***********************************************************************************/
+
+/*
+ * Detect, if we are inside the area defined by the buoys
+ *
+ * @return true, if the boat position is inside the area
+ */
+bool mi_isinside(NEDpoint boatpos) {
+
+	float x = boatpos.northx;
+	float y = boatpos.easty;
+
+	if(x > O1.easty) {
+
+	}
+
+}
 

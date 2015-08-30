@@ -336,6 +336,12 @@ int pp_thread_main(int argc, char *argv[]) {
 		#endif
 
 
+        /* Call the Mission-Handler */
+		#if LDEBUG_MISSIONHANDLER == 1
+        mi_handler();
+		#endif
+
+
         /* Warning: path_planning topic should be published only ONCE for every loop iteration.
          * Use pp_communication_buffer to change topic's values.
         */

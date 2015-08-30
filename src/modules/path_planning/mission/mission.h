@@ -17,6 +17,10 @@ void mi_set_configuration(float dist, float o1x, float o1y, float rotation);
 bool mi_set_new_task(uint8_t tasknum);
 
 
+/* @brief Handler Function for the missions as called by the main-program loop */
+bool mi_handler(void);
+
+
 
 
 #endif /* MISSION_H_ */
