@@ -525,3 +525,14 @@ void n_geo_to_ned(double lat_deg, double lon_deg, float alt_m,
 	//compute boat position in NED frame w.r.t. lat0 lon0 alt0 set by set_ref0()
 	geo_to_ned(&vehicle_global_position, x_dm_p, y_dm_p, z_dm_p);
 }
+
+
+#if LDEBUG_FAKEPOSITION==1
+
+void DEBUG_fakened(float north, float east) {
+    boat_ned_dm[0] = north * 1e2f;
+    boat_ned_dm[1] = east * 1e2f;
+    boat_ned_dm[2] = 0;
+}
+
+#endif

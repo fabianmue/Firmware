@@ -81,7 +81,7 @@ static uint64_t lastcall = 0; //Timestamp of the last call to the handler-functi
 
 static bool countdown = false; //Set true, if a countdown is needed
 static uint64_t countdown_ms = 0; //Number of milliseconds for the countdown
-static uint64_t countdown_ms_top = 300e6; //Time to reach in milliseconds (5min)
+static uint64_t countdown_ms_top = 150e6; //Time to reach in milliseconds (5min)
 
 //static char txt_msg[150]; //Buffer for QGround Control Messages
 
@@ -173,6 +173,8 @@ bool mi_set_new_task(uint8_t tasknum) {
 		case 0: { //Do no changes
 			mi_init();
 
+			nav_queue_init();
+
 			countdown_running = false;
 			countdown = false;
 
@@ -200,10 +202,10 @@ bool mi_set_new_task(uint8_t tasknum) {
 
 
 			//Set the configuration
-			nav_set_target_ned(0, start);
-			nav_set_target_ned(1, O1);
-			nav_set_target_ned(2, O4);
-			nav_set_target_ned(3, end);
+			nav_set_target_ned(start);
+			nav_set_target_ned(O1);
+			nav_set_target_ned(O4);
+			nav_set_target_ned(end);
 
 
 
@@ -238,8 +240,8 @@ bool mi_set_new_task(uint8_t tasknum) {
 			O3 = nh_rotate(O3, O1, config.rotation);
 			obst1 = nh_rotate(obst1, O1, config.rotation);
 
-			nav_set_target_ned(0, O3);
-			nav_set_target_ned(1, O1);
+			nav_set_target_ned(O3);
+			nav_set_target_ned(O1);
 			nav_set_obstacle_ned(0, obst1);
 
 
@@ -259,8 +261,8 @@ bool mi_set_new_task(uint8_t tasknum) {
 			O3 = nh_rotate(O3, O1, config.rotation);
 			obst1 = nh_rotate(obst1, O1, config.rotation);
 
-			nav_set_target_ned(0, O1);
-			nav_set_target_ned(1, O3);
+			nav_set_target_ned(O1);
+			nav_set_target_ned(O3);
 			nav_set_obstacle_ned(0, obst1);
 
 
@@ -281,8 +283,8 @@ bool mi_set_new_task(uint8_t tasknum) {
 			O2 = nh_rotate(O2, O1, config.rotation);
 			obst1 = nh_rotate(obst1, O1, config.rotation);
 
-			nav_set_target_ned(0, O1);
-			nav_set_target_ned(1, O2);
+			nav_set_target_ned(O1);
+			nav_set_target_ned(O2);
 			nav_set_obstacle_ned(0, obst1);
 
 
@@ -311,8 +313,8 @@ bool mi_set_new_task(uint8_t tasknum) {
 				start1 = nh_rotate(start1, O1, config.rotation);
 				start2 = nh_rotate(start2, O1, config.rotation);
 
-				nav_set_target_ned(0,start1);
-				nav_set_target_ned(1,start2);
+				nav_set_target_ned(start1);
+				nav_set_target_ned(start2);
 			}
 
 
@@ -329,9 +331,9 @@ bool mi_set_new_task(uint8_t tasknum) {
 				end = nh_rotate(end,O1,config.rotation);
 
 				//Set the configuration
-				nav_set_target_ned(0, O1);
-				nav_set_target_ned(1, O4);
-				nav_set_target_ned(2, end);
+				nav_set_target_ned(O1);
+				nav_set_target_ned(O4);
+				nav_set_target_ned(end);
 
 
 			}
@@ -375,9 +377,9 @@ bool mi_set_new_task(uint8_t tasknum) {
 			//wp2 = nh_rotate(wp2, middle, config.rotation);
 			//wp3 = nh_rotate(wp3, middle, config.rotation);
 
-			nav_set_target_ned(0,wp1);
-			nav_set_target_ned(1,wp2);
-			nav_set_target_ned(2,wp3);
+			nav_set_target_ned(wp1);
+			nav_set_target_ned(wp2);
+			nav_set_target_ned(wp3);
 
 			NEDpoint obst;
 			obst.northx = 0;
@@ -395,9 +397,8 @@ bool mi_set_new_task(uint8_t tasknum) {
 				//The countdown is over (namely the 5min are over)
 				//=> leave the Area
 
-				nav_set_target_ned(0,wp4);
-				//nav_set_target_ned(1,wp4);
-				//nav_set_target_ned(2,wp4);
+				nav_queue_init();
+				nav_set_target_ned(wp4);
 			}
 
 			break;

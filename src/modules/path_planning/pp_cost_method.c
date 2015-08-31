@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "pp_cost_method.h"
+#include "pp_navigator.h"
 
 #include "pp_polardiagram.h"
 
@@ -337,11 +338,13 @@ float cost_target_wind(float seg, struct nav_state_s *state, struct nav_field_s 
 	float appWind = nh_appWindDir(seg,state->wind_dir);
 
 	//Calcualte x and y Differences
-	float dx = state->position.northx-field->targets[state->targetNum].northx;
-	float dy = state->position.easty-field->targets[state->targetNum].easty;
+	NEDpoint act_wp;
+	nav_queue_read(&act_wp);
+	float dx = state->position.northx-act_wp.northx;
+	float dy = state->position.easty-act_wp.easty;
 
 	//Distance to target
-	float distToTarget = nh_ned_dist(state->position,field->targets[state->targetNum]);
+	float distToTarget = nh_ned_dist(state->position,act_wp);
 
 	float tgx = dx/distToTarget;			//Vector pointing towards the target
 	float tgy = dy/distToTarget;
@@ -457,7 +460,10 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
 
     if(Config.Gt > 0) {
 
-		float target_bearing = nh_ned_bearing(state->position,field->targets[state->targetNum]);
+    	NEDpoint act_wp;
+    	nav_queue_read(&act_wp);
+
+		float target_bearing = nh_ned_bearing(state->position,act_wp);
 
 		if((state->heading_cur >= target_bearing*0.9f) && (state->heading_ref <= 1.1f*target_bearing)) {
 			//The boat is on the last leg.
@@ -486,7 +492,7 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
 
 
 			//The meeting-point of the center-line and the boat-heading
-			float tcl = (clx*(state->position.easty-field->targets[state->targetNum].easty)-cly*(state->position.northx-field->targets[state->targetNum].northx))/(hx*cly-hy*clx);
+			float tcl = (clx*(state->position.easty-act_wp.easty)-cly*(state->position.northx-act_wp.northx))/(hx*cly-hy*clx);
 			NEDpoint mcl;
 			mcl.northx = state->position.northx + tcl * hx;
 			mcl.easty = state->position.easty + tcl * hy;
@@ -497,7 +503,7 @@ float cost_tactical(float seg,struct nav_state_s *state, struct nav_field_s *fie
 				mcl.easty = 10000000.0f;
 			}
 
-			float dist_target = nh_ned_dist(state->position,field->targets[state->targetNum]);  //The closer the boat gets to the target, the smaller is the cone-opening
+			float dist_target = nh_ned_dist(state->position,act_wp);  //The closer the boat gets to the target, the smaller is the cone-opening
 			float dist_mcl = nh_ned_dist(state->position,mcl);			//Distance to the Center-Line
 
 			Ct = min(dist_mcl,dist_target)/dist_target;

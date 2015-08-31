@@ -167,6 +167,9 @@ void nav_init(void) {
 	config.reset = false;
 	config.use_yaw = false;
 
+	//Initialize the queue of waypoints to 0
+	nav_queue_init();
+
 
 	//Update the state by requesting the values from the communication Buffer
 	nav_wind_update();		//Check for new Wind measurements
@@ -681,32 +684,24 @@ void nav_position_update(void) {
 
 
 	//Check, if we reached a target
-	if(enable_pathplanner == true)
+	if(enable_pathplanner == true) {
 		//We only check, if we have reached the target, when the pathplanner is on <=> we are in autonomous mode
-		if(nh_ned_dist(newPos,field.targets[state.targetNum]) <= TARGETTOLERANCE) {
+
+		NEDpoint act_wp;
+		nav_queue_read(&act_wp);
+
+		if(nh_ned_dist(newPos,act_wp) <= TARGETTOLERANCE) {
 			//We are inside the tolerance => target is counted as reached
 
-			if(state.targetNum != (field.NumberOfTargets-1)) {
-				//This is not the last target => set new Target
+			nav_queue_next_wp();
 
-				state.targetNum += 1;
-				//state.targetNum = 0;
-				smq_send_log_info("Waypoint reached!");
+			//Send the new target to QGround Control
+			NEDpoint temp_wp;
+			nav_queue_read(&temp_wp);
+			cb_new_target(temp_wp.northx, temp_wp.easty);
 
-				//Send the new target to QGround Control
-				cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
-
-			} else {
-				//This was the last target
-
-				//Don't know what to do here...just be happy?... maybe report to QGround Control?
-				smq_send_log_info("Final target reached!");
-
-				//We set again the first target as the next target => ensures that the boat alway has a target position to reach
-				state.targetNum = 0;
-
-			}
 		}
+	}
 
 	//Update the state to the new Position
 	state.position = newPos;
@@ -813,18 +808,12 @@ void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos) {
  * @param TargetNumber: The position of the target in the Array of all Targets
  * @param TargetPos: The GPS-Position of the target represented as a Point in NED-Coordinates
  */
-void nav_set_target_ned(uint8_t TargetNumber, NEDpoint TargetPos) {
+void nav_set_target_ned(NEDpoint TargetPos) {
 
-	#if P_DEBUG == 0
-	//The update of the target position should only be done, if we are not debugging
-	field.targets[TargetNumber] = TargetPos;
-	field.NumberOfTargets = TargetNumber + 1;
+	//Put the newly added target into the queue
+	nav_queue_put_wp(&TargetPos);
 
-	state.targetNum = TargetNumber;
-
-	cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
-
-	#endif
+	cb_new_target(TargetPos.northx, TargetPos.easty);
 
 }
 
@@ -1075,6 +1064,78 @@ void DEBUG_nav_alpha_minus(uint8_t status) {
 		dbg_alpha_minus = false;
 	}
 }
+
+
+
+
+
+/***********************************************************************************************/
+/********************************** FIFO QUEUE *************************************************/
+/***********************************************************************************************/
+
+//PARTLY COPIED FROM: http://stackoverflow.com/questions/215557/most-elegant-way-to-implement-a-circular-list-fifo
+
+
+/* Very simple queue
+ * These are FIFO queues which discard the new data when full.
+ *
+ * Queue is empty when in == out.
+ * If in != out, then
+ *  - items are placed into in before incrementing in
+ *  - items are removed from out before incrementing out
+ * Queue is full when in == (out-1 + QUEUE_SIZE) % QUEUE_SIZE;
+ *
+ * The queue will hold QUEUE_ELEMENTS number of items before the
+ * calls to QueuePut fail.
+ */
+
+/* Queue structure */
+#define QUEUE_SIZE (MAXTARGETNUMBER + 1)
+static NEDpoint Queue[QUEUE_SIZE];
+static int QueueIn, QueueOut;
+
+void nav_queue_init(void) {
+    QueueIn = QueueOut = 0;
+}
+
+int nav_queue_put_wp(NEDpoint *new){
+
+    if(QueueIn == (( QueueOut - 1 + QUEUE_SIZE) % QUEUE_SIZE)) {
+        return -1; /* Queue Full*/
+    }
+
+    Queue[QueueIn] = *new;
+
+    QueueIn = (QueueIn + 1) % QUEUE_SIZE;
+
+    return 0; // No errors
+}
+
+int nav_queue_next_wp(void) {
+
+    if(QueueIn == 0 && QueueOut == 0) {
+    	return -1; //Queue is empty
+    } else if(QueueIn == QueueOut) {
+    	QueueOut = 0;
+    } else {
+		QueueOut = (QueueOut + 1) % QUEUE_SIZE;
+    }
+
+	return 0; // No errors
+}
+
+int nav_queue_read(NEDpoint *old) {
+
+    if(QueueIn == QueueOut) {
+        return -1; /* Queue Empty - nothing to get*/
+    }
+
+    *old = Queue[QueueOut];
+
+    return 0; // No errors
+}
+
+
 
 
 

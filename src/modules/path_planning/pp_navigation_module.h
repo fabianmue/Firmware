@@ -101,4 +101,10 @@ float n_get_u_vel(void);
 void n_geo_to_ned(double lat_deg, double lon_deg, float alt_m,
                    int32_t *x_dm_p, int32_t *y_dm_p, int32_t *z_dm_p);
 
+
+
+#if LDEBUG_FAKEPOSITION==1
+void DEBUG_fakened(float north, float east);
+#endif
+
 #endif /* NAVIGATION_H_ */

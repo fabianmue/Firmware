@@ -207,6 +207,31 @@ PARAM_DEFINE_INT32(ASPS_ALT_E3, 406000);
 #endif //SIMULATION_FLAG == 1
 
 
+
+#if LDEBUG_FAKEPOSITION==1
+/**
+ * Simulated Latitude, in degrees * E7.
+ *
+ *
+ * @min -900000000
+ * @max 900000000
+ */
+PARAM_DEFINE_FLOAT(ASIM_NORTH, 0);
+
+/**
+ * Simulated Longitude, in degrees * E7.
+ *
+ *
+ * @min -1800000000
+ * @max 1800000000
+ */
+PARAM_DEFINE_FLOAT(ASIM_EAST, 0);
+
+#endif
+
+
+
+
 /**
  * pp_potentialfield_method: Weighting factors and other
  * configuration parameters for potentialfield method
@@ -434,6 +459,13 @@ static struct pointers_param_qgc_s{
     #endif //SIMULATION_FLAG == 1
 
 
+
+#if LDEBUG_FAKEPOSITION==1
+    param_t north_sim_pointer; /**< pointer to param ASIM_LAT_E7*/
+    param_t east_sim_pointer; /**< pointer to param ASIM_LON_E7*/
+#endif
+
+
 	//**COST_METHOD
 	param_t cm_weight_gw_pointer;
 	param_t cm_weight_go_pointer;
@@ -558,6 +590,13 @@ void p_param_init(void){
     #endif //USE_GRID_LINES == 1
 
     #endif //SIMULATION_FLAG == 1
+
+
+
+#if LDEBUG_FAKEPOSITION==1
+    pointers_param_qgc.north_sim_pointer = param_find("ASIM_NORTH");
+    pointers_param_qgc.east_sim_pointer = param_find("ASIM_EAST");
+#endif
 
     //clean boat_qgc_param2
     memset(&boat_qgc_param2, 0, sizeof(boat_qgc_param2));
@@ -812,6 +851,22 @@ void p_param_update(bool update_path_param){
     #endif //USE_GRID_LINES == 1
 
     #endif //SIMULATION_FLAG == 1
+
+
+    //**SIMULATE GPS-Position
+
+
+#if LDEBUG_FAKEPOSITION==1
+    float north_sim;
+    float east_sim;
+
+    param_get(pointers_param_qgc.north_sim_pointer, &north_sim);
+    param_get(pointers_param_qgc.east_sim_pointer, &east_sim);
+
+    DEBUG_fakened(north_sim, east_sim);
+#endif
+
+
 
 
     //**COST METHOD

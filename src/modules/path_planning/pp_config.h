@@ -55,6 +55,8 @@
 #define LDEBUG_USEMISSION   1 //Use the Mission planner instead of manual input of target and obstacles (1 = enable/0 = disable)
 #define LDEBUG_MISSIONHANDLER 1 //Use the Mission -Handler
 
+#define LDEBUG_FAKEPOSITION 0 //Fake a NED position by QGround Control
+
 
 
 /*FAILSAFE MODE
@@ -97,7 +99,7 @@
 
 /* DEFINE MAXIMUM NUMBER OF TARGETS
  * Maximum number of targets (waypoints) */
-#define MAXTARGETNUMBER 5
+#define MAXTARGETNUMBER 110
 
 
 /* DEFINE MAXIMUM NUMBER OF OBSTACLES

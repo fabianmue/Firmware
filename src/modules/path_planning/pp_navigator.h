@@ -98,7 +98,7 @@ void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos);
 
 
 /** @brief Set Targets in NED-Coordinates */
-void nav_set_target_ned(uint8_t TargetNumber, NEDpoint TargetPos);
+void nav_set_target_ned(NEDpoint TargetPos);
 
 
 /** @brief Set the number out of the stored targets should be reached */
@@ -155,6 +155,13 @@ void DEBUG_nav_alpha_minus(uint8_t status);
 
 /* @brief Get the Obstacles identified by the Kalman Tracker */
 bool nav_get_sensor_obstacles(void);
+
+
+/* FUNCTIONS FOR THE QUEUE */
+void nav_queue_init(void);
+int nav_queue_put_wp(NEDpoint *new);
+int nav_queue_next_wp(void);
+int nav_queue_read(NEDpoint *old);
 
 
 #endif /* PP_NAVIGATOR_H_ */
