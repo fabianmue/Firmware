@@ -53,6 +53,7 @@
 #define LDEBUG_KALMANTRACKER 0 //Activate the Kalman tracker (1 = tracker is activated)
 #define LDEBUG_KALMANTRACKER_CMS 0 //Activate printf-messages onto console (1 = messages are activated)
 #define LDEBUG_USEMISSION   1 //Use the Mission planner instead of manual input of target and obstacles (1 = enable/0 = disable)
+#define LDEBUG_MISSIONHANDLER 1 //Use the Mission -Handler
 
 
 
@@ -110,9 +111,13 @@
 //#define HOMELON 85609284f
 //#define HOMEALT	405*1000.0f				//Note: The altitude value is in Millimeters
 
-#define HOMELAT 473785680				//Note: This is the lower terrass at ETH Zurich (Physikstrasse)
-#define HOMELON 85528100
-#define HOMEALT	484.276f*1000.0f	//Note: The altitude value is in Millimeters
+//#define HOMELAT 473785680				//Note: This is the lower terrass at ETH Zurich (Physikstrasse)
+//#define HOMELON 85528100
+//#define HOMEALT	484.276f*1000.0f	//Note: The altitude value is in Millimeters
+
+#define HOMELAT 601050000
+#define HOMELON 199500000
+#define HOMEALT 0
 
 
 

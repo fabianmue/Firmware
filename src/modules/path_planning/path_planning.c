@@ -77,6 +77,7 @@
 #include "kalman_tracker/kt_tracker.h"
 
 #include "parser_sensorboard/ps_sensorboard.h"
+#include "mission/mission.h"
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
@@ -231,6 +232,11 @@ int pp_thread_main(int argc, char *argv[]) {
     //init the Kalman tracker
 	#if LDEBUG_KALMANTRACKER == 1
     tr_init();
+	#endif
+
+    //init the mission planner
+	#if LDEBUG_MISSIONHANDLER == 1
+    mi_init();
 	#endif
 
 

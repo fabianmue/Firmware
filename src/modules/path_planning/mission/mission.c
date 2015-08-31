@@ -73,28 +73,24 @@ static struct {
 	.curtask = 0
 };
 
+static bool stationkeeping_isinside = false;
+static bool countdown_running = false;
+
 
 static uint64_t lastcall = 0; //Timestamp of the last call to the handler-function
-static bool auto_mode_on = false; //True, if the autonomous mode is on
 
 static bool countdown = false; //Set true, if a countdown is needed
 static uint64_t countdown_ms = 0; //Number of milliseconds for the countdown
+static uint64_t countdown_ms_top = 300e6; //Time to reach in milliseconds (5min)
 
 //static char txt_msg[150]; //Buffer for QGround Control Messages
 
 
 //Calcualte the positions of the Buoys
-NEDpoint O1 = config.o1;
-NEDpoint O2;
-NEDpoint O3;
-NEDpoint O4;
-
-O2.northx = O1.northx;
-O2.easty = O1.easty + config.dist;
-O3.northx = O1.northx - config.dist;
-O3.easty = O1.easty;
-O4.northx = O1.northx - config.dist;
-O4.easty = O1.easty + config.dist;
+static NEDpoint O1;
+static NEDpoint O2;
+static NEDpoint O3;
+static NEDpoint O4;
 
 
 
@@ -109,6 +105,22 @@ O4.easty = O1.easty + config.dist;
 /***********************************************************************************/
 /*****  P U B L I C    F U N C T I O N S  ******************************************/
 /***********************************************************************************/
+
+void mi_init(void) {
+
+	O1 = config.o1;
+
+	//Set the buoys
+	O2.northx = O1.northx;
+	O2.easty =  O1.easty + config.dist;
+	O3.northx = O1.northx - config.dist;
+	O3.easty = O1.easty;
+	O4.northx = O1.northx - config.dist;
+	O4.easty = O1.easty + config.dist;
+
+}
+
+
 
 /*
  * Set the configuration of the race-Field
@@ -147,6 +159,8 @@ bool mi_set_new_task(uint8_t tasknum) {
 		return false;
 	}
 
+
+
 	//Assign the current Task-Number
 	state.curtask = tasknum;
 
@@ -157,6 +171,11 @@ bool mi_set_new_task(uint8_t tasknum) {
 
 	switch(tasknum) {
 		case 0: { //Do no changes
+			mi_init();
+
+			countdown_running = false;
+			countdown = false;
+
 			break;
 		}
 		case 1: { //Race-Task with triangular course
@@ -323,9 +342,8 @@ bool mi_set_new_task(uint8_t tasknum) {
 
 		case 6: {	//This is the COMPETITION STATION KEEPING CONTEST
 
-
-			countdown_ms = 300e6;	//The countdown for this mission is 5minutes
-			countdown = true; 		//Activate the countdown
+			//countdown_ms = 300e6;	//The countdown for this mission is 5minutes
+			//countdown = true; 		//Activate the countdown
 
 			NEDpoint wp1, wp2, wp3; //Predefine Waypoints
 
@@ -337,9 +355,11 @@ bool mi_set_new_task(uint8_t tasknum) {
 			//                wp3   |
 
 
+			mi_init();
+
 
 			wp1.easty = O1.easty + 10;
-			wp1.northx = O1.northx + 10;
+			wp1.northx = O1.northx - 10;
 
 			wp2.easty = O2.easty - 10;
 			wp2.northx = O2.northx - 10;
@@ -347,29 +367,37 @@ bool mi_set_new_task(uint8_t tasknum) {
 			wp3.easty = O2.easty - 10;
 			wp3.northx = O2.northx - 20;
 
-			nh_rotate(wp1, O1, config.rotation);
-			nh_rotate(wp2, O1, config.rotation);
-			nh_rotate(wp3, O1, config.rotation);
+			NEDpoint middle;
+			middle.easty = O1.easty + config.dist/2;
+			middle.northx = O1.northx - config.dist/2;
+
+			//wp1 = nh_rotate(wp1, middle, config.rotation);
+			//wp2 = nh_rotate(wp2, middle, config.rotation);
+			//wp3 = nh_rotate(wp3, middle, config.rotation);
 
 			nav_set_target_ned(0,wp1);
 			nav_set_target_ned(1,wp2);
 			nav_set_target_ned(2,wp3);
 
+			NEDpoint obst;
+			obst.northx = 0;
+			obst.easty = 0;
+			nav_set_obstacle_ned(0, obst);
+
 
 			//Final point
 			NEDpoint wp4;
-			wp4.easty = O2.easty + 20;
-			wp4.northx = O2.northx;
-			nh_rotate(wp4, O1, config.rotation);
+			wp4 = middle;
+			wp4.easty += config.dist;
 
 
-			if(countdown == false) {
+			if(countdown == false && countdown_running == true) {
 				//The countdown is over (namely the 5min are over)
 				//=> leave the Area
 
 				nav_set_target_ned(0,wp4);
-				nav_set_target_ned(1,wp4);
-				nav_set_target_ned(2,wp4);
+				//nav_set_target_ned(1,wp4);
+				//nav_set_target_ned(2,wp4);
 			}
 
 			break;
@@ -395,57 +423,37 @@ bool mi_handler(void) {
 
 	uint64_t curtime = hrt_absolute_time();
 
-	if(curtime-lastcall > 2e6) {
+	if(stationkeeping_isinside == true && countdown_running == false) {
+		countdown = true;
+		countdown_running = true;
+		countdown_ms = 0; //initialize the countdown
+
+		lastcall = curtime;
+	}
+
+	uint64_t difference = curtime-lastcall;
+
+	if(difference > 2e6) {
 		//Do not call the mission planner every time in the main-loop, but only every two seconds
 
-		bool just_switched = false; //Flag that signals when we just switched into autonomous mode
+		lastcall = curtime;
 
-		if(auto_mode_on == false && cb_is_autonomous_mode() == true) {
-			//We just switched into autonomous mode
+		if(countdown == true) {
+			//A countdown is set
 
-			auto_mode_on = true; //Signal that we are in autonomous mode now
-			just_switched = true;
-		}
+			countdown_ms += difference;
 
-		if(cb_is_autonomous_mode() == false) {
-			//We are in manual mode => clear the flag
+			cb_new_wind((float)countdown_ms / 1e3f); //TODO 31082015 remove this!!!!!!!
 
-			auto_mode_on = false;
-		}
+			if(countdown_ms >= countdown_ms_top) {
+				//The countdown is over => set countdown-flag to false and start original mission
+				countdown = false;
 
-		if(cb_is_autonomous_mode() == true) {
-			//we are in autonomous mode => set the flag
+				smq_send_log_info("End of Countdown (JW)");
 
-			auto_mode_on = true;
-
-			if(countdown == true) {
-				//A countdown is set
-
-				if(countdown_ms == 0) {
-					//The countdown is over => set countdown-flag to false and start original mission
-					countdown = false;
-
-					smq_send_log_info("End of Countdown (JW)");
-
-					countdown_ms = 0;
-					mi_set_new_task(state.curtask);
-				}
-
-				if(countdown == true) {
-					countdown_ms -= 2e6; //Decrease the countdown by two seconds
-				} else {
-					countdown_ms = 0;
-				}
+				countdown_ms = 0;
+				mi_set_new_task(state.curtask);
 			}
-		}
-
-
-
-		//We've just switched into autonomous mode => start the countdown
-		if(just_switched == true) {
-			//We've just switched into autonomous mode => start the countdown!
-
-
 
 		}
 
@@ -471,6 +479,7 @@ bool mi_handler(void) {
 
 /*
  * Detect, if we are inside the area defined by the buoys
+ * CORRECT!!!
  *
  * @return true, if the boat position is inside the area
  */
@@ -479,9 +488,28 @@ bool mi_isinside(NEDpoint boatpos) {
 	float x = boatpos.northx;
 	float y = boatpos.easty;
 
-	if(x > O1.easty) {
+	bool inside = false;
 
+	if(x < O1.northx && x > O3.northx) {
+		inside = true;
 	}
 
+	if(y > O1.easty && y < O2.easty) {
+		inside = inside && true;
+	}
+
+	if(inside == true && stationkeeping_isinside == false) {
+		smq_send_log_info("[JW] inside the competition area");
+	}
+
+	if(stationkeeping_isinside == true && inside == false) {
+		smq_send_log_info("[JW] just exited the competion area");
+	}
+
+	stationkeeping_isinside = inside;
+
+
+
+	return inside;
 }
 

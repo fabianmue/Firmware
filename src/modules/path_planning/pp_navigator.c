@@ -31,6 +31,8 @@
 #include "kalman_tracker/kt_tracker.h"
 #include "kalman_tracker/kt_track_list.h"
 
+#include "mission/mission.h"
+
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -350,6 +352,16 @@ void nav_navigator(void) {
 		#endif
 
 
+
+		//**
+		#if LDEBUG_MISSIONHANDLER == 1
+
+		mi_isinside(state.position);
+
+		#endif
+
+
+
 		//****SEND THE DATA USED FOR PATHPLANNING TO QGROUND CONTROL
 		cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
 
@@ -642,7 +654,7 @@ void nav_wind_update(void) {
 	state.wind_dir = nh_sensor2compass(state.wind_dir);
 
 	//Send current Wind-Value to QGround Control for debugging
-	cb_new_wind(state.wind_dir);
+	//TODO 31082015 cb_new_wind(state.wind_dir);
 
 } //end of nav_heading_update
 
@@ -674,7 +686,7 @@ void nav_position_update(void) {
 		if(nh_ned_dist(newPos,field.targets[state.targetNum]) <= TARGETTOLERANCE) {
 			//We are inside the tolerance => target is counted as reached
 
-			if(state.targetNum != (field.NumberOfTargets)) {
+			if(state.targetNum != (field.NumberOfTargets-1)) {
 				//This is not the last target => set new Target
 
 				state.targetNum += 1;
@@ -807,6 +819,8 @@ void nav_set_target_ned(uint8_t TargetNumber, NEDpoint TargetPos) {
 	//The update of the target position should only be done, if we are not debugging
 	field.targets[TargetNumber] = TargetPos;
 	field.NumberOfTargets = TargetNumber + 1;
+
+	state.targetNum = TargetNumber;
 
 	cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
 
