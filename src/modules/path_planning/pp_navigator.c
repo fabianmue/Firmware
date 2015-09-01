@@ -285,7 +285,10 @@ void nav_navigator(void) {
 
 			//Inform QGround Control
 			smq_send_log_info("Quick Target was set!");
-			cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
+
+			NEDpoint act_wp;
+			nav_queue_read(&act_wp);
+			cb_new_target(act_wp.northx, act_wp.easty);
 
 			//Enable the Pathplanner
 			enable_pathplanner = true;
@@ -366,7 +369,9 @@ void nav_navigator(void) {
 
 
 		//****SEND THE DATA USED FOR PATHPLANNING TO QGROUND CONTROL
-		cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
+		NEDpoint act_wp;
+		nav_queue_read(&act_wp);
+		cb_new_target(act_wp.northx, act_wp.easty);
 
 		/*cb_new_obstacle(field.obstacles[qground_obstnum].northx, field.obstacles[qground_obstnum].easty);
 		qground_obstnum++;
@@ -795,7 +800,10 @@ void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos) {
 	field.targets[TargetNumber] = nh_geo2ned(nh_e7_to_point(TargetPos));
 	field.NumberOfTargets = TargetNumber + 1;
 
-	cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
+
+	NEDpoint act_wp;
+	nav_queue_read(&act_wp);
+	cb_new_target(act_wp.northx, act_wp.easty);
 
 	#endif
 }
@@ -1035,7 +1043,10 @@ void DEBUG_nav_set_fake_state(NEDpoint pos, float heading) {
 			field.NumberOfTargets = 1;
 			field.NumberOfObstacles = 1;
 
-			cb_new_target(field.targets[state.targetNum].northx, field.targets[state.targetNum].easty);
+			NEDpoint act_wp;
+			nav_queue_read(&act_wp);
+			cb_new_target(act_wp.northx, act_wp.easty);
+
 		}
 
 
@@ -1115,10 +1126,11 @@ int nav_queue_next_wp(void) {
 
     if(QueueIn == 0 && QueueOut == 0) {
     	return -1; //Queue is empty
-    } else if(QueueIn == QueueOut) {
-    	QueueOut = 0;
-    } else {
+    }
+    else {
 		QueueOut = (QueueOut + 1) % QUEUE_SIZE;
+		if(QueueIn == QueueOut)
+			QueueOut = 0;
     }
 
 	return 0; // No errors

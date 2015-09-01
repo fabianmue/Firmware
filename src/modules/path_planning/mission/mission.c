@@ -81,7 +81,7 @@ static uint64_t lastcall = 0; //Timestamp of the last call to the handler-functi
 
 static bool countdown = false; //Set true, if a countdown is needed
 static uint64_t countdown_ms = 0; //Number of milliseconds for the countdown
-static uint64_t countdown_ms_top = 150e6; //Time to reach in milliseconds (5min)
+static uint64_t countdown_ms_top = 278e6; //Time to reach in milliseconds (5min)
 
 //static char txt_msg[150]; //Buffer for QGround Control Messages
 
@@ -369,9 +369,7 @@ bool mi_set_new_task(uint8_t tasknum) {
 			wp3.easty = O2.easty - 10;
 			wp3.northx = O2.northx - 20;
 
-			NEDpoint middle;
-			middle.easty = O1.easty + config.dist/2;
-			middle.northx = O1.northx - config.dist/2;
+
 
 			//wp1 = nh_rotate(wp1, middle, config.rotation);
 			//wp2 = nh_rotate(wp2, middle, config.rotation);
@@ -388,18 +386,18 @@ bool mi_set_new_task(uint8_t tasknum) {
 
 
 			//Final point
-			NEDpoint wp4;
-			wp4 = middle;
-			wp4.easty += config.dist;
+			//NEDpoint wp4;
+			//wp4 = middle;
+			//wp4.easty += config.dist;
 
 
-			if(countdown == false && countdown_running == true) {
+			/*if(countdown == false && countdown_running == true) {
 				//The countdown is over (namely the 5min are over)
 				//=> leave the Area
 
 				nav_queue_init();
 				nav_set_target_ned(wp4);
-			}
+			}*/
 
 			break;
 		}
@@ -444,8 +442,6 @@ bool mi_handler(void) {
 
 			countdown_ms += difference;
 
-			cb_new_wind((float)countdown_ms / 1e3f); //TODO 31082015 remove this!!!!!!!
-
 			if(countdown_ms >= countdown_ms_top) {
 				//The countdown is over => set countdown-flag to false and start original mission
 				countdown = false;
@@ -454,7 +450,15 @@ bool mi_handler(void) {
 
 				countdown_ms = 0;
 				mi_set_new_task(state.curtask);
+
+				NEDpoint wp4;
+				wp4.northx = -25;
+				wp4.easty = 25;
+
+				nav_set_target_ned(wp4);
 			}
+
+			cb_new_wind((float)countdown_ms / 1e3f); //TODO 31082015 remove this!!!!!!!
 
 		}
 
