@@ -402,6 +402,416 @@ bool mi_set_new_task(uint8_t tasknum) {
 			break;
 		}
 
+		case 7: {	//THIS IS THE AREA SCANNING CONTEST
+
+			//Load a waypoint for every box
+			NEDpoint wp;
+
+			wp.northx=-2.25f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25f;
+			wp.easty=-38.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-38.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-38.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-38.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-38.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-38.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-38.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-38.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-38.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-38.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-42.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-42.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-42.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-42.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-42.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-42.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-42.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-42.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-42.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25f;
+			wp.easty=-42.75f;
+			nav_set_target_ned(wp);
+
+
+
+			break;
+		}
+
 		default: {
 			//Nothing we can do about this
 			break;
@@ -446,21 +856,22 @@ bool mi_handler(void) {
 				//The countdown is over => set countdown-flag to false and start original mission
 				countdown = false;
 
-				smq_send_log_info("End of Countdown (JW)");
+				//smq_send_log_info("End of Countdown (JW)");
 
 				countdown_ms = 0;
 				mi_set_new_task(state.curtask);
 
 				nav_queue_init();
 
-				NEDpoint wp4;
-				wp4.northx = -25;
-				wp4.easty = 25;
+				//Hack for the Station Keeping contest
+				//NEDpoint wp4;
+				//wp4.northx = -25;
+				//wp4.easty = 25;
 
-				nav_set_target_ned(wp4);
+				//nav_set_target_ned(wp4); //Comment this out for the station-keeping-contest
 			}
 
-			cb_new_wind((float)countdown_ms / 1e3f); //TODO 31082015 remove this!!!!!!!
+			//cb_new_wind((float)countdown_ms / 1e3f); //TODO 31082015 remove this!!!!!!!
 
 		}
 
