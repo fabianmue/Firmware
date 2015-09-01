@@ -451,6 +451,8 @@ bool mi_handler(void) {
 				countdown_ms = 0;
 				mi_set_new_task(state.curtask);
 
+				nav_queue_init();
+
 				NEDpoint wp4;
 				wp4.northx = -25;
 				wp4.easty = 25;
@@ -495,13 +497,13 @@ bool mi_isinside(NEDpoint boatpos) {
 
 	bool inside = false;
 
-	if(x < O1.northx && x > O3.northx) {
+	if(x < O1.northx && x > O3.northx && y > O1.easty && y < O2.easty) {
 		inside = true;
 	}
 
-	if(y > O1.easty && y < O2.easty) {
-		inside = inside && true;
-	}
+	//if(y > O1.easty && y < O2.easty) {
+	//	inside = inside && true;
+	//}
 
 	if(inside == true && stationkeeping_isinside == false) {
 		smq_send_log_info("[JW] inside the competition area");
