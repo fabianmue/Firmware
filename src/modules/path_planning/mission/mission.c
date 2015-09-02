@@ -152,14 +152,13 @@ void mi_set_configuration(float dist, float o1x, float o1y, float rotation) {
  * Set a new Competition Task
  *
  * @param: tasknum: Number of the task that should be loaded
+ *
  */
 bool mi_set_new_task(uint8_t tasknum) {
 
 	if(tasknum == state.curtask) {
 		return false;
 	}
-
-
 
 	//Assign the current Task-Number
 	state.curtask = tasknum;
@@ -168,9 +167,10 @@ bool mi_set_new_task(uint8_t tasknum) {
 	smq_send_log_info("New Mission started! (JW)");
 
 
-
+	//Switch between the task-numbers
+	//NOTE: There is another switch on this task-number in the handler-function
 	switch(tasknum) {
-		case 0: { //Do no changes
+		case 0: { //Do no changes <=> reset the counter and the waypoint-queue to zero
 			mi_init();
 
 			nav_queue_init();
@@ -385,19 +385,9 @@ bool mi_set_new_task(uint8_t tasknum) {
 			nav_set_obstacle_ned(0, obst);
 
 
-			//Final point
-			//NEDpoint wp4;
-			//wp4 = middle;
-			//wp4.easty += config.dist;
-
-
-			/*if(countdown == false && countdown_running == true) {
-				//The countdown is over (namely the 5min are over)
-				//=> leave the Area
-
-				nav_queue_init();
-				nav_set_target_ned(wp4);
-			}*/
+			//We set the length of the countdown for this mission. Originally, 5min are needed, but we assume that
+			//we need some time to leave the square. So, do a lucky guess here :)
+			countdown_ms_top = 278e6;
 
 			break;
 		}
@@ -807,7 +797,9 @@ bool mi_set_new_task(uint8_t tasknum) {
 			wp.easty=-42.75f;
 			nav_set_target_ned(wp);
 
-
+			wp.northx = 0;
+			wp.easty = 0;
+			nav_set_target_ned(wp);
 
 			break;
 		}
@@ -855,24 +847,27 @@ bool mi_handler(void) {
 			if(countdown_ms >= countdown_ms_top) {
 				//The countdown is over => set countdown-flag to false and start original mission
 				countdown = false;
-
-				//smq_send_log_info("End of Countdown (JW)");
-
 				countdown_ms = 0;
-				mi_set_new_task(state.curtask);
 
-				nav_queue_init();
+				//Check, what the action is, when the countdown is over (for each task)
+				switch (state.curtask) {
+					case 6: { //THIS IS THE STATION KEEPING TASK
+						//We need to leave the square after 5 minutes
 
-				//Hack for the Station Keeping contest
-				//NEDpoint wp4;
-				//wp4.northx = -25;
-				//wp4.easty = 25;
+						NEDpoint wp4;
+						wp4.northx = -25;
+						wp4.easty = 25;
 
-				//nav_set_target_ned(wp4); //Comment this out for the station-keeping-contest
+						nav_queue_init();		 //We reset the queue to zero-waypoints
+						nav_set_target_ned(wp4); //We add a new target, that is OUTSIDE of the square
+
+						break;
+					}
+					default: {
+						break;
+					}
+				}
 			}
-
-			//cb_new_wind((float)countdown_ms / 1e3f); //TODO 31082015 remove this!!!!!!!
-
 		}
 
 
