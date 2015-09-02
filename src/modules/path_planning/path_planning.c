@@ -140,7 +140,7 @@ int path_planning_main(int argc, char *argv[])
         daemon_task = task_spawn_cmd("path_planning",
 					 SCHED_DEFAULT,
                      DAEMON_PRIORITY,
-                     5000, //was 4096 (5000 was working with SDLog)
+                     4096, //was 4096 (5000 was working with SDLog)
 					 pp_thread_main,
 					 (argv) ? (const char **)&argv[2] : (const char **)NULL);
 		exit(0);
@@ -182,7 +182,7 @@ int pp_thread_main(int argc, char *argv[]) {
 
 
     th_subscribe(&subs,&strs);       //Subscribe to interested Topics
-    th_advertise();                 //Advertise Topics
+    th_advertise();                  //Advertise Topics
 
 	//**POLL FOR CHANGES IN SUBSCRIBED TOPICS
     struct pollfd fds[] = {			 // Polling Management
@@ -278,7 +278,7 @@ int pp_thread_main(int argc, char *argv[]) {
                     #endif //USE_GRID_LINES == 1
 
 
-					#if LDEBUG_KALMANTRACKER
+					#if LDEBUG_KALMANTRACKER == 1
                     //Provide the Kalman Tracker with the velocity of the boat
                     kt_set_velocity(strs.vehicle_global_position.vel_n, strs.vehicle_global_position.vel_e);
 					#endif
@@ -299,7 +299,7 @@ int pp_thread_main(int argc, char *argv[]) {
                     cb_new_rc_data(&strs);
 
                     //Tell the state to the failsafe-mode
-					#if USE_FAILSAFE
+					#if USE_FAILSAFE == 1
                     fs_check_rc_signal(&strs);
 					#endif
                 }

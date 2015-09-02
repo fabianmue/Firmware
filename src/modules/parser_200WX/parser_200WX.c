@@ -194,7 +194,7 @@ int parser_200WX_main(int argc, char *argv[])
         daemon_task = task_spawn_cmd("parser_200WX",
                                     SCHED_DEFAULT,
                                     DAEMON_PRIORITY,
-                                    4096,
+                                    4096,//was 4096
                                     parser_200WX_daemon_thread_main,
                     (argv) ? (const char **)&argv[2] : (const char **)NULL);
 

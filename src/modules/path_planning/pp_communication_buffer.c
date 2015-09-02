@@ -386,7 +386,7 @@ void cb_init(void){
 
     pp.target_num = 0;
 
-    //Added 19.06.15
+    //Added 19.06.15, commented 02.09.2015
     pp_updated = true;
     cb_publish_pp_if_updated();
 

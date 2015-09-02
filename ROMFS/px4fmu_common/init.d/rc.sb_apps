@@ -3,6 +3,7 @@
 # Standard apps for autonomous sailing:
 #
 
+
 #
 # start the autonomous_sailing.c script:
 #
@@ -13,10 +14,12 @@ autonomous_sailing start
 #
 ekf_att_pos_estimator start
 
+
 #
 # start the parser_200WX.c script:
 #
 parser_200WX start
+
 
 #
 # start the path_planning.c script:

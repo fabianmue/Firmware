@@ -662,7 +662,7 @@ void nav_wind_update(void) {
 	state.wind_dir = nh_sensor2compass(state.wind_dir);
 
 	//Send current Wind-Value to QGround Control for debugging
-	//TODO 31082015 cb_new_wind(state.wind_dir);
+	cb_new_wind(state.wind_dir);
 
 } //end of nav_heading_update
 

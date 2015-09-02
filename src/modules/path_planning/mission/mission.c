@@ -834,7 +834,8 @@ bool mi_handler(void) {
 
 	uint64_t difference = curtime-lastcall;
 
-	if(difference > 2e6) {
+	//if(difference > 2e6) {
+	if(difference > 20e6) {
 		//Do not call the mission planner every time in the main-loop, but only every two seconds
 
 		lastcall = curtime;
