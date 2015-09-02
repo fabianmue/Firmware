@@ -279,7 +279,7 @@ bool mi_set_new_task(uint8_t tasknum) {
 			obst1.northx = O1.northx;
 			obst1.easty = O1.easty + config.dist/2;
 
-			//Rotate the Configuraiont
+			//Rotate the Configuration
 			O2 = nh_rotate(O2, O1, config.rotation);
 			obst1 = nh_rotate(obst1, O1, config.rotation);
 
