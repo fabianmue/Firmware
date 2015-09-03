@@ -46,11 +46,7 @@
 #include "../pp_communication_buffer.h"
 #include "../pp_send_msg_qgc.h"
 
-
 #include "../pp_config.h"
-
-
-
 
 
 
@@ -800,6 +796,16 @@ bool mi_set_new_task(uint8_t tasknum) {
 			wp.northx = 0;
 			wp.easty = 0;
 			nav_set_target_ned(wp);
+
+			break;
+		}
+
+		case 8: { //THIS IS THE TRIANGULAR COURSE COURSE
+			//This is the triangular course
+
+			//
+
+
 
 			break;
 		}
