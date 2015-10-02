@@ -349,7 +349,7 @@ void nav_navigator(void) {
 		state.last_call = systime;
 
 
-		//** Check if new information is available and change the state accordingly. This done in every pathplanning step,
+		//** Check if new information is available and change the state accordingly. This is done in every pathplanning step,
 		//   even when a maneuver is in progress. */
 		#if SIMULATION_FLAG == 0
 		//Note: This information is only available, when the boat is not in test-mode
