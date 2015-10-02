@@ -343,13 +343,14 @@ void nav_navigator(void) {
 	 *  Therefore, check the systemtime.
 	 *  Note: Pathplanning is NEVER done during maneuvers */
 
-	if((systime-state.last_call >= config.period) && (state.maneuver == false)) {
+	if(systime-state.last_call >= config.period) {
 
 		/** Assign the current time as the last call time */
 		state.last_call = systime;
 
 
-		//** Check if new information is available and change the state accordingly */
+		//** Check if new information is available and change the state accordingly. This done in every pathplanning step,
+		//   even when a maneuver is in progress. */
 		#if SIMULATION_FLAG == 0
 		//Note: This information is only available, when the boat is not in test-mode
 		nav_wind_update();			//New Wind-Data
@@ -358,142 +359,147 @@ void nav_navigator(void) {
 		#endif
 
 
+		//**We do NO pathplanning during maneuvers
+		if(state.maneuver == false) {
 
-		//**
-		#if LDEBUG_MISSIONHANDLER == 1
+			//**
+			#if LDEBUG_MISSIONHANDLER == 1
 
-		mi_isinside(state.position);
+			mi_isinside(state.position);
 
-		#endif
-
-
-
-		//****SEND THE DATA USED FOR PATHPLANNING TO QGROUND CONTROL
-		NEDpoint act_wp;
-		nav_queue_read(&act_wp);
-		cb_new_target(act_wp.northx, act_wp.easty);
-
-		/*cb_new_obstacle(field.obstacles[qground_obstnum].northx, field.obstacles[qground_obstnum].easty);
-		qground_obstnum++;
-		if(qground_obstnum>field.NumberOfObstacles) {
-			qground_obstnum = 0;
-		}*/
-
-		//Log the Sensor-Obstacles
-		cb_new_obstacle(field.sensorobstacles[qground_obstnum].northx,field.sensorobstacles[qground_obstnum].easty);
-		qground_obstnum++;
-		if(qground_obstnum>field.NumberOfSensorobstacles) {
-			qground_obstnum = 0;
-		}
-
-		cb_new_targetnum(state.targetNum);
+			#endif
 
 
 
-		//****GET THE OBSTACLES IDENTIFIED BY THE SENSOR
-		//Note: This is only executed, if the Kalman Tracker is activated by QGround Control
-		//get_sensor_obstacles();
+			//****SEND THE DATA USED FOR PATHPLANNING TO QGROUND CONTROL
+			NEDpoint act_wp;
+			nav_queue_read(&act_wp);
+			cb_new_target(act_wp.northx, act_wp.easty);
+
+			/*cb_new_obstacle(field.obstacles[qground_obstnum].northx, field.obstacles[qground_obstnum].easty);
+			qground_obstnum++;
+			if(qground_obstnum>field.NumberOfObstacles) {
+				qground_obstnum = 0;
+			}*/
+
+			//Log the Sensor-Obstacles
+			cb_new_obstacle(field.sensorobstacles[qground_obstnum].northx,field.sensorobstacles[qground_obstnum].easty);
+			qground_obstnum++;
+			if(qground_obstnum>field.NumberOfSensorobstacles) {
+				qground_obstnum = 0;
+			}
+
+			cb_new_targetnum(state.targetNum);
 
 
-		/****FIND A NEW REFERENCE HEADING
-		 * Different algorithms can be used. */
-		if(config.method == 1) {
-			//Use Cost-Function-Method
 
-			state.heading_ref = cm_NewHeadingReference(&state,&field);
-		}
-
-		if(config.method == 2) {
-			//Use Potential-Field-Method
-
-			state.heading_ref = pm_NewHeadingReference(&state,&field);
-		}
-
-		//Display the new reference heading in QGround Control (also Log this on SD-Card)
-		cb_new_refheading(state.heading_ref);
+			//****GET THE OBSTACLES IDENTIFIED BY THE SENSOR
+			//Note: This is only executed, if the Kalman Tracker is activated by QGround Control
+			//get_sensor_obstacles();
 
 
-		//****DECISION MAKING
-		/* In the following section the decisions based on the optimal Heading are made. In particular
-		 * the Navigator decides if the boat should tack or gybe or just track a reference heading */
-		float NewWind = nh_appWindDir(state.heading_ref,state.wind_dir); 		//New Apparent Winddirection
-		float OldWind = nh_appWindDir(state.heading_cur,state.wind_dir);		//Current Apparent Winddirection
+			/****FIND A NEW REFERENCE HEADING
+			 * Different algorithms can be used. */
+			if(config.method == 1) {
+				//Use Cost-Function-Method
+
+				state.heading_ref = cm_NewHeadingReference(&state,&field);
+			}
+
+			if(config.method == 2) {
+				//Use Potential-Field-Method
+
+				state.heading_ref = pm_NewHeadingReference(&state,&field);
+			}
+
+			//Display the new reference heading in QGround Control (also Log this on SD-Card)
+			cb_new_refheading(state.heading_ref);
 
 
-		/*Decide if we have to do a tack or a gybe
-		 * A maneuver is necessary, iff we change the hull. A change of hull is represented as a change of sign of the
-		 * apparent Wind direction.
-		 */
-		if(!((NewWind < 0 && OldWind < 0) || (NewWind > 0 && OldWind > 0))) {
-			//A Maneuver is Necessary
+			//****DECISION MAKING
+			/* In the following section the decisions based on the optimal Heading are made. In particular
+			 * the Navigator decides if the boat should tack or gybe or just track a reference heading */
+			float NewWind = nh_appWindDir(state.heading_ref,state.wind_dir); 		//New Apparent Winddirection
+			float OldWind = nh_appWindDir(state.heading_cur,state.wind_dir);		//Current Apparent Winddirection
 
-			state.command_maneuver = true;
 
-			//**START NEW CODE
-			if(fabsf(NewWind) > DOWNWIND_COURSE && config.nogybe == true) {
-				//We are sailing on a downwind course => when we tell the low-level control to perform a maneuver,
-				//then the boat starts behaving crazy => therefore do not tell the boat to gybe and simply change the
-				//reference heading
+			/*Decide if we have to do a tack or a gybe
+			 * A maneuver is necessary, iff we change the hull. A change of hull is represented as a change of sign of the
+			 * apparent Wind direction.
+			 */
+			if(!((NewWind < 0 && OldWind < 0) || (NewWind > 0 && OldWind > 0))) {
+				//A Maneuver is Necessary
 
+				state.command_maneuver = true;
+
+				//**START NEW CODE
+				if(fabsf(NewWind) > DOWNWIND_COURSE && config.nogybe == true) {
+					//We are sailing on a downwind course => when we tell the low-level control to perform a maneuver,
+					//then the boat starts behaving crazy => therefore do not tell the boat to gybe and simply change the
+					//reference heading
+
+					state.command_maneuver = false;
+					state.maneuver = false;
+				}
+				//**END NEW CODE
+
+			} else {
+				//No Maneuver is necessary and we can therefore set all flags to zero
 				state.command_maneuver = false;
 				state.maneuver = false;
-			}
-			//**END NEW CODE
-
-		} else {
-			//No Maneuver is necessary and we can therefore set all flags to zero
-			state.command_maneuver = false;
-			state.maneuver = false;
-		}//if boat should do a maneuver
+			}//if boat should do a maneuver
 
 
-		/* The boat has a limited turnrate. Therefore, ensure that the pathplanning
-		 * does not suggest heading-changes bigger than the maximum possible turnrate.
-		 * The check is only done when the boat is not doing a maneuver. If you want to
-		 * disable the turnrate, just set the value to a high value. */
-		/*if(!state.maneuver) {
-			//The boat is not doing a maneuver
+			/* The boat has a limited turnrate. Therefore, ensure that the pathplanning
+			 * does not suggest heading-changes bigger than the maximum possible turnrate.
+			 * The check is only done when the boat is not doing a maneuver. If you want to
+			 * disable the turnrate, just set the value to a high value. */
+			/*if(!state.maneuver) {
+				//The boat is not doing a maneuver
 
-			float diff = nh_heading_diff(state.heading_cur, state.heading_ref);
-			if(diff > config.max_headchange) {
-				//The desired change in heading is bigger than the maximum possibe heading-change
+				float diff = nh_heading_diff(state.heading_cur, state.heading_ref);
+				if(diff > config.max_headchange) {
+					//The desired change in heading is bigger than the maximum possibe heading-change
 
-				if(state.heading_cur-diff < 0) {
-					if((2*PI+(state.heading_cur-diff)) - state.heading_ref < 0.00000001f) {
-						//Reference lays on the left of Current Heading => -
+					if(state.heading_cur-diff < 0) {
+						if((2*PI+(state.heading_cur-diff)) - state.heading_ref < 0.00000001f) {
+							//Reference lays on the left of Current Heading => -
 
-						state.heading_ref = fmod(state.heading_cur - config.max_headchange,2*PI);
+							state.heading_ref = fmod(state.heading_cur - config.max_headchange,2*PI);
 
+						} else {
+							//Reference lays on the right of the current Heading => +
+
+							state.heading_ref = fmod(state.heading_cur + config.max_headchange,2*PI);
+						}
 					} else {
-						//Reference lays on the right of the current Heading => +
+						if((state.heading_cur-diff) - state.heading_ref < 0.00000001f) {
+							//Reference lays on the left of current Heading => -
 
-						state.heading_ref = fmod(state.heading_cur + config.max_headchange,2*PI);
+							state.heading_ref = fmod(state.heading_cur - config.max_headchange,2*PI);
+
+						} else {
+							//Reference lays on the right of current Heading => +
+
+							state.heading_ref = fmod(state.heading_cur + config.max_headchange,2*PI);
+
+						}
 					}
-				} else {
-					if((state.heading_cur-diff) - state.heading_ref < 0.00000001f) {
-						//Reference lays on the left of current Heading => -
 
-						state.heading_ref = fmod(state.heading_cur - config.max_headchange,2*PI);
-
-					} else {
-						//Reference lays on the right of current Heading => +
-
-						state.heading_ref = fmod(state.heading_cur + config.max_headchange,2*PI);
-
-					}
 				}
 
-			}
-
-		}*/
+			}*/
 
 
-		/****COMMUNICATION
-		* A new Reference Heading is generated => send this data to the Helsman (autonomous_sailing module) */
-		nav_speak2helsman();
+			/****COMMUNICATION
+			* A new Reference Heading is generated => send this data to the Helsman (autonomous_sailing module) */
+			nav_speak2helsman();
 
+		} else {//if do pathplanning when no maneuver is in progress
+			//A maneuer is in progress => we do NO pathplanning in this step
+		}
 	} else {
-		//We do NO pathplanning in this step
+		//We do NO pathplanning in this iteration
 
 	} //if do pathplanning with a predefined frequency
 

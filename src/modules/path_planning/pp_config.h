@@ -104,7 +104,7 @@
 
 /* DEFINE MAXIMUM NUMBER OF OBSTACLES
  * Maximum number of obstacles */
-#define MAXOBSTACLENUMBER 3
+#define MAXOBSTACLENUMBER 9
 
 
 /* INITIAL TARGET

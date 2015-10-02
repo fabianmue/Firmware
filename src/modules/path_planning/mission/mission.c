@@ -390,411 +390,410 @@ bool mi_set_new_task(uint8_t tasknum) {
 
 		case 7: {	//THIS IS THE AREA SCANNING CONTEST
 
+			//Initialize the Queue of Waypoints
+			nav_queue_init();
+
 			//Load a waypoint for every box
 			NEDpoint wp;
 
 			wp.northx=-2.25f;
-			wp.easty=-2.25f;
+			wp.easty=-42.75f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-6.75f;
-			wp.easty=-2.25f;
+			wp.easty=-42.75f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-11.25f;
-			wp.easty=-2.25f;
+			wp.easty=-42.75f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-15.75f;
-			wp.easty=-2.25f;
+			wp.easty=-42.75f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-20.25f;
-			wp.easty=-2.25f;
+			wp.easty=-42.75f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-24.75f;
-			wp.easty=-2.25f;
+			wp.easty=-42.75f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-29.25f;
-			wp.easty=-2.25f;
+			wp.easty=-42.75f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-33.75f;
-			wp.easty=-2.25f;
+			wp.easty=-42.75f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-38.25f;
-			wp.easty=-2.25f;
+			wp.easty=-42.75f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-42.75f;
-			wp.easty=-2.25f;
+			wp.easty=-42.75f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-42.75f;
-			wp.easty=-6.75f;
+			wp.easty=-38.25f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-38.25f;
-			wp.easty=-6.75f;
+			wp.easty=-38.25f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-33.75f;
-			wp.easty=-6.75f;
+			wp.easty=-38.25f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-29.25f;
-			wp.easty=-6.75f;
+			wp.easty=-38.25f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-24.75f;
-			wp.easty=-6.75f;
+			wp.easty=-38.25f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-20.25f;
-			wp.easty=-6.75f;
+			wp.easty=-38.25f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-15.75f;
-			wp.easty=-6.75f;
+			wp.easty=-38.25f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-11.25f;
-			wp.easty=-6.75f;
+			wp.easty=-38.25f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-6.75f;
-			wp.easty=-6.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-2.25f;
-			wp.easty=-6.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-2.25f;
-			wp.easty=-11.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-6.75f;
-			wp.easty=-11.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-11.25f;
-			wp.easty=-11.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-15.75f;
-			wp.easty=-11.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-20.25f;
-			wp.easty=-11.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-24.75f;
-			wp.easty=-11.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-29.25f;
-			wp.easty=-11.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-33.75f;
-			wp.easty=-11.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-38.25f;
-			wp.easty=-11.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-42.75f;
-			wp.easty=-11.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-42.75f;
-			wp.easty=-15.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-38.25f;
-			wp.easty=-15.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-33.75f;
-			wp.easty=-15.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-29.25f;
-			wp.easty=-15.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-24.75f;
-			wp.easty=-15.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-20.25f;
-			wp.easty=-15.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-15.75f;
-			wp.easty=-15.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-11.25f;
-			wp.easty=-15.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-6.75f;
-			wp.easty=-15.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-2.25f;
-			wp.easty=-15.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-2.25f;
-			wp.easty=-20.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-6.75f;
-			wp.easty=-20.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-11.25f;
-			wp.easty=-20.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-15.75f;
-			wp.easty=-20.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-20.25f;
-			wp.easty=-20.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-24.75f;
-			wp.easty=-20.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-29.25f;
-			wp.easty=-20.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-33.75f;
-			wp.easty=-20.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-38.25f;
-			wp.easty=-20.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-42.75f;
-			wp.easty=-20.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-42.75f;
-			wp.easty=-24.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-38.25f;
-			wp.easty=-24.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-33.75f;
-			wp.easty=-24.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-29.25f;
-			wp.easty=-24.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-24.75f;
-			wp.easty=-24.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-20.25f;
-			wp.easty=-24.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-15.75f;
-			wp.easty=-24.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-11.25f;
-			wp.easty=-24.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-6.75f;
-			wp.easty=-24.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-2.25f;
-			wp.easty=-24.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-2.25f;
-			wp.easty=-29.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-6.75f;
-			wp.easty=-29.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-11.25f;
-			wp.easty=-29.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-15.75f;
-			wp.easty=-29.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-20.25f;
-			wp.easty=-29.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-24.75f;
-			wp.easty=-29.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-29.25f;
-			wp.easty=-29.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-33.75f;
-			wp.easty=-29.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-38.25f;
-			wp.easty=-29.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-42.75f;
-			wp.easty=-29.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-42.75f;
-			wp.easty=-33.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-38.25f;
-			wp.easty=-33.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-33.75f;
-			wp.easty=-33.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-29.25f;
-			wp.easty=-33.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-24.75f;
-			wp.easty=-33.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-20.25f;
-			wp.easty=-33.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-15.75f;
-			wp.easty=-33.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-11.25f;
-			wp.easty=-33.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-6.75f;
-			wp.easty=-33.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-2.25f;
-			wp.easty=-33.75f;
+			wp.easty=-38.25f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-2.25f;
 			wp.easty=-38.25f;
 			nav_set_target_ned(wp);
 
-			wp.northx=-6.75f;
-			wp.easty=-38.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-11.25f;
-			wp.easty=-38.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-15.75f;
-			wp.easty=-38.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-20.25f;
-			wp.easty=-38.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-24.75f;
-			wp.easty=-38.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-29.25f;
-			wp.easty=-38.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-33.75f;
-			wp.easty=-38.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-38.25f;
-			wp.easty=-38.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-42.75f;
-			wp.easty=-38.25f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-42.75f;
-			wp.easty=-42.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-38.25f;
-			wp.easty=-42.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-33.75f;
-			wp.easty=-42.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-29.25f;
-			wp.easty=-42.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-24.75f;
-			wp.easty=-42.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-20.25f;
-			wp.easty=-42.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-15.75f;
-			wp.easty=-42.75f;
-			nav_set_target_ned(wp);
-
-			wp.northx=-11.25f;
-			wp.easty=-42.75f;
+			wp.northx=-2.25f;
+			wp.easty=-33.75f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-6.75f;
-			wp.easty=-42.75f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-33.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-29.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-29.25f;
 			nav_set_target_ned(wp);
 
 			wp.northx=-2.25f;
-			wp.easty=-42.75f;
+			wp.easty=-29.25f;
 			nav_set_target_ned(wp);
 
-			wp.northx = 0;
-			wp.easty = 0;
+			wp.northx=-2.25f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-24.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25f;
+			wp.easty=-20.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-15.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25f;
+			wp.easty=-11.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-6.75f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75f;
+			wp.easty=-2.25f;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25f;
+			wp.easty=-2.25f;
 			nav_set_target_ned(wp);
 
 			break;
@@ -803,7 +802,831 @@ bool mi_set_new_task(uint8_t tasknum) {
 		case 8: { //THIS IS THE TRIANGULAR COURSE COURSE
 			//This is the triangular course
 
-			//
+			nav_queue_init();
+
+			NEDpoint wp;
+			NEDpoint obst1, obst2, obst3, obst4;
+			wp.northx = -20;
+			wp.easty = -45;
+			nav_set_target_ned(wp);
+			wp.northx = 0;
+			wp.easty = -5;
+			nav_set_target_ned(wp);
+			wp.northx = 5;
+			wp.easty = 0;
+			nav_set_target_ned(wp);
+			wp.northx = 0;
+			wp.easty = 5;
+			nav_set_target_ned(wp);
+			obst1.northx = 0;
+			obst1.easty = 0;
+			obst2.northx = -2; //This can be removed
+			obst2.easty = -1;
+
+			nav_set_obstacle_ned(0, obst1);
+			nav_set_obstacle_ned(1, obst2);
+
+
+			wp.northx = -45;
+			wp.easty = -35;
+			nav_set_target_ned(wp);
+			wp.northx = -50;
+			wp.easty = -45;
+			nav_set_target_ned(wp);
+			wp.northx = -45;
+			wp.easty = -50;
+			nav_set_target_ned(wp);
+			obst3.northx = -45;
+			obst3.easty = -45;
+			obst4.northx = -43; //This can be removed
+			obst4.easty = -44;
+
+			nav_set_obstacle_ned(2, obst3);
+			nav_set_obstacle_ned(3, obst4);
+
+			//wp.northx = -20;
+			//wp.easty = -30;
+			nav_set_target_ned(wp);
+			wp.northx = 10;
+			wp.easty = -30;
+			nav_set_target_ned(wp);
+
+
+
+			break;
+		}
+
+		case 9: {
+			//Second Version of Area Scanning (horizontal)
+
+			nav_queue_init();
+
+			NEDpoint wp;
+
+			wp.northx=-2.25;
+			wp.easty=-2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25;
+			wp.easty=-6.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25;
+			wp.easty=-11.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25;
+			wp.easty=-15.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25;
+			wp.easty=-20.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25;
+			wp.easty=-24.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25;
+			wp.easty=-29.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25;
+			wp.easty=-33.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25;
+			wp.easty=-38.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-2.25;
+			wp.easty=-42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75;
+			wp.easty=-42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75;
+			wp.easty=-38.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75;
+			wp.easty=-33.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75;
+			wp.easty=-29.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75;
+			wp.easty=-24.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75;
+			wp.easty=-20.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75;
+			wp.easty=-15.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75;
+			wp.easty=-11.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75;
+			wp.easty=-6.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-6.75;
+			wp.easty=-2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25;
+			wp.easty=-2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25;
+			wp.easty=-6.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25;
+			wp.easty=-11.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25;
+			wp.easty=-15.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25;
+			wp.easty=-20.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25;
+			wp.easty=-24.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25;
+			wp.easty=-29.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25;
+			wp.easty=-33.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25;
+			wp.easty=-38.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-11.25;
+			wp.easty=-42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75;
+			wp.easty=-42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75;
+			wp.easty=-38.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75;
+			wp.easty=-33.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75;
+			wp.easty=-29.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75;
+			wp.easty=-24.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75;
+			wp.easty=-20.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75;
+			wp.easty=-15.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75;
+			wp.easty=-11.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75;
+			wp.easty=-6.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-15.75;
+			wp.easty=-2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25;
+			wp.easty=-2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25;
+			wp.easty=-6.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25;
+			wp.easty=-11.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25;
+			wp.easty=-15.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25;
+			wp.easty=-20.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25;
+			wp.easty=-24.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25;
+			wp.easty=-29.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25;
+			wp.easty=-33.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25;
+			wp.easty=-38.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-20.25;
+			wp.easty=-42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75;
+			wp.easty=-42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75;
+			wp.easty=-38.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75;
+			wp.easty=-33.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75;
+			wp.easty=-29.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75;
+			wp.easty=-24.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75;
+			wp.easty=-20.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75;
+			wp.easty=-15.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75;
+			wp.easty=-11.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75;
+			wp.easty=-6.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-24.75;
+			wp.easty=-2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25;
+			wp.easty=-2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25;
+			wp.easty=-6.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25;
+			wp.easty=-11.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25;
+			wp.easty=-15.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25;
+			wp.easty=-20.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25;
+			wp.easty=-24.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25;
+			wp.easty=-29.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25;
+			wp.easty=-33.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25;
+			wp.easty=-38.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-29.25;
+			wp.easty=-42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75;
+			wp.easty=-42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75;
+			wp.easty=-38.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75;
+			wp.easty=-33.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75;
+			wp.easty=-29.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75;
+			wp.easty=-24.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75;
+			wp.easty=-20.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75;
+			wp.easty=-15.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75;
+			wp.easty=-11.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75;
+			wp.easty=-6.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-33.75;
+			wp.easty=-2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25;
+			wp.easty=-2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25;
+			wp.easty=-6.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25;
+			wp.easty=-11.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25;
+			wp.easty=-15.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25;
+			wp.easty=-20.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25;
+			wp.easty=-24.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25;
+			wp.easty=-29.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25;
+			wp.easty=-33.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25;
+			wp.easty=-38.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-38.25;
+			wp.easty=-42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75;
+			wp.easty=-42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75;
+			wp.easty=-38.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75;
+			wp.easty=-33.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75;
+			wp.easty=-29.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75;
+			wp.easty=-24.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75;
+			wp.easty=-20.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75;
+			wp.easty=-15.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75;
+			wp.easty=-11.25;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75;
+			wp.easty=-6.75;
+			nav_set_target_ned(wp);
+
+			wp.northx=-42.75;
+			wp.easty=-2.25;
+			nav_set_target_ned(wp);
+
+
+
+			break;
+		}
+
+		case 10: {
+			//Area Scanning (Diagonal)
+
+			nav_queue_init();
+
+			NEDpoint wp;
+
+			wp.northx = -2.25;
+			wp.easty = -2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -2.25;
+			wp.easty = -6.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -11.25;
+			wp.easty = -2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -2.25;
+			wp.easty = -15.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -20.25;
+			wp.easty = -2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -2.25;
+			wp.easty = -29.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -33.75;
+			wp.easty = -2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -2.25;
+			wp.easty = -38.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -42.75;
+			wp.easty = -6.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -11.25;
+			wp.easty = -42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -42.75;
+			wp.easty = -15.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -20.25;
+			wp.easty = -42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -42.75;
+			wp.easty = -33.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -38.25;
+			wp.easty = -42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -42.75;
+			wp.easty = -42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -2.25;
+			wp.easty = -2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -6.75;
+			wp.easty = -2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -2.25;
+			wp.easty = -11.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -15.75;
+			wp.easty = -2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -2.25;
+			wp.easty = -24.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -24.75;
+			wp.easty = -2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -2.25;
+			wp.easty = -42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -38.25;
+			wp.easty = -2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -11.25;
+			wp.easty = -42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -42.75;
+			wp.easty = -11.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -20.25;
+			wp.easty = -42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -42.75;
+			wp.easty = -24.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -29.25;
+			wp.easty = -42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -42.75;
+			wp.easty = -33.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -38.25;
+			wp.easty = -42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -42.75;
+			wp.easty = -42.75;
+			nav_set_target_ned(wp);
+
+			break;
+		}
+
+		case 11: { //Spiral for Area Scanning
+			nav_queue_init();
+
+			NEDpoint wp;
+
+			wp.northx = -2.25;
+			wp.easty = -2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -42.75;
+			wp.easty = -2.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -42.75;
+			wp.easty = -42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -2.25;
+			wp.easty = -42.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -2.25;
+			wp.easty = -6.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -38.25;
+			wp.easty = -6.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -38.25;
+			wp.easty = -38.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -6.75;
+			wp.easty = -38.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -6.75;
+			wp.easty = -11.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -33.25;
+			wp.easty = -11.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -33.75;
+			wp.easty = -33.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -11.25;
+			wp.easty = -33.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -11.25;
+			wp.easty = -15.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -29.25;
+			wp.easty = -15.75;
+			nav_set_target_ned(wp);
+
+			wp.northx = -29.25;
+			wp.easty = -29.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -15.75;
+			wp.easty = -29.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -15.75;
+			wp.easty = -20.25;
+			nav_set_target_ned(wp);
+
+			wp.northx = -29.25;
+			wp.easty = -20.25;
+			nav_set_target_ned(wp);
+
+
+			break;
+		}
+
+		case 12: {
+			//This is the big triangular course
+
+			nav_queue_init();
+
+			NEDpoint wp;
+
+			wp.northx = 250;
+			wp.easty = -10;
+			nav_set_target_ned(wp);
+
+			wp.northx = 335;
+			wp.easty = 300;
+			nav_set_target_ned(wp);
+
+			wp.northx = 340;
+			wp.easty = 335;
+			nav_set_target_ned(wp);
+
+			wp.northx = 335;
+			wp.easty = 340;
+			nav_set_target_ned(wp);
+
+
+			wp.northx = 0;
+			wp.easty = 35;
+			nav_set_target_ned(wp);
+
+			wp.northx = -5;
+			wp.easty = 0;
+			nav_set_target_ned(wp);
+
+			wp.northx = 0;
+			wp.easty = -5;
+			nav_set_target_ned(wp);
+
+			wp.northx = 335;
+			wp.easty = 30;
+			nav_set_target_ned(wp);
+
+			NEDpoint obst1, obst2, obst3, obst4;
+
+			obst1.northx = 335;
+			obst1.easty = 335;
+			obst2.northx = 332;
+			obst2.easty = 333;
+
+			obst3.northx = 0;
+			obst3.easty = 0;
+			obst4.northx = 5;
+			obst4.easty = 3;
+
+			nav_set_obstacle_ned(0, obst1);
+			nav_set_obstacle_ned(1, obst2);
+			nav_set_obstacle_ned(2, obst3);
+			nav_set_obstacle_ned(3, obst4);
+
+			break;
+		}
+
+		/*case 13: {
+
+			NEDpoint wp;
+			countdown_ms_top = 60e6;
+
+			nav_queue_init();
+
+			//Here we put the two points, we want to circle around before the start
+
+
+			break;
+		}*/
+
+		case 14: {
+
+			NEDpoint wp;
+
+			nav_queue_init();
+
+			NEDpoint obst;
+			obst.northx = 0;
+			obst.easty = 0;
+			nav_set_obstacle_ned(0, obst);
+
+			obst.northx = 2;
+			obst.easty = 2;
+			nav_set_obstacle_ned(1, obst);
+
+			obst.northx = 2;
+			obst.easty = 308;
+			nav_set_obstacle_ned(2, obst);
+
+			obst.northx = 308;
+			obst.easty = 308;
+			nav_set_obstacle_ned(3, obst);
+
+			obst.northx = 308;
+			obst.easty = 2;
+			nav_set_obstacle_ned(4, obst);
+
+			obst.northx = 0;
+			obst.easty = 310;
+			nav_set_obstacle_ned(5, obst);
+
+			obst.northx = 310;
+			obst.easty = 310;
+			nav_set_obstacle_ned(6, obst);
+
+			obst.northx = 310;
+			obst.easty = 0;
+			nav_set_obstacle_ned(7, obst);
+
+
+			wp.northx = -5;
+			wp.easty = 310;
+			nav_set_target_ned(wp);
+
+			wp.northx = 0;
+			wp.easty = 315;
+			nav_set_target_ned(wp);
+
+			wp.northx = 310;
+			wp.easty = 315;
+			nav_set_target_ned(wp);
+
+			wp.northx = 315;
+			wp.easty = 310;
+			nav_set_target_ned(wp);
+
+			wp.northx = 315;
+			wp.easty = 0;
+			nav_set_target_ned(wp);
+
+			wp.northx = 310;
+			wp.easty = -5;
+			nav_set_target_ned(wp);
+
+			wp.northx = 0;
+			wp.easty = -5;
+			nav_set_target_ned(wp);
+
+			wp.northx = -5;
+			wp.easty = 0;
+			nav_set_target_ned(wp);
 
 
 
@@ -830,13 +1653,23 @@ bool mi_handler(void) {
 
 	uint64_t curtime = hrt_absolute_time();
 
-	if(stationkeeping_isinside == true && countdown_running == false) {
+	/*if(stationkeeping_isinside == true && countdown_running == false) {
 		countdown = true;
 		countdown_running = true;
 		countdown_ms = 0; //initialize the countdown
 
 		lastcall = curtime;
-	}
+	}*/
+
+	//We start the timer, when we switch to autonomous mode
+	/*if(cb_is_autonomous_mode() == true && countdown_running == false) {
+		countdown = true;
+		countdown_running = true;
+		countdown_ms = 0;
+
+		lastcall = curtime;
+	}*/
+
 
 	uint64_t difference = curtime-lastcall;
 
@@ -869,6 +1702,14 @@ bool mi_handler(void) {
 
 						break;
 					}
+					/*case 13: { //THIS IS THE FLEET-RACE
+						//We switch now to Mission 14, which is the race-course (fleet-race)
+
+						mi_set_new_task(14);
+						state.curtask = 14;
+
+						break;
+					}*/
 					default: {
 						break;
 					}
