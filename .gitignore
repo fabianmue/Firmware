@@ -53,5 +53,6 @@ Firmware_AS.creator
 Firmware_AS.creator.user
 Firmware_AS.files
 Firmware_AS.includes
+/src/modules/autonomous_sailing/mpcForces/
 
 
