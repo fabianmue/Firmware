@@ -100,7 +100,9 @@ MODULES		+= modules/ekf_att_pos_estimator
 #
 MODULES		+= modules/autonomous_sailing	
 MODULES		+= modules/parser_200WX	
-MODULES         += modules/path_planning
+MODULES     += modules/path_planning
+# MODULES		+= modules/mission_planning
+
 #
 # Logging
 #
