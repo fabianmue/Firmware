@@ -1,5 +1,5 @@
 /*
- * kt_cog_list.h
+ * mission.h
  *
  *  Created on: 25.05.2015
  *      Author: Jonas

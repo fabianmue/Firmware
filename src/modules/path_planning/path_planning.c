@@ -234,12 +234,6 @@ int pp_thread_main(int argc, char *argv[]) {
     tr_init();
 	#endif
 
-    //init the mission planner
-	#if LDEBUG_MISSIONHANDLER == 1
-    mi_init();
-	#endif
-
-
 	//**SET THE THREAD-STATUS TO RUNNING
 	thread_running = true;
 
