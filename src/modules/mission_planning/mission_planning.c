@@ -32,7 +32,7 @@
  ****************************************************************************/
 
 /*
- * @file mission_planning.c: doing missionplanning for the boat.
+ * @file mission_planning.c: doing mission planning for the boat.
  *
  * The main Software-Structure for reaching a target can be explained as follows:
  *
@@ -51,39 +51,57 @@
  * @author Fabian Müller <fabianmu@student.ethz.ch>
  */
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
+#include <string.h>
+#include <unistd.h>
+#include <poll.h>
+#include <errno.h>
+
+#include <nuttx/config.h>
+#include <nuttx/sched.h>
+
+#include <systemlib/systemlib.h>
+#include <systemlib/err.h>
+
+#include "mp_mission.h"
+#include "mp_readSD.h"
+
+/***********************************************************************************/
+/*****  V A R I A B L E S  *********************************************************/
+/***********************************************************************************/
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
 static int daemon_task;						/**< Handle of daemon task / thread */
 
 //thread priority
-#define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 20 ///daemon priority (-20)
+#define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 25 ///daemon priority (-25)
 
-/**
- * daemon management function.
- */
-__EXPORT int mission_planning_main(int argc, char *argv[]);
+/***********************************************************************************/
+/*****  F U N C T I O N   D E C L A R A T I O N S  *********************************/
+/***********************************************************************************/
 
-/**
- * Mainloop of daemon.
- */
-int mp_thread_main(int argc, char *argv[]);
-
-/**
- * Print the correct usage.
- */
+// print the correct usage.
 static void usage(const char *reason);
 
-static void
-usage(const char *reason)
-{
-	if (reason)
+ // daemon management function.
+__EXPORT int mission_planning_main(int argc, char *argv[]);
+
+// mainloop of daemon.
+int mp_thread_main(int argc, char *argv[]);
+
+/***********************************************************************************/
+/*****  P U B L I C    F U N C T I O N S  ******************************************/
+/***********************************************************************************/
+
+static void usage(const char *reason) {
+
+	if (reason) {
 		warnx("%s\n", reason);
+	}
 	errx(1, "usage: daemon {start|stop|status} [-p <additional params>]\n\n");
+
 }
 
 /**
@@ -96,6 +114,9 @@ usage(const char *reason)
  *
  * Note: This code is standard and should not be changed.
  *       It is directly copied from the Pixhawk Firmware Example.
+ *
+ * argv[1] = "start", "stop" or "status"
+ * rest of the arguments are passed to daemon task creation
  *
  */
 int mission_planning_main(int argc, char *argv[])
@@ -112,12 +133,13 @@ int mission_planning_main(int argc, char *argv[])
 		}
 
 		thread_should_exit = false;
+		//was 4096 (5000 was working with SDLog)
         daemon_task = task_spawn_cmd("mission_planning",
-					 SCHED_DEFAULT,
-                     DAEMON_PRIORITY,
-                     4096, //was 4096 (5000 was working with SDLog)
-					 mp_thread_main,
-					 (argv) ? (const char **)&argv[2] : (const char **)NULL);
+        		SCHED_DEFAULT,
+        		DAEMON_PRIORITY,
+        		4096,
+        		mp_thread_main,
+        		(argv) ? (const char **)&argv[2] : (const char **)NULL);
 		exit(0);
 	}
 
@@ -148,24 +170,15 @@ int mp_thread_main(int argc, char *argv[]) {
 	/* thread is starting */
     warnx("mission_planning starting\n");
 
-    /* tasks:
-     *
-     * - receive data from mavlink telemetry
-     *
-     *
-     */
-
-    //init the mission planner
-	#if LDEBUG_MISSIONHANDLER == 1
-    mi_init();
-	#endif
+    /* read data from SD card */
+    mp_readSD("params.txt");
 
 	while (!thread_should_exit) {
 
         /* Call the Mission-Handler */
 		#if LDEBUG_MISSIONHANDLER == 1
-        mi_handler();
-		#endif
+        	mi_handler();
+     	#endif
 
 	} // end of main_thread loop
 
