@@ -405,19 +405,6 @@ PARAM_DEFINE_FLOAT(KT_CO,10);
 PARAM_DEFINE_FLOAT(KT_PERIOD,2);
 
 
-
-/**
- * co_
- * Parameters for the Competiton
- */
-PARAM_DEFINE_FLOAT(MI_DIST,45.0f);
-PARAM_DEFINE_FLOAT(MI_O1N,1740.0f);
-PARAM_DEFINE_FLOAT(MI_O1E,-1170.0f);
-PARAM_DEFINE_FLOAT(MI_ROTATION,0.0f);
-PARAM_DEFINE_INT32(MI_MISSION,0);
-
-
-
 static struct pointers_param_qgc_s{
 
 
@@ -671,15 +658,6 @@ void p_param_init(void){
 	pointers_param_qgc.kt_nnsf_thresh = param_find("KT_NNSF_THRESH");
 	pointers_param_qgc.kt_co = param_find("KT_CO");
 	pointers_param_qgc.kt_period = param_find("KT_PERIOD");
-
-
-	//**MISSION PLANNER (COMPETITON)
-	pointers_param_qgc.co_dist = param_find("MI_DIST");
-	pointers_param_qgc.co_o1n = param_find("MI_O1N");
-	pointers_param_qgc.co_o1e = param_find("MI_O1E");
-	pointers_param_qgc.co_rotation = param_find("MI_ROTATION");
-	pointers_param_qgc.co_mission = param_find("MI_MISSION");
-
 
     //get parameters but do not add any grid lines at start up
     p_param_update(false);
@@ -1036,25 +1014,5 @@ void p_param_update(bool update_path_param){
    	float kt_period = 0;
    	param_get(pointers_param_qgc.kt_period, &kt_period);
    	sb_set_configuration(kt_period);
-
-
-   	//**MISSION PLANNER (COMPETITION)
-   	float co_dist = 45;
-   	float co_o1n = 1740.0f;
-   	float co_o1e = -1170.0f;
-   	float co_rotation = 0.0f;
-   	uint8_t co_mission = 0;
-
-   	param_get(pointers_param_qgc.co_dist, &co_dist);
-   	param_get(pointers_param_qgc.co_o1n, &co_o1n);
-   	param_get(pointers_param_qgc.co_o1e, &co_o1e);
-   	param_get(pointers_param_qgc.co_rotation, &co_rotation);
-   	param_get(pointers_param_qgc.co_mission, &co_mission);
-
-	#if LDEBUG_USEMISSION == 1
-   	mi_set_configuration(co_dist,co_o1n,co_o1e,co_rotation);
-   	mi_set_new_task(co_mission);
-	#endif
-
 
 }

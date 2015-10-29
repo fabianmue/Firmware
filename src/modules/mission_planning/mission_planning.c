@@ -65,7 +65,7 @@
 #include <systemlib/err.h>
 
 #include "mp_mission.h"
-#include "mp_readSD.h"
+#include "mp_read_params.h"
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
@@ -74,6 +74,9 @@
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
 static int daemon_task;						/**< Handle of daemon task / thread */
+
+static char param_source[] = "SD";
+static char file_path[] = "/fs/microsd/params.txt";
 
 //thread priority
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 25 ///daemon priority (-25)
@@ -88,11 +91,11 @@ static void usage(const char *reason);
  // daemon management function.
 __EXPORT int mission_planning_main(int argc, char *argv[]);
 
-// mainloop of daemon.
+// mainloop of daemon
 int mp_thread_main(int argc, char *argv[]);
 
 /***********************************************************************************/
-/*****  P U B L I C    F U N C T I O N S  ******************************************/
+/*****  F U N C T I O N   D E F I N I T I O N S  ***********************************/
 /***********************************************************************************/
 
 static void usage(const char *reason) {
@@ -170,17 +173,24 @@ int mp_thread_main(int argc, char *argv[]) {
 	/* thread is starting */
     warnx("mission_planning starting\n");
 
-    /* read data from SD card */
-    mp_readSD("params.txt");
+    /* read parameters from specified source */
+    if (strcmp(param_source, "SD")==0) {
 
+    	mp_readSD(file_path);
+
+    } else {
+
+
+
+    }
+
+    /*
 	while (!thread_should_exit) {
 
-        /* Call the Mission-Handler */
-		#if LDEBUG_MISSIONHANDLER == 1
-        	mi_handler();
-     	#endif
+
 
 	} // end of main_thread loop
+	*/
 
 	// kill the thread
     warnx("mission_planning exiting.\n");

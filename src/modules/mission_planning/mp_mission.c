@@ -42,48 +42,13 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-extern frame comp_frame;
-
-static uint64_t last_call;
-
 mission last_mission;
 
 /***********************************************************************************/
-/*****  P U B L I C    F U N C T I O N S  ******************************************/
+/*****  F U N C T I O N   D E F I N I T I O N S  ***********************************/
 /***********************************************************************************/
 
-/*
- * set the configuration of the race-Field
- *
- * @param O1long: longitude of buoy 1 [deg]
- * @param O1lat: latitude of buoy 1 [deg]
- * @param dist: distances between two buoys [m]
- * @param rotation: rotation of the frame around O1 [deg] (0 deg = y axis)
- */
-void mp_set_racefield(float O1long, float O1lat, float dist, float rotation) {
-
-	comp_frame.dist = dist;
-	comp_frame.rotation = DEG2RAD * rotation;
-	comp_frame.O1.northx = 0;
-	comp_frame.O1.easty = 0;
-
-	float sqrt2 = (float) sqrt(2);
-
-	comp_frame.O2.northx = comp_frame.O1.northx + dist*sinf(comp_frame.rotation);
-	comp_frame.O2.easty = comp_frame.O1.easty + dist*cosf(comp_frame.rotation);
-	comp_frame.O3.northx = comp_frame.O1.northx - dist*sinf(comp_frame.rotation-PI/2);
-	comp_frame.O3.easty = comp_frame.O1.easty + dist*cosf(comp_frame.rotation-PI/2);
-	comp_frame.O4.northx = comp_frame.O1.northx - sqrt2*dist*sinf(comp_frame.rotation-PI/4);
-	comp_frame.O4.easty = comp_frame.O1.easty + sqrt2*dist*cosf(comp_frame.rotation-PI/4);
-
-}
-
-/*
- * start a new mission
- *
- * @param: mission : mission that is started
- *
- */
+// start a new mission
 bool mp_start_mission(mission new_mission) {
 
 	if(last_mission.isactive == true) {
@@ -131,23 +96,9 @@ bool mp_start_mission(mission new_mission) {
 void mp_stop_mission(void) {
 
 	/* TODO: stop mission (stop thread) */
+	nav_queue_init();
+
 	last_mission.isactive = false;
 	smq_send_log_info("mission stopped!");
 
 };
-
-bool mp_handler(void) {
-
-	uint64_t curr_time = hrt_absolute_time();
-	uint64_t difference = curr_time - last_call;
-
-	if(difference > 2e6) {
-
-		//Do not call the mission planner every time in the main-loop, but only every two seconds
-		last_call = curr_time;
-
-	}
-
-	return true;
-
-}

@@ -20,7 +20,7 @@
 /*****  F U N C T I O N   D E C L A R A T I O N S  *********************************/
 /***********************************************************************************/
 
-bool mp_sk_start(mission new_mission);
+bool mp_sk_start(frame comp_frame);
 
 bool mp_sk_isinside(NEDpoint boat_pos, frame comp_frame);
 
@@ -30,7 +30,7 @@ float mp_sk_perpdist(NEDpoint P1, NEDpoint P2, NEDpoint pos);
 /*****  P U B L I C    F U N C T I O N S  ******************************************/
 /***********************************************************************************/
 
-bool mp_sk_start(mission new_mission) {
+bool mp_sk_start(frame comp_frame) {
 
 	printf("station-keeping started");
 
@@ -67,7 +67,7 @@ bool mp_sk_isinside(NEDpoint boat_pos, frame comp_frame) {
 	float dist_O3O4 = mp_sk_perpdist(comp_frame.O3, comp_frame.O4, boat_pos);
 	float dist_O4O1 = mp_sk_perpdist(comp_frame.O4, comp_frame.O1, boat_pos);
 
-	if (dist_O1O2 < comp_frame.dist & dist_O2O3 < comp_frame.dist & dist_O3O4 < comp_frame.dist & dist_O4O1 < comp_frame.dist) {
+	if ((dist_O1O2 < comp_frame.dist) & (dist_O2O3 < comp_frame.dist) & (dist_O3O4 < comp_frame.dist) & (dist_O4O1 < comp_frame.dist)) {
 
 		return true;
 
