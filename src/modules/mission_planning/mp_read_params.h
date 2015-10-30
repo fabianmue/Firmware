@@ -17,10 +17,17 @@
 #define DEG2RAD      0.0174532925199433f
 #define PI           3.14159265358979323846f
 
+#define NAME_LEN 20
+#define VALUE_LEN 20
+
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
+extern double cf_o1n;
+extern double cf_o1e;
+extern double cf_dist;
+extern double cf_rot;
 
 typedef struct NEDpoint_s {
 	float northx;	//north component
@@ -38,7 +45,7 @@ typedef struct frame_s {
 } frame;
 
 typedef struct SD_params_s {
-	char name[20];
+	char name[NAME_LEN];
 	double value;
 } SD_params;
 
@@ -66,10 +73,10 @@ typedef struct pointers_param_qgc_mp_s{
 
 
 /* @brief read parameters from SD card */
-void mp_readSD(char file_path[]);
+void mp_read_param_SD(char file_path[]);
 
 /* @brief initialize parameters from qgc */
-void mp_param_init_qgc(void);
+void mp_read_param_QGC(void);
 
 // @brief update parameters from qgc */
 void mp_param_update_qgc(bool update_path_param);

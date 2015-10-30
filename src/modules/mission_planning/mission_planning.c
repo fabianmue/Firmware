@@ -176,7 +176,7 @@ int mp_thread_main(int argc, char *argv[]) {
     /* read parameters from specified source */
     if (strcmp(param_source, "SD")==0) {
 
-    	mp_readSD(file_path);
+    	mp_read_param_SD(file_path);
 
     } else {
 

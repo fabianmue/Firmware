@@ -19,11 +19,15 @@
 
 #include "../path_planning/pp_navigation_module.h"
 
-#define NAME_LEN 20
-#define VALUE_LEN 20
+
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
+
+double cf_o1n;
+double cf_o1e;
+double cf_dist;
+double cf_rot;
 
 char temp[VALUE_LEN];
 
@@ -50,7 +54,7 @@ PARAM_DEFINE_INT32(MP_MISSION, 0);
 
 
 // read parameters from SD card
-void mp_readSD(char file_path[])
+void mp_read_param_SD(char file_path[])
 {
 
   char buffer[1];
@@ -63,15 +67,14 @@ void mp_readSD(char file_path[])
 	  printf("file at %s found \n", file_path);
 
 	  /* allocate memory for each parameter */
-	  int ch = 0, number_of_lines = 1;
+	  int ch, number_of_lines = 1;
 	  do {
 		  ch = read(fd, buffer, 1);
-		  if (ch <= 0) {
+		  if (ch < 0) {
 			  perror("error when reading: ");
 		  }
-		  printf("buffer: %s\n", buffer);
 		  if (buffer[0] == '\n') number_of_lines++;
-	  } while (ch > 0);
+	  } while (ch != 0);
 	  struct SD_params_s SD_params[number_of_lines];
 	  printf("number of lines in file: %i \n", number_of_lines);
 
@@ -83,35 +86,50 @@ void mp_readSD(char file_path[])
 	  int i = 0, j = 0, k = 0;
 	  do {
 		  ch2 = read(fd, buffer, 1);
-		  if (isalpha(buffer[0])) {
-			  j = 0;
-			  do {
-				  SD_params[i].name[j] = buffer[0];
-				  ch2 = read(fd, buffer, 1);
-				  j++;
-			  } while (isalpha(buffer[0]) && j < NAME_LEN-1);
-			  SD_params[i].name[j] = '\0';
-			  printf("read parameter %i, name: %s\n", i, SD_params[i].name);
-		  }	else if (isdigit(buffer[0])) {
-			  k = 0;
-			  do {
-				  temp[k] = buffer[0];
-				  ch2 = read(fd, buffer, 1);
-				  k++;
-			  } while (isdigit(buffer[0]) && k < VALUE_LEN-1);
-			  temp[k] = '\0';
-			  SD_params[i].value = atof(temp);
-			  printf("read parameter %i, value: %f\n", i, SD_params[i].value);
+		  if (ch2 < 0) {
+			  perror("error when reading: ");
+		  }
+		  if (isalpha(buffer[0]) && j < NAME_LEN-1) {
+			  SD_params[i].name[j] = buffer[0];
+			  j++;
+		  }	else if ((isdigit(buffer[0]) || buffer[0]=='.') && k < VALUE_LEN-1) {
+			  temp[k] = buffer[0];
+			  k++;
 		  } else if (buffer[0] == '\n') {
+			  SD_params[i].name[j] = '\0';
+			  temp[k] = '\0';
+			  SD_params[i].value = strtod(temp, NULL);
+			  printf("parameter #%i, name: %s, value: %.2f\n", i, SD_params[i].name, SD_params[i].value);
 			  i++;
-		  };
-	  } while (ch2 > 0);
-	  printf("end of file reached");
+			  j = 0, k = 0;
+		  }
+	  } while (ch2 != 0);
+	  SD_params[i].name[j] = '\0';
+	  temp[k] = '\0';
+	  SD_params[i].value = strtod(temp, NULL);
+	  printf("parameter #%i, name: %s, value: %.2f\n", i, SD_params[i].name, SD_params[i].value);
+
+	  // copy parameters to variables
+	  int l = 0;
+	  while (l < number_of_lines) {
+		  if (strcmp(SD_params[l].name, "O1N") == 0) {
+			  param_get(SD_params[l].value, &cf_o1n);
+		  } else if (strcmp(SD_params[l].name, "O1E") == 0) {
+			  param_get(SD_params[l].value, &cf_o1e);
+		  } else if (strcmp(SD_params[l].name, "distance") == 0) {
+			  param_get(SD_params[l].value, &cf_dist);
+		  } else if (strcmp(SD_params[l].name, "rotation") == 0) {
+			  param_get(SD_params[l].value, &cf_rot);
+		  } else {
+			  printf("parameter %s could not be assigned\n", SD_params[l].name);
+		  }
+		  l++;
+	  }
   }
 };
 
 // initialize parameters
-void mp_param_init_qgc(void){
+void mp_read_param_QGC(void){
 
     // geo reference
 	params_qgc.lat0_pointer = param_find("ASP_R_LAT0_E7");
@@ -151,21 +169,17 @@ void mp_param_update_qgc(bool update_path_param){
     mp_set_ref0(&lat0, &lon0, &alt0);
 
    	// competition frame
-   	float cf_dist = 0.0f;
-   	float cf_o1n = 0.0f;
-   	float cf_o1e = 0.0f;
-   	float cf_rotation = 0.0f;
    	param_get(params_qgc.cf_o1n, &cf_o1n);
    	param_get(params_qgc.cf_o1e, &cf_o1e);
    	param_get(params_qgc.cf_dist, &cf_dist);
-   	param_get(params_qgc.cf_rotation, &cf_rotation);
+   	param_get(params_qgc.cf_rotation, &cf_rot);
 
    	// mission
    	int32_t mp_mission = 0;
    	param_get(params_qgc.mp_mission, &mp_mission);
 
 	#if LDEBUG_USEMISSION == 1
-   	mp_set_racefield(cf_o1n, cf_o1e, cf_dist, cf_rotation);
+   	mp_set_racefield(cf_o1n, cf_o1e, cf_dist, cf_rot);
 	#endif
 }
 
