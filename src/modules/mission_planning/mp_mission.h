@@ -12,7 +12,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "mp_read_params.h"
 
 
 /***********************************************************************************/
@@ -20,23 +19,11 @@
 /***********************************************************************************/
 
 
-typedef struct mission_s {
-	uint8_t type; 	// mission type; 0 = triangular course, 1 = station-keeping, 2 = area-scanning, 3 = fleet-race, 4 = unconstrained
-	NEDpoint waypoints[100];
-	bool isactive;
-} mission;
-
 
 /***********************************************************************************/
 /*****  F U N C T I O N   D E C L A R A T I O N S  *********************************/
 /***********************************************************************************/
 
-
-/* @brief start new mission */
-bool mp_start_mission(mission new_mission);
-
-/* @brief stop current mission */
-void mp_stop_mission(void);
-
+void mp_start_mission(mission new_mission);
 
 #endif /* MP_MISSION_H_ */

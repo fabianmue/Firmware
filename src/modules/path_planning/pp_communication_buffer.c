@@ -38,6 +38,7 @@
  *
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
+
 #include "pp_communication_buffer.h"
 #include <drivers/drv_hrt.h>
 #include <stdio.h>
@@ -75,7 +76,7 @@ static char txt_msg[70]; ///used to send messages to QGC
 
 /**
  * Set Failsafe state
- * Communiate to Autonomous Sailing app, that we need to go into failsafe mode
+ * Communicate to Autonomous Sailing app, that we need to go into failsafe mode
  */
 bool cb_set_failsafe(bool state) {
 
@@ -159,14 +160,14 @@ float cb_get_heading(void) {
  *
  * @param obst_pos: position of the obstacle (NED) [m]
  */
-bool cb_new_obstacle(float o_north, float o_east) {
-	pp.obst_north = o_north;
-	pp.obst_east = o_east;
-
-	pp_updated = true;
-
-	return true;
-}
+// bool cb_new_obstacle(float o_north, float o_east) {
+//	pp.obst_north = o_north;
+//	pp.obst_east = o_east;
+//
+//	pp_updated = true;
+//
+//	return true;
+// }
 
 
 /**
@@ -199,33 +200,33 @@ bool cb_new_wind(float wind) {
 }
 
 
-/**
+/*
  * Send an Int-Value for Debug purposes to QGround Control
  *
  * @param int-value
  */
-bool cb_new_target(float north, float east) {
-	pp.target_north = north;
-	pp.target_east = east;
-
-	pp_updated = true;
-
-	return true;
-}
+// bool cb_new_target(float north, float east) {
+//	pp.target_north = north;
+//	pp.target_east = east;
+//
+//	pp_updated = true;
+//
+//	return true;
+// }
 
 
 /**
- * Send the current Target Number that is set as the next Waypoint ot QGround Control
+ * Send the current Target Number that is set as the next Waypoint to QGround Control
  *
  * @param tar_num: Number of the next Waypoint
  */
-bool cb_new_targetnum(uint8_t tar_num) {
-	pp.target_num = tar_num;
-
-	pp_updated = true;
-
-	return true;
-}
+// bool cb_new_targetnum(uint8_t tar_num) {
+//	pp.target_num = tar_num;
+//
+//	pp_updated = true;
+//
+//	return true;
+// }
 
 
 
@@ -375,6 +376,7 @@ bool cb_set_alpha_star(float new_alpha_star){
  * Init pp_communication_buffer.
 */
 void cb_init(void){
+
     //clean memory
     memset(&pp, 0, sizeof(pp));
     memset(&boat_guidance_debug, 0, sizeof(boat_guidance_debug));
@@ -384,13 +386,11 @@ void cb_init(void){
     cb_set_alpha_star(M_PI_F / 4.0f);
     pp.id_cmd = PP_NORMAL_CMD;
 
-    pp.target_num = 0;
+    // pp.target_num = 0;
 
     //Added 19.06.15, commented 02.09.2015
     pp_updated = true;
     cb_publish_pp_if_updated();
-
-
 }
 
 /**

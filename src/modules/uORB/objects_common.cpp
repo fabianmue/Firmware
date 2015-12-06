@@ -274,3 +274,7 @@ ORB_DEFINE(boat_pp_debug1, struct boat_pp_debug1_s);
 //Added by Jonas Wirz
 #include "topics/path_planning_kalman.h"
 ORB_DEFINE(path_planning_kalman, struct path_planning_kalman_s);
+
+//Added by Fabian Müller
+#include "topics/mission_planning.h"
+ORB_DEFINE(mission_planning, struct mission_planning_s);

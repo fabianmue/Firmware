@@ -44,7 +44,6 @@
 #include "../pp_navigator.h"
 #include "../pp_send_msg_qgc.h"
 #include "../pp_communication_buffer.h"
-#include "../pp_send_msg_qgc.h"
 
 #include "../pp_config.h"
 

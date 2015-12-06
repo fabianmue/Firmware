@@ -79,13 +79,13 @@ bool cb_new_refheading(float ref_heading);
 bool cb_new_wind(float wind);
 
 /** @brief Send the new target position to the Pathplanning Topic */
-bool cb_new_target(float north, float east);
+// bool cb_new_target(float north, float east);
 
 /** @brief Store the current obstacle position in the pathplanning-topic */
-bool cb_new_obstacle(float o_north, float o_east);
+// bool cb_new_obstacle(float o_north, float o_east);
 
 /** @brief Send the Number of the next Waypoint to QGround Control */
-bool cb_new_targetnum(uint8_t tar_num);
+// bool cb_new_targetnum(uint8_t tar_num);
 
 /** @brief command a tack or a jybe */
 bool cb_do_maneuver(float new_alpha_star);

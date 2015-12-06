@@ -299,7 +299,6 @@ PARAM_DEFINE_INT32(PP_NAV_TURNRATE, 10);
 
 /**
  * pp_navigator: Target Position (GEO-Coordinate Frame)
- */
 PARAM_DEFINE_INT32(PP_NAV_TAR_LAT, HOMELAT);
 PARAM_DEFINE_INT32(PP_NAV_TAR_LON, HOMELON);
 PARAM_DEFINE_FLOAT(PP_NAV_TAR_NEDN,0);
@@ -307,26 +306,25 @@ PARAM_DEFINE_FLOAT(PP_NAV_TAR_NEDE,0);
 
 PARAM_DEFINE_INT32(PP_NAV_TAR_NUM, 1);	//Number of Target currently set
 PARAM_DEFINE_INT32(PP_NAV_TAR_NEXT,0);	//Number of the next Target to be reached
-
+ */
 
 /**
  * pp_navigator: Target Position (GEO-Coordinate Frame)
- */
 PARAM_DEFINE_INT32(PP_NAV_OBST_LAT, HOMELAT);
 PARAM_DEFINE_INT32(PP_NAV_OBST_LON, HOMELON);
 PARAM_DEFINE_FLOAT(PP_NAV_OBST_NEDN,0);
 PARAM_DEFINE_FLOAT(PP_NAV_OBST_NEDE,0);
 
 PARAM_DEFINE_INT32(PP_NAV_OBST_NUM, 1);	//Number of Obstacle currently set
-
+*/
 
 /**
  * pp_navigator: Start-Line defined by two buoys
- */
 PARAM_DEFINE_INT32(PP_NAV_STRT1_LAT, HOMELAT);
 PARAM_DEFINE_INT32(PP_NAV_STRT1_LON, HOMELON);
 PARAM_DEFINE_INT32(PP_NAV_STRT2_LAT, HOMELAT);
 PARAM_DEFINE_INT32(PP_NAV_STRT2_LON, HOMELON);
+ */
 
 PARAM_DEFINE_FLOAT(PP_NAV_ALTITUDE, HOMEALT);		//Note: The altitude value is in Millimeters
 
@@ -405,7 +403,7 @@ PARAM_DEFINE_FLOAT(KT_CO,10);
 PARAM_DEFINE_FLOAT(KT_PERIOD,2);
 
 
-static struct pointers_param_qgc_s{
+static struct pointers_param_qgc_s {
 
 
     param_t lat0_pointer;         /**< pointer to param ASP_R_LAT0_E7*/
@@ -472,6 +470,7 @@ static struct pointers_param_qgc_s{
 	//**NAVIGATION
 	param_t nav_period;
 	param_t nav_turnrate;
+	/*
 	param_t nav_target_lat;
 	param_t nav_target_lon;
 	param_t nav_target_nedn;
@@ -483,10 +482,12 @@ static struct pointers_param_qgc_s{
 	param_t nav_obstacle_nedn;
 	param_t nav_obstacle_nede;
 	param_t nav_obstacle_number;
+
 	param_t nav_start1_lat;
 	param_t nav_start1_lon;
 	param_t nav_start2_lat;
 	param_t nav_start2_lon;
+	*/
 	param_t nav_altitude;
 
 	param_t nav_reset;
@@ -529,7 +530,7 @@ static struct pointers_param_qgc_s{
 	param_t co_rotation;
 	param_t co_mission;
 
-}pointers_param_qgc;
+} pointers_param_qgc;
 
 
 /**
@@ -608,6 +609,8 @@ void p_param_init(void){
     //**NAVIGATION
     pointers_param_qgc.nav_period = param_find("PP_NAV_PERIOD");
     pointers_param_qgc.nav_turnrate = param_find("PP_NAV_TURNRATE");
+
+    /*
     pointers_param_qgc.nav_target_lat = param_find("PP_NAV_TAR_LAT");
     pointers_param_qgc.nav_target_lon = param_find("PP_NAV_TAR_LON");
     pointers_param_qgc.nav_target_nedn = param_find("PP_NAV_TAR_NEDN");
@@ -624,6 +627,8 @@ void p_param_init(void){
     pointers_param_qgc.nav_start1_lon = param_find("PP_NAV_STRT1_LON");
     pointers_param_qgc.nav_start2_lat = param_find("PP_NAV_STRT2_LAT");
     pointers_param_qgc.nav_start2_lon = param_find("PP_NAV_STRT2_LON");
+    */
+
     pointers_param_qgc.nav_altitude = param_find("PP_NAV_ALTITUDE");
 
     pointers_param_qgc.nav_reset = param_find("PP_NAV_RESET");
@@ -874,6 +879,7 @@ void p_param_update(bool update_path_param){
     param_get(pointers_param_qgc.nav_turnrate, &turnrate);
     nav_set_configuration(period, turnrate);
 
+    /*
     PointE7 target;
     NEDpoint target_ned;
     PointE7 obstacle;
@@ -897,12 +903,11 @@ void p_param_update(bool update_path_param){
    	obstacle.alt = altitude;
 
 	#if LDEBUG_USEMISSION == 0
-   	nav_set_target(t_num,target);
-   	nav_set_target_ned(t_num,target_ned);	//NOTE: Because of this the target is always set in NED-Coordinates
-   	nav_set_obstacle(o_num,obstacle);
-   	nav_set_obstacle_ned(o_num,obstacle_ned);	//NOTE: Because of this the obstacle is always set in NED-Coordinates
+   		nav_set_target(t_num,target);
+   		nav_set_target_ned(t_num,target_ned);	//NOTE: Because of this the target is always set in NED-Coordinates
+   		nav_set_obstacle(o_num,obstacle);
+   		nav_set_obstacle_ned(o_num,obstacle_ned);	//NOTE: Because of this the obstacle is always set in NED-Coordinates
 	#endif
-
 
    	PointE7 start[2];
    	param_get(pointers_param_qgc.nav_start1_lat, &(start[0].lat));
@@ -913,6 +918,7 @@ void p_param_update(bool update_path_param){
    	start[1].alt = altitude;
 
    	nav_set_startline(start[0],start[1]);
+    */
 
    	//**RESET THE NAVIGTOR PARAMETERS
    	uint8_t reset = 0;
@@ -923,14 +929,14 @@ void p_param_update(bool update_path_param){
    		smq_send_log_info("NAVIGATOR RESET! switch back to 0!");
    	}
 
-
+    /*
    	//**SET THE NUMBER OF THE TARGET THAT SHOULD BE REACHED NEXT
    	uint8_t targetnumber = 0;
    	param_get(pointers_param_qgc.nav_target_next, &targetnumber);
 	#if LDEBUG_USEMISSION == 0
    	nav_set_targetnumber(targetnumber);
 	#endif
-
+	*/
 
    	//**INVERT ALPHA BEFORE SENDING TO AUTONOMOUS SAILING APP
    	uint8_t dbg_invalp = 0;

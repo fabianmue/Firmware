@@ -80,6 +80,7 @@
 #include <uORB/topics/boat_local_position.h>//Added by Marco Tranzatto
 #include <uORB/topics/path_planning.h>//Added by Jonas Wirz
 #include <uORB/topics/path_planning_kalman.h> //Added by Jonas Wirz
+#include <uORB/topics/mission_planning.h>//Added by Fabian Müller
 
 #include "mavlink_messages.h"
 #include "mavlink_main.h"
@@ -2190,7 +2191,7 @@ public:
         //return 8 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
         //return 6 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
         //return 4 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
-        return 12 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 7 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
     }
 
 private:
@@ -2214,10 +2215,10 @@ protected:
         if (_path_p_sub->update(&_path_p_time, &path_p_debug)) {
             /* send, add spaces so that string buffer is at least 10 chars long */
             mavlink_named_value_float_t msg;
-            mavlink_named_value_int_t msg_int;
+            // mavlink_named_value_int_t msg_int;
 
             msg.time_boot_ms = path_p_debug.timestamp / 1000;
-            msg_int.time_boot_ms = path_p_debug.timestamp / 1000;
+            // msg_int.time_boot_ms = path_p_debug.timestamp / 1000;
 
             snprintf(msg.name, sizeof(msg.name), "as_alstr");
             msg.value = (path_p_debug.alpha_star*RAD2DEG);
@@ -2239,6 +2240,7 @@ protected:
             msg.value = ((float)path_p_debug.ned_east);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
+            /*
             snprintf(msg_int.name, sizeof(msg.name), "pp_TarNum");
             msg_int.value = ((int)(path_p_debug.target_num));
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg_int);
@@ -2250,6 +2252,7 @@ protected:
             snprintf(msg.name, sizeof(msg.name), "pp_Etar");
             msg.value = ((float)path_p_debug.target_east);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+			*/
 
             snprintf(msg.name, sizeof(msg.name), "pp_navref");
             msg.value = ((float)path_p_debug.ref_heading*RAD2DEG);
@@ -2263,6 +2266,7 @@ protected:
             msg.value = ((float)path_p_debug.wind*RAD2DEG);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
+            /*
             snprintf(msg.name, sizeof(msg.name), "pp_Nobs");
             msg.value = ((float)path_p_debug.obst_north);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
@@ -2270,6 +2274,7 @@ protected:
             snprintf(msg.name, sizeof(msg.name), "pp_Eobs");
             msg.value = ((float)path_p_debug.obst_east);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+            */
         }
     }
 };
@@ -2350,6 +2355,79 @@ protected:
     }
 };
 
+//--------------------------------- ADD MISSIONPLANNING MSG ------------------
+// by Fabian Müller
+class MavlinkStreamMissionP : public MavlinkStream
+{
+public:
+    const char *get_name() const
+    {
+        return MavlinkStreamMissionP::get_name_static();
+    }
+
+    static const char *get_name_static()
+    {
+        return "MISSION_P_MSG";
+    }
+
+    uint8_t get_id()
+    {
+        return 0;
+    }
+
+    static MavlinkStream *new_instance(Mavlink *mavlink)
+    {
+        return new MavlinkStreamMissionP(mavlink);
+    }
+
+    unsigned get_size()
+    {
+        return 4 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+    }
+
+private:
+    MavlinkOrbSubscription *_mission_p_sub;
+    uint64_t _mission_p_time;
+
+    /* do not allow top copying this class */
+    MavlinkStreamMissionP(MavlinkStreamMissionP &);
+    MavlinkStreamMissionP& operator = (const MavlinkStreamMissionP &);
+
+protected:
+    explicit MavlinkStreamMissionP(Mavlink *mavlink) : MavlinkStream(mavlink),
+        _mission_p_sub(_mavlink->add_orb_subscription(ORB_ID(mission_planning))),
+        _mission_p_time(0)
+    {}
+
+    void send(const hrt_abstime t)
+    {
+        struct mission_planning_s mission_p_debug;
+
+        if (_mission_p_sub->update(&_mission_p_time, &mission_p_debug)) {
+            /* send, add spaces so that string buffer is at least 10 chars long */
+            mavlink_named_value_float_t msg;
+            // mavlink_named_value_int_t msg_int;
+
+            msg.time_boot_ms = mission_p_debug.timestamp / 1000;
+
+            snprintf(msg.name, sizeof(msg.name), "mp_tar_lat");
+            msg.value = (mission_p_debug.tar_lat);
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "mp_tar_lon");
+            msg.value = (mission_p_debug.tar_lon);
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "mp_tar_ned_n");
+            msg.value = (mission_p_debug.tar_ned_north);
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "mp_tar_ned_e");
+            msg.value = (mission_p_debug.tar_ned_east);
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+        }
+    }
+};
 
 
 //--------------------------------- End Add -----------------------------------

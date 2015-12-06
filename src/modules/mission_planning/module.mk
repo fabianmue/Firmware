@@ -36,9 +36,6 @@
 MODULE_COMMAND	= mission_planning
 
 SRCS	= mission_planning.c\
-		  mp_mission.c\
-		  mp_read_params.c\
-		  mp_station_keeping.c\
-		  mp_area_scanning.c\
+		  mp_params.c\
 
 #add here all additional c-Files by using \ at the end of each line

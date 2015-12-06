@@ -31,74 +31,72 @@
 
 #include <stdbool.h>
 #include <math.h>
-#include "mp_mission.h"
 
 #include <drivers/drv_hrt.h>
 
-#include "../path_planning/pp_send_msg_qgc.h"
+#include "mp_mission.h"
+#include "mp_params.h"
 
+#include "../pp_send_msg_qgc.h"
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-mission last_mission;
+static struct {
+	int cur_task;
+	int queue_size;
+	mission queue[MAX_ELEM];
+} mission_queue = {
+	.cur_task = NULL,
+	.queue_size = 0
+};
 
 /***********************************************************************************/
 /*****  F U N C T I O N   D E F I N I T I O N S  ***********************************/
 /***********************************************************************************/
 
-// start a new mission
-bool mp_start_mission(mission new_mission) {
+void mp_start_mission(mission new_mission) {
 
-	if(last_mission.isactive == true) {
+	smq_send_log_info("new mission started");
 
-		smq_send_log_info("current mission still active, new mission could not be started!");
-		return false;
-	}
-	else {
-
-		/* TODO: start mission (start thread) */
-		new_mission.isactive = true;
-		last_mission = new_mission;
-		smq_send_log_info("new mission started!");
-
-		switch(new_mission.type) {
-			case 0:
-				// triangular course
-				break;
-
-			case 1:
-				// station-keeping
-				break;
-
-			case 2:
-				// area-scanning
-				break;
-
-			case 3:
-				// fleet-race
-				break;
-
-			case 4:
-				// unconstrained
-				break;
-
-			default:
-				// nothing to do here
-				break;
-
-		return true;
-		}
-	}
-}
-
-void mp_stop_mission(void) {
-
-	/* TODO: stop mission (stop thread) */
 	nav_queue_init();
 
-	last_mission.isactive = false;
-	smq_send_log_info("mission stopped!");
+
+	// set obstacles
+	int ob_count = 0;
+	while (*new_mission.obstacles) {
+
+		// convert lat-lon obstacle to NED
+		NEDpoint ob;
+
+		// set obstacle
+		nav_set_obstacle_ned(ob_count, ob);
+	}
+
+
+
+	// set waypoints
+	while (*new_mission.waypoints) {
+
+		// convert lat-lon waypoint to NED
+		NEDpoint wp;
+
+		// set target
+		nav_set_target_ned(wp);
+	}
+
+	switch (new_mission.type) {
+		case 0:
+			// unconstrained
+
+		case 1:
+
+		case 2:
+
+		case 3:
+
+		case 4:
+	}
 
 };

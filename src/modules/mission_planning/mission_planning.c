@@ -40,10 +40,10 @@
  * | MODULE "autonomous_sailing" |                                 | MODULE "path_planning"       |       | MODULE "mission_planning"    |
  * |                             |       -------------------       |                              |       |                              |
  * | this module is the HELSMAN. |       |  SHARED MEMEORY |       | this module is the NAVIGATOR.|       | this module sets the way-    |
- * | it controls the sails and   | POLL  |                 | PUSH  | it calculates the optimum    | PUSH  | points to fulfil a certain   |
+ * | it controls the sails and   | POLL  |                 | PUSH  | it calculates the optimum    | PUSH  | points to fulfill a certain  |
  * | the rudder in order to      |------>|  heading        |<------| heading and gives orders     |<------| mission. It receives data    |
- * | track a given heading.      |       |  tack/gybe      |       | to the helsman.              |       | from SD card or telemetry.   |
- * |                             |       -------------------       |                              |       |                              |
+ * | track a given heading.      |       |  tack/gybe      |       | to the helsman.              |       | from a ground station via    |
+ * |                             |       -------------------       |                              |       | SD card or telemetry.        |
  * -------------------------------                                 --------------------------------		  --------------------------------
  *
  * @author Jonas Wirz <wirzjo@student.ethz.ch>
@@ -64,8 +64,11 @@
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
 
-#include "mp_mission.h"
-#include "mp_read_params.h"
+#include "mp_topics_handler.h"
+#include "mp_communication_buffer.h"
+#include "mp_params.h"
+
+#include "../path_planning/pp_send_msg_qgc.h"
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
@@ -75,11 +78,17 @@ static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
 static int daemon_task;						/**< Handle of daemon task / thread */
 
-static char param_source[] = "SD";
-static char file_path[] = "/fs/microsd/params.txt";
+// static char file_path[] = "/fs/microsd/params.txt";
 
 //thread priority
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 25 ///daemon priority (-25)
+#define TIMEOUT_POLL 1000
+
+frame frames[MAX_ELEM];
+int fr_count = 0;
+
+mission missions[MAX_ELEM];
+int mi_count = 0;
 
 /***********************************************************************************/
 /*****  F U N C T I O N   D E C L A R A T I O N S  *********************************/
@@ -136,7 +145,7 @@ int mission_planning_main(int argc, char *argv[])
 		}
 
 		thread_should_exit = false;
-		//was 4096 (5000 was working with SDLog)
+		// create thread
         daemon_task = task_spawn_cmd("mission_planning",
         		SCHED_DEFAULT,
         		DAEMON_PRIORITY,
@@ -170,31 +179,82 @@ int mission_planning_main(int argc, char *argv[])
  */
 int mp_thread_main(int argc, char *argv[]) {
 
-	/* thread is starting */
+	// thread is starting
     warnx("mission_planning starting\n");
+	thread_running = true;
 
-    /* read parameters from specified source */
-    if (strcmp(param_source, "SD")==0) {
+	// handle topics
+	struct subscribtion_fd_s subs;   // file-descriptors of subscribed topics
+	struct structs_topics_s strs;    // struct of Interested Topics
 
-    	mp_read_param_SD(file_path);
+    th_subscribe(&subs, &strs);      // subscribe to interested topics
+    th_advertise();                  // advertise topics
 
-    } else {
+	// poll for changes in subscribed topics
+    struct pollfd fds[] = {			 // polling management
+            { .fd = subs.parameter_update,          .events = POLLIN }
+    };
 
+    int poll_return;				// return value of the polling.
 
+    // init mission planning parameters
+    mp_param_init();
 
-    }
+    // init communication buffer
+    cb_init();
+
+    // init msg to QGC module
+    smq_init_msg_module();
 
     /*
+    // read parameters from specified source
+    if (pointers_mp_param_qgc.mp_data_src == 1) {
+    	mp_get_params_SD(file_path, frames, fr_count, missions, mi_count);
+    } else {
+    	mp_get_params_SP();
+    }
+    */
+
+    // main_thread loop - loops until thread is killed
 	while (!thread_should_exit) {
 
+		// poll for changes in subscribed topics
+		poll_return = poll(fds, (sizeof(fds) / sizeof(fds[0])), TIMEOUT_POLL);
+		if (poll_return == 0) {
+
+			// no topic contains changed data
+			warnx("no new data\n");
+		} else if (poll_return < 0) {
+
+			// error during polling
+			warnx("polling error %d, %d", poll_return, errno);
+			continue;
+		} else {
+
+			// new data
+            if(fds[0].revents & POLLIN){
+
+                // copy new parameters from QGC
+                orb_copy(ORB_ID(parameter_update), subs.parameter_update,
+                         &(strs.parameter_update));
+                // update parameters
+                mp_param_update(true);
+
+                // check if data source changed to SD card
 
 
-	} // end of main_thread loop
-	*/
+            }
+		}
+
+        /* warning: mission_planning topic should be published only ONCE for every loop iteration.
+         * use mp_communication_buffer to change topic's values.
+        */
+        cb_publish_mp_if_updated();
+	}
 
 	// kill the thread
-    warnx("mission_planning exiting.\n");
+    warnx("mission_planning exiting\n");
 	thread_running = false;
 
 	return 0;
-} // end of mission_planning thread
+}
