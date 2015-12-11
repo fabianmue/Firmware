@@ -68,7 +68,7 @@
 #include "mp_communication_buffer.h"
 #include "mp_params.h"
 
-#include "../path_planning/pp_send_msg_qgc.h"
+#include "mp_send_msg_qgc.h"
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
@@ -78,17 +78,9 @@ static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
 static int daemon_task;						/**< Handle of daemon task / thread */
 
-// static char file_path[] = "/fs/microsd/params.txt";
-
 //thread priority
 #define DAEMON_PRIORITY SCHED_PRIORITY_MAX - 25 ///daemon priority (-25)
 #define TIMEOUT_POLL 1000
-
-frame frames[MAX_ELEM];
-int fr_count = 0;
-
-mission missions[MAX_ELEM];
-int mi_count = 0;
 
 /***********************************************************************************/
 /*****  F U N C T I O N   D E C L A R A T I O N S  *********************************/
@@ -184,11 +176,11 @@ int mp_thread_main(int argc, char *argv[]) {
 	thread_running = true;
 
 	// handle topics
-	struct subscribtion_fd_s subs;   // file-descriptors of subscribed topics
-	struct structs_topics_s strs;    // struct of Interested Topics
+	struct mp_subscribtion_fd_s subs;   // file-descriptors of subscribed topics
+	struct mp_structs_topics_s strs;    // struct of Interested Topics
 
-    th_subscribe(&subs, &strs);      // subscribe to interested topics
-    th_advertise();                  // advertise topics
+    mp_th_subscribe(&subs, &strs);      // subscribe to interested topics
+    mp_th_advertise();                  // advertise topics
 
 	// poll for changes in subscribed topics
     struct pollfd fds[] = {			 // polling management
@@ -201,19 +193,10 @@ int mp_thread_main(int argc, char *argv[]) {
     mp_param_init();
 
     // init communication buffer
-    cb_init();
+    mp_cb_init();
 
     // init msg to QGC module
-    smq_init_msg_module();
-
-    /*
-    // read parameters from specified source
-    if (pointers_mp_param_qgc.mp_data_src == 1) {
-    	mp_get_params_SD(file_path, frames, fr_count, missions, mi_count);
-    } else {
-    	mp_get_params_SP();
-    }
-    */
+    mp_init_msg_module();
 
     // main_thread loop - loops until thread is killed
 	while (!thread_should_exit) {
@@ -249,7 +232,7 @@ int mp_thread_main(int argc, char *argv[]) {
         /* warning: mission_planning topic should be published only ONCE for every loop iteration.
          * use mp_communication_buffer to change topic's values.
         */
-        cb_publish_mp_if_updated();
+        mp_cb_publish_if_updated();
 	}
 
 	// kill the thread

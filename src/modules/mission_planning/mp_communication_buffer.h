@@ -12,12 +12,15 @@
 #include "../path_planning/pp_send_msg_qgc.h"
 
 /* @brief send new target position to the mission_planning topic */
-bool cb_new_target(float lat, float lon, float north, float east);
+bool mp_cb_new_target(float lat, float lon);
+
+/* @brief update QGC obstacle number */
+bool mp_cb_new_obstacle(void);
 
 /* @brief publish mission_planning module if it has been updated */
-void cb_publish_mp_if_updated(void);
+void mp_cb_publish_if_updated(void);
 
 /* @brief init module */
-void cb_init(void);
+void mp_cb_init(void);
 
 #endif /* MP_COMMUNICATION_BUFFER_H_ */

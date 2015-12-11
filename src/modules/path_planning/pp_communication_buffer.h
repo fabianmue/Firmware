@@ -122,13 +122,13 @@ void cb_use_fixed_twd(bool use_fixed_twd);
 void cb_new_as_data(int boat_guidance_debug_sub);
 
 /** @brief publish path_planning module if it has been updated */
-void cb_publish_pp_if_updated(void);
+void pp_cb_publish_if_updated(void);
 
 /** @brief init module */
-void cb_init(void);
+void pp_cb_init(void);
 
 /** @brief copy new data from remote controller*/
-void cb_new_rc_data(const struct structs_topics_s *strs_p);
+void cb_new_rc_data(const struct pp_structs_topics_s *strs_p);
 
 #if USE_GRID_LINES == 1
 

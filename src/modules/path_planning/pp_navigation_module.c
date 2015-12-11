@@ -405,7 +405,7 @@ void n_navigation_module(const struct vehicle_global_position_s *vgp_p){
                                        boat_local_position.y_race_m * boat_local_position.y_race_m);
     //publish boat_local_position topic
     boat_local_position.timestamp = hrt_absolute_time();
-    th_publish_boat_local_position(&boat_local_position);
+    pp_th_publish_boat_local_position(&boat_local_position);
 }
 
 /**

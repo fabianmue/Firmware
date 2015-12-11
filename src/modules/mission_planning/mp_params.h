@@ -42,7 +42,7 @@ typedef struct buoy_s {
 typedef struct frame_s {
 	char *name;
 	int id;
-	buoy buoys[MAX_ELEM];
+	buoy buoys[4];
 } frame;
 
 typedef struct mission_s {
@@ -65,7 +65,7 @@ void mp_param_init(void);
 void mp_param_update(bool update_param);
 
 /* @brief get parameters from SD card */
-void mp_get_params_SD(char file_path[], frame frames[], int fr_count, mission missions[], int mi_count);
+void mp_get_params_SD(char file_path[]);
 
 /* @brief get parameters from serial port */
 void mp_get_params_SP(void);

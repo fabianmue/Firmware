@@ -24,7 +24,7 @@ static struct {
  * @param *strs_p: Pointer to a struct of all interested Topics
  * @return true, iff successfully subscribed to all topics
  */
-bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *strs_p) {
+bool pp_th_subscribe(struct pp_subscribtion_fd_s *subs_p, struct pp_structs_topics_s *strs_p) {
 
 	//Subscribe to the topics
 	subs_p->vehicle_global_position = orb_subscribe(ORB_ID(vehicle_global_position));
@@ -76,7 +76,7 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
  * @param *strs_p: Pointer to a struct of all interested Topics
  * @return true, iff successfully subscribed to all topics
  */
-bool th_advertise(void) {
+bool pp_th_advertise(void) {
 
 	//Advertise the Pathplanning topic
     struct path_planning_s path_planning;
@@ -108,7 +108,7 @@ bool th_advertise(void) {
  * @param path_planning_p: Pointer to a path_planning_s struct
  * @return return value from orb_publish()
  */
-int th_publish_path_planning(const struct path_planning_s *path_planning_p) {
+int pp_th_publish(const struct path_planning_s *path_planning_p) {
 
     return orb_publish(ORB_ID(path_planning), pubs.path_planning, path_planning_p);
 }
@@ -119,7 +119,7 @@ int th_publish_path_planning(const struct path_planning_s *path_planning_p) {
  * @param boat_qgc_param2_p: Pointer to a boat_qgc_param2_s struct
  * @return return value from orb_publish()
  */
-int th_publish_qgc2(const struct boat_qgc_param2_s *boat_qgc_param2_p){
+int pp_th_publish_qgc2(const struct boat_qgc_param2_s *boat_qgc_param2_p){
 
     return orb_publish(ORB_ID(boat_qgc_param2), pubs.boat_qgc_param2, boat_qgc_param2_p);
 }
@@ -130,7 +130,7 @@ int th_publish_qgc2(const struct boat_qgc_param2_s *boat_qgc_param2_p){
  * @param boat_local_position_p: Pointer to a boat_local_position_s struct
  * @return return value from orb_publish()
  */
-int th_publish_boat_local_position(const struct boat_local_position_s *boat_local_position_p){
+int pp_th_publish_boat_local_position(const struct boat_local_position_s *boat_local_position_p){
 
     return orb_publish(ORB_ID(boat_local_position),
                        pubs.boat_local_position,
@@ -145,7 +145,7 @@ int th_publish_boat_local_position(const struct boat_local_position_s *boat_loca
  * @return return value from orb_publish()
  *
  */
-int th_publish_boat_pp_debug1(const struct boat_pp_debug1_s *boat_pp_debug1_p) {
+int pp_th_publish_boat_debug1(const struct boat_pp_debug1_s *boat_pp_debug1_p) {
 	return orb_publish(ORB_ID(boat_pp_debug1), pubs.boat_pp_debug1, boat_pp_debug1_p);
 }
 

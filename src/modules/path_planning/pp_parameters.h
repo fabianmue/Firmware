@@ -20,10 +20,10 @@
 #include "pp_gridlines_handler.h"
 
 /** @brief Initialize parameters*/
-void p_param_init(void);
+void pp_param_init(void);
 
 /** @brief Check if one or more parameters have been updated and perform appropriate actions*/
-void p_param_update(bool update_path_param);
+void pp_param_update(bool update_path_param);
 
 
 

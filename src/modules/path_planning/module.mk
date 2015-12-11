@@ -53,7 +53,6 @@ SRCS	= path_planning.c\
           kalman_tracker/kt_cog_list.c\
           kalman_tracker/kt_tracker.c\
           kalman_tracker/kt_topic_handler.c\
-          mission/mission.c
           
 
 #add here all additional c-Files by using \ at the end of each line

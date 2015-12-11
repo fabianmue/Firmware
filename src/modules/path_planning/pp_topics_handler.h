@@ -26,7 +26,7 @@
 
 
 //Struct of all topic-Subscriptions
-struct subscribtion_fd_s{
+struct pp_subscribtion_fd_s{
     int vehicle_global_position;			//Contains the filtered GPS-Data
     int parameter_update;					//Update of Parameters from QGroundControl
     int boat_guidance_debug;                //Values from guidance_module from autonomous_sailing app
@@ -36,7 +36,7 @@ struct subscribtion_fd_s{
 
 
 //Structs of interested topics
-struct structs_topics_s{
+struct pp_structs_topics_s{
 	struct vehicle_global_position_s vehicle_global_position;
 	struct parameter_update_s parameter_update;
     struct rc_channels_s rc_channels;
@@ -46,21 +46,21 @@ struct structs_topics_s{
 
 
 /** @brief Subscribe to interested Topics*/
-bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *strs_p);
+bool pp_th_subscribe(struct pp_subscribtion_fd_s *subs_p, struct pp_structs_topics_s *strs_p);
 
 /** @brief Advertise Topics */
-bool th_advertise(void);
+bool pp_th_advertise(void);
 
 /** @brief publish path_planning topic*/
-int th_publish_path_planning(const struct path_planning_s *path_planning_p);
+int pp_th_publish(const struct path_planning_s *path_planning_p);
 
 /** @brief publish boat_pp_debug1 topic */
-int th_publish_boat_pp_debug1(const struct boat_pp_debug1_s *boat_pp_debug1);
+int pp_th_publish_boat_debug1(const struct boat_pp_debug1_s *boat_pp_debug1);
 
 /** @brief publish qgc2 topic */
-int th_publish_qgc2(const struct boat_qgc_param2_s *boat_qgc_param2_p);
+int pp_th_publish_qgc2(const struct boat_qgc_param2_s *boat_qgc_param2_p);
 
 /** @brief publish boat_local_position topic*/
-int th_publish_boat_local_position(const struct boat_local_position_s *boat_local_position_p);
+int pp_th_publish_boat_local_position(const struct boat_local_position_s *boat_local_position_p);
 
 #endif /* TOPICS_HANDLER_H_ */

@@ -323,7 +323,7 @@ void cb_new_as_data(int boat_guidance_debug_sub){
  * has been changed or when have to reach "sail downwind" position,
  * publish it.
 */
-void cb_publish_pp_if_updated(void){
+void pp_cb_publish_if_updated(void){
 
     //do we need to go in the "downwind position" by changing alpha_star ?
     #if USE_GRID_LINES == 1
@@ -340,7 +340,7 @@ void cb_publish_pp_if_updated(void){
     	//last_update = time;
 
         pp.timestamp = hrt_absolute_time();
-        th_publish_path_planning(&pp);
+        pp_th_publish(&pp);
         pp_updated = false;
     }
 }
@@ -375,7 +375,7 @@ bool cb_set_alpha_star(float new_alpha_star){
 /**
  * Init pp_communication_buffer.
 */
-void cb_init(void){
+void pp_cb_init(void){
 
     //clean memory
     memset(&pp, 0, sizeof(pp));
@@ -390,7 +390,7 @@ void cb_init(void){
 
     //Added 19.06.15, commented 02.09.2015
     pp_updated = true;
-    cb_publish_pp_if_updated();
+    pp_cb_publish_if_updated();
 }
 
 /**
@@ -405,7 +405,7 @@ float cb_get_alpha_star(void){
 /**
  * Check if the remote control is in manual mode.
 */
-void cb_new_rc_data(const struct structs_topics_s *strs_p){
+void cb_new_rc_data(const struct pp_structs_topics_s *strs_p){
 
     if(strs_p->rc_channels.channels[RC_MODE_INDEX] == RC_MANUAL_MODE){
         manual_mode = true;

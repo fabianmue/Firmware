@@ -62,9 +62,9 @@ bool fs_is_failsafe_active(void) {
  *
  * This function sets the state of the failsafe mode
  */
-void fs_check_rc_signal(struct structs_topics_s *strs_p) {
+void fs_check_rc_signal(struct pp_structs_topics_s *strs_pp) {
 
-	if(strs_p->rc_channels.signal_lost == true) {
+	if(strs_pp->rc_channels.signal_lost == true) {
 		//We lost the signal => update internal signal state
 		lost_signal = true;
 

@@ -36,6 +36,10 @@
 MODULE_COMMAND	= mission_planning
 
 SRCS	= mission_planning.c\
+		  mp_mission.c\
+		  mp_communication_buffer.c\
+		  mp_topics_handler.c\
 		  mp_params.c\
+		  mp_send_msg_qgc.c\
 
 #add here all additional c-Files by using \ at the end of each line

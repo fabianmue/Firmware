@@ -403,7 +403,7 @@ PARAM_DEFINE_FLOAT(KT_CO,10);
 PARAM_DEFINE_FLOAT(KT_PERIOD,2);
 
 
-static struct pointers_param_qgc_s {
+static struct pointers_pp_param_qgc_s {
 
 
     param_t lat0_pointer;         /**< pointer to param ASP_R_LAT0_E7*/
@@ -470,24 +470,7 @@ static struct pointers_param_qgc_s {
 	//**NAVIGATION
 	param_t nav_period;
 	param_t nav_turnrate;
-	/*
-	param_t nav_target_lat;
-	param_t nav_target_lon;
-	param_t nav_target_nedn;
-	param_t nav_target_nede;
-	param_t nav_target_number;
-	param_t nav_target_next;
-	param_t nav_obstacle_lat;
-	param_t nav_obstacle_lon;
-	param_t nav_obstacle_nedn;
-	param_t nav_obstacle_nede;
-	param_t nav_obstacle_number;
 
-	param_t nav_start1_lat;
-	param_t nav_start1_lon;
-	param_t nav_start2_lat;
-	param_t nav_start2_lon;
-	*/
 	param_t nav_altitude;
 
 	param_t nav_reset;
@@ -499,8 +482,6 @@ static struct pointers_param_qgc_s {
 	param_t nav_dbg_invalp;
 
 	param_t nav_dbg_nogybe;
-
-
 
 	//**SIMULATION FOR DEBUGGING
 	param_t sim_ned_northx;
@@ -530,61 +511,61 @@ static struct pointers_param_qgc_s {
 	param_t co_rotation;
 	param_t co_mission;
 
-} pointers_param_qgc;
+} pointers_pp_param_qgc;
 
 
 /**
 * Initialize parameters.
 *
 */
-void p_param_init(void){
+void pp_param_init(void){
 
     //initialize pointer to parameters
-    pointers_param_qgc.lat0_pointer    = param_find("ASP_R_LAT0_E7");
-    pointers_param_qgc.lon0_pointer    = param_find("ASP_R_LON0_E7");
-    pointers_param_qgc.alt0_pointer    = param_find("ASP_R_ALT0_E3");
+	pointers_pp_param_qgc.lat0_pointer    = param_find("ASP_R_LAT0_E7");
+	pointers_pp_param_qgc.lon0_pointer    = param_find("ASP_R_LON0_E7");
+	pointers_pp_param_qgc.alt0_pointer    = param_find("ASP_R_ALT0_E3");
 
-    pointers_param_qgc.mean_wind_pointer = param_find("ASP_MEAN_WIND_D");
+	pointers_pp_param_qgc.mean_wind_pointer = param_find("ASP_MEAN_WIND_D");
 
-    pointers_param_qgc.lat_tmark_pointer    = param_find("ASP_T_LAT_E7");
-    pointers_param_qgc.lon_tmark_pointer    = param_find("ASP_T_LON_E7");
-    pointers_param_qgc.alt_tmark_pointer    = param_find("ASP_T_ALT_E3");
+	pointers_pp_param_qgc.lat_tmark_pointer    = param_find("ASP_T_LAT_E7");
+	pointers_pp_param_qgc.lon_tmark_pointer    = param_find("ASP_T_LON_E7");
+	pointers_pp_param_qgc.alt_tmark_pointer    = param_find("ASP_T_ALT_E3");
 
     // --- grid lines system parameters
     #if USE_GRID_LINES == 1
-    pointers_param_qgc.grids_number_pointer    = param_find("ASP_P_TOT_G");
-    pointers_param_qgc.grid_ray_pointer    = param_find("ASP_P_R_M");
+		pointers_pp_param_qgc.grids_number_pointer    = param_find("ASP_P_TOT_G");
+		pointers_pp_param_qgc.grid_ray_pointer    = param_find("ASP_P_R_M");
 
-    pointers_param_qgc.grid_add_pointer = param_find("ASP_P_ADD");
-    pointers_param_qgc.repeat_past_grids_pointer = param_find("ASP_REIN_GRS");
+		pointers_pp_param_qgc.grid_add_pointer = param_find("ASP_P_ADD");
+		pointers_pp_param_qgc.repeat_past_grids_pointer = param_find("ASP_REIN_GRS");
 
-    pointers_param_qgc.alpha_star_vel_pointer = param_find("ASP_ALPST_V_DS");
-    pointers_param_qgc.downwind_alpha_star_pointer = param_find("ASP_DWN_ALPST_D");
+		pointers_pp_param_qgc.alpha_star_vel_pointer = param_find("ASP_ALPST_V_DS");
+		pointers_pp_param_qgc.downwind_alpha_star_pointer = param_find("ASP_DWN_ALPST_D");
     #endif //USE_GRID_LINES == 1
 
     //explicit tack now command from QGC
-    pointers_param_qgc.do_maneuver_now = param_find("ASP_DO_MANEUV");
+    pointers_pp_param_qgc.do_maneuver_now = param_find("ASP_DO_MANEUV");
 
     //explicit alpha star from QGC
-    pointers_param_qgc.alpha_star_pointer    = param_find("ASP_ALST_ANG_D");
-    pointers_param_qgc.use_alpha_star_pointer    = param_find("ASP_ALST_SET");
+    pointers_pp_param_qgc.alpha_star_pointer    = param_find("ASP_ALST_ANG_D");
+    pointers_pp_param_qgc.use_alpha_star_pointer    = param_find("ASP_ALST_SET");
 
     #if SIMULATION_FLAG == 1
 
     #if USE_GRID_LINES == 1
-    pointers_param_qgc.lat_sim_pointer = param_find("ASPS_LAT_E7");
-    pointers_param_qgc.lon_sim_pointer = param_find("ASPS_LON_E7");
-    pointers_param_qgc.alt_sim_pointer = param_find("ASPS_ALT_E3");
+		pointers_pp_param_qgc.lat_sim_pointer = param_find("ASPS_LAT_E7");
+		pointers_pp_param_qgc.lon_sim_pointer = param_find("ASPS_LON_E7");
+		pointers_pp_param_qgc.alt_sim_pointer = param_find("ASPS_ALT_E3");
     #endif //USE_GRID_LINES == 1
 
     #endif //SIMULATION_FLAG == 1
 
 
 
-#if LDEBUG_FAKEPOSITION==1
-    pointers_param_qgc.north_sim_pointer = param_find("ASIM_NORTH");
-    pointers_param_qgc.east_sim_pointer = param_find("ASIM_EAST");
-#endif
+	#if LDEBUG_FAKEPOSITION==1
+		pointers_pp_param_qgc.north_sim_pointer = param_find("ASIM_NORTH");
+		pointers_pp_param_qgc.east_sim_pointer = param_find("ASIM_EAST");
+	#endif
 
     //clean boat_qgc_param2
     memset(&boat_qgc_param2, 0, sizeof(boat_qgc_param2));
@@ -592,106 +573,87 @@ void p_param_init(void){
 
 
     //**COST_METHOD
-    pointers_param_qgc.cm_weight_gw_pointer = param_find("PP_CM_W_GW");
-    pointers_param_qgc.cm_weight_go_pointer = param_find("PP_CM_W_GO");
-    pointers_param_qgc.cm_weight_gm_pointer = param_find("PP_CM_W_GM");
-    pointers_param_qgc.cm_weight_gs_pointer = param_find("PP_CM_W_GS");
-    pointers_param_qgc.cm_weight_gt_pointer = param_find("PP_CM_W_GT");
-    pointers_param_qgc.cm_weight_glee_pointer = param_find("PP_CM_W_GLEE");
-    pointers_param_qgc.cm_weight_gsensor_pointer = param_find("PP_CM_W_GSEN");
+    pointers_pp_param_qgc.cm_weight_gw_pointer = param_find("PP_CM_W_GW");
+    pointers_pp_param_qgc.cm_weight_go_pointer = param_find("PP_CM_W_GO");
+    pointers_pp_param_qgc.cm_weight_gm_pointer = param_find("PP_CM_W_GM");
+    pointers_pp_param_qgc.cm_weight_gs_pointer = param_find("PP_CM_W_GS");
+    pointers_pp_param_qgc.cm_weight_gt_pointer = param_find("PP_CM_W_GT");
+    pointers_pp_param_qgc.cm_weight_glee_pointer = param_find("PP_CM_W_GLEE");
+    pointers_pp_param_qgc.cm_weight_gsensor_pointer = param_find("PP_CM_W_GSEN");
 
-    pointers_param_qgc.cm_obstsafetyradius_pointer = param_find("PP_CM_OBSTSAFRAD");
-    pointers_param_qgc.cm_obsthorizon_pointer = param_find("PP_CM_OBSTHORIZN");
-    pointers_param_qgc.cm_windowsize_pointer = param_find("PP_CM_WINDOWSIZE");
+    pointers_pp_param_qgc.cm_obstsafetyradius_pointer = param_find("PP_CM_OBSTSAFRAD");
+    pointers_pp_param_qgc.cm_obsthorizon_pointer = param_find("PP_CM_OBSTHORIZN");
+    pointers_pp_param_qgc.cm_windowsize_pointer = param_find("PP_CM_WINDOWSIZE");
 
-    pointers_param_qgc.cm_dbg_nodist = param_find("PP_DBG_NODIST");
+    pointers_pp_param_qgc.cm_dbg_nodist = param_find("PP_DBG_NODIST");
 
     //**NAVIGATION
-    pointers_param_qgc.nav_period = param_find("PP_NAV_PERIOD");
-    pointers_param_qgc.nav_turnrate = param_find("PP_NAV_TURNRATE");
+    pointers_pp_param_qgc.nav_period = param_find("PP_NAV_PERIOD");
+    pointers_pp_param_qgc.nav_turnrate = param_find("PP_NAV_TURNRATE");
 
-    /*
-    pointers_param_qgc.nav_target_lat = param_find("PP_NAV_TAR_LAT");
-    pointers_param_qgc.nav_target_lon = param_find("PP_NAV_TAR_LON");
-    pointers_param_qgc.nav_target_nedn = param_find("PP_NAV_TAR_NEDN");
-    pointers_param_qgc.nav_target_nede = param_find("PP_NAV_TAR_NEDE");
-    pointers_param_qgc.nav_target_number = param_find("PP_NAV_TAR_NUM");
-    pointers_param_qgc.nav_target_next = param_find("PP_NAV_TAR_NEXT");
-    pointers_param_qgc.nav_obstacle_lat = param_find("PP_NAV_OBST_LAT");
-    pointers_param_qgc.nav_obstacle_lon = param_find("PP_NAV_OBST_LON");
-    pointers_param_qgc.nav_obstacle_nedn = param_find("PP_NAV_OBST_NEDN");
-    pointers_param_qgc.nav_obstacle_nede = param_find("PP_NAV_OBST_NEDE");
-    pointers_param_qgc.nav_obstacle_number = param_find("PP_NAV_OBST_NUM");
+    pointers_pp_param_qgc.nav_altitude = param_find("PP_NAV_ALTITUDE");
 
-    pointers_param_qgc.nav_start1_lat = param_find("PP_NAV_STRT1_LAT");
-    pointers_param_qgc.nav_start1_lon = param_find("PP_NAV_STRT1_LON");
-    pointers_param_qgc.nav_start2_lat = param_find("PP_NAV_STRT2_LAT");
-    pointers_param_qgc.nav_start2_lon = param_find("PP_NAV_STRT2_LON");
-    */
+    pointers_pp_param_qgc.nav_reset = param_find("PP_NAV_RESET");
+    pointers_pp_param_qgc.nav_useyaw = param_find("PP_NAV_USEYAW");
 
-    pointers_param_qgc.nav_altitude = param_find("PP_NAV_ALTITUDE");
-
-    pointers_param_qgc.nav_reset = param_find("PP_NAV_RESET");
-    pointers_param_qgc.nav_useyaw = param_find("PP_NAV_USEYAW");
-
-    pointers_param_qgc.nav_dbg_invalp = param_find("PP_DBG_INVALP");
-    pointers_param_qgc.nav_dbg_nogybe = param_find("PP_DBG_NOGYBE");
+    pointers_pp_param_qgc.nav_dbg_invalp = param_find("PP_DBG_INVALP");
+    pointers_pp_param_qgc.nav_dbg_nogybe = param_find("PP_DBG_NOGYBE");
 
     //**SIMULATION DEBUG
-    pointers_param_qgc.sim_ned_northx = param_find("SIM_NED_NORTHX");
-    pointers_param_qgc.sim_ned_easty = param_find("SIM_NED_EASTY");
-    pointers_param_qgc.sim_heading = param_find("SIM_HEADING");
+    pointers_pp_param_qgc.sim_ned_northx = param_find("SIM_NED_NORTHX");
+    pointers_pp_param_qgc.sim_ned_easty = param_find("SIM_NED_EASTY");
+    pointers_pp_param_qgc.sim_heading = param_find("SIM_HEADING");
 
     //**ENABLE PATHPLANNER
-    pointers_param_qgc.nav_pathp_on = param_find("PP_APATHP_ON");
-    pointers_param_qgc.nav_meth = param_find("PP_NAV_METH");
-    pointers_param_qgc.nav_setar = param_find("PP_NAV_SETAR");
+    pointers_pp_param_qgc.nav_pathp_on = param_find("PP_APATHP_ON");
+    pointers_pp_param_qgc.nav_meth = param_find("PP_NAV_METH");
+    pointers_pp_param_qgc.nav_setar = param_find("PP_NAV_SETAR");
 
 
     //**POTENTIALFIELD METHOD
-    pointers_param_qgc.pm_weight_gt_pointer = param_find("PP_PM_W_GT");
-	pointers_param_qgc.pm_weight_go_pointer = param_find("PP_PM_W_GO");
-	pointers_param_qgc.pm_weight_gw_pointer = param_find("PP_PM_W_GW");
-	pointers_param_qgc.pm_weight_gm_pointer = param_find("PP_PM_W_GM");
-	pointers_param_qgc.pm_weight_sdist_pointer = param_find("PP_PM_W_SDIST");
+    pointers_pp_param_qgc.pm_weight_gt_pointer = param_find("PP_PM_W_GT");
+    pointers_pp_param_qgc.pm_weight_go_pointer = param_find("PP_PM_W_GO");
+    pointers_pp_param_qgc.pm_weight_gw_pointer = param_find("PP_PM_W_GW");
+    pointers_pp_param_qgc.pm_weight_gm_pointer = param_find("PP_PM_W_GM");
+    pointers_pp_param_qgc.pm_weight_sdist_pointer = param_find("PP_PM_W_SDIST");
 
 
 	//**KALMAN OBSTACLE TRACKER
-	pointers_param_qgc.kt_enable = param_find("KT_A_ENABLE");
-	pointers_param_qgc.kt_sigma = param_find("KT_SIGMA");
-	pointers_param_qgc.kt_unseen = param_find("KT_UNSEEN");
-	pointers_param_qgc.kt_nnsf_thresh = param_find("KT_NNSF_THRESH");
-	pointers_param_qgc.kt_co = param_find("KT_CO");
-	pointers_param_qgc.kt_period = param_find("KT_PERIOD");
+    pointers_pp_param_qgc.kt_enable = param_find("KT_A_ENABLE");
+    pointers_pp_param_qgc.kt_sigma = param_find("KT_SIGMA");
+    pointers_pp_param_qgc.kt_unseen = param_find("KT_UNSEEN");
+    pointers_pp_param_qgc.kt_nnsf_thresh = param_find("KT_NNSF_THRESH");
+    pointers_pp_param_qgc.kt_co = param_find("KT_CO");
+    pointers_pp_param_qgc.kt_period = param_find("KT_PERIOD");
 
     //get parameters but do not add any grid lines at start up
-    p_param_update(false);
+    pp_param_update(false);
 }
 
 /** Update local copy of parameters.
  *
 */
-void p_param_update(bool update_path_param){
+void pp_param_update(bool update_path_param){
 
     //----- reference geo coordinate
     int32_t lat0;
     int32_t lon0;
     int32_t alt0;
     //lat0
-    param_get(pointers_param_qgc.lat0_pointer, &lat0);
+    param_get(pointers_pp_param_qgc.lat0_pointer, &lat0);
 
     //lon0
-    param_get(pointers_param_qgc.lon0_pointer, &lon0);
+    param_get(pointers_pp_param_qgc.lon0_pointer, &lon0);
 
     //alt0
-    param_get(pointers_param_qgc.alt0_pointer, &alt0);
+    param_get(pointers_pp_param_qgc.alt0_pointer, &alt0);
 
     //update NED origin in pp_navigation_module
     n_set_ref0(&lat0, &lon0, &alt0);
 
     //----- mean wind
     float mean_wind;
-    param_get(pointers_param_qgc.mean_wind_pointer, &mean_wind);
+    param_get(pointers_pp_param_qgc.mean_wind_pointer, &mean_wind);
 
     //convert mean_wind in rad
     mean_wind = mean_wind * deg2rad;
@@ -704,13 +666,13 @@ void p_param_update(bool update_path_param){
     int32_t lon_tmark;
     int32_t alt_tmark;
     //lat_tmark
-    param_get(pointers_param_qgc.lat_tmark_pointer, &lat_tmark);
+    param_get(pointers_pp_param_qgc.lat_tmark_pointer, &lat_tmark);
 
     //lon_tmark
-    param_get(pointers_param_qgc.lon_tmark_pointer, &lon_tmark);
+    param_get(pointers_pp_param_qgc.lon_tmark_pointer, &lon_tmark);
 
     //alt_tmark
-    param_get(pointers_param_qgc.alt_tmark_pointer, &alt_tmark);
+    param_get(pointers_pp_param_qgc.alt_tmark_pointer, &alt_tmark);
 
     //set top mark position in pp_navigation_module
     n_set_pos_top_mark(&lat_tmark, &lon_tmark, &alt_tmark);
@@ -720,14 +682,14 @@ void p_param_update(bool update_path_param){
     //----- number of grids
     int32_t grids_number;
     float grids_ray_m;
-    param_get(pointers_param_qgc.grids_number_pointer, &grids_number);
+    param_get(pointers_pp_param_qgc.grids_number_pointer, &grids_number);
 
     //x coordinate of current grid line
-    param_get(pointers_param_qgc.grid_ray_pointer, &grids_ray_m);
+    param_get(pointers_pp_param_qgc.grid_ray_pointer, &grids_ray_m);
 
     //check if we have to add a new grid line
     int32_t temp = 0;
-    param_get(pointers_param_qgc.grid_add_pointer, &temp);
+    param_get(pointers_pp_param_qgc.grid_add_pointer, &temp);
     if(temp > 0 && update_path_param){
         //set x coordinate of a new grid line
         gh_set_grid_qgc(grids_ray_m);
@@ -736,14 +698,14 @@ void p_param_update(bool update_path_param){
     //set the new number of grid lines
     gh_set_grids_number_qgc(grids_number);
 
-    param_get(pointers_param_qgc.repeat_past_grids_pointer, &temp);
+    param_get(pointers_pp_param_qgc.repeat_past_grids_pointer, &temp);
     bool use_last_grids = (temp > 0) ? true : false;
     gh_reuse_last_grids(use_last_grids);
 
     //velocity of alpha star
     float alpha_star_vel_r;
 
-    param_get(pointers_param_qgc.alpha_star_vel_pointer, &alpha_star_vel_r);
+    param_get(pointers_pp_param_qgc.alpha_star_vel_pointer, &alpha_star_vel_r);
 
     //convert alpha_star_vel_r from deg/s to rad/s
     alpha_star_vel_r = alpha_star_vel_r * deg2rad;
@@ -755,7 +717,7 @@ void p_param_update(bool update_path_param){
     //alpha_star in downwind course
     float downwind_alpha_star;
 
-    param_get(pointers_param_qgc.downwind_alpha_star_pointer, &downwind_alpha_star);
+    param_get(pointers_pp_param_qgc.downwind_alpha_star_pointer, &downwind_alpha_star);
 
     downwind_alpha_star = downwind_alpha_star * deg2rad;
 
@@ -770,9 +732,9 @@ void p_param_update(bool update_path_param){
     int32_t do_maneuver_now;
 
     //take values
-    param_get(pointers_param_qgc.do_maneuver_now, &do_maneuver_now);
-    param_get(pointers_param_qgc.alpha_star_pointer, &alpha_tmp);
-    param_get(pointers_param_qgc.use_alpha_star_pointer, &set_alpha);
+    param_get(pointers_pp_param_qgc.do_maneuver_now, &do_maneuver_now);
+    param_get(pointers_pp_param_qgc.alpha_star_pointer, &alpha_tmp);
+    param_get(pointers_pp_param_qgc.use_alpha_star_pointer, &set_alpha);
 
     //convert alpha from deg to rad
     alpha_tmp = alpha_tmp * deg2rad;
@@ -807,20 +769,20 @@ void p_param_update(bool update_path_param){
     boat_qgc_param2.mean_wind_direction_r = mean_wind;
 
     //publish topic
-    th_publish_qgc2(&boat_qgc_param2);
+    pp_th_publish_qgc2(&boat_qgc_param2);
 
     #if SIMULATION_FLAG == 1
 
     #if USE_GRID_LINES == 1
     //----- simulation coordinates
     //lat_sim
-    param_get(pointers_param_qgc.lat_sim_pointer, &lat_sim);
+    param_get(pointers_pp_param_qgc.lat_sim_pointer, &lat_sim);
 
     //lon_sim
-    param_get(pointers_param_qgc.lon_sim_pointer, &lon_sim);
+    param_get(pointers_pp_param_qgc.lon_sim_pointer, &lon_sim);
 
     //alt_sim
-    param_get(pointers_param_qgc.alt_sim_pointer, &alt_sim);
+    param_get(pointers_pp_param_qgc.alt_sim_pointer, &alt_sim);
 
     //set lat, lon and alt to gps_filtered struct to simulate
     vgp.lat = ((double)lat_sim) / 1e7;
@@ -843,8 +805,8 @@ void p_param_update(bool update_path_param){
     float north_sim;
     float east_sim;
 
-    param_get(pointers_param_qgc.north_sim_pointer, &north_sim);
-    param_get(pointers_param_qgc.east_sim_pointer, &east_sim);
+    param_get(pointers_pp_param_qgc.north_sim_pointer, &north_sim);
+    param_get(pointers_pp_param_qgc.east_sim_pointer, &east_sim);
 
     DEBUG_fakened(north_sim, east_sim);
 #endif
@@ -854,122 +816,72 @@ void p_param_update(bool update_path_param){
 
     //**COST METHOD
     float gw, go, gm, gs, gt, glee, gsensor, obstsafetyradius, obsthorizon, windowsize;
-    param_get(pointers_param_qgc.cm_weight_gw_pointer, &gw);
-    param_get(pointers_param_qgc.cm_weight_go_pointer, &go);
-    param_get(pointers_param_qgc.cm_weight_gm_pointer, &gm);
-    param_get(pointers_param_qgc.cm_weight_gs_pointer, &gs);
-    param_get(pointers_param_qgc.cm_weight_gt_pointer, &gt);
-    param_get(pointers_param_qgc.cm_weight_glee_pointer, &glee);
-    param_get(pointers_param_qgc.cm_weight_gsensor_pointer, &gsensor);
+    param_get(pointers_pp_param_qgc.cm_weight_gw_pointer, &gw);
+    param_get(pointers_pp_param_qgc.cm_weight_go_pointer, &go);
+    param_get(pointers_pp_param_qgc.cm_weight_gm_pointer, &gm);
+    param_get(pointers_pp_param_qgc.cm_weight_gs_pointer, &gs);
+    param_get(pointers_pp_param_qgc.cm_weight_gt_pointer, &gt);
+    param_get(pointers_pp_param_qgc.cm_weight_glee_pointer, &glee);
+    param_get(pointers_pp_param_qgc.cm_weight_gsensor_pointer, &gsensor);
 
-    param_get(pointers_param_qgc.cm_obstsafetyradius_pointer, &obstsafetyradius);
-    param_get(pointers_param_qgc.cm_obsthorizon_pointer, &obsthorizon);
-    param_get(pointers_param_qgc.cm_windowsize_pointer, &windowsize);
+    param_get(pointers_pp_param_qgc.cm_obstsafetyradius_pointer, &obstsafetyradius);
+    param_get(pointers_pp_param_qgc.cm_obsthorizon_pointer, &obsthorizon);
+    param_get(pointers_pp_param_qgc.cm_windowsize_pointer, &windowsize);
 
     cm_set_configuration(gw, go, gm, gs, gt, glee, gsensor, obstsafetyradius, obsthorizon, windowsize);
 
     uint8_t dbg_nodist = 0;
-    param_get(pointers_param_qgc.cm_dbg_nodist, &dbg_nodist);
+    param_get(pointers_pp_param_qgc.cm_dbg_nodist, &dbg_nodist);
     DEBUG_set_minus(dbg_nodist);
 
 
     //**NAVIGATOR
     float period, turnrate;
-    param_get(pointers_param_qgc.nav_period, &period);
-    param_get(pointers_param_qgc.nav_turnrate, &turnrate);
+    param_get(pointers_pp_param_qgc.nav_period, &period);
+    param_get(pointers_pp_param_qgc.nav_turnrate, &turnrate);
     nav_set_configuration(period, turnrate);
-
-    /*
-    PointE7 target;
-    NEDpoint target_ned;
-    PointE7 obstacle;
-    NEDpoint obstacle_ned;
-    uint8_t t_num, o_num;
-    int32_t altitude;
-
-    param_get(pointers_param_qgc.nav_altitude, &altitude);
-   	param_get(pointers_param_qgc.nav_target_lat,&(target.lat));
-   	param_get(pointers_param_qgc.nav_target_lon,&(target.lon));
-   	param_get(pointers_param_qgc.nav_target_nedn,&(target_ned.northx));
-   	param_get(pointers_param_qgc.nav_target_nede,&(target_ned.easty));
-   	param_get(pointers_param_qgc.nav_target_number,&t_num);
-   	param_get(pointers_param_qgc.nav_obstacle_lat,&(obstacle.lat));
-   	param_get(pointers_param_qgc.nav_obstacle_lon,&(obstacle.lon));
-   	param_get(pointers_param_qgc.nav_obstacle_nedn, &(obstacle_ned.northx));
-   	param_get(pointers_param_qgc.nav_obstacle_nede, &(obstacle_ned.easty));
-   	param_get(pointers_param_qgc.nav_obstacle_number,&o_num);
-
-   	target.alt = altitude;
-   	obstacle.alt = altitude;
-
-	#if LDEBUG_USEMISSION == 0
-   		nav_set_target(t_num,target);
-   		nav_set_target_ned(t_num,target_ned);	//NOTE: Because of this the target is always set in NED-Coordinates
-   		nav_set_obstacle(o_num,obstacle);
-   		nav_set_obstacle_ned(o_num,obstacle_ned);	//NOTE: Because of this the obstacle is always set in NED-Coordinates
-	#endif
-
-   	PointE7 start[2];
-   	param_get(pointers_param_qgc.nav_start1_lat, &(start[0].lat));
-   	param_get(pointers_param_qgc.nav_start1_lon, &(start[0].lon));
-   	param_get(pointers_param_qgc.nav_start2_lat, &(start[1].lat));
-   	param_get(pointers_param_qgc.nav_start2_lon, &(start[1].lon));
-   	start[0].alt = altitude;
-   	start[1].alt = altitude;
-
-   	nav_set_startline(start[0],start[1]);
-    */
 
    	//**RESET THE NAVIGTOR PARAMETERS
    	uint8_t reset = 0;
-   	param_get(pointers_param_qgc.nav_reset, &reset);
+   	param_get(pointers_pp_param_qgc.nav_reset, &reset);
    	if(reset == 1) {
    		//Reset the parameters for the pathplanning to the default values.
    		nav_reset();
    		smq_send_log_info("NAVIGATOR RESET! switch back to 0!");
    	}
 
-    /*
-   	//**SET THE NUMBER OF THE TARGET THAT SHOULD BE REACHED NEXT
-   	uint8_t targetnumber = 0;
-   	param_get(pointers_param_qgc.nav_target_next, &targetnumber);
-	#if LDEBUG_USEMISSION == 0
-   	nav_set_targetnumber(targetnumber);
-	#endif
-	*/
-
    	//**INVERT ALPHA BEFORE SENDING TO AUTONOMOUS SAILING APP
    	uint8_t dbg_invalp = 0;
-   	param_get(pointers_param_qgc.nav_dbg_invalp, &dbg_invalp);
+   	param_get(pointers_pp_param_qgc.nav_dbg_invalp, &dbg_invalp);
    	DEBUG_nav_alpha_minus(dbg_invalp);
 
 
    	//**Do not command gybes on downwind courses => simply change reference
    	uint8_t dbg_nogybe = 0;
-   	param_get(pointers_param_qgc.nav_dbg_nogybe, &dbg_nogybe);
+   	param_get(pointers_pp_param_qgc.nav_dbg_nogybe, &dbg_nogybe);
    	nav_set_nogybe(dbg_nogybe);
 
 
 
    	//**ENABLE THE USE OF THE NAVIGATOR
    	uint8_t pathp_on = 0;
-   	param_get(pointers_param_qgc.nav_pathp_on, &pathp_on);
+   	param_get(pointers_pp_param_qgc.nav_pathp_on, &pathp_on);
    	nav_enable_navigator(pathp_on);
 
    	//**SET METHOD USED FOR PATHPLANNING
    	uint8_t pathp_meth = 1;
-   	param_get(pointers_param_qgc.nav_meth, &pathp_meth);
+   	param_get(pointers_pp_param_qgc.nav_meth, &pathp_meth);
    	nav_set_method(pathp_meth);
 
    	//**USE THE YAW ONLY FOR HEADING
    	uint8_t pathp_useyaw = 0;
-   	param_get(pointers_param_qgc.nav_useyaw, &pathp_useyaw);
+   	param_get(pointers_pp_param_qgc.nav_useyaw, &pathp_useyaw);
    	nav_set_use_yaw(pathp_useyaw);
 
 
    	//**SET THE CURRENT POSITION OF THE BOAT AS THE NEXT TARGET POSITION
    	uint8_t pathp_settar = 0;
-   	param_get(pointers_param_qgc.nav_setar, &pathp_settar);
+   	param_get(pointers_pp_param_qgc.nav_setar, &pathp_settar);
    	if(pathp_settar == 1) {
 		#if LDEBUG_USEMISSION == 0
    		nav_set_quick_target();
@@ -981,44 +893,44 @@ void p_param_update(bool update_path_param){
    	//**SIMULATION DEBUG
    	NEDpoint p;
    	float head;
-   	param_get(pointers_param_qgc.sim_ned_northx,&(p.northx));
-   	param_get(pointers_param_qgc.sim_ned_easty,&(p.easty));
-   	param_get(pointers_param_qgc.sim_heading,&head);
+   	param_get(pointers_pp_param_qgc.sim_ned_northx,&(p.northx));
+   	param_get(pointers_pp_param_qgc.sim_ned_easty,&(p.easty));
+   	param_get(pointers_pp_param_qgc.sim_heading,&head);
 
    	DEBUG_nav_set_fake_state(p, head);
 
 
    	//**SET CONFIGURATION FOR POTENTIALFIELD METHOD
    	float Gt, Go, Gm, Gw, SearchDist;
-   	param_get(pointers_param_qgc.pm_weight_gt_pointer, &Gt);
-   	param_get(pointers_param_qgc.pm_weight_go_pointer, &Go);
-   	param_get(pointers_param_qgc.pm_weight_gw_pointer, &Gm);
-   	param_get(pointers_param_qgc.pm_weight_gm_pointer, &Gw);
-   	param_get(pointers_param_qgc.pm_weight_sdist_pointer, &SearchDist);
+   	param_get(pointers_pp_param_qgc.pm_weight_gt_pointer, &Gt);
+   	param_get(pointers_pp_param_qgc.pm_weight_go_pointer, &Go);
+   	param_get(pointers_pp_param_qgc.pm_weight_gw_pointer, &Gm);
+   	param_get(pointers_pp_param_qgc.pm_weight_gm_pointer, &Gw);
+   	param_get(pointers_pp_param_qgc.pm_weight_sdist_pointer, &SearchDist);
    	pm_set_configuration(Gt, Go, Gm, Gw, SearchDist);
 
 
    	//**KALMAN OBSTACLE TRACKER
    	uint8_t kt_status = 0;
-   	param_get(pointers_param_qgc.kt_enable, &kt_status);
+   	param_get(pointers_pp_param_qgc.kt_enable, &kt_status);
    	kt_enable(kt_status);
 
    	uint8_t kt_unseen = 0;
    	float kt_sigma = 0;
-   	param_get(pointers_param_qgc.kt_sigma, &kt_sigma);
-   	param_get(pointers_param_qgc.kt_unseen, &kt_unseen);
+   	param_get(pointers_pp_param_qgc.kt_sigma, &kt_sigma);
+   	param_get(pointers_pp_param_qgc.kt_unseen, &kt_unseen);
    	tl_set_configuration(kt_sigma, kt_unseen);
 
    	float kt_nnsf_thresh = 0;
-   	param_get(pointers_param_qgc.kt_nnsf_thresh, &kt_nnsf_thresh);
+   	param_get(pointers_pp_param_qgc.kt_nnsf_thresh, &kt_nnsf_thresh);
    	cl_set_configuration(kt_nnsf_thresh);
 
    	float kt_co = 0;
-   	param_get(pointers_param_qgc.kt_co, &kt_co);
+   	param_get(pointers_pp_param_qgc.kt_co, &kt_co);
    	kt_set_configuration(kt_co);
 
    	float kt_period = 0;
-   	param_get(pointers_param_qgc.kt_period, &kt_period);
+   	param_get(pointers_pp_param_qgc.kt_period, &kt_period);
    	sb_set_configuration(kt_period);
 
 }

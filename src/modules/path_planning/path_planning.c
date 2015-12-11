@@ -51,7 +51,6 @@
  * @author Marco Tranzatto <marco.tranzatto@gmail.com>
  */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,7 +76,6 @@
 #include "kalman_tracker/kt_tracker.h"
 
 #include "parser_sensorboard/ps_sensorboard.h"
-#include "mission/mission.h"
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;			/**< daemon status flag */
@@ -177,12 +175,12 @@ int pp_thread_main(int argc, char *argv[]) {
 
 
 	//**HANDLE TOPICS
-	struct subscribtion_fd_s subs;   //File-Descriptors of subscribed topics
-	struct structs_topics_s strs;    //Struct of Interested Topics
+	struct pp_subscribtion_fd_s subs;   //File-Descriptors of subscribed topics
+	struct pp_structs_topics_s strs;    //Struct of Interested Topics
 
 
-    th_subscribe(&subs,&strs);       //Subscribe to interested Topics
-    th_advertise();                  //Advertise Topics
+    pp_th_subscribe(&subs,&strs);       //Subscribe to interested Topics
+    pp_th_advertise();                  //Advertise Topics
 
 	//**POLL FOR CHANGES IN SUBSCRIBED TOPICS
     struct pollfd fds[] = {			 // Polling Management
@@ -199,10 +197,10 @@ int pp_thread_main(int argc, char *argv[]) {
     //** INIT FUNCTIONS
 
     //init pp_paramters module
-    p_param_init();
+    pp_param_init();
 
     //init communication_buffer module
-    cb_init();
+    pp_cb_init();
 
     //init pp_send_msg_qgc module
     smq_init_msg_module();
@@ -284,7 +282,7 @@ int pp_thread_main(int argc, char *argv[]) {
                     orb_copy(ORB_ID(parameter_update), subs.parameter_update,
                              &(strs.parameter_update));
                     //update param
-                    p_param_update(true);
+                    pp_param_update(true);
                 }
                 if(fds[3].revents & POLLIN){
                     // copy commands from remote control
@@ -336,16 +334,10 @@ int pp_thread_main(int argc, char *argv[]) {
 		#endif
 
 
-        /* Call the Mission-Handler */
-		#if LDEBUG_MISSIONHANDLER == 1
-        mi_handler();
-		#endif
-
-
         /* Warning: path_planning topic should be published only ONCE for every loop iteration.
          * Use pp_communication_buffer to change topic's values.
         */
-        cb_publish_pp_if_updated();
+        pp_cb_publish_if_updated();
 
 
 	} //END OF MAIN THREAD-LOOP

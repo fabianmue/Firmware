@@ -6,7 +6,7 @@
  */
 
 #include "mp_topics_handler.h"
-#include "../path_planning/pp_send_msg_qgc.h"
+#include "mp_send_msg_qgc.h"
 
 // struct of all topic-advertisements
 static struct {
@@ -20,7 +20,7 @@ static struct {
  * @param *strs_p: pointer to a struct of all interested topics
  * @return true, iff successfully subscribed to all topics
  */
-bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *strs_p) {
+bool mp_th_subscribe(struct mp_subscribtion_fd_s *subs_p, struct mp_structs_topics_s *strs_p) {
 
 	subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
 
@@ -41,7 +41,7 @@ bool th_subscribe(struct subscribtion_fd_s *subs_p, struct structs_topics_s *str
  * @param *strs_p: pointer to a struct of all interested topics
  * @return true, iff successfully subscribed to all topics
  */
-bool th_advertise(void) {
+bool mp_th_advertise(void) {
 
 	// advertise the mission_planning topic
     struct mission_planning_s mission_planning;
@@ -57,7 +57,7 @@ bool th_advertise(void) {
  * @param mission_planning_p: pointer to a mission_planning_s struct
  * @return return value from orb_publish()
  */
-int th_publish_mission_planning(const struct mission_planning_s *mission_planning_p) {
+int mp_th_publish(const struct mission_planning_s *mission_planning_p) {
 
     return orb_publish(ORB_ID(mission_planning), pubs.mission_planning, mission_planning_p);
 };

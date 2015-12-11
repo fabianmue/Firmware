@@ -36,6 +36,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "../mission_planning/mp_communication_buffer.h"
+
 #if C_DEBUG == 0
 #include "pp_communication_buffer.h"
 #include "pp_failsafe.h"
@@ -101,7 +103,7 @@ static float dbg_alpha = 0;
 static bool dbg_alpha_status = false;
 static bool dbg_alpha_minus = false;
 
-static uint8_t qground_obstnum = 0; //number, auto increasing in every step. It is used to store all obstacles in the SD-Log
+// static uint8_t qground_obstnum = 0; //number, auto increasing in every step. It is used to store all obstacles in the SD-Log
 
 
 
@@ -286,10 +288,6 @@ void nav_navigator(void) {
 			//Inform QGround Control
 			smq_send_log_info("Quick Target was set!");
 
-			NEDpoint act_wp;
-			nav_queue_read(&act_wp);
-			cb_new_target(act_wp.northx, act_wp.easty);
-
 			//Enable the Pathplanner
 			enable_pathplanner = true;
 
@@ -362,19 +360,11 @@ void nav_navigator(void) {
 		//**We do NO pathplanning during maneuvers
 		if(state.maneuver == false) {
 
-			//**
+			/*
 			#if LDEBUG_MISSIONHANDLER == 1
-
-			mi_isinside(state.position);
-
+				mi_isinside(state.position);
 			#endif
-
-
-
-			//****SEND THE DATA USED FOR PATHPLANNING TO QGROUND CONTROL
-			NEDpoint act_wp;
-			nav_queue_read(&act_wp);
-			cb_new_target(act_wp.northx, act_wp.easty);
+			*/
 
 			/*cb_new_obstacle(field.obstacles[qground_obstnum].northx, field.obstacles[qground_obstnum].easty);
 			qground_obstnum++;
@@ -383,6 +373,7 @@ void nav_navigator(void) {
 			}*/
 
 			//Log the Sensor-Obstacles
+			/*
 			cb_new_obstacle(field.sensorobstacles[qground_obstnum].northx,field.sensorobstacles[qground_obstnum].easty);
 			qground_obstnum++;
 			if(qground_obstnum>field.NumberOfSensorobstacles) {
@@ -390,7 +381,7 @@ void nav_navigator(void) {
 			}
 
 			cb_new_targetnum(state.targetNum);
-
+			*/
 
 
 			//****GET THE OBSTACLES IDENTIFIED BY THE SENSOR
@@ -640,7 +631,7 @@ void nav_heading_update(void) {
  *
  * @param Pointer to the struct of the topic
  */
-void yaw_update(struct structs_topics_s *strs) {
+void yaw_update(struct pp_structs_topics_s *strs) {
 
 	if(config.use_yaw == true) {
 		state.heading_cur = nh_sensor2compass(strs->vehicle_attitude.yaw);
@@ -705,12 +696,6 @@ void nav_position_update(void) {
 			//We are inside the tolerance => target is counted as reached
 
 			nav_queue_next_wp();
-
-			//Send the new target to QGround Control
-			NEDpoint temp_wp;
-			nav_queue_read(&temp_wp);
-			cb_new_target(temp_wp.northx, temp_wp.easty);
-
 		}
 	}
 
@@ -765,7 +750,7 @@ void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos) {
 	#endif
 
 	//Send new Obstacle Position to QGround Control for debugging
-	cb_new_obstacle(field.obstacles[ObstNumber].northx, field.obstacles[ObstNumber].easty);
+	// cb_new_obstacle(field.obstacles[ObstNumber].northx, field.obstacles[ObstNumber].easty);
 }
 
 
@@ -787,7 +772,7 @@ void nav_set_obstacle_ned(uint8_t ObstNumber, NEDpoint ObstPos) {
 	#endif
 
 	//Send new Obstacle Position to QGround Control for debugging
-	cb_new_obstacle(field.obstacles[0].northx, field.obstacles[0].easty);
+	// cb_new_obstacle(field.obstacles[0].northx, field.obstacles[0].easty);
 }
 
 
@@ -809,7 +794,7 @@ void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos) {
 
 	NEDpoint act_wp;
 	nav_queue_read(&act_wp);
-	cb_new_target(act_wp.northx, act_wp.easty);
+	mp_cb_new_target(act_wp.northx, act_wp.easty);
 
 	#endif
 }
@@ -826,9 +811,6 @@ void nav_set_target_ned(NEDpoint TargetPos) {
 
 	//Put the newly added target into the queue
 	nav_queue_put_wp(&TargetPos);
-
-	cb_new_target(TargetPos.northx, TargetPos.easty);
-
 }
 
 
@@ -1051,7 +1033,7 @@ void DEBUG_nav_set_fake_state(NEDpoint pos, float heading) {
 
 			NEDpoint act_wp;
 			nav_queue_read(&act_wp);
-			cb_new_target(act_wp.northx, act_wp.easty);
+			mp_cb_new_target(act_wp.northx, act_wp.easty);
 
 		}
 

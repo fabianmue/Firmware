@@ -6,42 +6,55 @@
  */
 
 #include "mp_communication_buffer.h"
+#include "mp_topics_handler.h"
 #include <drivers/drv_hrt.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "../path_planning/pp_navigation_helper.h"
 
 //state variables
 static struct mission_planning_s mp;
 static bool mp_updated = false;
 
-/**
- * send an int-value for debug purposes to QGC
- */
-bool cb_new_target(float north, float east) {
+bool mp_cb_new_target(float lat, float lon) {
 
-	// TODO: convert NED to lat-lon
-	mp.tar_lat = 0;
-	mp.tar_lon = 0;
-	mp.tar_ned_north = north;
-	mp.tar_ned_east = east;
+	mp.tar_lat = lat;
+	mp.tar_lon = lon;
+
+	Point tar;
+	tar.lat = lat;
+	tar.lon = lon;
+	tar.alt = 0;
+	NEDpoint tar_ned = nh_geo2ned(tar);
+	mp.tar_ned_north = tar_ned.northx;
+	mp.tar_ned_east = tar_ned.easty;
 
 	mp_updated = true;
 	return true;
 }
 
-void cb_publish_mp_if_updated(void) {
+bool mp_cb_new_obstacle(void) {
+
+	mp.ob_num++;
+
+	mp_updated = true;
+	return true;
+}
+
+void mp_cb_publish_if_updated(void) {
 
     // if mission_planning topic has been updated, publish it
     // make sure this happens not too often, otherwise the processor load is too high
     if(mp_updated == true) {
 
         mp.timestamp = hrt_absolute_time();
-        th_publish_mission_planning(&mp);
+        mp_th_publish(&mp);
         mp_updated = false;
     }
 }
 
-void cb_init(void) {
+void mp_cb_init(void) {
 
     //clean memory
     memset(&mp, 0, sizeof(mp));
@@ -52,5 +65,5 @@ void cb_init(void) {
     mp.tar_ned_east = 0;
 
     mp_updated = true;
-    cb_publish_pp_if_updated();
+    mp_cb_publish_if_updated();
 }

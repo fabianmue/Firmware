@@ -12,7 +12,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
+#include "mp_params.h"
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
@@ -24,6 +24,14 @@
 /*****  F U N C T I O N   D E C L A R A T I O N S  *********************************/
 /***********************************************************************************/
 
-void mp_start_mission(mission new_mission);
+void mp_mi_handler(int id);
+
+void mp_init_mi(void);
+
+void mp_execute_mi(void);
+
+int mp_add_mi_to_queue(mission mi);
+
+int mp_add_fr_to_queue(frame fr);
 
 #endif /* MP_MISSION_H_ */

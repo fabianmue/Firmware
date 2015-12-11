@@ -21,7 +21,7 @@ bool fs_is_failsafe_active(void);
 
 
 /* @brief Check, if an RC-Signal is present */
-void fs_check_rc_signal(struct structs_topics_s *strs_p);
+void fs_check_rc_signal(struct pp_structs_topics_s *strs_pp);
 
 
 /* @brief Main state-machine that is executed in the main-while-loop */

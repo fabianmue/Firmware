@@ -83,7 +83,7 @@ void nav_heading_update(void);
 
 
 /** @brief Use the Yaw for calculating the heading */
-void yaw_update(struct structs_topics_s *strs);
+void yaw_update(struct pp_structs_topics_s *strs);
 
 
 /** @brief Set Obstacles */

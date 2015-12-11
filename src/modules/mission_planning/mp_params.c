@@ -17,12 +17,19 @@
 #include <nuttx/config.h>
 #include <fcntl.h>
 
-#include "../path_planning/pp_navigation_module.h"
-#include "../path_planning/pp_navigation_helper.h"
+#include "mp_mission.h"
+#include "../path_planning/pp_navigator.h"
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
+
+bool sd_read = false;
+
+frame rd_frame;
+mission rd_mission;
+
+char file_path[] = "/fs/microsd/params.txt";
 
 /**
  *  mission planner QGC variables
@@ -92,7 +99,7 @@ void mp_param_init(void) {
 void mp_param_update(bool update_param) {
 
 	int32_t data_src;
-	PointE7 target;
+	PointE7 target, start[2];
 	NEDpoint target_ned;
 	mission cur_mission;
 	uint8_t ob_num;
@@ -100,8 +107,16 @@ void mp_param_update(bool update_param) {
 
 	param_get(pointers_mp_param_qgc.mp_data_src, &data_src);
 
+	if (data_src == 1 & sd_read == false) {
+
+		// read parameters from SD card
+		mp_get_params_SD(file_path);
+		sd_read = true;
+	}
+
    	param_get(pointers_mp_param_qgc.mp_tar_lat, &(target.lat));
    	param_get(pointers_mp_param_qgc.mp_tar_lon, &(target.lon));
+   	target.alt = altitude;
    	param_get(pointers_mp_param_qgc.mp_tar_ned_n, &(target_ned.northx));
    	param_get(pointers_mp_param_qgc.mp_tar_ned_e, &(target_ned.easty));
 
@@ -111,29 +126,21 @@ void mp_param_update(bool update_param) {
 
    	param_get(pointers_mp_param_qgc.mp_ob_num, &ob_num);
 
-   	target.alt = altitude;
-
 	#if LDEBUG_USEMISSION == 0
-		nav_set_target(t_num, target);
-		nav_set_target_ned(t_num, target_ned);	//NOTE: Because of this the target is always set in NED-Coordinates
-		nav_set_obstacle(o_num,obstacle);
-		nav_set_obstacle_ned(o_num,obstacle_ned);	//NOTE: Because of this the obstacle is always set in NED-Coordinates
+		// nav_set_target(t_num, target);
+		nav_set_target_ned(t_num, target_ned);			//NOTE: Because of this the target is always set in NED-Coordinates
+		// nav_set_obstacle(o_num, obstacle);
+		// nav_set_obstacle_ned(o_num, obstacle_ned);	//NOTE: Because of this the obstacle is always set in NED-Coordinates
 	#endif
 
-	PointE7 start[2];
 	param_get(pointers_mp_param_qgc.mp_start1_lat, &(start[0].lat));
 	param_get(pointers_mp_param_qgc.mp_start1_lon, &(start[0].lon));
 	param_get(pointers_mp_param_qgc.mp_start2_lat, &(start[1].lat));
 	param_get(pointers_mp_param_qgc.mp_start2_lon, &(start[1].lon));
-	start[0].alt = altitude;
-	start[1].alt = altitude;
-
-	nav_set_startline(start[0],start[1]);
-
 };
 
 // read parameters from SD card
-void mp_get_params_SD(char file_path[], frame frames[], int fr_count, mission missions[], int mi_count) {
+void mp_get_params_SD(char file_path[]) {
 	// open file
 	int fd = open(file_path, O_RDONLY);
 	if (fd < 0 | fd == NULL) {
@@ -145,13 +152,29 @@ void mp_get_params_SD(char file_path[], frame frames[], int fr_count, mission mi
 		do {
 			line = read_line(fd, MAX_CHAR_LINE);
 			if (strstr(line, "<frame>") != NULL) {
-				sc = read_fr(fd, frames[fr_count]);
-				fr_count++;
+
+				// read frame from file descriptor
+				sc = read_fr(fd, rd_frame);
+
+				disp_fr(rd_frame);	// for test purpose only
+
+				// add frame to list
+				mp_add_fr_to_queue(rd_frame);
+
+				//
 				if (sc != 0) printf("successfully read frame");
 			}
 			if (strstr(line, "<mission>") != NULL) {
-				sc = read_mi(fd, missions[mi_count]);
-				mi_count++;
+
+				// read mission from file descriptor
+				sc = read_mi(fd, rd_mission);
+
+				disp_mi(rd_mission);	// for test purpose only
+
+				// add mission to queue
+				mp_add_mi_to_queue(rd_mission);
+
+				//
 				if (sc != 0) printf("successfully read mission");
 			}
 		} while (line != NULL);
@@ -287,7 +310,7 @@ static int read_fr(int fd, frame fr) {
 		}
 		sc = read_bu(fd, fr.buoys[bu_count]);
 		bu_count++;
-	} while (strstr(line, "<buoy>") != NULL & bu_count < MAX_ELEM);
+	} while (strstr(line, "<buoy>") != NULL & bu_count < 4);
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
 		printf("error reading frame");
