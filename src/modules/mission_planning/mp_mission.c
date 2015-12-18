@@ -50,18 +50,18 @@ bool mi_is_set = false;
 frame cur_frame;
 bool fr_is_set = false;
 
-char buffer[50];
+char buffer_mi[50];
 
 static struct {
 	int size;
-	frame list[MAX_ELEM];
+	frame list[MAX_NUM_FR];
 } fr_list = {
 	.size = 0
 };
 
 static struct {
 	int size;
-	mission queue[MAX_ELEM];
+	mission queue[MAX_NUM_MI];
 } mi_queue = {
 	.size = 0
 };
@@ -89,8 +89,9 @@ void mp_mi_handler(int id) {
 	if (found == false) {
 
 		mi_is_set = false;
-		sprintf(buffer, "failed to start mission (id %d not found)", id);
-		mp_send_log_info(buffer);
+		sprintf(buffer_mi, "failed to start mission (id %d not found)\n", id);
+		printf(buffer_mi);
+		mp_send_log_info(buffer_mi);
 		return;
 	}
 
@@ -99,8 +100,9 @@ void mp_mi_handler(int id) {
 	if (fr_is_set != true) {
 
 		// frame setting failed - reset
-		sprintf(buffer, "failed to start mission %s (id %d, failed to set frame)", cur_mission.name, id);
-		mp_send_log_info(buffer);
+		sprintf(buffer_mi, "failed to start mission %s (id %d, failed to set frame)\n", cur_mission.name, id);
+		printf(buffer_mi);
+		mp_send_log_info(buffer_mi);
 		mi_is_set = false;
 		return;
 	}
@@ -116,27 +118,30 @@ void mp_init_mi(void) {
 		if (fr_list.list[i].id == cur_mission.fr_id) {
 			cur_frame = fr_list.list[i];
 			fr_is_set = true;
-			sprintf(buffer, "frame set to %s (id %d)", cur_frame.name, cur_frame.id);
-			mp_send_log_info(buffer);
+			sprintf(buffer_mi, "frame set to %s (id %d)\n", cur_frame.name, cur_frame.id);
+			printf(buffer_mi);
+			mp_send_log_info(buffer_mi);
 			return;
 		}
 	}
 	fr_is_set = false;
-	sprintf(buffer, "failed to set frame (id %d, not found)", cur_mission.fr_id);
-	mp_send_log_info(buffer);
+	sprintf(buffer_mi, "failed to set frame (id %d, not found)\n", cur_mission.fr_id);
+	printf(buffer_mi);
+	mp_send_log_info(buffer_mi);
 }
 
 void mp_execute_mi(void) {
 
 	// advertise
-	sprintf(buffer, "mission %s started (id %d)", cur_mission.name, cur_mission.id);
-	mp_send_log_info(buffer);
+	sprintf(buffer_mi, "mission %s started (id %d)\n", cur_mission.name, cur_mission.id);
+	printf(buffer_mi);
+	mp_send_log_info(buffer_mi);
 
 	// reset navigation queue
 	nav_queue_init();
 
 	// set all obstacles
-	for (int i = 0; i < MAX_ELEM; i++) {
+	for (int i = 0; i < MAX_NUM_OB; i++) {
 		if (cur_mission.obstacles[i].center.latitude == 0 & cur_mission.obstacles[i].center.longitude == 0) {
 			break;
 		}
@@ -149,7 +154,7 @@ void mp_execute_mi(void) {
 		mp_cb_new_obstacle();	// msg to QGC
 	}
 
-	for (int j = 0; j < MAX_ELEM; j++) {
+	for (int j = 0; j < MAX_NUM_WP; j++) {
 		if (cur_mission.waypoints[j].latitude == 0 & cur_mission.waypoints[j].longitude == 0) {
 			break;
 		}
@@ -166,36 +171,46 @@ void mp_execute_mi(void) {
 	fr_is_set = false;
 }
 
-int mp_add_mi_to_queue(mission mi) {
+int mp_add_mi_to_queue(mission *mi) {
+
+	mission mi_val;
+	mi_val = *mi;
 
 	// check if mission queue is full
-	if (mi_queue.size == MAX_ELEM) {
+	if (mi_queue.size == MAX_NUM_MI) {
 
-		sprintf(buffer, "failed to add mission %s to mission queue (max queue size reached)", mi.name);
-		mp_send_log_info(buffer);
+		sprintf(buffer_mi, "failed to add mission %s to mission queue (max queue size reached)\n", mi_val.name);
+		printf(buffer_mi);
+		mp_send_log_info(buffer_mi);
 		return -1;
 	}
-
-	mi_queue.queue[mi_queue.size] = mi;
+	// disp_mi(mi);
+	mi_queue.queue[mi_queue.size] = mi_val;
 	mi_queue.size++;
-	sprintf(buffer, "added mission %s to mission queue", mi.name);
-	mp_send_log_info(buffer);
+	sprintf(buffer_mi, "added mission %s to mission queue\n", mi_val.name);
+	printf(buffer_mi);
+	mp_send_log_info(buffer_mi);
 	return 0;
 }
 
-int mp_add_fr_to_queue(frame fr) {
+int mp_add_fr_to_queue(frame *fr) {
+
+	frame fr_val;
+	fr_val = *fr;
 
 	// check if frame list is full
-	if (fr_list.size == MAX_ELEM) {
+	if (fr_list.size == MAX_NUM_FR) {
 
-		sprintf(buffer, "failed to add frame %s to frame list (max list size reached)", fr.name);
-		mp_send_log_info(buffer);
+		sprintf(buffer_mi, "failed to add frame %s to frame list (max list size reached)\n", fr_val.name);
+		printf(buffer_mi);
+		mp_send_log_info(buffer_mi);
 		return -1;
 	}
-
-	fr_list.list[fr_list.size] = fr;
+	// disp_fr(fr);
+	fr_list.list[fr_list.size] = fr_val;
 	fr_list.size++;
-	sprintf(buffer, "added frame %s to frame list", fr.name);
-	mp_send_log_info(buffer);
+	sprintf(buffer_mi, "added frame %s to frame list\n", fr_val.name);
+	printf(buffer_mi);
+	mp_send_log_info(buffer_mi);
 	return 0;
 }

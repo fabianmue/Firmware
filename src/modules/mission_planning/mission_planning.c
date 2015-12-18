@@ -233,6 +233,11 @@ int mp_thread_main(int argc, char *argv[]) {
          * use mp_communication_buffer to change topic's values.
         */
         mp_cb_publish_if_updated();
+
+        // to debug the SD card reading, 1 loop is sufficient
+        if (SD_DEBUG == 1) {
+        	thread_should_exit = true;
+        }
 	}
 
 	// kill the thread

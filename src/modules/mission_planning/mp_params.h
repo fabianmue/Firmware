@@ -18,7 +18,11 @@
 #define PI           3.14159265358979323846f
 
 #define MAX_CHAR_LINE 50
-#define MAX_ELEM 20
+#define MAX_NUM_BU 4
+#define MAX_NUM_WP 20
+#define MAX_NUM_OB 20
+
+#define SD_DEBUG 1
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
@@ -42,7 +46,7 @@ typedef struct buoy_s {
 typedef struct frame_s {
 	char *name;
 	int id;
-	buoy buoys[4];
+	buoy buoys[MAX_NUM_BU];
 } frame;
 
 typedef struct mission_s {
@@ -50,8 +54,8 @@ typedef struct mission_s {
 	int id;
 	int type;
 	int fr_id;
-	waypoint waypoints[MAX_ELEM];
-	obstacle obstacles[MAX_ELEM];
+	waypoint waypoints[MAX_NUM_WP];
+	obstacle obstacles[MAX_NUM_OB];
 } mission;
 
 /***********************************************************************************/
@@ -73,20 +77,20 @@ void mp_get_params_SP(void);
 /* @brief send paramaters to serial port */
 void mp_send_params_SP(char buffer[]);
 
-static int read_wp(int fd, waypoint wp);
+static waypoint* read_wp(int fd);
 
-static int read_ob(int fd, obstacle ob);
+static obstacle* read_ob(int fd);
 
-static int read_bu(int fd, buoy bu);
+static buoy* read_bu(int fd);
 
-static int read_fr(int fd, frame fr);
+static frame* read_fr(int fd);
 
-static int read_mi(int fd, mission mi);
+static mission* read_mi(int fd);
 
 static char* read_line(int fd, int maxChar);
 
-void disp_fr(frame fr);
+void disp_fr(frame *fr);
 
-void disp_mi(mission mi);
+void disp_mi(mission *mi);
 
 #endif /* MP_PARAMETERS_H_ */

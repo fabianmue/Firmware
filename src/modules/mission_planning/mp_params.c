@@ -26,10 +26,10 @@
 
 bool sd_read = false;
 
-frame rd_frame;
-mission rd_mission;
-
 char file_path[] = "/fs/microsd/params.txt";
+char buffer_pa[50];
+
+int temp = 1;
 
 /**
  *  mission planner QGC variables
@@ -107,7 +107,7 @@ void mp_param_update(bool update_param) {
 
 	param_get(pointers_mp_param_qgc.mp_data_src, &data_src);
 
-	if (data_src == 1 & sd_read == false) {
+	if ((data_src == 1 | SD_DEBUG == 1) & sd_read == false) {
 
 		// read parameters from SD card
 		mp_get_params_SD(file_path);
@@ -144,38 +144,49 @@ void mp_get_params_SD(char file_path[]) {
 	// open file
 	int fd = open(file_path, O_RDONLY);
 	if (fd < 0 | fd == NULL) {
-		printf("unable to open file %s \n", file_path);
+		sprintf(buffer_pa, "unable to open file %s \n", file_path);
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
 	} else {
-		printf("parameter file found at %s\n", file_path);
+		sprintf(buffer_pa, "parameter file found at %s\n", file_path);
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
 		char *line;
-		int sc;
 		do {
 			line = read_line(fd, MAX_CHAR_LINE);
 			if (strstr(line, "<frame>") != NULL) {
 
 				// read frame from file descriptor
-				sc = read_fr(fd, rd_frame);
-
-				disp_fr(rd_frame);	// for test purpose only
-
-				// add frame to list
-				mp_add_fr_to_queue(rd_frame);
-
-				//
-				if (sc != 0) printf("successfully read frame");
+				frame *rd_frame;
+				rd_frame = read_fr(fd);
+				if (rd_frame == NULL) {
+					sprintf(buffer_pa, "error reading frame\n");
+					printf(buffer_pa);
+					mp_send_log_info(buffer_pa);
+				} else {
+					sprintf(buffer_pa, "successfully read frame\n");	// advertise
+					printf(buffer_pa);
+					mp_send_log_info(buffer_pa);
+					mp_add_fr_to_queue(rd_frame);					// add frame to list
+					// disp_fr(rd_frame);							// for test purpose only
+				}
 			}
 			if (strstr(line, "<mission>") != NULL) {
 
 				// read mission from file descriptor
-				sc = read_mi(fd, rd_mission);
-
-				disp_mi(rd_mission);	// for test purpose only
-
-				// add mission to queue
-				mp_add_mi_to_queue(rd_mission);
-
-				//
-				if (sc != 0) printf("successfully read mission");
+				mission *rd_mission;
+				rd_mission = read_mi(fd);
+				if (rd_mission == NULL) {
+					sprintf(buffer_pa, "error reading mission\n");
+					printf(buffer_pa);
+					mp_send_log_info(buffer_pa);
+				} else {
+					sprintf(buffer_pa, "successfully read mission\n");	// advertise
+					printf(buffer_pa);
+					mp_send_log_info(buffer_pa);
+					mp_add_mi_to_queue(rd_mission);					// add mission to list
+					// disp_mi(rd_mission);							// for test purpose only
+				}
 			}
 		} while (line != NULL);
 	}
@@ -192,199 +203,322 @@ void mp_send_params_SP(char buffer[]){
 
 };
 
-static int read_wp(int fd, waypoint wp) {
+static waypoint* read_wp(int fd) {
 	char *line, *pch;
+
+	// allocate memory
+	waypoint *wp;
+	wp = (waypoint*) calloc (1, sizeof(waypoint));
+
+	// latitude
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
-		printf("error reading waypoint");
-		return 0;
+		sprintf(buffer_pa, "error reading waypoint");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
 	}
 	pch = strtok(line, " ");
 	pch = strtok(NULL, " ");
-	wp.latitude = atof(pch);
+	wp->latitude = atof(pch);
+
+	// longitude
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
-		printf("error reading waypoint");
-		return 0;
+		sprintf(buffer_pa, "error reading waypoint");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
 	}
 	pch = strtok(line, " ");
 	pch = strtok(NULL, " ");
-	wp.longitude = atof(pch);
+	wp->longitude = atof(pch);
+
+	// end marker
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
-		printf("error reading waypoint");
-		return 0;
+		sprintf(buffer_pa, "error reading waypoint");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
 	}
-	if (strstr(line, "<end_waypoint>") != NULL) {
-		// success
-		return 1;
+	if (strstr(line, "<end_waypoint>") == NULL) {
+		return NULL;
 	}
-	return 0;
+	return wp;
 };
 
-static int read_ob(int fd, obstacle ob) {
+static obstacle* read_ob(int fd) {
 	char *line, *pch;
-	int sc;
+
+	// allocate memory
+	obstacle *ob;
+	ob = (obstacle*) calloc (1, sizeof(obstacle));
+
+	// waypoint
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
-		printf("error reading obstacle");
-		return 0;
+		sprintf(buffer_pa, "error reading obstacle");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
 	}
 	if (strstr(line, "<waypoint>") != NULL) {
-		sc = read_wp(fd, ob.center);
+		waypoint *wp;
+		wp = read_wp(fd);
+		if (wp == NULL) {
+			return NULL;
+		} else {
+			ob->center = *wp;
+		}
 	}
+
+	// radius
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
-		printf("error reading obstacle");
-		return 0;
+		sprintf(buffer_pa, "error reading obstacle");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
 	}
 	pch = strtok(line, " ");
 	pch = strtok(NULL, " ");
-	ob.radius = atof(pch);
-	line = read_line(fd, MAX_CHAR_LINE);
-	if (line == NULL) {
-		printf("error reading obstacle");
-		return 0;
-	}
-	if (strstr(line, "<end_obstacle>") != NULL & sc != 0) {
-		return 1;
-	}
-	return 0;
-};
+	ob->radius = atof(pch);
 
-static int read_bu(int fd, buoy bu) {
-	char *line, *pch;
-	int sc;
+	// end marker
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
-		printf("error reading buoy");
-		return 0;
+		sprintf(buffer_pa, "error reading obstacle");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
+	}
+	if (strstr(line, "<end_obstacle>") == NULL) {
+		return NULL;
+	}
+	return ob;
+}
+
+static buoy* read_bu(int fd) {
+	char *line, *pch;
+
+	// allocate memory
+	buoy *bu;
+	bu = (buoy*) calloc (1, sizeof(buoy));
+
+	// obstacle
+	line = read_line(fd, MAX_CHAR_LINE);
+	if (line == NULL) {
+		sprintf(buffer_pa, "error reading buoy");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
 	}
 	if (strstr(line, "<obstacle>") != NULL) {
-		sc = read_ob(fd, bu.body);
+		obstacle *ob;
+		ob = read_ob(fd);
+		if (ob == NULL) {
+			return NULL;
+		} else {
+			bu->body = *ob;
+		}
 	}
+
+	// rotation
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
-		printf("error reading buoy");
-		return 0;
+		sprintf(buffer_pa, "error reading buoy");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
 	}
 	pch = strtok(line, " ");
 	pch = strtok(NULL, " ");
-	bu.rotation = atoi(pch);
+	bu->rotation = atoi(pch);
+
+	// end marker
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
-		printf("error reading buoy");
-		return 0;
+		sprintf(buffer_pa, "error reading buoy");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
 	}
-	if (strstr(line, "<end_buoy>") != NULL & sc != 0) {
-		return 1;
+	if (strstr(line, "<end_buoy>") == NULL) {
+		return NULL;
 	}
-	return 0;
+	return bu;
 };
 
-static int read_fr(int fd, frame fr) {
+static frame* read_fr(int fd) {
 	char *line, *pch;
-	int sc;
+
+	// allocate memory
+	frame *fr;
+	fr = (frame*) calloc (1, sizeof(frame));
+
+	// name
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
-		printf("error reading frame");
-		return 0;
+		sprintf(buffer_pa, "error reading frame");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
 	}
 	pch = strtok(line, " ");
 	pch = strtok(NULL, " ");
-	fr.name = pch;
+	fr->name = pch;
+
+	// id
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
-		printf("error reading frame");
-		return 0;
+		sprintf(buffer_pa, "error reading frame");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
 	}
 	pch = strtok(line, " ");
 	pch = strtok(NULL, " ");
-	fr.id = atoi(pch);
+	fr->id = atoi(pch);
+
+	// buoys
 	int bu_count = 0;
 	do {
 		line = read_line(fd, MAX_CHAR_LINE);
 		if (line == NULL) {
-			printf("error reading frame");
-			return 0;
+			sprintf(buffer_pa, "error reading frame");
+			printf(buffer_pa);
+			mp_send_log_info(buffer_pa);
+			return NULL;
 		}
-		sc = read_bu(fd, fr.buoys[bu_count]);
-		bu_count++;
-	} while (strstr(line, "<buoy>") != NULL & bu_count < 4);
-	line = read_line(fd, MAX_CHAR_LINE);
-	if (line == NULL) {
-		printf("error reading frame");
-		return 0;
-	}
-	if (strstr(line, "<end_frame>") != NULL & sc != 0) {
-		return 1;
-	}
-	return 0;
+		if (strstr(line, "<end_frame>") != NULL) {
+			return fr;
+		}
+		if (strstr(line, "<buoy>") != NULL) {
+			if (bu_count < MAX_NUM_BU) {
+				buoy *bu;
+				bu = read_bu(fd);
+				if (bu == NULL) {
+					return NULL;
+				} else {
+					fr->buoys[bu_count] = *bu;
+					bu_count++;
+				}
+			} else {
+				sprintf(buffer_pa, "maximum number of buoys in frame reached\n");
+				printf(buffer_pa);
+				mp_send_log_info(buffer_pa);
+				read_bu(fd);
+			}
+		}
+	} while (true);
+	return fr;
 };
 
-static int read_mi(int fd, mission mi) {
+static mission* read_mi(int fd) {
 	char *line, *pch;
-	int sc;
+
+	// allocate memory
+	mission *mi;
+	mi = (mission*) calloc (1, sizeof(mission));
+
+	// name
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
-		printf("error reading mission");
-		return 0;
+		sprintf(buffer_pa, "error reading mission");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
 	}
 	pch = strtok(line, " ");
 	pch = strtok(NULL, " ");
-	mi.name = pch;
+	mi->name = pch;
+
+	// id
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
-		printf("error reading mission");
-		return 0;
+		sprintf(buffer_pa, "error reading mission");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
 	}
 	pch = strtok(line, " ");
 	pch = strtok(NULL, " ");
-	mi.id = atoi(pch);
+	mi->id = atoi(pch);
+
+	// type
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
-		printf("error reading mission");
-		return 0;
+		sprintf(buffer_pa, "error reading mission");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
 	}
 	pch = strtok(line, " ");
 	pch = strtok(NULL, " ");
-	mi.type = atoi(pch);
+	mi->type = atoi(pch);
+
+	// frame id
 	line = read_line(fd, MAX_CHAR_LINE);
 	if (line == NULL) {
-		printf("error reading mission");
-		return 0;
+		sprintf(buffer_pa, "error reading mission");
+		printf(buffer_pa);
+		mp_send_log_info(buffer_pa);
+		return NULL;
 	}
 	pch = strtok(line, " ");
 	pch = strtok(NULL, " ");
-	mi.fr_id = atoi(pch);
+	mi->fr_id = atoi(pch);
+
+	// waypoints / obstacles
 	int wp_count = 0, ob_count = 0;
 	do {
 		line = read_line(fd, MAX_CHAR_LINE);
 		if (line == NULL) {
-			printf("error reading mission");
-			return 0;
+			sprintf(buffer_pa, "error reading mission");
+			printf(buffer_pa);
+			mp_send_log_info(buffer_pa);
+			return NULL;
 		}
-		sc = read_wp(fd, mi.waypoints[wp_count]);
-		wp_count++;
-	} while (strstr(line, "<waypoint>") != NULL & wp_count < MAX_ELEM);
-	do {
-		line = read_line(fd, MAX_CHAR_LINE);
-		if (line == NULL) {
-			printf("error reading mission");
-			return 0;
+		if (strstr(line, "<end_mission>") != NULL) {
+			return mi;
 		}
-		sc = read_ob(fd, mi.obstacles[ob_count]);
-		ob_count++;
-	} while (strstr(line, "<obstacle>") != NULL & ob_count < MAX_ELEM);
-	line = read_line(fd, MAX_CHAR_LINE);
-	if (line == NULL) {
-		printf("error reading mission");
-		return 0;
-	}
-	if (strstr(line, "<end_mission>") != NULL & sc != 0) {
-		return 1;
-	}
-	return 0;
+		if (strstr(line, "<waypoint>") != NULL) {
+			if (wp_count < MAX_NUM_WP) {
+				waypoint *wp;
+				wp = read_wp(fd);
+				if (wp == NULL) {
+					return NULL;
+				} else {
+					mi->waypoints[wp_count] = *wp;
+					wp_count++;
+				}
+			} else {
+				sprintf(buffer_pa, "maximum number of waypoints in mission reached\n");
+				printf(buffer_pa);
+				mp_send_log_info(buffer_pa);
+				read_bu(fd);
+			}
+		}
+		if (strstr(line, "<obstacle>") != NULL) {
+			if (ob_count < MAX_NUM_OB) {
+				obstacle *ob;
+				ob = read_ob(fd);
+				if (ob == NULL) {
+					return NULL;
+				} else {
+					mi->obstacles[ob_count] = *ob;
+					ob_count++;
+				}
+			} else {
+				sprintf(buffer_pa, "maximum number of obstacles in mission reached\n");
+				printf(buffer_pa);
+				mp_send_log_info(buffer_pa);
+				read_bu(fd);
+			}
+		}
+	} while (true);
+	return mi;
 };
 
 // read line from opened file descriptor
@@ -405,22 +539,19 @@ static char* read_line(int fd, int maxChar) {
 			return NULL;
 		}
 		strcat(line, readbuffer);
-		// printf("readbuffer: %s\n", readbuffer);
 	} while (num_read <= maxChar & strchr(readbuffer, '\n') == NULL);
 	realloc(line, num_read+1);
-	// printf("END readline\n");
-	// printf("line: %s", line);
 	return line;
 };
 
-void disp_fr(frame fr) {
+void disp_fr(frame *fr) {
 	printf("---frame---\n");
-	printf("name: %s\n", fr.name);
-	printf("id: %d\n", fr.id);
+	printf("name: %s\n", fr->name);
+	printf("id: %d\n", fr->id);
 	int bu_count = 0;
 	while (1) {
-		if (fr.buoys[bu_count].body.center.latitude != 0 & bu_count < MAX_ELEM) {
-			printf("buoy%d, lat: %.5f, lon: %.5f, rad: %.5f, rot: %d\n", bu_count, fr.buoys[bu_count].body.center.latitude, fr.buoys[bu_count].body.center.longitude, fr.buoys[bu_count].body.radius, fr.buoys[bu_count].rotation);
+		if (fr->buoys[bu_count].body.center.latitude != 0 & bu_count < MAX_NUM_BU) {
+			printf("buoy%d, lat: %.5f, lon: %.5f, rad: %.5f, rot: %d\n", bu_count, fr->buoys[bu_count].body.center.latitude, fr->buoys[bu_count].body.center.longitude, fr->buoys[bu_count].body.radius, fr->buoys[bu_count].rotation);
 			bu_count++;
 		} else {
 			break;
@@ -429,24 +560,24 @@ void disp_fr(frame fr) {
 	printf("---end frame---\n");
 };
 
-void disp_mi(mission mi) {
+void disp_mi(mission *mi) {
 	printf("---mission---\n");
-	printf("name: %s\n", mi.name);
-	printf("id: %d\n", mi.id);
-	printf("type: %d\n", mi.type);
-	printf("frame id: %d\n", mi.fr_id);
+	printf("name: %s\n", mi->name);
+	printf("id: %d\n", mi->id);
+	printf("type: %d\n", mi->type);
+	printf("frame id: %d\n", mi->fr_id);
 	int wp_count = 0, ob_count = 0;
 	while (1) {
-		if (mi.waypoints[wp_count].latitude != 0 & wp_count < MAX_ELEM) {
-			printf("waypoint%d, lat: %.5f, lon: %.5f\n", wp_count, mi.waypoints[wp_count].latitude, mi.waypoints[wp_count].longitude);
+		if (mi->waypoints[wp_count].latitude != 0 & wp_count < MAX_NUM_WP) {
+			printf("waypoint%d, lat: %.5f, lon: %.5f\n", wp_count, mi->waypoints[wp_count].latitude, mi->waypoints[wp_count].longitude);
 			wp_count++;
 		} else {
 			break;
 		}
 	}
 	while (1) {
-		if (mi.obstacles[ob_count].center.latitude != 0 & ob_count < MAX_ELEM) {
-			printf("obstacle%d, lat: %.5f, lon: %.5f, rad: %.5f\n", ob_count, mi.obstacles[ob_count].center.latitude, mi.obstacles[ob_count].center.longitude, mi.obstacles[ob_count].radius);
+		if (mi->obstacles[ob_count].center.latitude != 0 & ob_count < MAX_NUM_OB) {
+			printf("obstacle%d, lat: %.5f, lon: %.5f, rad: %.5f\n", ob_count, mi->obstacles[ob_count].center.latitude, mi->obstacles[ob_count].center.longitude, mi->obstacles[ob_count].radius);
 			ob_count++;
 		} else {
 			break;
