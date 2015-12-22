@@ -51,7 +51,7 @@ struct nav_field_s {
 
 
 /** @brief Init a Navigator */
-void nav_init(void);
+extern void nav_init(void);
 
 
 /** @brief Reset the navigator to start again with the first target */
@@ -87,18 +87,19 @@ void yaw_update(struct pp_structs_topics_s *strs);
 
 
 /** @brief Set Obstacles */
-void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos);
+extern void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos);
+
 
 /** @brief Set Obstacles in NED-Coordinates */
-void nav_set_obstacle_ned(uint8_t ObstNumber, NEDpoint ObstPos);
+extern void nav_set_obstacle_ned(uint8_t ObstNumber, NEDpoint ObstPos);
 
 
 /** @brief Set Targets */
-void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos);
+extern void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos);
 
 
 /** @brief Set Targets in NED-Coordinates */
-void nav_set_target_ned(NEDpoint TargetPos);
+extern void nav_set_target_ned(NEDpoint TargetPos);
 
 
 /** @brief Set the number out of the stored targets should be reached */
@@ -158,7 +159,7 @@ bool nav_get_sensor_obstacles(void);
 
 
 /* FUNCTIONS FOR THE QUEUE */
-void nav_queue_init(void);
+extern void nav_queue_init(void);
 int nav_queue_put_wp(NEDpoint *new);
 int nav_queue_next_wp(void);
 int nav_queue_read(NEDpoint *old);

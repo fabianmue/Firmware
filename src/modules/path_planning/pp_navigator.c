@@ -31,12 +31,8 @@
 #include "kalman_tracker/kt_tracker.h"
 #include "kalman_tracker/kt_track_list.h"
 
-#include "mission/mission.h"
-
 #include <stdbool.h>
 #include <stdlib.h>
-
-#include "../mission_planning/mp_communication_buffer.h"
 
 #if C_DEBUG == 0
 #include "pp_communication_buffer.h"
@@ -124,7 +120,7 @@ static bool dbg_alpha_minus = false;
  * Init a new Navigator by creating all necessary variables.
  *
  */
-void nav_init(void) {
+extern void nav_init(void) {
 
 	//Set the initial values for the Field
 	field.NumberOfTargets = 1;
@@ -740,7 +736,7 @@ void nav_set_startline(PointE7 buoy1, PointE7 buoy2) {
  * @param ObstNumber: The position of the obstacle in the Array of all Obstacles
  * @param ObstPos: The GPS-Position of the obstacle represented as a Point
  */
-void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos) {
+extern void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos) {
 
 	#if P_DEBUG == 0
 	//The update of the target position should only be done, if we are not debugging
@@ -761,7 +757,7 @@ void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos) {
  * @param ObstNumber: The position of the obstacle in the Array of all Obstacles
  * @param ObstPos: The GPS-Position of the obstacle represented as a Point in NED-Coordinates
  */
-void nav_set_obstacle_ned(uint8_t ObstNumber, NEDpoint ObstPos) {
+extern void nav_set_obstacle_ned(uint8_t ObstNumber, NEDpoint ObstPos) {
 
 	#if P_DEBUG == 0
 	//The update of the target position should only be done, if we are not debugging
@@ -783,7 +779,7 @@ void nav_set_obstacle_ned(uint8_t ObstNumber, NEDpoint ObstPos) {
  * @param TargetNumber: The position of the target in the Array of all Targets
  * @param TargetPos: The GPS-Position of the target represented as a Point
  */
-void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos) {
+extern void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos) {
 
 	#if P_DEBUG == 0
 
@@ -794,7 +790,6 @@ void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos) {
 
 	NEDpoint act_wp;
 	nav_queue_read(&act_wp);
-	mp_cb_new_target(act_wp.northx, act_wp.easty);
 
 	#endif
 }
@@ -807,7 +802,7 @@ void nav_set_target(uint8_t TargetNumber, PointE7 TargetPos) {
  * @param TargetNumber: The position of the target in the Array of all Targets
  * @param TargetPos: The GPS-Position of the target represented as a Point in NED-Coordinates
  */
-void nav_set_target_ned(NEDpoint TargetPos) {
+extern void nav_set_target_ned(NEDpoint TargetPos) {
 
 	//Put the newly added target into the queue
 	nav_queue_put_wp(&TargetPos);
@@ -1033,7 +1028,6 @@ void DEBUG_nav_set_fake_state(NEDpoint pos, float heading) {
 
 			NEDpoint act_wp;
 			nav_queue_read(&act_wp);
-			mp_cb_new_target(act_wp.northx, act_wp.easty);
 
 		}
 
@@ -1093,7 +1087,7 @@ void DEBUG_nav_alpha_minus(uint8_t status) {
 static NEDpoint Queue[QUEUE_SIZE];
 static int QueueIn, QueueOut;
 
-void nav_queue_init(void) {
+extern void nav_queue_init(void) {
     QueueIn = QueueOut = 0;
 }
 

@@ -35,11 +35,10 @@
 #include <drivers/drv_hrt.h>
 
 #include "mp_mission.h"
-#include "mp_params.h"
-
 #include "mp_send_msg_qgc.h"
 #include "mp_communication_buffer.h"
-#include "../path_planning/pp_navigation_helper.h"
+
+#include <path_planning/pp_navigator.h>
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
@@ -138,33 +137,32 @@ void mp_execute_mi(void) {
 	mp_send_log_info(buffer_mi);
 
 	// reset navigation queue
+	nav_init();
 	nav_queue_init();
 
 	// set all obstacles
 	for (int i = 0; i < MAX_NUM_OB; i++) {
-		if (cur_mission.obstacles[i].center.latitude == 0 & cur_mission.obstacles[i].center.longitude == 0) {
-			break;
+		if (cur_mission.obstacles[i].center.latitude != 0 & cur_mission.obstacles[i].center.longitude != 0) {
+			Point geo;
+			geo.lat = cur_mission.obstacles[i].center.latitude;
+			geo.lon = cur_mission.obstacles[i].center.longitude;
+			geo.alt = 0;
+			NEDpoint obs = nh_geo2ned(geo);
+			nav_set_obstacle_ned(i, obs);
+			mp_cb_new_obstacle();	// msg to QGC
 		}
-		Point geo;
-		geo.lat = cur_mission.obstacles[i].center.latitude;
-		geo.lon = cur_mission.obstacles[i].center.longitude;
-		geo.alt = 0;
-		NEDpoint obs = nh_geo2ned(geo);
-		nav_set_obstacle_ned(i, obs);
-		mp_cb_new_obstacle();	// msg to QGC
 	}
 
 	for (int j = 0; j < MAX_NUM_WP; j++) {
-		if (cur_mission.waypoints[j].latitude == 0 & cur_mission.waypoints[j].longitude == 0) {
-			break;
+		if (cur_mission.waypoints[j].latitude != 0 & cur_mission.waypoints[j].longitude != 0) {
+			Point geo;
+			geo.lat = cur_mission.waypoints[j].latitude;
+			geo.lon = cur_mission.waypoints[j].longitude;
+			geo.alt = 0;
+			NEDpoint wp = nh_geo2ned(geo);
+			nav_set_target_ned(wp);
+			mp_cb_new_target(geo.lat, geo.lon);	// msg to QGC
 		}
-		Point geo;
-		geo.lat = cur_mission.waypoints[j].latitude;
-		geo.lon = cur_mission.waypoints[j].longitude;
-		geo.alt = 0;
-		NEDpoint wp = nh_geo2ned(geo);
-		nav_set_target_ned(wp);
-		mp_cb_new_target(geo.lat, geo.lon);	// msg to QGC
 	}
 
 	mi_is_set = false;

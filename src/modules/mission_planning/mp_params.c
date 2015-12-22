@@ -12,19 +12,20 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include "mp_params.h"
 
 #include <nuttx/config.h>
 #include <fcntl.h>
 
+#include "mp_params.h"
 #include "mp_mission.h"
-#include "../path_planning/pp_navigator.h"
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
 bool sd_read = false;
+
+int mi_select_prev = -1;
 
 char file_path[] = "/fs/microsd/params.txt";
 char buffer_pa[50];
@@ -35,6 +36,7 @@ int temp = 1;
  *  mission planner QGC variables
  */
 PARAM_DEFINE_INT32(MP_DATA_SRC, 0);		// data source, 0 = telemetry, 1 = SD card
+PARAM_DEFINE_INT32(MP_MI_SELECT, -1);	// mission selected
 
 PARAM_DEFINE_INT32(MP_TAR_LAT, 0);		// current target latitude
 PARAM_DEFINE_INT32(MP_TAR_LON, 0);		// current target longitude
@@ -50,6 +52,7 @@ PARAM_DEFINE_INT32(MP_OB_NUM, 0);		// number of obstacles currently set
 static struct pointers_mp_param_qgc_s {
 
 	param_t mp_data_src;
+	param_t mp_mi_select;
 
 	param_t mp_tar_lat;
 	param_t mp_tar_lon;
@@ -76,6 +79,7 @@ static struct pointers_mp_param_qgc_s {
 void mp_param_init(void) {
 
     pointers_mp_param_qgc.mp_data_src = param_find("MP_DATA_SRC");
+    pointers_mp_param_qgc.mp_mi_select = param_find("MP_MI_SELECT");
 
     pointers_mp_param_qgc.mp_tar_lat = param_find("MP_TAR_LAT");
     pointers_mp_param_qgc.mp_tar_lon = param_find("MP_TAR_LON");
@@ -98,14 +102,10 @@ void mp_param_init(void) {
 
 void mp_param_update(bool update_param) {
 
-	int32_t data_src;
-	PointE7 target, start[2];
-	NEDpoint target_ned;
-	mission cur_mission;
-	uint8_t ob_num;
-	int32_t altitude;
+	int32_t data_src, mi_select;
 
 	param_get(pointers_mp_param_qgc.mp_data_src, &data_src);
+	param_get(pointers_mp_param_qgc.mp_mi_select, &mi_select);
 
 	if ((data_src == 1 | SD_DEBUG == 1) & sd_read == false) {
 
@@ -113,6 +113,18 @@ void mp_param_update(bool update_param) {
 		mp_get_params_SD(file_path);
 		sd_read = true;
 	}
+
+	if (mi_select != mi_select_prev & mi_select != -1) {
+
+		// new mission selected, call the mission handler
+		mp_mi_handler(mi_select);
+	}
+
+	/*
+	NEDpoint target_ned;
+	mission cur_mission;
+	uint8_t ob_num;
+	int32_t altitude;
 
    	param_get(pointers_mp_param_qgc.mp_tar_lat, &(target.lat));
    	param_get(pointers_mp_param_qgc.mp_tar_lon, &(target.lon));
@@ -127,16 +139,17 @@ void mp_param_update(bool update_param) {
    	param_get(pointers_mp_param_qgc.mp_ob_num, &ob_num);
 
 	#if LDEBUG_USEMISSION == 0
-		// nav_set_target(t_num, target);
-		nav_set_target_ned(t_num, target_ned);			//NOTE: Because of this the target is always set in NED-Coordinates
-		// nav_set_obstacle(o_num, obstacle);
-		// nav_set_obstacle_ned(o_num, obstacle_ned);	//NOTE: Because of this the obstacle is always set in NED-Coordinates
+		nav_set_target(t_num, target);
+		nav_set_target_ned(target_ned);			//NOTE: Because of this the target is always set in NED-Coordinates
+		nav_set_obstacle(o_num, obstacle);
+		nav_set_obstacle_ned(o_num, obstacle_ned);	//NOTE: Because of this the obstacle is always set in NED-Coordinates
 	#endif
 
 	param_get(pointers_mp_param_qgc.mp_start1_lat, &(start[0].lat));
 	param_get(pointers_mp_param_qgc.mp_start1_lon, &(start[0].lon));
 	param_get(pointers_mp_param_qgc.mp_start2_lat, &(start[1].lat));
 	param_get(pointers_mp_param_qgc.mp_start2_lon, &(start[1].lon));
+	 */
 };
 
 // read parameters from SD card
@@ -203,7 +216,7 @@ void mp_send_params_SP(char buffer[]){
 
 };
 
-static waypoint* read_wp(int fd) {
+waypoint* read_wp(int fd) {
 	char *line, *pch;
 
 	// allocate memory
@@ -248,7 +261,7 @@ static waypoint* read_wp(int fd) {
 	return wp;
 };
 
-static obstacle* read_ob(int fd) {
+obstacle* read_ob(int fd) {
 	char *line, *pch;
 
 	// allocate memory
@@ -299,7 +312,7 @@ static obstacle* read_ob(int fd) {
 	return ob;
 }
 
-static buoy* read_bu(int fd) {
+buoy* read_bu(int fd) {
 	char *line, *pch;
 
 	// allocate memory
@@ -350,7 +363,7 @@ static buoy* read_bu(int fd) {
 	return bu;
 };
 
-static frame* read_fr(int fd) {
+frame* read_fr(int fd) {
 	char *line, *pch;
 
 	// allocate memory
@@ -415,7 +428,7 @@ static frame* read_fr(int fd) {
 	return fr;
 };
 
-static mission* read_mi(int fd) {
+mission* read_mi(int fd) {
 	char *line, *pch;
 
 	// allocate memory
@@ -522,7 +535,7 @@ static mission* read_mi(int fd) {
 };
 
 // read line from opened file descriptor
-static char* read_line(int fd, int maxChar) {
+char* read_line(int fd, int maxChar) {
 	// printf("START readline\n");
 	int ch, num_read = 0, size = 1;
 	int *line, *readbuffer;

@@ -162,7 +162,7 @@ float nh_appWindDir(float heading, float windDir) {
  * @param geo: Point in geo-frame
  * @return Point in NED-Frame
  */
-NEDpoint nh_geo2ned(Point geo) {
+extern NEDpoint nh_geo2ned(Point geo) {
 	NEDpoint result;
 
 	int32_t north_dm;

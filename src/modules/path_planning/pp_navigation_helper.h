@@ -5,8 +5,8 @@
  *      Author: Jonas Wirz (wirzjo@student.ethz.ch)
  */
 
-#ifndef NAVIGATION_HELPER_H_
-#define NAVIGATION_HELPER_H_
+#ifndef PP_NAVIGATION_HELPER_H_
+#define PP_NAVIGATION_HELPER_H_
 
 #include <stdint.h>
 #include <math.h>
@@ -59,7 +59,7 @@ uint8_t nh_findMin(const float *array, uint8_t arraySize);
 
 
 /* @brief Convert a Point in the geo-Frame to the NED-Frame */
-NEDpoint nh_geo2ned(Point geo);
+extern NEDpoint nh_geo2ned(Point geo);
 
 
 /* @brief Calculate the absolute difference between two headings in Compass Frame and account for the discontinuity */
@@ -102,4 +102,4 @@ float nh_mod(float angle);
 NEDpoint nh_rotate(NEDpoint torot, NEDpoint center, float angle);
 
 
-#endif /* NAVIGATION_HELPER_H_ */
+#endif /* PP_NAVIGATION_HELPER_H_ */

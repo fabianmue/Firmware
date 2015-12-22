@@ -9,7 +9,6 @@
 #define MP_COMMUNICATION_BUFFER_H_
 
 #include "mp_topics_handler.h"
-#include "../path_planning/pp_send_msg_qgc.h"
 
 /* @brief send new target position to the mission_planning topic */
 bool mp_cb_new_target(float lat, float lon);

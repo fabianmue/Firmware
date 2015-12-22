@@ -8,10 +8,18 @@
 #include "mp_topics_handler.h"
 #include "mp_send_msg_qgc.h"
 
+/***********************************************************************************/
+/*****  V A R I A B L E S  *********************************************************/
+/***********************************************************************************/
+
 // struct of all topic-advertisements
 static struct {
     orb_advert_t mission_planning;     	//output of mission_planning topic
 } pubs;
+
+/***********************************************************************************/
+/*****  F U N C T I O N   D E F I N I T I O N S  ***********************************/
+/***********************************************************************************/
 
 /**
  * subscribe to all topics in the topic-subscription struct

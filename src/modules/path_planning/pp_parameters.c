@@ -23,8 +23,6 @@
 
 #include "parser_sensorboard/ps_sensorboard.h"
 
-#include "mission/mission.h"
-
 #define M_PI_F 3.14159265358979323846f
 
 static const float deg2rad = 0.0174532925199433f; // pi / 180

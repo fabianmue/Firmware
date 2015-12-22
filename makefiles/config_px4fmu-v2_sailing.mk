@@ -1,5 +1,5 @@
 #
-# Makefile for the px4fmu_default configuration
+# Makefile for the px4fmu-v2_sailing configuration
 #
 
 #
@@ -7,7 +7,7 @@
 # the ROMFS if it's available
 #
 ROMFS_ROOT	 = $(PX4_BASE)/ROMFS/px4fmu_common
-ROMFS_OPTIONAL_FILES = $(PX4_BASE)/Images/px4io-v2_default.bin
+ROMFS_OPTIONAL_FILES = $(PX4_BASE)/Images/px4io-v2_sailing.bin
 
 #
 # Board support modules

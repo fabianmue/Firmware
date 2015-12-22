@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
 #include "mp_params.h"
 
 /***********************************************************************************/
@@ -25,7 +26,7 @@
 /*****  F U N C T I O N   D E C L A R A T I O N S  *********************************/
 /***********************************************************************************/
 
-void mp_mi_handler(int id);
+extern void mp_mi_handler(int id);
 
 void mp_init_mi(void);
 

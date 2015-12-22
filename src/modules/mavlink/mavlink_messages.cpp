@@ -2382,7 +2382,7 @@ public:
 
     unsigned get_size()
     {
-        return 5 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 3 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
     }
 
 private:
@@ -2418,6 +2418,7 @@ protected:
             msg.value = (mission_p_debug.tar_lon);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
+            /*
             snprintf(msg.name, sizeof(msg.name), "mp_tar_ned_n");
             msg.value = (mission_p_debug.tar_ned_north);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
@@ -2425,6 +2426,7 @@ protected:
             snprintf(msg.name, sizeof(msg.name), "mp_tar_ned_e");
             msg.value = (mission_p_debug.tar_ned_east);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+			*/
 
             snprintf(msg.name, sizeof(msg.name), "mp_ob_num");
             msg.value = (mission_p_debug.ob_num);

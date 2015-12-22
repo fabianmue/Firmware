@@ -5,8 +5,8 @@
  *      Author: Fabian
  */
 
-#ifndef MP_PARAMETERS_H_
-#define MP_PARAMETERS_H_
+#ifndef MP_PARAMS_H_
+#define MP_PARAMS_H_
 
 #include <systemlib/param/param.h>
 
@@ -22,7 +22,7 @@
 #define MAX_NUM_WP 20
 #define MAX_NUM_OB 20
 
-#define SD_DEBUG 1
+#define SD_DEBUG 0
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
@@ -77,20 +77,20 @@ void mp_get_params_SP(void);
 /* @brief send paramaters to serial port */
 void mp_send_params_SP(char buffer[]);
 
-static waypoint* read_wp(int fd);
+waypoint* read_wp(int fd);
 
-static obstacle* read_ob(int fd);
+obstacle* read_ob(int fd);
 
-static buoy* read_bu(int fd);
+buoy* read_bu(int fd);
 
-static frame* read_fr(int fd);
+frame* read_fr(int fd);
 
-static mission* read_mi(int fd);
+mission* read_mi(int fd);
 
-static char* read_line(int fd, int maxChar);
+char* read_line(int fd, int maxChar);
 
 void disp_fr(frame *fr);
 
 void disp_mi(mission *mi);
 
-#endif /* MP_PARAMETERS_H_ */
+#endif /* MP_PARAMS_H_ */

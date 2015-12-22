@@ -1,14 +1,12 @@
 /*
- * mp_area_scanning.c
+ * mp_gcs_communication.h
  *
- *  Created on: 26.10.2015
+ *  Created on: 19.12.2015
  *      Author: Fabian
  */
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <math.h>
-#include "mp_mission.h"
+#ifndef MP_GCS_COMMUNICATION_H_
+#define MP_GCS_COMMUNICATION_H_
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
@@ -20,16 +18,6 @@
 /*****  F U N C T I O N   D E C L A R A T I O N S  *********************************/
 /***********************************************************************************/
 
-bool mp_as_start(frame comp_frame);
+int send_msg_gcs(void);
 
-/***********************************************************************************/
-/*****  P U B L I C    F U N C T I O N S  ******************************************/
-/***********************************************************************************/
-
-bool mp_as_start(frame comp_frame) {
-
-
-
-
-	return true;
-}
+#endif /* MP_GCS_COMMUNICATION_H_ */

@@ -17,6 +17,10 @@
 #include <stdio.h>
 #include <systemlib/err.h>
 
+/***********************************************************************************/
+/*****  V A R I A B L E S  *********************************************************/
+/***********************************************************************************/
+
 // struct of all topic-subscriptions
 struct mp_subscribtion_fd_s {
     int parameter_update;					// update of Parameters from QGroundControl
@@ -26,6 +30,10 @@ struct mp_subscribtion_fd_s {
 struct mp_structs_topics_s{
 	struct parameter_update_s parameter_update;
 };
+
+/***********************************************************************************/
+/*****  F U N C T I O N   D E C L A R A T I O N S  *********************************/
+/***********************************************************************************/
 
 /* @brief subscribe to interested topics */
 bool mp_th_subscribe(struct mp_subscribtion_fd_s *subs_p, struct mp_structs_topics_s *strs_p);
