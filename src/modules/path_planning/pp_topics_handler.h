@@ -18,6 +18,8 @@
 #include <uORB/topics/boat_local_position.h>
 #include <uORB/topics/boat_pp_debug.h>
 #include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/mission_planning.h>
+#include <uORB/topics/mi_ack.h>
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -32,6 +34,7 @@ struct pp_subscribtion_fd_s{
     int boat_guidance_debug;                //Values from guidance_module from autonomous_sailing app
     int rc_channels;                        //Remote Control commands
     int vehicle_attitude;					//Raw Yaw-Angle
+    int mission_planning;					//Mission Planning parameters
 };
 
 
@@ -41,6 +44,7 @@ struct pp_structs_topics_s{
 	struct parameter_update_s parameter_update;
     struct rc_channels_s rc_channels;
     struct vehicle_attitude_s vehicle_attitude;
+    struct mission_planning_s mission_planning;
 };
 
 
@@ -53,6 +57,9 @@ bool pp_th_advertise(void);
 
 /** @brief publish path_planning topic*/
 int pp_th_publish(const struct path_planning_s *path_planning_p);
+
+/** @brief publish mi_ack topic*/
+int pp_th_publish_mi_ack(const struct mi_ack_s *mi_ack_p);
 
 /** @brief publish boat_pp_debug1 topic */
 int pp_th_publish_boat_debug1(const struct boat_pp_debug1_s *boat_pp_debug1);

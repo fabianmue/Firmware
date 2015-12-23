@@ -278,3 +278,7 @@ ORB_DEFINE(path_planning_kalman, struct path_planning_kalman_s);
 //Added by Fabian Müller
 #include "topics/mission_planning.h"
 ORB_DEFINE(mission_planning, struct mission_planning_s);
+
+//Added by Fabian Müller
+#include "topics/mi_ack.h"
+ORB_DEFINE(mi_ack, struct mi_ack_s);

@@ -24,28 +24,37 @@ static bool mp_updated = false;
 /*****  F U N C T I O N   D E F I N I T I O N S  ***********************************/
 /***********************************************************************************/
 
-bool mp_cb_new_target(float lat, float lon) {
+bool mp_cb_sd_read(void) {
 
-	mp.tar_lat = lat;
-	mp.tar_lon = lon;
-
-	/*
-	Point tar;
-	tar.lat = lat;
-	tar.lon = lon;
-	tar.alt = 0;
-	NEDpoint tar_ned = nh_geo2ned(tar);
-	mp.tar_ned_north = tar_ned.northx;
-	mp.tar_ned_east = tar_ned.easty;
-	*/
+	mp.sd_read = 1;
 
 	mp_updated = true;
 	return true;
 }
 
-bool mp_cb_new_obstacle(void) {
+bool mp_cb_new_mission(int id) {
 
-	mp.ob_num++;
+	mp.mi_id = id;
+
+	mp_updated = true;
+	return true;
+}
+
+bool mp_cb_new_target(float tar_lat, float tar_lon) {
+
+	mp.tar_lat = tar_lat;
+	mp.tar_lon = tar_lon;
+	mp.tar_num++;
+
+	mp_updated = true;
+	return true;
+}
+
+bool mp_cb_new_obstacle(float obs_lat, float obs_lon) {
+
+	mp.obs_lat = obs_lat;
+	mp.obs_lon = obs_lon;
+	mp.obs_num++;
 
 	mp_updated = true;
 	return true;
@@ -67,14 +76,6 @@ void mp_cb_init(void) {
 
     //clean memory
     memset(&mp, 0, sizeof(mp));
-
-    mp.tar_lat = 0;
-    mp.tar_lon = 0;
-
-    /*
-    mp.tar_ned_north = 0;
-    mp.tar_ned_east = 0;
-	*/
 
     mp_updated = true;
     mp_cb_publish_if_updated();

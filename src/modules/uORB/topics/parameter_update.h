@@ -42,19 +42,10 @@
 #include <stdint.h>
 #include "../uORB.h"
 
-/**
- * @addtogroup topics
- * @{
- */
-
 struct parameter_update_s {
-	/** time at which the latest parameter was updated */
+
 	uint64_t	timestamp;
 };
-
-/**
- * @}
- */
 
 ORB_DECLARE(parameter_update);
 

@@ -13,9 +13,7 @@
 /***********************************************************************************/
 
 // struct of all topic-advertisements
-static struct {
-    orb_advert_t mission_planning;     	//output of mission_planning topic
-} pubs;
+struct mp_published_fd_s pubs;
 
 /***********************************************************************************/
 /*****  F U N C T I O N   D E F I N I T I O N S  ***********************************/
@@ -31,14 +29,20 @@ static struct {
 bool mp_th_subscribe(struct mp_subscribtion_fd_s *subs_p, struct mp_structs_topics_s *strs_p) {
 
 	subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
+	subs_p->mi_ack = orb_subscribe(ORB_ID(mi_ack));
 
     if(subs_p->parameter_update == -1){
-        warnx(" error on subscribing on parameter_update Topic \n");
+        warnx("error on subscribing on parameter_update topic \n");
+        return false;
+    }
+
+    if(subs_p->mi_ack == -1){
+        warnx("error on subscribing on path_planning topic \n");
         return false;
     }
 
     //Subscription to all topics was successful
-    warnx(" subscribed to all topics \n");
+    warnx("subscribed to all topics \n");
     return true;
 };
 
@@ -69,3 +73,4 @@ int mp_th_publish(const struct mission_planning_s *mission_planning_p) {
 
     return orb_publish(ORB_ID(mission_planning), pubs.mission_planning, mission_planning_p);
 };
+

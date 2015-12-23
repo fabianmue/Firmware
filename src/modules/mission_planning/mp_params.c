@@ -30,34 +30,31 @@ int mi_select_prev = -1;
 char file_path[] = "/fs/microsd/params.txt";
 char buffer_pa[50];
 
-int temp = 1;
-
 /**
  *  mission planner QGC variables
  */
 PARAM_DEFINE_INT32(MP_DATA_SRC, 0);		// data source, 0 = telemetry, 1 = SD card
-PARAM_DEFINE_INT32(MP_MI_SELECT, -1);	// mission selected
+PARAM_DEFINE_INT32(MP_MI_SELECT, 8);	// mission selected
 
+/*
 PARAM_DEFINE_INT32(MP_TAR_LAT, 0);		// current target latitude
 PARAM_DEFINE_INT32(MP_TAR_LON, 0);		// current target longitude
-PARAM_DEFINE_FLOAT(MP_TAR_NED_N, 0);	// current target NED north
-PARAM_DEFINE_FLOAT(MP_TAR_NED_E, 0);	// current target NED east
 
 PARAM_DEFINE_INT32(MP_CUR_FR_ID, 0);	// current frame id
 PARAM_DEFINE_INT32(MP_CUR_MI_ID, 0);	// current mission id
 PARAM_DEFINE_INT32(MP_CUR_MI_TYPE, 0);	// current mission type
 
 PARAM_DEFINE_INT32(MP_OB_NUM, 0);		// number of obstacles currently set
+*/
 
 static struct pointers_mp_param_qgc_s {
 
 	param_t mp_data_src;
 	param_t mp_mi_select;
 
+	/*
 	param_t mp_tar_lat;
 	param_t mp_tar_lon;
-	param_t mp_tar_ned_n;
-	param_t mp_tar_ned_e;
 
 	param_t mp_cur_fr_id;
 	param_t mp_cur_mi_id;
@@ -69,6 +66,7 @@ static struct pointers_mp_param_qgc_s {
 	param_t mp_start1_lon;
 	param_t mp_start2_lat;
 	param_t mp_start2_lon;
+	*/
 
 } pointers_mp_param_qgc;
 
@@ -81,6 +79,7 @@ void mp_param_init(void) {
     pointers_mp_param_qgc.mp_data_src = param_find("MP_DATA_SRC");
     pointers_mp_param_qgc.mp_mi_select = param_find("MP_MI_SELECT");
 
+    /*
     pointers_mp_param_qgc.mp_tar_lat = param_find("MP_TAR_LAT");
     pointers_mp_param_qgc.mp_tar_lon = param_find("MP_TAR_LON");
     pointers_mp_param_qgc.mp_tar_ned_n = param_find("MP_TAR_NED_N");
@@ -96,6 +95,7 @@ void mp_param_init(void) {
     pointers_mp_param_qgc.mp_start1_lon = param_find("MP_START1_LON");
     pointers_mp_param_qgc.mp_start2_lat = param_find("MP_START2_LAT");
     pointers_mp_param_qgc.mp_start2_lon = param_find("MP_START2_LON");
+	*/
 
     mp_param_update(false);
 };
@@ -180,7 +180,7 @@ void mp_get_params_SD(char file_path[]) {
 					sprintf(buffer_pa, "successfully read frame\n");	// advertise
 					printf(buffer_pa);
 					mp_send_log_info(buffer_pa);
-					mp_add_fr_to_queue(rd_frame);					// add frame to list
+					mp_add_fr_to_list(rd_frame);					// add frame to list
 					// disp_fr(rd_frame);							// for test purpose only
 				}
 			}
@@ -197,7 +197,7 @@ void mp_get_params_SD(char file_path[]) {
 					sprintf(buffer_pa, "successfully read mission\n");	// advertise
 					printf(buffer_pa);
 					mp_send_log_info(buffer_pa);
-					mp_add_mi_to_queue(rd_mission);					// add mission to list
+					mp_add_mi_to_list(rd_mission);					// add mission to list
 					// disp_mi(rd_mission);							// for test purpose only
 				}
 			}
@@ -369,6 +369,7 @@ frame* read_fr(int fd) {
 	// allocate memory
 	frame *fr;
 	fr = (frame*) calloc (1, sizeof(frame));
+	fr->buoy_count = 0;
 
 	// name
 	line = read_line(fd, MAX_CHAR_LINE);
@@ -411,6 +412,7 @@ frame* read_fr(int fd) {
 			if (bu_count < MAX_NUM_BU) {
 				buoy *bu;
 				bu = read_bu(fd);
+				fr->buoy_count++;
 				if (bu == NULL) {
 					return NULL;
 				} else {
@@ -434,6 +436,8 @@ mission* read_mi(int fd) {
 	// allocate memory
 	mission *mi;
 	mi = (mission*) calloc (1, sizeof(mission));
+	mi->waypoint_count = 0;
+	mi->obstacle_count = 0;
 
 	// name
 	line = read_line(fd, MAX_CHAR_LINE);
@@ -500,6 +504,7 @@ mission* read_mi(int fd) {
 			if (wp_count < MAX_NUM_WP) {
 				waypoint *wp;
 				wp = read_wp(fd);
+				mi->waypoint_count++;
 				if (wp == NULL) {
 					return NULL;
 				} else {
@@ -510,13 +515,14 @@ mission* read_mi(int fd) {
 				sprintf(buffer_pa, "maximum number of waypoints in mission reached\n");
 				printf(buffer_pa);
 				mp_send_log_info(buffer_pa);
-				read_bu(fd);
+				read_wp(fd);
 			}
 		}
 		if (strstr(line, "<obstacle>") != NULL) {
 			if (ob_count < MAX_NUM_OB) {
 				obstacle *ob;
 				ob = read_ob(fd);
+				mi->obstacle_count++;
 				if (ob == NULL) {
 					return NULL;
 				} else {
@@ -527,7 +533,7 @@ mission* read_mi(int fd) {
 				sprintf(buffer_pa, "maximum number of obstacles in mission reached\n");
 				printf(buffer_pa);
 				mp_send_log_info(buffer_pa);
-				read_bu(fd);
+				read_ob(fd);
 			}
 		}
 	} while (true);
@@ -561,14 +567,8 @@ void disp_fr(frame *fr) {
 	printf("---frame---\n");
 	printf("name: %s\n", fr->name);
 	printf("id: %d\n", fr->id);
-	int bu_count = 0;
-	while (1) {
-		if (fr->buoys[bu_count].body.center.latitude != 0 & bu_count < MAX_NUM_BU) {
-			printf("buoy%d, lat: %.5f, lon: %.5f, rad: %.5f, rot: %d\n", bu_count, fr->buoys[bu_count].body.center.latitude, fr->buoys[bu_count].body.center.longitude, fr->buoys[bu_count].body.radius, fr->buoys[bu_count].rotation);
-			bu_count++;
-		} else {
-			break;
-		}
+	for (int i = 0; i < fr->buoy_count; i++) {
+		printf("buoy %d, lat: %.5f, lon: %.5f, rad: %.5f, rot: %d\n", i, fr->buoys[i].body.center.latitude, fr->buoys[i].body.center.longitude, fr->buoys[i].body.radius, fr->buoys[i].rotation);
 	}
 	printf("---end frame---\n");
 };
@@ -579,22 +579,11 @@ void disp_mi(mission *mi) {
 	printf("id: %d\n", mi->id);
 	printf("type: %d\n", mi->type);
 	printf("frame id: %d\n", mi->fr_id);
-	int wp_count = 0, ob_count = 0;
-	while (1) {
-		if (mi->waypoints[wp_count].latitude != 0 & wp_count < MAX_NUM_WP) {
-			printf("waypoint%d, lat: %.5f, lon: %.5f\n", wp_count, mi->waypoints[wp_count].latitude, mi->waypoints[wp_count].longitude);
-			wp_count++;
-		} else {
-			break;
-		}
+	for (int i = 0; i < mi->waypoint_count; i++) {
+		printf("waypoint %d, lat: %.5f, lon: %.5f\n", i, mi->waypoints[i].latitude, mi->waypoints[i].longitude);
 	}
-	while (1) {
-		if (mi->obstacles[ob_count].center.latitude != 0 & ob_count < MAX_NUM_OB) {
-			printf("obstacle%d, lat: %.5f, lon: %.5f, rad: %.5f\n", ob_count, mi->obstacles[ob_count].center.latitude, mi->obstacles[ob_count].center.longitude, mi->obstacles[ob_count].radius);
-			ob_count++;
-		} else {
-			break;
-		}
+	for (int j = 0; j < mi->obstacle_count; j++) {
+		printf("obstacle %d, lat: %.5f, lon: %.5f, rad: %.5f\n", j, mi->obstacles[j].center.latitude, mi->obstacles[j].center.longitude, mi->obstacles[j].radius);
 	}
 	printf("---end mission---\n");
 };

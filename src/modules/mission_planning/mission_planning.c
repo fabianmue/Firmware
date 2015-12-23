@@ -184,7 +184,8 @@ int mp_thread_main(int argc, char *argv[]) {
 
 	// poll for changes in subscribed topics
     struct pollfd fds[] = {			 // polling management
-            { .fd = subs.parameter_update,          .events = POLLIN }
+            { .fd = subs.parameter_update,          .events = POLLIN },
+            { .fd = subs.mi_ack,          			.events = POLLIN }
     };
 
     int poll_return;				// return value of the polling.
@@ -218,14 +219,17 @@ int mp_thread_main(int argc, char *argv[]) {
             if(fds[0].revents & POLLIN){
 
                 // copy new parameters from QGC
-                orb_copy(ORB_ID(parameter_update), subs.parameter_update,
-                         &(strs.parameter_update));
+                orb_copy(ORB_ID(parameter_update), subs.parameter_update, &(strs.parameter_update));
                 // update parameters
                 mp_param_update(true);
+            }
 
-                // check if data source changed to SD card
+            if(fds[1].revents & POLLIN){
 
-
+                // copy new parameters from QGC
+                orb_copy(ORB_ID(mi_ack), subs.mi_ack, &(strs.mi_ack));
+                // send next waypoint/obstacle parameters
+                mp_tf_mi_data(&strs);
             }
 		}
 

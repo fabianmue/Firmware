@@ -85,6 +85,8 @@ void nav_heading_update(void);
 /** @brief Use the Yaw for calculating the heading */
 void yaw_update(struct pp_structs_topics_s *strs);
 
+/** @brief update mission */
+void mission_update(struct pp_structs_topics_s *strs);
 
 /** @brief Set Obstacles */
 extern void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos);

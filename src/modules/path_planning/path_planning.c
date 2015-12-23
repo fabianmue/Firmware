@@ -184,11 +184,12 @@ int pp_thread_main(int argc, char *argv[]) {
 
 	//**POLL FOR CHANGES IN SUBSCRIBED TOPICS
     struct pollfd fds[] = {			 // Polling Management
-            { .fd = subs.boat_guidance_debug,       .events = POLLIN },//MUST BE THE FIRST ONE!
+            { .fd = subs.boat_guidance_debug,       .events = POLLIN }, //MUST BE THE FIRST ONE!
             { .fd = subs.vehicle_global_position,   .events = POLLIN },
             { .fd = subs.parameter_update,          .events = POLLIN },
             { .fd = subs.rc_channels,               .events = POLLIN },
-            { .fd = subs.vehicle_attitude,          .events = POLLIN }
+            { .fd = subs.vehicle_attitude,          .events = POLLIN },
+            { .fd = subs.mission_planning,			.events = POLLIN }
     };
 
     int poll_return;				//Return Value of the polling.
@@ -304,6 +305,13 @@ int pp_thread_main(int argc, char *argv[]) {
                 	yaw_update(&strs);
 					#endif
                 }
+                if(fds[5].revents & POLLIN){
+                	//New data in vehicle_attitude topic
+                	orb_copy(ORB_ID(mission_planning), subs.mission_planning, &(strs.mission_planning));
+
+                	//Set the new value for the mission
+                	mission_update(&strs);
+                }
 			}
 		}
 
@@ -334,10 +342,11 @@ int pp_thread_main(int argc, char *argv[]) {
 		#endif
 
 
-        /* Warning: path_planning topic should be published only ONCE for every loop iteration.
+        /* Warning: path_planning and mi_ack topic should be published only ONCE for every loop iteration.
          * Use pp_communication_buffer to change topic's values.
         */
         pp_cb_publish_if_updated();
+        pp_cb_publish_mi_ack_if_updated();
 
 
 	} //END OF MAIN THREAD-LOOP

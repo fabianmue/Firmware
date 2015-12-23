@@ -15,6 +15,7 @@
 #include "../uORB.h"
 
 struct path_planning_s {
+
 	uint64_t timestamp;   /**< Time of the last Pathplanning Update since System Start in Microseconds */
     float    alpha_star;  /**< Alpha angle reference, in Dumas' convention [rad] */
     bool     do_maneuver; /**< True, iff boat should either tack or jybe */
@@ -26,11 +27,14 @@ struct path_planning_s {
     float heading; 		  /**< Current heading of the boat known by the Navigator => for debugging*/
     float ref_heading;    /**< Reference heading from the pathplanning (Note: This heading is not necessarily sent to autonomous_sailing app) */
     float wind; 		  /**< Current Wind Direction known by the Navigator => for debugging */
-    // float target_north;   /**< NED-North Coordinate of the next Target */
-    // float target_east;    /**< NED-East Coordinate of the next Target */
-    // float obst_north; 	  /**< NED-North Coordinate for the obstacle */
-    // float obst_east;      /**< NED-East Coordinate for the obstacle */
-    // uint8_t target_num;   /**< Number of the Target currently set as the next waypoint */
+
+    uint32_t 	mi_id;
+    float 		tar_lat;
+    float		tar_lon;
+    uint32_t 	tar_num;
+    float 		obs_lat;
+    float		obs_lon;
+    uint32_t 	obs_num;
 
     bool failsafe; 		  /**< Failsafe-Flag. true, iff the Pathplanning detected a failsafe condition */
 };

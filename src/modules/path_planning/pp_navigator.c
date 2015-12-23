@@ -46,6 +46,9 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
+int cur_mi_id = -1, num_obs = 0;
+Point cur_tar, cur_obs;
+
 /** Struct holding the main configuration variables of the navigator */
 static struct {
 	uint64_t period; 		//The period of calls to Pathplanning (time between two calls to nav_navigate())
@@ -100,16 +103,6 @@ static bool dbg_alpha_status = false;
 static bool dbg_alpha_minus = false;
 
 // static uint8_t qground_obstnum = 0; //number, auto increasing in every step. It is used to store all obstacles in the SD-Log
-
-
-
-/***********************************************************************************/
-/*****  F U N C T I O N   P R O T O T Y P E S **************************************/
-/***********************************************************************************/
-
-
-
-
 
 /***********************************************************************************/
 /*****  P U B L I C    F U N C T I O N S  ******************************************/
@@ -639,6 +632,43 @@ void yaw_update(struct pp_structs_topics_s *strs) {
 
 }
 
+void mission_update(struct pp_structs_topics_s *strs) {
+
+	cb_new_obs_ack(false);
+	cb_new_tar_ack(false);
+	if (cur_mi_id != strs->mission_planning.mi_id) {
+
+		// new mission, reset navigation queue
+		cur_mi_id = strs->mission_planning.mi_id;
+		nav_queue_init();
+		cb_new_mission(strs->mission_planning.mi_id);
+	}
+
+	if (cur_tar.lat != (double)strs->mission_planning.tar_lat | cur_tar.lon != (double)strs->mission_planning.tar_lon) {
+
+		// new target
+		cur_tar.lat = (double)strs->mission_planning.tar_lat;
+		cur_tar.lon = (double)strs->mission_planning.tar_lon;
+		cur_tar.alt = 0;
+		NEDpoint tar_ned = nh_geo2ned(cur_tar);
+		nav_set_target_ned(tar_ned);
+		cb_new_target(cur_tar);
+		cb_new_tar_ack(true);
+	}
+
+	if (cur_obs.lat != (double)strs->mission_planning.obs_lat | cur_obs.lon != (double)strs->mission_planning.obs_lon) {
+
+		// new obstacle
+		cur_obs.lat = (double)strs->mission_planning.obs_lat;
+		cur_obs.lon = (double)strs->mission_planning.obs_lon;
+		cur_obs.alt = 0;
+		NEDpoint obs_ned = nh_geo2ned(cur_obs);
+		nav_set_obstacle_ned(num_obs, obs_ned);
+		num_obs++;
+		cb_new_obstacle(cur_obs);
+		cb_new_obs_ack(true);
+	}
+}
 
 
 /**

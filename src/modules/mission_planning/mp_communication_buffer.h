@@ -10,11 +10,17 @@
 
 #include "mp_topics_handler.h"
 
-/* @brief send new target position to the mission_planning topic */
-bool mp_cb_new_target(float lat, float lon);
+/* @brief send new mission_id */
+bool mp_cb_sd_read(void);
 
-/* @brief update QGC obstacle number */
-bool mp_cb_new_obstacle(void);
+/* @brief send new mission_id */
+bool mp_cb_new_mission(int id);
+
+/* @brief send new target position */
+bool mp_cb_new_target(float tar_lat, float tar_lon);
+
+/* @brief increase obstacle number */
+bool mp_cb_new_obstacle(float obs_lat, float obs_lon);
 
 /* @brief publish mission_planning module if it has been updated */
 void mp_cb_publish_if_updated(void);

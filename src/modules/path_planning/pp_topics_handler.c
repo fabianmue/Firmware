@@ -15,6 +15,7 @@ static struct {
     orb_advert_t boat_qgc_param2;      //QGC paramters for path_planning
     orb_advert_t boat_local_position; // local position of the boat
     orb_advert_t boat_pp_debug1;		//Data from Pathplanning (Costfunction)
+    orb_advert_t mi_ack;
 } pubs;
 
 /**
@@ -32,6 +33,7 @@ bool pp_th_subscribe(struct pp_subscribtion_fd_s *subs_p, struct pp_structs_topi
     subs_p->boat_guidance_debug = orb_subscribe(ORB_ID(boat_guidance_debug));
     subs_p->rc_channels = orb_subscribe(ORB_ID(rc_channels));
     subs_p->vehicle_attitude = orb_subscribe(ORB_ID(vehicle_attitude));
+    subs_p->mission_planning = orb_subscribe(ORB_ID(mission_planning));
 
     //Set update intervals => helps keeping the processor-load low
     //orb_set_interval(subs_p->vehicle_global_position, 500);
@@ -43,22 +45,32 @@ bool pp_th_subscribe(struct pp_subscribtion_fd_s *subs_p, struct pp_structs_topi
 
 	//Check correct subscription
     if(subs_p->vehicle_global_position == -1){
-        warnx(" error on subscribing on vehicle_global_position Topic \n");
+        warnx(" error on subscribing on vehicle_global_position topic \n");
         return false;
     }
 
     if(subs_p->parameter_update == -1){
-        warnx(" error on subscribing on parameter_update Topic \n");
+        warnx(" error on subscribing on parameter_update topic \n");
         return false;
     }
 
     if(subs_p->boat_guidance_debug == -1){
-        warnx(" error on subscribing on boat_guidance_debug Topic \n");
+        warnx(" error on subscribing on boat_guidance_debug topic \n");
         return false;
     }
 
     if(subs_p->rc_channels == -1){
-        warnx(" error on subscribing on rc_channels Topic \n");
+        warnx(" error on subscribing on rc_channels topic \n");
+        return false;
+    }
+
+    if(subs_p->vehicle_attitude == -1){
+        warnx(" error on subscribing on vehicle_attitude topic \n");
+        return false;
+    }
+
+    if(subs_p->mission_planning == -1){
+        warnx(" error on subscribing on mission_planning topic \n");
         return false;
     }
 
@@ -78,10 +90,15 @@ bool pp_th_subscribe(struct pp_subscribtion_fd_s *subs_p, struct pp_structs_topi
  */
 bool pp_th_advertise(void) {
 
-	//Advertise the Pathplanning topic
+	//Advertise the path_planning topic
     struct path_planning_s path_planning;
     memset(&path_planning, 0, sizeof(path_planning));
     pubs.path_planning = orb_advertise(ORB_ID(path_planning), &path_planning);
+
+	//Advertise the mi_ack topic
+    struct mi_ack_s mi_ack;
+    memset(&mi_ack, 0, sizeof(mi_ack));
+    pubs.mi_ack = orb_advertise(ORB_ID(mi_ack), &mi_ack);
 
     //Advertise boat_qgc_param2 topic
     struct boat_qgc_param2_s boat_qgc_param2;
@@ -114,6 +131,17 @@ int pp_th_publish(const struct path_planning_s *path_planning_p) {
 }
 
 /**
+ * Publish mi_ack topic.
+ *
+ * @param mi_ack: Pointer to a mi_ack struct
+ * @return return value from orb_publish()
+ */
+int pp_th_publish_mi_ack(const struct mi_ack_s *mi_ack_p) {
+
+    return orb_publish(ORB_ID(mi_ack), pubs.mi_ack, mi_ack_p);
+}
+
+/**
  * Publish topic boat_qgc_param2.
  *
  * @param boat_qgc_param2_p: Pointer to a boat_qgc_param2_s struct
@@ -137,15 +165,12 @@ int pp_th_publish_boat_local_position(const struct boat_local_position_s *boat_l
                        boat_local_position_p);
 }
 
-
-
-/** Publish topic boat_pp_debug1
+/**
+ * Publish topic boat_pp_debug1
  *
  * @param boat_pp_debug1: Pointer to the boat_pp_debug1_s struct
  * @return return value from orb_publish()
- *
  */
 int pp_th_publish_boat_debug1(const struct boat_pp_debug1_s *boat_pp_debug1_p) {
 	return orb_publish(ORB_ID(boat_pp_debug1), pubs.boat_pp_debug1, boat_pp_debug1_p);
 }
-

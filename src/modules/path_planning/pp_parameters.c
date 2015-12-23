@@ -295,29 +295,17 @@ PARAM_DEFINE_FLOAT(PP_NAV_PERIOD, 1);
 PARAM_DEFINE_INT32(PP_NAV_TURNRATE, 10);
 
 
-/**
- * pp_navigator: Target Position (GEO-Coordinate Frame)
-PARAM_DEFINE_INT32(PP_NAV_TAR_LAT, HOMELAT);
-PARAM_DEFINE_INT32(PP_NAV_TAR_LON, HOMELON);
-PARAM_DEFINE_FLOAT(PP_NAV_TAR_NEDN,0);
-PARAM_DEFINE_FLOAT(PP_NAV_TAR_NEDE,0);
+PARAM_DEFINE_INT32(MI_ID, -1);
 
-PARAM_DEFINE_INT32(PP_NAV_TAR_NUM, 1);	//Number of Target currently set
-PARAM_DEFINE_INT32(PP_NAV_TAR_NEXT,0);	//Number of the next Target to be reached
- */
+PARAM_DEFINE_FLOAT(TAR_LAT, 0);
+PARAM_DEFINE_FLOAT(TAR_LON, 0);
+PARAM_DEFINE_FLOAT(TAR_NUM, 0);
 
-/**
- * pp_navigator: Target Position (GEO-Coordinate Frame)
-PARAM_DEFINE_INT32(PP_NAV_OBST_LAT, HOMELAT);
-PARAM_DEFINE_INT32(PP_NAV_OBST_LON, HOMELON);
-PARAM_DEFINE_FLOAT(PP_NAV_OBST_NEDN,0);
-PARAM_DEFINE_FLOAT(PP_NAV_OBST_NEDE,0);
+PARAM_DEFINE_FLOAT(OBS_LAT, 0);
+PARAM_DEFINE_FLOAT(OBS_LON, 0);
+PARAM_DEFINE_FLOAT(OBS_NUM, 0);
 
-PARAM_DEFINE_INT32(PP_NAV_OBST_NUM, 1);	//Number of Obstacle currently set
-*/
-
-/**
- * pp_navigator: Start-Line defined by two buoys
+/*
 PARAM_DEFINE_INT32(PP_NAV_STRT1_LAT, HOMELAT);
 PARAM_DEFINE_INT32(PP_NAV_STRT1_LON, HOMELON);
 PARAM_DEFINE_INT32(PP_NAV_STRT2_LAT, HOMELAT);
@@ -481,20 +469,20 @@ static struct pointers_pp_param_qgc_s {
 
 	param_t nav_dbg_nogybe;
 
-	//**SIMULATION FOR DEBUGGING
+	// SIMULATION FOR DEBUGGING
 	param_t sim_ned_northx;
 	param_t sim_ned_easty;
 	param_t sim_heading;
 
 
-	//**POTENTIALFIELD METHOD
+	// POTENTIALFIELD METHOD
 	param_t pm_weight_gt_pointer;
 	param_t pm_weight_go_pointer;
 	param_t pm_weight_gw_pointer;
 	param_t pm_weight_gm_pointer;
 	param_t pm_weight_sdist_pointer;
 
-	//**KALMAN OBSTACLE TRACKER
+	// KALMAN OBSTACLE TRACKER
 	param_t kt_enable;
 	param_t kt_sigma;
 	param_t kt_unseen;
@@ -502,12 +490,14 @@ static struct pointers_pp_param_qgc_s {
 	param_t kt_co;
 	param_t kt_period;
 
-	//**MISSION PLANNER (COMPETITION)
-	param_t co_dist;
-	param_t co_o1n;
-	param_t co_o1e;
-	param_t co_rotation;
-	param_t co_mission;
+	// MISSION PLANNER (COMPETITION)
+	param_t mi_id;
+	param_t mi_tar_lat;
+	param_t mi_tar_lon;
+	param_t mi_tar_num;
+	param_t mi_obs_lat;
+	param_t mi_obs_lon;
+	param_t mi_obs_num;
 
 } pointers_pp_param_qgc;
 
@@ -518,7 +508,7 @@ static struct pointers_pp_param_qgc_s {
 */
 void pp_param_init(void){
 
-    //initialize pointer to parameters
+    // initialize pointer to parameters
 	pointers_pp_param_qgc.lat0_pointer    = param_find("ASP_R_LAT0_E7");
 	pointers_pp_param_qgc.lon0_pointer    = param_find("ASP_R_LON0_E7");
 	pointers_pp_param_qgc.alt0_pointer    = param_find("ASP_R_ALT0_E3");
@@ -541,10 +531,10 @@ void pp_param_init(void){
 		pointers_pp_param_qgc.downwind_alpha_star_pointer = param_find("ASP_DWN_ALPST_D");
     #endif //USE_GRID_LINES == 1
 
-    //explicit tack now command from QGC
+    // explicit tack now command from QGC
     pointers_pp_param_qgc.do_maneuver_now = param_find("ASP_DO_MANEUV");
 
-    //explicit alpha star from QGC
+    // explicit alpha star from QGC
     pointers_pp_param_qgc.alpha_star_pointer    = param_find("ASP_ALST_ANG_D");
     pointers_pp_param_qgc.use_alpha_star_pointer    = param_find("ASP_ALST_SET");
 
@@ -570,7 +560,7 @@ void pp_param_init(void){
 
 
 
-    //**COST_METHOD
+    // COST_METHOD
     pointers_pp_param_qgc.cm_weight_gw_pointer = param_find("PP_CM_W_GW");
     pointers_pp_param_qgc.cm_weight_go_pointer = param_find("PP_CM_W_GO");
     pointers_pp_param_qgc.cm_weight_gm_pointer = param_find("PP_CM_W_GM");
@@ -585,7 +575,7 @@ void pp_param_init(void){
 
     pointers_pp_param_qgc.cm_dbg_nodist = param_find("PP_DBG_NODIST");
 
-    //**NAVIGATION
+    // NAVIGATION
     pointers_pp_param_qgc.nav_period = param_find("PP_NAV_PERIOD");
     pointers_pp_param_qgc.nav_turnrate = param_find("PP_NAV_TURNRATE");
 
@@ -597,18 +587,18 @@ void pp_param_init(void){
     pointers_pp_param_qgc.nav_dbg_invalp = param_find("PP_DBG_INVALP");
     pointers_pp_param_qgc.nav_dbg_nogybe = param_find("PP_DBG_NOGYBE");
 
-    //**SIMULATION DEBUG
+    // SIMULATION DEBUG
     pointers_pp_param_qgc.sim_ned_northx = param_find("SIM_NED_NORTHX");
     pointers_pp_param_qgc.sim_ned_easty = param_find("SIM_NED_EASTY");
     pointers_pp_param_qgc.sim_heading = param_find("SIM_HEADING");
 
-    //**ENABLE PATHPLANNER
+    // ENABLE PATHPLANNER
     pointers_pp_param_qgc.nav_pathp_on = param_find("PP_APATHP_ON");
     pointers_pp_param_qgc.nav_meth = param_find("PP_NAV_METH");
     pointers_pp_param_qgc.nav_setar = param_find("PP_NAV_SETAR");
 
 
-    //**POTENTIALFIELD METHOD
+    // POTENTIALFIELD METHOD
     pointers_pp_param_qgc.pm_weight_gt_pointer = param_find("PP_PM_W_GT");
     pointers_pp_param_qgc.pm_weight_go_pointer = param_find("PP_PM_W_GO");
     pointers_pp_param_qgc.pm_weight_gw_pointer = param_find("PP_PM_W_GW");
@@ -616,13 +606,22 @@ void pp_param_init(void){
     pointers_pp_param_qgc.pm_weight_sdist_pointer = param_find("PP_PM_W_SDIST");
 
 
-	//**KALMAN OBSTACLE TRACKER
+	// KALMAN OBSTACLE TRACKER
     pointers_pp_param_qgc.kt_enable = param_find("KT_A_ENABLE");
     pointers_pp_param_qgc.kt_sigma = param_find("KT_SIGMA");
     pointers_pp_param_qgc.kt_unseen = param_find("KT_UNSEEN");
     pointers_pp_param_qgc.kt_nnsf_thresh = param_find("KT_NNSF_THRESH");
     pointers_pp_param_qgc.kt_co = param_find("KT_CO");
     pointers_pp_param_qgc.kt_period = param_find("KT_PERIOD");
+
+    // MISSION
+    pointers_pp_param_qgc.mi_id = param_find("MI_ID");
+    pointers_pp_param_qgc.mi_tar_lat = param_find("TAR_LAT");
+    pointers_pp_param_qgc.mi_tar_lon = param_find("TAR_LON");
+    pointers_pp_param_qgc.mi_tar_num = param_find("TAR_NUM");
+    pointers_pp_param_qgc.mi_obs_lat = param_find("OBS_LAT");
+    pointers_pp_param_qgc.mi_obs_lon = param_find("OBS_LON");
+    pointers_pp_param_qgc.mi_obs_num = param_find("OBS_NUM");
 
     //get parameters but do not add any grid lines at start up
     pp_param_update(false);
@@ -930,5 +929,16 @@ void pp_param_update(bool update_path_param){
    	float kt_period = 0;
    	param_get(pointers_pp_param_qgc.kt_period, &kt_period);
    	sb_set_configuration(kt_period);
+
+    // MISSION
+   	int mi_id, tar_num, obs_num;
+   	Point tar, obs;
+   	param_get(pointers_pp_param_qgc.mi_id, &mi_id);
+   	param_get(pointers_pp_param_qgc.mi_tar_lat, &tar.lat);
+   	param_get(pointers_pp_param_qgc.mi_tar_lon, &tar.lon);
+   	param_get(pointers_pp_param_qgc.mi_tar_num, &tar_num);
+   	param_get(pointers_pp_param_qgc.mi_obs_lat, &obs.lat);
+   	param_get(pointers_pp_param_qgc.mi_obs_lon, &obs.lon);
+   	param_get(pointers_pp_param_qgc.mi_obs_num, &obs_num);
 
 }

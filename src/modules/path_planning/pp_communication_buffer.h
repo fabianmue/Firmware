@@ -42,6 +42,7 @@
 #ifndef PP_COMMUNICATION_BUFFER_H
 #define PP_COMMUNICATION_BUFFER_H
 
+#include "pp_navigation_helper.h"
 #include "pp_topics_handler.h"
 #include "pp_send_msg_qgc.h"
 #include "pp_config.h"
@@ -78,14 +79,20 @@ bool cb_new_refheading(float ref_heading);
 /** @brief store the current Wind Direction known by the Navigator in the pathplanning-topic */
 bool cb_new_wind(float wind);
 
-/** @brief Send the new target position to the Pathplanning Topic */
-// bool cb_new_target(float north, float east);
+/* @brief send new mission_id */
+bool cb_new_mission(int id);
 
-/** @brief Store the current obstacle position in the pathplanning-topic */
-// bool cb_new_obstacle(float o_north, float o_east);
+/* @brief send new target position */
+bool cb_new_target(Point tar);
 
-/** @brief Send the Number of the next Waypoint to QGround Control */
-// bool cb_new_targetnum(uint8_t tar_num);
+/* @brief increase obstacle number */
+bool cb_new_obstacle(Point obs);
+
+//
+bool cb_new_obs_ack(bool ack);
+
+//
+bool cb_new_tar_ack(bool ack);
 
 /** @brief command a tack or a jybe */
 bool cb_do_maneuver(float new_alpha_star);
@@ -123,6 +130,9 @@ void cb_new_as_data(int boat_guidance_debug_sub);
 
 /** @brief publish path_planning module if it has been updated */
 void pp_cb_publish_if_updated(void);
+
+//
+void pp_cb_publish_mi_ack_if_updated(void);
 
 /** @brief init module */
 void pp_cb_init(void);

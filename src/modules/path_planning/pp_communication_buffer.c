@@ -52,7 +52,11 @@
 
 //state variables
 static struct path_planning_s pp;
-static bool pp_updated = false;//has pp been updated ?
+static bool pp_updated = false; //has pp been updated ?
+
+static struct mi_ack_s mi_ack;
+static bool mi_ack_updated = false;
+
 static bool manual_mode = false; //is remote control in manual mode?, true, if in manual mode
 static uint8_t last_haul = HAUL_PORT;//dummy initial guess
 
@@ -87,10 +91,6 @@ bool cb_set_failsafe(bool state) {
 	return true;
 }
 
-
-
-
-
 /**
  * Get the mode we are in at the moment (manual/autonomous)
  *
@@ -105,9 +105,6 @@ bool cb_is_autonomous_mode(void) {
 		return true;
 	}
 }
-
-
-
 
 /**
  * Store the current Position of the boat in NED-Coordinates in the Pathplanning Topic
@@ -138,7 +135,6 @@ bool cb_new_heading(float heading) {
 	return true;
 }
 
-
 /**
  * Return the current Heading of the boat from the Pathplanning Topic
  * Note: The heading is calculated in navigator.c
@@ -150,25 +146,6 @@ float cb_get_heading(void) {
 
 	return pp.heading;
 }
-
-
-
-
-/**
- * Store the current Position of the obstacle in Pathplanning Topic
- * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
- *
- * @param obst_pos: position of the obstacle (NED) [m]
- */
-// bool cb_new_obstacle(float o_north, float o_east) {
-//	pp.obst_north = o_north;
-//	pp.obst_east = o_east;
-//
-//	pp_updated = true;
-//
-//	return true;
-// }
-
 
 /**
  * Store the current Reference Heading of the boat in Pathplanning Topic => For DEBUG purposes
@@ -184,7 +161,6 @@ bool cb_new_refheading(float ref_heading) {
 	return true;
 }
 
-
 /**
  * Store the current Heading of the boat in Pathplanning Topic
  * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
@@ -199,37 +175,52 @@ bool cb_new_wind(float wind) {
 	return true;
 }
 
+/* @brief send new mission_id */
+bool cb_new_mission(int id) {
 
-/*
- * Send an Int-Value for Debug purposes to QGround Control
- *
- * @param int-value
- */
-// bool cb_new_target(float north, float east) {
-//	pp.target_north = north;
-//	pp.target_east = east;
-//
-//	pp_updated = true;
-//
-//	return true;
-// }
+	pp.mi_id = id;
 
+	pp_updated = true;
+	return true;
+}
 
-/**
- * Send the current Target Number that is set as the next Waypoint to QGround Control
- *
- * @param tar_num: Number of the next Waypoint
- */
-// bool cb_new_targetnum(uint8_t tar_num) {
-//	pp.target_num = tar_num;
-//
-//	pp_updated = true;
-//
-//	return true;
-// }
+/* @brief send new target position */
+bool cb_new_target(Point tar) {
 
+	pp.tar_lat = tar.lat;
+	pp.tar_lon = tar.lon;
+	pp.tar_num++;
 
+	pp_updated = true;
+	return true;
+}
 
+/* @brief increase obstacle number */
+bool cb_new_obstacle(Point obs) {
+
+	pp.obs_lat = obs.lat;
+	pp.obs_lon = obs.lon;
+	pp.obs_num++;
+
+	pp_updated = true;
+	return true;
+}
+
+bool cb_new_obs_ack(bool ack) {
+
+	mi_ack.obs_ack = ack;
+
+	mi_ack_updated = true;
+	return true;
+}
+
+bool cb_new_tar_ack(bool ack) {
+
+	mi_ack.tar_ack = ack;
+
+	mi_ack_updated = true;
+	return true;
+}
 
 /**
  * Tell autonomous_sailing app to start a tack or jybe maneuver.
@@ -336,12 +327,29 @@ void pp_cb_publish_if_updated(void){
     //Make sure this happens not too often, otherwise the processor load is too high
     //uint64_t utime = hrt_absolute_time();
 
-    if(pp_updated == true /*&& last_update-utime > 0.25e-6*/){
+    if (pp_updated == true /*&& last_update-utime > 0.25e-6*/) {
     	//last_update = time;
 
         pp.timestamp = hrt_absolute_time();
         pp_th_publish(&pp);
         pp_updated = false;
+    }
+}
+
+/**
+ * If either at least one parameter in mi_ack topic
+ * has been changed, publish it.
+*/
+void pp_cb_publish_mi_ack_if_updated(void){
+
+    //if mi_ack topic has been updated, publish it
+    //Make sure this happens not too often, otherwise the processor load is too high
+
+    if (mi_ack_updated == true) {
+
+        mi_ack.timestamp = hrt_absolute_time();
+        pp_th_publish_mi_ack(&mi_ack);
+        mi_ack_updated = false;
     }
 }
 
@@ -380,17 +388,23 @@ void pp_cb_init(void){
     //clean memory
     memset(&pp, 0, sizeof(pp));
     memset(&boat_guidance_debug, 0, sizeof(boat_guidance_debug));
+    memset(&mi_ack, 0, sizeof(mi_ack));
+
     //default starting maneuver id = 255
     pp.id_maneuver = 255;
+    pp.id_cmd = PP_NORMAL_CMD;
     //default alpha_star = 45 deg
     cb_set_alpha_star(M_PI_F / 4.0f);
-    pp.id_cmd = PP_NORMAL_CMD;
-
-    // pp.target_num = 0;
+    //
+    mi_ack.obs_ack = true;
+    mi_ack.tar_ack = true;
 
     //Added 19.06.15, commented 02.09.2015
     pp_updated = true;
     pp_cb_publish_if_updated();
+
+    mi_ack_updated = true;
+    pp_cb_publish_mi_ack_if_updated();
 }
 
 /**

@@ -2188,10 +2188,7 @@ public:
 
     unsigned get_size()
     {
-        //return 8 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
-        //return 6 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
-        //return 4 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
-        return 7 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 13 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
     }
 
 private:
@@ -2240,19 +2237,29 @@ protected:
             msg.value = ((float)path_p_debug.ned_east);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-            /*
-            snprintf(msg_int.name, sizeof(msg.name), "pp_TarNum");
-            msg_int.value = ((int)(path_p_debug.target_num));
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg_int);
+            snprintf(msg.name, sizeof(msg.name), "pp_tar_lat");
+            msg.value = ((float)(path_p_debug.tar_lat));
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "pp_Ntar");
-            msg.value = ((float)path_p_debug.target_north);
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+            snprintf(msg.name, sizeof(msg.name), "pp_tar_lon");
+            msg.value = ((float)(path_p_debug.tar_lon));
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "pp_Etar");
-            msg.value = ((float)path_p_debug.target_east);
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
-			*/
+            snprintf(msg.name, sizeof(msg.name), "pp_tar_num");
+            msg.value = ((float)(path_p_debug.tar_num));
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "pp_obs_lat");
+            msg.value = ((float)(path_p_debug.obs_lat));
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "pp_obs_lon");
+            msg.value = ((float)(path_p_debug.obs_lon));
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "pp_obs_num");
+            msg.value = ((float)(path_p_debug.obs_num));
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg);
 
             snprintf(msg.name, sizeof(msg.name), "pp_navref");
             msg.value = ((float)path_p_debug.ref_heading*RAD2DEG);
@@ -2265,16 +2272,6 @@ protected:
             snprintf(msg.name, sizeof(msg.name), "pp_navwin");
             msg.value = ((float)path_p_debug.wind*RAD2DEG);
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
-
-            /*
-            snprintf(msg.name, sizeof(msg.name), "pp_Nobs");
-            msg.value = ((float)path_p_debug.obst_north);
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
-
-            snprintf(msg.name, sizeof(msg.name), "pp_Eobs");
-            msg.value = ((float)path_p_debug.obst_east);
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
-            */
         }
     }
 };
@@ -2382,7 +2379,7 @@ public:
 
     unsigned get_size()
     {
-        return 3 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 0 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
     }
 
 private:
@@ -2405,32 +2402,15 @@ protected:
 
         if (_mission_p_sub->update(&_mission_p_time, &mission_p_debug)) {
             /* send, add spaces so that string buffer is at least 10 chars long */
-            mavlink_named_value_float_t msg;
+        	mavlink_named_value_int_t msg_int;
             // mavlink_named_value_int_t msg_int;
 
-            msg.time_boot_ms = mission_p_debug.timestamp / 1000;
+            msg_int.time_boot_ms = mission_p_debug.timestamp / 1000;
 
-            snprintf(msg.name, sizeof(msg.name), "mp_tar_lat");
-            msg.value = (mission_p_debug.tar_lat);
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+            snprintf(msg_int.name, sizeof(msg_int.name), "mp_sd_read");
+            msg_int.value = ((int)(mission_p_debug.sd_read));
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg_int);
 
-            snprintf(msg.name, sizeof(msg.name), "mp_tar_lon");
-            msg.value = (mission_p_debug.tar_lon);
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
-
-            /*
-            snprintf(msg.name, sizeof(msg.name), "mp_tar_ned_n");
-            msg.value = (mission_p_debug.tar_ned_north);
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
-
-            snprintf(msg.name, sizeof(msg.name), "mp_tar_ned_e");
-            msg.value = (mission_p_debug.tar_ned_east);
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
-			*/
-
-            snprintf(msg.name, sizeof(msg.name), "mp_ob_num");
-            msg.value = (mission_p_debug.ob_num);
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg);
         }
     }
 };

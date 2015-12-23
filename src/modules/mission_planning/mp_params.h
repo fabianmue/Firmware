@@ -47,6 +47,7 @@ typedef struct frame_s {
 	char *name;
 	int id;
 	buoy buoys[MAX_NUM_BU];
+	int buoy_count;
 } frame;
 
 typedef struct mission_s {
@@ -55,7 +56,9 @@ typedef struct mission_s {
 	int type;
 	int fr_id;
 	waypoint waypoints[MAX_NUM_WP];
+	int waypoint_count;
 	obstacle obstacles[MAX_NUM_OB];
+	int obstacle_count;
 } mission;
 
 /***********************************************************************************/

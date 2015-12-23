@@ -10,8 +10,9 @@
 #define MP_TOPICS_HANDLER_H_
 
 #include <uORB/uORB.h>
-#include <uORB/topics/parameter_update.h> 	// timestamp
-#include <uORB/topics/mission_planning.h> 	// current target (lat-lon and NED)
+#include <uORB/topics/parameter_update.h>
+#include <uORB/topics/mission_planning.h>
+#include <uORB/topics/mi_ack.h>
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -24,11 +25,17 @@
 // struct of all topic-subscriptions
 struct mp_subscribtion_fd_s {
     int parameter_update;					// update of Parameters from QGroundControl
+    int mi_ack;
+};
+
+struct mp_published_fd_s {
+    orb_advert_t mission_planning;
 };
 
 // structs of interested topics
-struct mp_structs_topics_s{
+struct mp_structs_topics_s {
 	struct parameter_update_s parameter_update;
+	struct mi_ack_s mi_ack;
 };
 
 /***********************************************************************************/

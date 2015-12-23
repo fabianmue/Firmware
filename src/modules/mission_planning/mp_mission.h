@@ -14,6 +14,7 @@
 #include <stdbool.h>
 
 #include "mp_params.h"
+#include "mp_topics_handler.h"
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
@@ -26,11 +27,11 @@
 /*****  F U N C T I O N   D E C L A R A T I O N S  *********************************/
 /***********************************************************************************/
 
-extern void mp_mi_handler(int id);
+void mp_mi_handler(int id);
 
-void mp_init_mi(void);
+void mp_tf_mi_init(void);
 
-void mp_execute_mi(void);
+void mp_tf_mi_data(struct mp_structs_topics_s *strs);
 
 int mp_add_mi_to_queue(mission *mi);
 
