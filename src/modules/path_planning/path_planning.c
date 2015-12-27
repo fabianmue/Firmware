@@ -138,7 +138,7 @@ int path_planning_main(int argc, char *argv[])
         daemon_task = task_spawn_cmd("path_planning",
 					 SCHED_DEFAULT,
                      DAEMON_PRIORITY,
-                     4096, //was 4096 (5000 was working with SDLog)
+                     8192, //was 4096 (5000 was working with SDLog)
 					 pp_thread_main,
 					 (argv) ? (const char **)&argv[2] : (const char **)NULL);
 		exit(0);
@@ -173,11 +173,9 @@ int pp_thread_main(int argc, char *argv[]) {
 	//**THREAD IS STARTING
     warnx("path_planning starting\n");
 
-
 	//**HANDLE TOPICS
-	struct pp_subscribtion_fd_s subs;   //File-Descriptors of subscribed topics
-	struct pp_structs_topics_s strs;    //Struct of Interested Topics
-
+	struct pp_subscribtion_fd_s subs;   // File-Descriptors of subscribed topics
+	struct pp_structs_topics_s strs;    // Struct of Interested Topics
 
     pp_th_subscribe(&subs,&strs);       //Subscribe to interested Topics
     pp_th_advertise();                  //Advertise Topics
@@ -193,7 +191,6 @@ int pp_thread_main(int argc, char *argv[]) {
     };
 
     int poll_return;				//Return Value of the polling.
-
 
     //** INIT FUNCTIONS
 
@@ -236,9 +233,7 @@ int pp_thread_main(int argc, char *argv[]) {
 	//**SET THE THREAD-STATUS TO RUNNING
 	thread_running = true;
 
-
-	/**MAIN THREAD-LOOP
-	 * This is the main Thread Loop. It loops until the Process is killed.*/
+	// MAIN THREAD-LOOP
 	while (!thread_should_exit) {
 
 		//**POLL FOR CHANGES IN THE SUBSCRIBED TOPICS
@@ -315,42 +310,37 @@ int pp_thread_main(int argc, char *argv[]) {
 			}
 		}
 
-
-        /* Call the navigator to calculate a new reference Heading
-         * Note: The navigator is called in every loop, but it is only executed in a regular
-         * time-based interval. */
+        // Call the navigator to calculate a new reference Heading
+        // Note: The navigator is called in every loop, but it is only executed in a regular
+        // time-based interval.
 		#if USE_GRID_LINES == 0
         nav_navigator();
 		#endif
 
 
-        /* Communicate with the Sensorboard */
+        // Communicate with the Sensorboard
 		#if LDEBUG_SENSORBOARD == 0
 		sb_handler();
 		#endif
 
 
-        /* Call the Failsafe state-machine */
+        // Call the Failsafe state-machine
 		#if USE_FAILSAFE == 1
         fs_state_machine();
 		#endif
 
 
-        /* Call the Kalman Tracker Update-Function */
+        // Call the Kalman Tracker Update-Function
 		#if LDEBUG_KALMANTRACKER == 1
         tr_handler();
 		#endif
 
 
-        /* Warning: path_planning and mi_ack topic should be published only ONCE for every loop iteration.
-         * Use pp_communication_buffer to change topic's values.
-        */
+        // Warning: path_planning and mi_ack topic should be published only ONCE for every loop iteration.
+        // Use pp_communication_buffer to change topic's values.
         pp_cb_publish_if_updated();
-        pp_cb_publish_mi_ack_if_updated();
-
 
 	} //END OF MAIN THREAD-LOOP
-
 
 	//**MANAGE THE KILLING OF THE THREAD
     warnx("path_planning exiting.\n");

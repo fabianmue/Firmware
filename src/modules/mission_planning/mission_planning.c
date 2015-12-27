@@ -173,7 +173,6 @@ int mp_thread_main(int argc, char *argv[]) {
 
 	// thread is starting
     warnx("mission_planning starting\n");
-	thread_running = true;
 
 	// handle topics
 	struct mp_subscribtion_fd_s subs;   // file-descriptors of subscribed topics
@@ -199,11 +198,14 @@ int mp_thread_main(int argc, char *argv[]) {
     // init msg to QGC module
     mp_init_msg_module();
 
+	thread_running = true;
+
     // main_thread loop - loops until thread is killed
 	while (!thread_should_exit) {
 
 		// poll for changes in subscribed topics
 		poll_return = poll(fds, (sizeof(fds) / sizeof(fds[0])), TIMEOUT_POLL);
+
 		if (poll_return == 0) {
 
 			// no topic contains changed data
@@ -216,15 +218,14 @@ int mp_thread_main(int argc, char *argv[]) {
 		} else {
 
 			// new data
-            if(fds[0].revents & POLLIN){
+            if(fds[0].revents & POLLIN) {
 
                 // copy new parameters from QGC
                 orb_copy(ORB_ID(parameter_update), subs.parameter_update, &(strs.parameter_update));
                 // update parameters
-                mp_param_update(true);
+                mp_param_update();
             }
-
-            if(fds[1].revents & POLLIN){
+            if(fds[1].revents & POLLIN) {
 
                 // copy new parameters from QGC
                 orb_copy(ORB_ID(mi_ack), subs.mi_ack, &(strs.mi_ack));
@@ -233,15 +234,9 @@ int mp_thread_main(int argc, char *argv[]) {
             }
 		}
 
-        /* warning: mission_planning topic should be published only ONCE for every loop iteration.
-         * use mp_communication_buffer to change topic's values.
-        */
+        // warning: mission_planning topic should be published only ONCE for every loop iteration
         mp_cb_publish_if_updated();
 
-        // to debug the SD card reading, 1 loop is sufficient
-        if (SD_DEBUG == 1) {
-        	thread_should_exit = true;
-        }
 	}
 
 	// kill the thread

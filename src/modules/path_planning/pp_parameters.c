@@ -294,17 +294,6 @@ PARAM_DEFINE_FLOAT(PP_NAV_PERIOD, 1);
  */
 PARAM_DEFINE_INT32(PP_NAV_TURNRATE, 10);
 
-
-PARAM_DEFINE_INT32(MI_ID, -1);
-
-PARAM_DEFINE_FLOAT(TAR_LAT, 0);
-PARAM_DEFINE_FLOAT(TAR_LON, 0);
-PARAM_DEFINE_FLOAT(TAR_NUM, 0);
-
-PARAM_DEFINE_FLOAT(OBS_LAT, 0);
-PARAM_DEFINE_FLOAT(OBS_LON, 0);
-PARAM_DEFINE_FLOAT(OBS_NUM, 0);
-
 /*
 PARAM_DEFINE_INT32(PP_NAV_STRT1_LAT, HOMELAT);
 PARAM_DEFINE_INT32(PP_NAV_STRT1_LON, HOMELON);
@@ -388,6 +377,17 @@ PARAM_DEFINE_FLOAT(KT_NNSF_THRESH,100);
 PARAM_DEFINE_FLOAT(KT_CO,10);
 PARAM_DEFINE_FLOAT(KT_PERIOD,2);
 
+/**
+ * mi_...
+ * Parameters for the mission
+ */
+PARAM_DEFINE_INT32(MI_ID, 0);
+PARAM_DEFINE_FLOAT(MI_TAR_LAT, 0.0f);
+PARAM_DEFINE_FLOAT(MI_TAR_LON, 0.0f);
+PARAM_DEFINE_INT32(MI_TAR_NUM, 0);
+PARAM_DEFINE_FLOAT(MI_OBS_LAT, 0.0f);
+PARAM_DEFINE_FLOAT(MI_OBS_LON, 0.0f);
+PARAM_DEFINE_INT32(MI_OBS_NUM, 0);
 
 static struct pointers_pp_param_qgc_s {
 
@@ -490,7 +490,7 @@ static struct pointers_pp_param_qgc_s {
 	param_t kt_co;
 	param_t kt_period;
 
-	// MISSION PLANNER (COMPETITION)
+	// KALMAN OBSTACLE TRACKER
 	param_t mi_id;
 	param_t mi_tar_lat;
 	param_t mi_tar_lon;
@@ -614,14 +614,14 @@ void pp_param_init(void){
     pointers_pp_param_qgc.kt_co = param_find("KT_CO");
     pointers_pp_param_qgc.kt_period = param_find("KT_PERIOD");
 
-    // MISSION
+	// MISSION
     pointers_pp_param_qgc.mi_id = param_find("MI_ID");
-    pointers_pp_param_qgc.mi_tar_lat = param_find("TAR_LAT");
-    pointers_pp_param_qgc.mi_tar_lon = param_find("TAR_LON");
-    pointers_pp_param_qgc.mi_tar_num = param_find("TAR_NUM");
-    pointers_pp_param_qgc.mi_obs_lat = param_find("OBS_LAT");
-    pointers_pp_param_qgc.mi_obs_lon = param_find("OBS_LON");
-    pointers_pp_param_qgc.mi_obs_num = param_find("OBS_NUM");
+    pointers_pp_param_qgc.mi_tar_lat = param_find("MI_TAR_LAT");
+    pointers_pp_param_qgc.mi_tar_lon = param_find("MI_TAR_LON");
+    pointers_pp_param_qgc.mi_tar_num = param_find("MI_TAR_NUM");
+    pointers_pp_param_qgc.mi_obs_lat = param_find("MI_OBS_LAT");
+    pointers_pp_param_qgc.mi_obs_lon = param_find("MI_OBS_LON");
+    pointers_pp_param_qgc.mi_obs_num = param_find("MI_OBS_NUM");
 
     //get parameters but do not add any grid lines at start up
     pp_param_update(false);
@@ -929,16 +929,4 @@ void pp_param_update(bool update_path_param){
    	float kt_period = 0;
    	param_get(pointers_pp_param_qgc.kt_period, &kt_period);
    	sb_set_configuration(kt_period);
-
-    // MISSION
-   	int mi_id, tar_num, obs_num;
-   	Point tar, obs;
-   	param_get(pointers_pp_param_qgc.mi_id, &mi_id);
-   	param_get(pointers_pp_param_qgc.mi_tar_lat, &tar.lat);
-   	param_get(pointers_pp_param_qgc.mi_tar_lon, &tar.lon);
-   	param_get(pointers_pp_param_qgc.mi_tar_num, &tar_num);
-   	param_get(pointers_pp_param_qgc.mi_obs_lat, &obs.lat);
-   	param_get(pointers_pp_param_qgc.mi_obs_lon, &obs.lon);
-   	param_get(pointers_pp_param_qgc.mi_obs_num, &obs_num);
-
 }

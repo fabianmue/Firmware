@@ -334,17 +334,6 @@ void pp_cb_publish_if_updated(void){
         pp_th_publish(&pp);
         pp_updated = false;
     }
-}
-
-/**
- * If either at least one parameter in mi_ack topic
- * has been changed, publish it.
-*/
-void pp_cb_publish_mi_ack_if_updated(void){
-
-    //if mi_ack topic has been updated, publish it
-    //Make sure this happens not too often, otherwise the processor load is too high
-
     if (mi_ack_updated == true) {
 
         mi_ack.timestamp = hrt_absolute_time();
@@ -395,16 +384,11 @@ void pp_cb_init(void){
     pp.id_cmd = PP_NORMAL_CMD;
     //default alpha_star = 45 deg
     cb_set_alpha_star(M_PI_F / 4.0f);
-    //
-    mi_ack.obs_ack = true;
-    mi_ack.tar_ack = true;
 
     //Added 19.06.15, commented 02.09.2015
     pp_updated = true;
-    pp_cb_publish_if_updated();
-
     mi_ack_updated = true;
-    pp_cb_publish_mi_ack_if_updated();
+    pp_cb_publish_if_updated();
 }
 
 /**

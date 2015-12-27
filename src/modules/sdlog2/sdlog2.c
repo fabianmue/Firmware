@@ -1934,12 +1934,12 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_PP.heading_ref = buf.path_planning.ref_heading;
             log_msg.body.log_PP.pos_n = buf.path_planning.ned_north;
             log_msg.body.log_PP.pos_e = buf.path_planning.ned_east;
-            /*
-            log_msg.body.log_PP.tar_n = buf.path_planning.target_north;
-            log_msg.body.log_PP.tar_e = buf.path_planning.target_east;
-            log_msg.body.log_PP.obst_n = buf.path_planning.obst_north;
-            log_msg.body.log_PP.obst_e = buf.path_planning.obst_east;
-            */
+            log_msg.body.log_PP.tar_lat = buf.path_planning.tar_lat;
+            log_msg.body.log_PP.tar_lon = buf.path_planning.tar_lon;
+            log_msg.body.log_PP.tar_num = buf.path_planning.tar_num;
+            log_msg.body.log_PP.obs_lat = buf.path_planning.obs_lat;
+            log_msg.body.log_PP.obs_lon = buf.path_planning.obs_lon;
+            log_msg.body.log_PP.obs_num = buf.path_planning.obs_num;
             log_msg.body.log_PP.wind = buf.path_planning.wind;
             log_msg.body.log_PP.head = buf.path_planning.heading;
             LOGBUFFER_WRITE_AND_COUNT(PP);

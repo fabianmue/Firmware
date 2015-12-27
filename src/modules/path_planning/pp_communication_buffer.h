@@ -131,9 +131,6 @@ void cb_new_as_data(int boat_guidance_debug_sub);
 /** @brief publish path_planning module if it has been updated */
 void pp_cb_publish_if_updated(void);
 
-//
-void pp_cb_publish_mi_ack_if_updated(void);
-
 /** @brief init module */
 void pp_cb_init(void);
 

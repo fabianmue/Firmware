@@ -69,7 +69,7 @@ typedef struct mission_s {
 void mp_param_init(void);
 
 /* @brief update parameters from QGC */
-void mp_param_update(bool update_param);
+void mp_param_update(void);
 
 /* @brief get parameters from SD card */
 void mp_get_params_SD(char file_path[]);

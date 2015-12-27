@@ -2153,7 +2153,6 @@ protected:
 
             snprintf(msg.name, sizeof(msg.name), "blp_d");
             msg.value = boat_local_position.dist_m;
-
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
         }
     }
@@ -2188,7 +2187,7 @@ public:
 
     unsigned get_size()
     {
-        return 13 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 11 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES) + 2 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
     }
 
 private:
@@ -2212,10 +2211,10 @@ protected:
         if (_path_p_sub->update(&_path_p_time, &path_p_debug)) {
             /* send, add spaces so that string buffer is at least 10 chars long */
             mavlink_named_value_float_t msg;
-            // mavlink_named_value_int_t msg_int;
+            mavlink_named_value_int_t msg_int;
 
             msg.time_boot_ms = path_p_debug.timestamp / 1000;
-            // msg_int.time_boot_ms = path_p_debug.timestamp / 1000;
+            msg_int.time_boot_ms = path_p_debug.timestamp / 1000;
 
             snprintf(msg.name, sizeof(msg.name), "as_alstr");
             msg.value = (path_p_debug.alpha_star*RAD2DEG);
@@ -2239,27 +2238,27 @@ protected:
 
             snprintf(msg.name, sizeof(msg.name), "pp_tar_lat");
             msg.value = ((float)(path_p_debug.tar_lat));
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg);
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
             snprintf(msg.name, sizeof(msg.name), "pp_tar_lon");
             msg.value = ((float)(path_p_debug.tar_lon));
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg);
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "pp_tar_num");
-            msg.value = ((float)(path_p_debug.tar_num));
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg);
+            snprintf(msg_int.name, sizeof(msg_int.name), "pp_tar_num");
+            msg_int.value = ((int)(path_p_debug.tar_num));
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg_int);
 
             snprintf(msg.name, sizeof(msg.name), "pp_obs_lat");
             msg.value = ((float)(path_p_debug.obs_lat));
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg);
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
             snprintf(msg.name, sizeof(msg.name), "pp_obs_lon");
             msg.value = ((float)(path_p_debug.obs_lon));
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg);
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
 
-            snprintf(msg.name, sizeof(msg.name), "pp_obs_num");
-            msg.value = ((float)(path_p_debug.obs_num));
-            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg);
+            snprintf(msg_int.name, sizeof(msg_int.name), "pp_obs_num");
+            msg_int.value = ((int)(path_p_debug.obs_num));
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg_int);
 
             snprintf(msg.name, sizeof(msg.name), "pp_navref");
             msg.value = ((float)path_p_debug.ref_heading*RAD2DEG);
@@ -2304,10 +2303,7 @@ public:
 
     unsigned get_size()
     {
-        //return 8 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
-        //return 6 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
-        //return 4 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
-        return 3 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 3 * (MAVLINK_MSG_ID_NAMED_VALUE_INT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
     }
 
 private:
@@ -2330,21 +2326,19 @@ protected:
 
         if (_path_kal_sub->update(&_path_kal_time, &path_kal_debug)) {
             /* send, add spaces so that string buffer is at least 10 chars long */
-            mavlink_named_value_float_t msg;
             mavlink_named_value_int_t msg_int;
 
-            msg.time_boot_ms = path_kal_debug.timestamp / 1000;
             msg_int.time_boot_ms = path_kal_debug.timestamp / 1000;
 
-            snprintf(msg_int.name, sizeof(msg.name), "kt_numObj");
+            snprintf(msg_int.name, sizeof(msg_int.name), "kt_numObj");
             msg_int.value = ((int)(path_kal_debug.tracknum));
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg_int);
 
-            snprintf(msg_int.name, sizeof(msg.name), "kt_numRefound");
+            snprintf(msg_int.name, sizeof(msg_int.name), "kt_numRefound");
             msg_int.value = ((int)(path_kal_debug.refoundnum));
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg_int);
 
-            snprintf(msg_int.name, sizeof(msg.name), "kt_numNewTrack");
+            snprintf(msg_int.name, sizeof(msg_int.name), "kt_numNewTrack");
             msg_int.value = ((int)(path_kal_debug.newtracknum));
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg_int);
 
@@ -2379,7 +2373,7 @@ public:
 
     unsigned get_size()
     {
-        return 0 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 1 * (MAVLINK_MSG_ID_NAMED_VALUE_INT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
     }
 
 private:
@@ -2403,7 +2397,6 @@ protected:
         if (_mission_p_sub->update(&_mission_p_time, &mission_p_debug)) {
             /* send, add spaces so that string buffer is at least 10 chars long */
         	mavlink_named_value_int_t msg_int;
-            // mavlink_named_value_int_t msg_int;
 
             msg_int.time_boot_ms = mission_p_debug.timestamp / 1000;
 

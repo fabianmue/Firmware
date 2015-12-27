@@ -46,8 +46,17 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-int cur_mi_id = -1, num_obs = 0;
-Point cur_tar, cur_obs;
+int cur_mi_id = 0, num_obs = 0;
+Point cur_tar = {
+		.lat = 0,
+		.lon = 0,
+		.alt = 0
+};
+Point cur_obs = {
+		.lat = 0,
+		.lon = 0,
+		.alt = 0
+};
 
 /** Struct holding the main configuration variables of the navigator */
 static struct {
@@ -349,35 +358,6 @@ void nav_navigator(void) {
 		//**We do NO pathplanning during maneuvers
 		if(state.maneuver == false) {
 
-			/*
-			#if LDEBUG_MISSIONHANDLER == 1
-				mi_isinside(state.position);
-			#endif
-			*/
-
-			/*cb_new_obstacle(field.obstacles[qground_obstnum].northx, field.obstacles[qground_obstnum].easty);
-			qground_obstnum++;
-			if(qground_obstnum>field.NumberOfObstacles) {
-				qground_obstnum = 0;
-			}*/
-
-			//Log the Sensor-Obstacles
-			/*
-			cb_new_obstacle(field.sensorobstacles[qground_obstnum].northx,field.sensorobstacles[qground_obstnum].easty);
-			qground_obstnum++;
-			if(qground_obstnum>field.NumberOfSensorobstacles) {
-				qground_obstnum = 0;
-			}
-
-			cb_new_targetnum(state.targetNum);
-			*/
-
-
-			//****GET THE OBSTACLES IDENTIFIED BY THE SENSOR
-			//Note: This is only executed, if the Kalman Tracker is activated by QGround Control
-			//get_sensor_obstacles();
-
-
 			/****FIND A NEW REFERENCE HEADING
 			 * Different algorithms can be used. */
 			if(config.method == 1) {
@@ -641,7 +621,13 @@ void mission_update(struct pp_structs_topics_s *strs) {
 		// new mission, reset navigation queue
 		cur_mi_id = strs->mission_planning.mi_id;
 		nav_queue_init();
-		cb_new_mission(strs->mission_planning.mi_id);
+		num_obs = 0;
+		memcpy(&cur_obs, 0, sizeof(cur_obs));
+		memcpy(&cur_tar, 0, sizeof(cur_tar));
+		cb_new_mission(cur_mi_id);
+		cb_new_obs_ack(true);
+		cb_new_tar_ack(true);
+		return;
 	}
 
 	if (cur_tar.lat != (double)strs->mission_planning.tar_lat | cur_tar.lon != (double)strs->mission_planning.tar_lon) {

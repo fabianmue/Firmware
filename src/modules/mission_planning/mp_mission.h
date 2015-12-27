@@ -20,8 +20,8 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-#define MAX_NUM_MI 100
-#define MAX_NUM_FR 10
+#define MAX_NUM_MI 5
+#define MAX_NUM_FR 5
 
 /***********************************************************************************/
 /*****  F U N C T I O N   D E C L A R A T I O N S  *********************************/
@@ -32,6 +32,8 @@ void mp_mi_handler(int id);
 void mp_tf_mi_init(void);
 
 void mp_tf_mi_data(struct mp_structs_topics_s *strs);
+
+void mp_reset_lists(void);
 
 int mp_add_mi_to_queue(mission *mi);
 
