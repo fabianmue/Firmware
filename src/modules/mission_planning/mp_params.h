@@ -14,13 +14,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DEG2RAD      0.0174532925199433f
-#define PI           3.14159265358979323846f
-
 #define MAX_CHAR_LINE 50
 #define MAX_NUM_BU 4
 #define MAX_NUM_WP 20
-#define MAX_NUM_OB 20
+#define MAX_NUM_OB 10
 
 #define SD_DEBUG 0
 
@@ -28,72 +25,106 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-typedef struct waypoint_s {
+typedef struct rd_waypoint_s {
+	char *name;
 	double latitude;
 	double longitude;
-} waypoint;
+} rd_waypoint;
 
-typedef struct obstacle_s {
-	waypoint center;
+typedef struct rd_obstacle_s {
+	char *name;
+	rd_waypoint center;
 	double radius;
-} obstacle;
+} rd_obstacle;
 
-typedef struct buoy_s {
-	obstacle body;
+typedef struct rd_buoy_s {
+	char *name;
+	rd_obstacle body;
 	int rotation;
-} buoy;
+} rd_buoy;
 
-typedef struct frame_s {
+typedef struct rd_frame_s {
 	char *name;
 	int id;
-	buoy buoys[MAX_NUM_BU];
+	rd_buoy buoys[MAX_NUM_BU];
 	int buoy_count;
-} frame;
+} rd_frame;
 
-typedef struct mission_s {
+typedef struct rd_mission_base_s {
 	char *name;
 	int id;
 	int type;
 	int fr_id;
-	waypoint waypoints[MAX_NUM_WP];
+} rd_mission_base;
+
+typedef struct rd_mission_uc_s {
+	rd_mission_base mi_base;
+	rd_waypoint waypoints[MAX_NUM_WP];
 	int waypoint_count;
-	obstacle obstacles[MAX_NUM_OB];
+	rd_obstacle obstacles[MAX_NUM_OB];
 	int obstacle_count;
-} mission;
+} rd_mission_uc;
+
+typedef struct rd_mission_tr_s {
+	rd_mission_base mi_base;
+	rd_buoy startB1;
+	rd_buoy startB2;
+	rd_buoy courseB1;
+	rd_buoy courseB2;
+	rd_buoy finishB1;
+	rd_buoy finishB2;
+} rd_mission_tr;
+
+typedef struct rd_mission_sk_s {
+	rd_mission_base mi_base;
+	float time;
+	float windDirAngle;
+} rd_mission_sk;
+
+typedef struct rd_mission_as_s {
+	rd_mission_base mi_base;
+	int subdivision;
+	float windDirAngle;
+} rd_mission_as;
 
 /***********************************************************************************/
 /*****  F U N C T I O N   D E C L A R A T I O N S  *********************************/
 /***********************************************************************************/
 
 /* @brief initialize parameters from QGC */
-void mp_param_init(void);
+void mp_param_QGC_init(void);
 
-/* @brief update parameters from QGC */
-void mp_param_update(void);
+/* @brief get parameters from QGC */
+void mp_param_QGC_get(void);
+
+/* @brief set parameters in QGC */
+void mp_param_QGC_set(void);
+
+// @brief update transfer to path_planning module
+void mp_mission_update(int wp_ack, int ob_ack);
 
 /* @brief get parameters from SD card */
-void mp_get_params_SD(char file_path[]);
+void mp_get_mission_from_SD(char file_path[]);
 
-/* @brief get parameters from serial port */
-void mp_get_params_SP(void);
 
-/* @brief send paramaters to serial port */
-void mp_send_params_SP(char buffer[]);
+rd_waypoint* read_wp(int fd);
 
-waypoint* read_wp(int fd);
+rd_obstacle* read_ob(int fd);
 
-obstacle* read_ob(int fd);
+rd_buoy* read_bu(int fd);
 
-buoy* read_bu(int fd);
+rd_frame* read_frame(int fd);
 
-frame* read_fr(int fd);
+rd_mission_base* read_mission_base(int fd);
 
-mission* read_mi(int fd);
+rd_mission_uc* read_mission_uc(int fd, rd_mission_base *rd_mi_base);
+
+rd_mission_tr* read_mission_tr(int fd, rd_mission_base *rd_mi_base);
+
+rd_mission_sk* read_mission_sk(int fd, rd_mission_base *rd_mi_base);
+
+rd_mission_as* read_mission_as(int fd, rd_mission_base *rd_mi_base);
 
 char* read_line(int fd, int maxChar);
-
-void disp_fr(frame *fr);
-
-void disp_mi(mission *mi);
 
 #endif /* MP_PARAMS_H_ */

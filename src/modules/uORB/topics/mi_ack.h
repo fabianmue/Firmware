@@ -12,11 +12,9 @@
 #include "../uORB.h"
 
 struct mi_ack_s {
-
 	uint64_t	timestamp;
-
-	uint32_t	tar_ack;
-	uint32_t	obs_ack;
+	uint32_t	wp_ack;
+	uint32_t	ob_ack;
 };
 
 /* register this as object request broker structure */

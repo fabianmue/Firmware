@@ -190,7 +190,7 @@ int mp_thread_main(int argc, char *argv[]) {
     int poll_return;				// return value of the polling.
 
     // init mission planning parameters
-    mp_param_init();
+    mp_param_QGC_init();
 
     // init communication buffer
     mp_cb_init();
@@ -222,15 +222,17 @@ int mp_thread_main(int argc, char *argv[]) {
 
                 // copy new parameters from QGC
                 orb_copy(ORB_ID(parameter_update), subs.parameter_update, &(strs.parameter_update));
+
                 // update parameters
-                mp_param_update();
+                mp_param_QGC_get();
             }
             if(fds[1].revents & POLLIN) {
 
                 // copy new parameters from QGC
                 orb_copy(ORB_ID(mi_ack), subs.mi_ack, &(strs.mi_ack));
-                // send next waypoint/obstacle parameters
-                mp_tf_mi_data(&strs);
+
+                // update mission transfer
+                mp_mission_update(strs.mi_ack.wp_ack, strs.mi_ack.ob_ack);
             }
 		}
 

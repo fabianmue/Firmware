@@ -2348,6 +2348,7 @@ protected:
 
 //--------------------------------- ADD MISSIONPLANNING MSG ------------------
 // by Fabian Müller
+/*
 class MavlinkStreamMissionP : public MavlinkStream
 {
 public:
@@ -2380,7 +2381,7 @@ private:
     MavlinkOrbSubscription *_mission_p_sub;
     uint64_t _mission_p_time;
 
-    /* do not allow top copying this class */
+    // do not allow top copying this class
     MavlinkStreamMissionP(MavlinkStreamMissionP &);
     MavlinkStreamMissionP& operator = (const MavlinkStreamMissionP &);
 
@@ -2395,7 +2396,7 @@ protected:
         struct mission_planning_s mission_p_debug;
 
         if (_mission_p_sub->update(&_mission_p_time, &mission_p_debug)) {
-            /* send, add spaces so that string buffer is at least 10 chars long */
+            // send, add spaces so that string buffer is at least 10 chars long
         	mavlink_named_value_int_t msg_int;
 
             msg_int.time_boot_ms = mission_p_debug.timestamp / 1000;
@@ -2407,8 +2408,7 @@ protected:
         }
     }
 };
-
-
+*/
 //--------------------------------- End Add -----------------------------------
 
 

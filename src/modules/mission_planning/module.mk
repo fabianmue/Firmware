@@ -33,13 +33,17 @@
 #
 # Daemon application
 #
-MODULE_COMMAND	= mission_planning
+MODULE_COMMAND		= mission_planning
 
-SRCS	= mission_planning.c\
-		  mp_communication_buffer.c\
-		  mp_params.c\
-		  mp_send_msg_qgc.c\
-		  mp_topics_handler.c\
-		  mp_mission.c\
+MODULE_STACKSIZE 	= 4096
+
+# MODULE_PRIORITY	= 230
+
+SRCS				= mission_planning.c\
+		  			  mp_communication_buffer.c\
+		    		  mp_params.c\
+		  			  mp_send_msg_qgc.c\
+		  			  mp_topics_handler.c\
+		  			  mp_mission.c\
 		  
 #add here all additional c-Files by using \ at the end of each line

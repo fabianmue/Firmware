@@ -490,7 +490,7 @@ static struct pointers_pp_param_qgc_s {
 	param_t kt_co;
 	param_t kt_period;
 
-	// KALMAN OBSTACLE TRACKER
+	// MISSION
 	param_t mi_id;
 	param_t mi_tar_lat;
 	param_t mi_tar_lon;
@@ -501,12 +501,11 @@ static struct pointers_pp_param_qgc_s {
 
 } pointers_pp_param_qgc;
 
-
 /**
 * Initialize parameters.
 *
 */
-void pp_param_init(void){
+void pp_param_QGC_init(void){
 
     // initialize pointer to parameters
 	pointers_pp_param_qgc.lat0_pointer    = param_find("ASP_R_LAT0_E7");
@@ -624,13 +623,13 @@ void pp_param_init(void){
     pointers_pp_param_qgc.mi_obs_num = param_find("MI_OBS_NUM");
 
     //get parameters but do not add any grid lines at start up
-    pp_param_update(false);
+    pp_param_QGC_get(false);
 }
 
 /** Update local copy of parameters.
  *
 */
-void pp_param_update(bool update_path_param){
+void pp_param_QGC_get(bool update_path_param){
 
     //----- reference geo coordinate
     int32_t lat0;

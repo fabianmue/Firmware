@@ -197,27 +197,21 @@ bool cb_new_target(Point tar) {
 
 /* @brief increase obstacle number */
 bool cb_new_obstacle(Point obs) {
-
 	pp.obs_lat = obs.lat;
 	pp.obs_lon = obs.lon;
 	pp.obs_num++;
-
 	pp_updated = true;
 	return true;
 }
 
-bool cb_new_obs_ack(bool ack) {
-
-	mi_ack.obs_ack = ack;
-
+bool cb_new_ob_ack(int ack) {
+	mi_ack.ob_ack = ack;
 	mi_ack_updated = true;
 	return true;
 }
 
-bool cb_new_tar_ack(bool ack) {
-
-	mi_ack.tar_ack = ack;
-
+bool cb_new_wp_ack(int ack) {
+	mi_ack.wp_ack = ack;
 	mi_ack_updated = true;
 	return true;
 }

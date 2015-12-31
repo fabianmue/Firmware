@@ -33,26 +33,29 @@
 #
 # Daemon application
 #
-MODULE_COMMAND	= path_planning
+MODULE_COMMAND		= path_planning
 
-SRCS	= path_planning.c\
-          pp_parameters.c\
-          pp_topics_handler.c\
-          pp_navigation_module.c\
-          pp_gridlines_handler.c\
-          pp_communication_buffer.c\
-          pp_send_msg_qgc.c\
-          pp_navigation_helper.c\
-          pp_polardiagram.c\
-          pp_navigator.c\
-          pp_cost_method.c\
-          pp_potentialfield_method.c\
-          pp_failsafe.c\
-          parser_sensorboard/ps_sensorboard.c\
-          kalman_tracker/kt_track_list.c\
-          kalman_tracker/kt_cog_list.c\
-          kalman_tracker/kt_tracker.c\
-          kalman_tracker/kt_topic_handler.c\
+# MODULE_STACKSIZE 	= 4096
+
+# MODULE_PRIORITY	= 235
+
+SRCS				= path_planning.c\
+          			  pp_parameters.c\
+          			  pp_topics_handler.c\
+          			  pp_navigation_module.c\
+          			  pp_gridlines_handler.c\
+          			  pp_communication_buffer.c\
+          			  pp_send_msg_qgc.c\
+          			  pp_navigation_helper.c\
+          			  pp_polardiagram.c\
+          			  pp_navigator.c\
+          			  pp_cost_method.c\
+          			  pp_potentialfield_method.c\
+          			  pp_failsafe.c\
+          			  parser_sensorboard/ps_sensorboard.c\
+          			  kalman_tracker/kt_track_list.c\
+          			  kalman_tracker/kt_cog_list.c\
+          			  kalman_tracker/kt_tracker.c\
+          			  kalman_tracker/kt_topic_handler.c\
           
-
 #add here all additional c-Files by using \ at the end of each line

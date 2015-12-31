@@ -138,7 +138,7 @@ int path_planning_main(int argc, char *argv[])
         daemon_task = task_spawn_cmd("path_planning",
 					 SCHED_DEFAULT,
                      DAEMON_PRIORITY,
-                     8192, //was 4096 (5000 was working with SDLog)
+                     4096, //was 4096 (5000 was working with SDLog)
 					 pp_thread_main,
 					 (argv) ? (const char **)&argv[2] : (const char **)NULL);
 		exit(0);
@@ -195,7 +195,7 @@ int pp_thread_main(int argc, char *argv[]) {
     //** INIT FUNCTIONS
 
     //init pp_paramters module
-    pp_param_init();
+    pp_param_QGC_init();
 
     //init communication_buffer module
     pp_cb_init();
@@ -278,7 +278,7 @@ int pp_thread_main(int argc, char *argv[]) {
                     orb_copy(ORB_ID(parameter_update), subs.parameter_update,
                              &(strs.parameter_update));
                     //update param
-                    pp_param_update(true);
+                    pp_param_QGC_get(true);
                 }
                 if(fds[3].revents & POLLIN){
                     // copy commands from remote control
@@ -305,7 +305,7 @@ int pp_thread_main(int argc, char *argv[]) {
                 	orb_copy(ORB_ID(mission_planning), subs.mission_planning, &(strs.mission_planning));
 
                 	//Set the new value for the mission
-                	mission_update(&strs);
+                	mission_update(strs.mission_planning);
                 }
 			}
 		}

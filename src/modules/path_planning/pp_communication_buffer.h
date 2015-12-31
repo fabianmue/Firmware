@@ -89,10 +89,10 @@ bool cb_new_target(Point tar);
 bool cb_new_obstacle(Point obs);
 
 //
-bool cb_new_obs_ack(bool ack);
+bool cb_new_ob_ack(int ack);
 
 //
-bool cb_new_tar_ack(bool ack);
+bool cb_new_wp_ack(int ack);
 
 /** @brief command a tack or a jybe */
 bool cb_do_maneuver(float new_alpha_star);
