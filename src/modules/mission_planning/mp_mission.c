@@ -42,7 +42,7 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-int sel_id = -1;
+int sel_id = -1, tf_done = 0;
 mission selected_mission;
 int wp_tf_count = 0, ob_tf_count = 0;
 
@@ -79,10 +79,17 @@ void mp_mi_handler(int id, int wp_ack, int ob_ack) {
 			mp_cb_new_obstacle(selected_mission.obstacles[ob_tf_count].center.latitude, selected_mission.obstacles[ob_tf_count].center.longitude, selected_mission.obstacles[ob_tf_count].radius);
 			ob_tf_count++;
 		}
+
+		if (wp_tf_count == selected_mission.waypoint_count & ob_tf_count == selected_mission.obstacle_count) {
+			tf_done = 1;
+			mp_param_QGC_set(&tf_done);
+		}
 		return;
 	}
 
 	// new id selected
+	tf_done = 0;
+	mp_param_QGC_set(&tf_done);
 	sel_id = id;
 	wp_tf_count = 0;
 	ob_tf_count = 0;

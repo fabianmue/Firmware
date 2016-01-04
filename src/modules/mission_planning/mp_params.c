@@ -38,6 +38,7 @@ PARAM_DEFINE_INT32(MP_MI_SELECT, 0);	// mission selected
 
 // variables sent to QGC
 PARAM_DEFINE_INT32(MP_SD_READ, 0);
+PARAM_DEFINE_INT32(MP_TF_DONE, 0);
 
 static struct pointers_mp_param_qgc_s {
 
@@ -47,6 +48,7 @@ static struct pointers_mp_param_qgc_s {
 
 	// to QGC
 	param_t mp_sd_read;
+	param_t mp_tf_done;
 
 } pointers_mp_param_qgc;
 
@@ -63,7 +65,7 @@ void mp_param_QGC_init(void) {
 
     // to QGC
     pointers_mp_param_qgc.mp_sd_read = param_find("MP_SD_READ");
-
+    pointers_mp_param_qgc.mp_tf_done = param_find("MP_TF_DONE");
 
 };
 
@@ -76,13 +78,13 @@ void mp_param_QGC_get(void) {
 		mp_get_mission_from_SD(file_path);
 
 		// set parameter in QGC
-		param_set(pointers_mp_param_qgc.mp_sd_read, 1);
 		sd_read = 1;
+		param_set(pointers_mp_param_qgc.mp_sd_read, &sd_read);
 	}
 }
 
-void mp_param_QGC_set(void) {
-	//
+void mp_param_QGC_set(int *done) {
+	param_set(pointers_mp_param_qgc.mp_tf_done, done);
 }
 
 void mp_mission_update(int wp_ack, int ob_ack) {
