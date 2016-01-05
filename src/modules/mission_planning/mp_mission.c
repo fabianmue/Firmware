@@ -42,8 +42,8 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-int sel_id = -1, tf_done = 0;
-mission selected_mission;
+int32_t sel_id = 0, tf_done = 0;
+mission *selected_mission = NULL;
 int wp_tf_count = 0, ob_tf_count = 0;
 
 char buffer_mi[60];
@@ -66,44 +66,47 @@ struct mp_published_fd_s *mp_pubs;
 
 void mp_mi_handler(int id, int wp_ack, int ob_ack) {
 
-	if (id == sel_id) {
+	if (selected_mission == NULL && id != sel_id) {
+
+		// try to get selected mission from list
+		selected_mission = mp_get_mission_by_id(id);
+		if (selected_mission == NULL) {
+			sprintf(buffer_mi, "mission with id %d not found\n", id);
+			printf(buffer_mi);
+			mp_send_log_info(buffer_mi);
+			return;
+		}
+
+		// new id selected
+		sel_id = mp_cb_new_mission_id(selected_mission->id);;
+		mp_cb_new_mission_id(sel_id);
+		tf_done = 0;
+		mp_param_QGC_set(tf_done);
+		wp_tf_count = 0;
+		ob_tf_count = 0;
+	}
+
+	if (id == sel_id & selected_mission != NULL) {
+
+		// check if all waypoints have been transfered
+		if (wp_tf_count >= selected_mission->waypoint_count & ob_tf_count >= selected_mission->obstacle_count) {
+			tf_done = 1;
+			mp_param_QGC_set(tf_done);
+			return;
+		}
 
 		// transfer next waypoint
-		if (wp_ack != 0 & wp_tf_count < selected_mission.waypoint_count) {
-			mp_cb_new_waypoint(selected_mission.waypoints[wp_tf_count].latitude, selected_mission.waypoints[wp_tf_count].longitude);
+		if (wp_ack != 0 & wp_tf_count < selected_mission->waypoint_count) {
+			mp_cb_new_waypoint(selected_mission->waypoints[wp_tf_count].latitude, selected_mission->waypoints[wp_tf_count].longitude);
 			wp_tf_count++;
 		}
 
 		// transfer next obstacle
-		if (ob_ack != 0 & ob_tf_count < selected_mission.obstacle_count) {
-			mp_cb_new_obstacle(selected_mission.obstacles[ob_tf_count].center.latitude, selected_mission.obstacles[ob_tf_count].center.longitude, selected_mission.obstacles[ob_tf_count].radius);
+		if (ob_ack != 0 & ob_tf_count < selected_mission->obstacle_count) {
+			mp_cb_new_obstacle(selected_mission->obstacles[ob_tf_count].center.latitude, selected_mission->obstacles[ob_tf_count].center.longitude, selected_mission->obstacles[ob_tf_count].radius);
 			ob_tf_count++;
 		}
-
-		if (wp_tf_count == selected_mission.waypoint_count & ob_tf_count == selected_mission.obstacle_count) {
-			tf_done = 1;
-			mp_param_QGC_set(&tf_done);
-		}
-		return;
 	}
-
-	// new id selected
-	tf_done = 0;
-	mp_param_QGC_set(&tf_done);
-	sel_id = id;
-	wp_tf_count = 0;
-	ob_tf_count = 0;
-
-	// check if mission with this id exists in mission list
-	mission *sel_mi = mp_get_mission_by_id(id);
-	if (sel_mi == NULL) {
-		sprintf(buffer_mi, "mission with id %d not found\n", id);
-		printf(buffer_mi);
-		mp_send_log_info(buffer_mi);
-		return;
-	}
-	selected_mission = *sel_mi;
-	mp_cb_new_mission_id(sel_id);
 }
 
 // @brief: reset frame and mission list

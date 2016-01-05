@@ -378,24 +378,19 @@ PARAM_DEFINE_FLOAT(KT_CO,10);
 PARAM_DEFINE_FLOAT(KT_PERIOD,2);
 
 /**
- * MI_...
- * mission parameters
+ * PP_TF_...
+ * transfered mission parameters
  */
-PARAM_DEFINE_INT32(MI_ID, 0);
-PARAM_DEFINE_FLOAT(MI_WP_LAT, 0.0f);
-PARAM_DEFINE_FLOAT(MI_WP_LON, 0.0f);
-PARAM_DEFINE_INT32(MI_WP_NUM, 0);
-PARAM_DEFINE_FLOAT(MI_OB_LAT, 0.0f);
-PARAM_DEFINE_FLOAT(MI_OB_LON, 0.0f);
-PARAM_DEFINE_FLOAT(MI_OB_RAD, 0.0f);
-PARAM_DEFINE_INT32(MI_OB_NUM, 0);
-
-/**
- * TF_...
- * transfer parameters
- */
-PARAM_DEFINE_INT32(TF_WP_ACK, 0);
-PARAM_DEFINE_INT32(TF_OB_ACK, 0);
+PARAM_DEFINE_INT32(PP_TF_MI_ID, 0);
+PARAM_DEFINE_FLOAT(PP_TF_MI_WP_LAT, 0.0f);
+PARAM_DEFINE_FLOAT(PP_TF_MI_WP_LON, 0.0f);
+PARAM_DEFINE_INT32(PP_TF_MI_WP_NUM, 0);
+PARAM_DEFINE_FLOAT(PP_TF_MI_OB_LAT, 0.0f);
+PARAM_DEFINE_FLOAT(PP_TF_MI_OB_LON, 0.0f);
+PARAM_DEFINE_FLOAT(PP_TF_MI_OB_RAD, 0.0f);
+PARAM_DEFINE_INT32(PP_TF_MI_OB_NUM, 0);
+PARAM_DEFINE_INT32(PP_TF_WP_ACK, 0);
+PARAM_DEFINE_INT32(PP_TF_OB_ACK, 0);
 
 static struct pointers_pp_param_qgc_s {
 
@@ -499,14 +494,14 @@ static struct pointers_pp_param_qgc_s {
 	param_t kt_period;
 
 	// MISSION
-	param_t mi_id;
-	param_t mi_wp_lat;
-	param_t mi_wp_lon;
-	param_t mi_wp_num;
-	param_t mi_ob_lat;
-	param_t mi_ob_lon;
-	param_t mi_ob_rad;
-	param_t mi_ob_num;
+	param_t tf_mi_id;
+	param_t tf_mi_wp_lat;
+	param_t tf_mi_wp_lon;
+	param_t tf_mi_wp_num;
+	param_t tf_mi_ob_lat;
+	param_t tf_mi_ob_lon;
+	param_t tf_mi_ob_rad;
+	param_t tf_mi_ob_num;
 
 	param_t tf_wp_ack;
 	param_t tf_ob_ack;
@@ -626,17 +621,17 @@ void pp_param_QGC_init(void){
     pointers_pp_param_qgc.kt_period = param_find("KT_PERIOD");
 
 	// TRANSFER
-    pointers_pp_param_qgc.mi_id = param_find("TF_MI_ID");
-    pointers_pp_param_qgc.mi_wp_lat = param_find("TF_MI_WP_LAT");
-    pointers_pp_param_qgc.mi_wp_lon = param_find("TF_MI_WP_LON");
-    pointers_pp_param_qgc.mi_wp_num = param_find("TF_MI_WP_NUM");
-    pointers_pp_param_qgc.mi_ob_lat = param_find("TF_MI_OB_LAT");
-    pointers_pp_param_qgc.mi_ob_lon = param_find("TF_MI_OB_LON");
-    pointers_pp_param_qgc.mi_ob_lon = param_find("TF_MI_OB_RAD");
-    pointers_pp_param_qgc.mi_ob_num = param_find("TF_MI_OB_NUM");
+    pointers_pp_param_qgc.tf_mi_id = param_find("PP_TF_MI_ID");
+    pointers_pp_param_qgc.tf_mi_wp_lat = param_find("PP_TF_MI_WP_LAT");
+    pointers_pp_param_qgc.tf_mi_wp_lon = param_find("PP_TF_MI_WP_LON");
+    pointers_pp_param_qgc.tf_mi_wp_num = param_find("PP_TF_MI_WP_NUM");
+    pointers_pp_param_qgc.tf_mi_ob_lat = param_find("PP_TF_MI_OB_LAT");
+    pointers_pp_param_qgc.tf_mi_ob_lon = param_find("PP_TF_MI_OB_LON");
+    pointers_pp_param_qgc.tf_mi_ob_lon = param_find("PP_TF_MI_OB_RAD");
+    pointers_pp_param_qgc.tf_mi_ob_num = param_find("PP_TF_MI_OB_NUM");
 
-    pointers_pp_param_qgc.tf_wp_ack = param_find("MI_WP_ACK");
-    pointers_pp_param_qgc.tf_ob_ack = param_find("MI_OB_ACK");
+    pointers_pp_param_qgc.tf_wp_ack = param_find("PP_TF_WP_ACK");
+    pointers_pp_param_qgc.tf_ob_ack = param_find("PP_TF_OB_ACK");
 
     //get parameters but do not add any grid lines at start up
     pp_param_QGC_get(false);
@@ -946,27 +941,27 @@ void pp_param_QGC_get(bool update_path_param){
    	sb_set_configuration(kt_period);
 }
 
-void pp_param_QGC_set_mi(int *id) {
-	param_set(pointers_pp_param_qgc.mi_id, id);
+void pp_param_QGC_set_mi(int id) {
+	param_set(pointers_pp_param_qgc.tf_mi_id, &id);
 }
 
-void pp_param_QGC_set_wp(float *lat, float *lon, int *num) {
-	param_set(pointers_pp_param_qgc.mi_wp_lat, lat);
-	param_set(pointers_pp_param_qgc.mi_wp_lon, lon);
-	param_set(pointers_pp_param_qgc.mi_wp_num, num);
+void pp_param_QGC_set_wp(float lat, float lon, int num) {
+	param_set(pointers_pp_param_qgc.tf_mi_wp_lat, &lat);
+	param_set(pointers_pp_param_qgc.tf_mi_wp_lon, &lon);
+	param_set(pointers_pp_param_qgc.tf_mi_wp_num, &num);
 }
 
-void pp_param_QGC_set_ob(float *lat, float *lon, float *rad, int *num) {
-	param_set(pointers_pp_param_qgc.mi_ob_lat, lat);
-	param_set(pointers_pp_param_qgc.mi_ob_lon, lon);
-	param_set(pointers_pp_param_qgc.mi_ob_rad, rad);
-	param_set(pointers_pp_param_qgc.mi_ob_num, num);
+void pp_param_QGC_set_ob(float lat, float lon, float rad, int num) {
+	param_set(pointers_pp_param_qgc.tf_mi_ob_lat, &lat);
+	param_set(pointers_pp_param_qgc.tf_mi_ob_lon, &lon);
+	param_set(pointers_pp_param_qgc.tf_mi_ob_rad, &rad);
+	param_set(pointers_pp_param_qgc.tf_mi_ob_num, &num);
 }
 
-void pp_param_QGC_set_wp_ack(int *ack) {
-	param_set(pointers_pp_param_qgc.tf_wp_ack, ack);
+void pp_param_QGC_set_wp_ack(int ack) {
+	param_set(pointers_pp_param_qgc.tf_wp_ack, &ack);
 }
 
-void pp_param_QGC_set_ob_ack(int *ack) {
-	param_set(pointers_pp_param_qgc.tf_ob_ack, ack);
+void pp_param_QGC_set_ob_ack(int ack) {
+	param_set(pointers_pp_param_qgc.tf_ob_ack, &ack);
 }

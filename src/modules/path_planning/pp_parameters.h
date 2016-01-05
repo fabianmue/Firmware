@@ -26,18 +26,18 @@ void pp_param_QGC_init(void);
 void pp_param_QGC_get(bool update_path_param);
 
 /* @brief set new mission paramater values in QGC */
-void pp_param_QGC_set_mi(int *id);
+void pp_param_QGC_set_mi(int id);
 
 /* @brief get new target paramater values in QGC */
-void pp_param_QGC_set_wp(float *lat, float *lon, int *num);
+void pp_param_QGC_set_wp(float lat, float lon, int num);
 
 /* @brief get new obstacle paramater values in QGC */
-void pp_param_QGC_set_ob(float *lat, float *lon, float *rad, int *num);
+void pp_param_QGC_set_ob(float lat, float lon, float rad, int num);
 
 /* @brief get new waypoint ack paramater in QGC */
-void pp_param_QGC_set_wp_ack(int *ack);
+void pp_param_QGC_set_wp_ack(int ack);
 
 /* @brief get new obstacle ack paramater in QGC */
-void pp_param_QGC_set_ob_ack(int *ack);
+void pp_param_QGC_set_ob_ack(int ack);
 
 #endif /* PP_PARAMETERS_H_ */

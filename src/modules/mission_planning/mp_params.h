@@ -98,7 +98,7 @@ void mp_param_QGC_init(void);
 void mp_param_QGC_get(void);
 
 /* @brief set parameters in QGC */
-void mp_param_QGC_set(int *done);
+void mp_param_QGC_set(int done);
 
 // @brief update transfer to path_planning module
 void mp_mission_update(int wp_ack, int ob_ack);

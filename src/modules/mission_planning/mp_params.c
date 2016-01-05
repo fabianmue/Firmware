@@ -22,15 +22,14 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-int sd_read = 0;
-
 int mi_select_prev = 0;
 
 char file_path[] = "/fs/microsd/mission_data/mission_data.txt";
 char buffer_pa[60];
 
-int32_t data_src = 0, mi_select = 0;
-
+// file variables
+int32_t data_src = 0, mi_select = 0, sd_read = 0;
+int32_t acc = 0;
 
 // variables received from QGC
 PARAM_DEFINE_INT32(MP_DATA_SRC, 0);		// data source, 0 = telemetry, 1 = SD card
@@ -39,6 +38,10 @@ PARAM_DEFINE_INT32(MP_MI_SELECT, 0);	// mission selected
 // variables sent to QGC
 PARAM_DEFINE_INT32(MP_SD_READ, 0);
 PARAM_DEFINE_INT32(MP_TF_DONE, 0);
+
+// test variables
+PARAM_DEFINE_INT32(MP_TEST, 0);
+PARAM_DEFINE_INT32(MP_TEST2, 7);
 
 static struct pointers_mp_param_qgc_s {
 
@@ -49,6 +52,8 @@ static struct pointers_mp_param_qgc_s {
 	// to QGC
 	param_t mp_sd_read;
 	param_t mp_tf_done;
+
+	param_t mp_test;
 
 } pointers_mp_param_qgc;
 
@@ -67,6 +72,8 @@ void mp_param_QGC_init(void) {
     pointers_mp_param_qgc.mp_sd_read = param_find("MP_SD_READ");
     pointers_mp_param_qgc.mp_tf_done = param_find("MP_TF_DONE");
 
+    pointers_mp_param_qgc.mp_test = param_find("MP_TEST");
+
 };
 
 void mp_param_QGC_get(void) {
@@ -83,8 +90,8 @@ void mp_param_QGC_get(void) {
 	}
 }
 
-void mp_param_QGC_set(int *done) {
-	param_set(pointers_mp_param_qgc.mp_tf_done, done);
+void mp_param_QGC_set(int done) {
+	param_set(pointers_mp_param_qgc.mp_tf_done, &done);
 }
 
 void mp_mission_update(int wp_ack, int ob_ack) {
