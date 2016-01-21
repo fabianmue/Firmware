@@ -1404,6 +1404,7 @@ Mavlink::task_main(int argc, char *argv[])
 		configure_stream("ATTITUDE_TARGET", 3.0f);
 		configure_stream("DISTANCE_SENSOR", 0.5f);
 		configure_stream("OPTICAL_FLOW", 5.0f);
+		configure_stream("MP_TF_DEBUG", 5.0f);
 		break;
 
 	case MAVLINK_MODE_ONBOARD:
@@ -1414,6 +1415,7 @@ Mavlink::task_main(int argc, char *argv[])
 		configure_stream("ATTITUDE_TARGET", 10.0f);
 		configure_stream("POSITION_TARGET_GLOBAL_INT", 10.0f);
 		configure_stream("VFR_HUD", 10.0f);
+		configure_stream("MP_TF_DEBUG", 5.0f);
 		break;
 
 	default:

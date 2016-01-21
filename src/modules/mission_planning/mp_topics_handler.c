@@ -12,7 +12,16 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-// struct of all topic-advertisements
+// mission planning
+struct mission_planning_s mission_planning = { 	.mi_id = 0,
+												.wp_lat = 0.0f,
+												.wp_lon = 0.0f,
+												.wp_count = 0,
+												.ob_lat = 0.0f,
+												.ob_lon = 0.0f,
+												.ob_rad = 0.0f,
+												.ob_count = 0,
+};
 struct mp_published_fd_s pubs;
 
 /***********************************************************************************/
@@ -26,7 +35,7 @@ struct mp_published_fd_s pubs;
  * @param *strs_p: pointer to a struct of all interested topics
  * @return true, iff successfully subscribed to all topics
  */
-bool mp_th_subscribe(struct mp_subscribtion_fd_s *subs_p, struct mp_structs_topics_s *strs_p) {
+bool mp_th_subscribe(struct mp_subscribtion_fd_s *subs_p) {
 
 	subs_p->parameter_update = orb_subscribe(ORB_ID(parameter_update));
 	subs_p->mi_ack = orb_subscribe(ORB_ID(mi_ack));
@@ -47,17 +56,13 @@ bool mp_th_subscribe(struct mp_subscribtion_fd_s *subs_p, struct mp_structs_topi
 };
 
 /**
- * advertise topics. call this function only once.
+ * advertise mission planning topic. call this function only once.
  *
- * @param *subs_p: pointer to a struct of all file-descriptors
- * @param *strs_p: pointer to a struct of all interested topics
- * @return true, iff successfully subscribed to all topics
+ * @return true
  */
 bool mp_th_advertise(void) {
 
 	// advertise the mission_planning topic
-    struct mission_planning_s mission_planning;
-    memset(&mission_planning, 0, sizeof(mission_planning));
     pubs.mission_planning = orb_advertise(ORB_ID(mission_planning), &mission_planning);
 
     return true;
@@ -73,4 +78,3 @@ int mp_th_publish(const struct mission_planning_s *mission_planning_p) {
 
     return orb_publish(ORB_ID(mission_planning), pubs.mission_planning, mission_planning_p);
 };
-

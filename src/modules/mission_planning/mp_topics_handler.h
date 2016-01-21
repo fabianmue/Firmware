@@ -28,24 +28,25 @@ struct mp_subscribtion_fd_s {
     int mi_ack;
 };
 
-struct mp_published_fd_s {
-    orb_advert_t mission_planning;
-};
-
 // structs of interested topics
 struct mp_structs_topics_s {
 	struct parameter_update_s parameter_update;
 	struct mi_ack_s mi_ack;
 };
 
+struct mp_published_fd_s {
+    orb_advert_t mission_planning;
+};
+
+
 /***********************************************************************************/
 /*****  F U N C T I O N   D E C L A R A T I O N S  *********************************/
 /***********************************************************************************/
 
 /* @brief subscribe to interested topics */
-bool mp_th_subscribe(struct mp_subscribtion_fd_s *subs_p, struct mp_structs_topics_s *strs_p);
+bool mp_th_subscribe(struct mp_subscribtion_fd_s *subs_p);
 
-/* @brief advertise topics */
+/* @brief advertise mission planning topic */
 bool mp_th_advertise(void);
 
 /* @brief publish mission_planning topic */

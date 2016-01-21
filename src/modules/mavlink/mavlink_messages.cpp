@@ -2346,20 +2346,20 @@ protected:
     }
 };
 
-//--------------------------------- ADD MISSIONPLANNING MSG ------------------
+//--------------------------------- ADD MISSIONPLANNING DEBUG MSG ------------------
 // by Fabian Müller
-/*
-class MavlinkStreamMissionP : public MavlinkStream
+
+class MavlinkStreamMpDebug : public MavlinkStream
 {
 public:
     const char *get_name() const
     {
-        return MavlinkStreamMissionP::get_name_static();
+        return MavlinkStreamMpDebug::get_name_static();
     }
 
     static const char *get_name_static()
     {
-        return "MISSION_P_MSG";
+        return "MP_DEBUG_MSG";
     }
 
     uint8_t get_id()
@@ -2369,49 +2369,76 @@ public:
 
     static MavlinkStream *new_instance(Mavlink *mavlink)
     {
-        return new MavlinkStreamMissionP(mavlink);
+        return new MavlinkStreamMpDebug(mavlink);
     }
 
     unsigned get_size()
     {
-        return 1 * (MAVLINK_MSG_ID_NAMED_VALUE_INT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
+        return 3 * (MAVLINK_MSG_ID_NAMED_VALUE_INT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES) + 5 * (MAVLINK_MSG_ID_NAMED_VALUE_FLOAT_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES);
     }
 
 private:
-    MavlinkOrbSubscription *_mission_p_sub;
-    uint64_t _mission_p_time;
+    MavlinkOrbSubscription *_mp_debug_sub;
+    uint64_t _mp_debug_time;
 
-    // do not allow top copying this class
-    MavlinkStreamMissionP(MavlinkStreamMissionP &);
-    MavlinkStreamMissionP& operator = (const MavlinkStreamMissionP &);
+    /* do not allow top copying this class */
+    MavlinkStreamMpDebug(MavlinkStreamMpDebug &);
+    MavlinkStreamMpDebug& operator = (const MavlinkStreamMpDebug &);
 
 protected:
-    explicit MavlinkStreamMissionP(Mavlink *mavlink) : MavlinkStream(mavlink),
-        _mission_p_sub(_mavlink->add_orb_subscription(ORB_ID(mission_planning))),
-        _mission_p_time(0)
+    explicit MavlinkStreamMpDebug(Mavlink *mavlink) : MavlinkStream(mavlink),
+        _mp_debug_sub(_mavlink->add_orb_subscription(ORB_ID(mission_planning))),
+        _mp_debug_time(0)
     {}
 
     void send(const hrt_abstime t)
     {
-        struct mission_planning_s mission_p_debug;
+        struct mission_planning_s mission_planning;
 
-        if (_mission_p_sub->update(&_mission_p_time, &mission_p_debug)) {
-            // send, add spaces so that string buffer is at least 10 chars long
+        if (_mp_debug_sub->update(&_mp_debug_time, &mission_planning)) {
+
+            /* send, add spaces so that string buffer is at least 10 chars long */
         	mavlink_named_value_int_t msg_int;
+            mavlink_named_value_float_t msg;
 
-            msg_int.time_boot_ms = mission_p_debug.timestamp / 1000;
+            msg.time_boot_ms = mission_planning.timestamp / 1000;
+            msg_int.time_boot_ms = mission_planning.timestamp / 1000;
 
-            snprintf(msg_int.name, sizeof(msg_int.name), "mp_sd_read");
-            msg_int.value = ((int)(mission_p_debug.sd_read));
+            snprintf(msg_int.name, sizeof(msg_int.name), "mp_tf_mi_id");
+            msg_int.value = mission_planning.mi_id;
             _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg_int);
 
+            snprintf(msg.name, sizeof(msg.name), "mp_tf_wp_lat");
+            msg.value = mission_planning.wp_lat;
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "mp_tf_wp_lon");
+            msg.value = mission_planning.wp_lon;
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg_int.name, sizeof(msg_int.name), "mp_tf_wp_count");
+            msg_int.value = mission_planning.wp_count;
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg_int);
+
+            snprintf(msg.name, sizeof(msg.name), "mp_tf_ob_lat");
+            msg.value = mission_planning.ob_lat;
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "mp_tf_ob_lon");
+            msg.value = mission_planning.ob_lon;
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg.name, sizeof(msg.name), "mp_tf_ob_rad");
+            msg.value = mission_planning.ob_rad;
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, &msg);
+
+            snprintf(msg_int.name, sizeof(msg_int.name), "mp_tf_ob_count");
+            msg_int.value = mission_planning.ob_count;
+            _mavlink->send_message(MAVLINK_MSG_ID_NAMED_VALUE_INT, &msg_int);
         }
     }
 };
-*/
 //--------------------------------- End Add -----------------------------------
-
-
 
 class MavlinkStreamNamedValueFloat : public MavlinkStream
 {
@@ -2648,5 +2675,6 @@ StreamListItem *streams_list[] = {
     new StreamListItem(&MavlinkStreamBoatLocalPos::new_instance, &MavlinkStreamBoatLocalPos::get_name_static),//Added by Marco Tranzatto
     new StreamListItem(&MavlinkStreamPathP::new_instance, &MavlinkStreamPathP::get_name_static),//Added by Jonas Wirz
     new StreamListItem(&MavlinkStreamPathPKalman::new_instance, &MavlinkStreamPathPKalman::get_name_static),//Added by Jonas Wirz
+    new StreamListItem(&MavlinkStreamMpDebug::new_instance, &MavlinkStreamMpDebug::get_name_static),//Added by Fabian Müller
 	nullptr
 };

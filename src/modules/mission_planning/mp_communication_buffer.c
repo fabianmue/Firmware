@@ -16,6 +16,7 @@
 /***********************************************************************************/
 
 static struct mission_planning_s mp;
+
 static bool mp_updated = false;
 
 /***********************************************************************************/
@@ -23,24 +24,33 @@ static bool mp_updated = false;
 /***********************************************************************************/
 
 bool mp_cb_new_mission_id(int id) {
+
+	//
 	mp.mi_id = id;
+
 	mp_updated = true;
 	return true;
 }
 
 bool mp_cb_new_waypoint(float wp_lat, float wp_lon) {
+
+	//
 	mp.wp_lat = wp_lat;
 	mp.wp_lon = wp_lon;
 	mp.wp_count++;
+
 	mp_updated = true;
 	return true;
 }
 
 bool mp_cb_new_obstacle(float ob_lat, float ob_lon, float ob_rad) {
+
+	//
 	mp.ob_lat = ob_lat;
 	mp.ob_lon = ob_lon;
 	mp.ob_rad = ob_rad;
 	mp.ob_count++;
+
 	mp_updated = true;
 	return true;
 }

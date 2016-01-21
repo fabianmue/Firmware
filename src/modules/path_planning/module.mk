@@ -37,7 +37,7 @@ MODULE_COMMAND		= path_planning
 
 # MODULE_STACKSIZE 	= 4096
 
-# MODULE_PRIORITY	= 235
+# MODULE_PRIORITY		= 235
 
 SRCS				= path_planning.c\
           			  pp_parameters.c\

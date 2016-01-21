@@ -37,7 +37,7 @@ MODULE_COMMAND		= mission_planning
 
 MODULE_STACKSIZE 	= 4096
 
-# MODULE_PRIORITY	= 230
+# MODULE_PRIORITY		= 230
 
 SRCS				= mission_planning.c\
 		  			  mp_communication_buffer.c\

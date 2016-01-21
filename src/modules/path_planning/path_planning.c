@@ -177,8 +177,8 @@ int pp_thread_main(int argc, char *argv[]) {
 	struct pp_subscribtion_fd_s subs;   // File-Descriptors of subscribed topics
 	struct pp_structs_topics_s strs;    // Struct of Interested Topics
 
-    pp_th_subscribe(&subs,&strs);       //Subscribe to interested Topics
-    pp_th_advertise();                  //Advertise Topics
+    pp_th_subscribe(&subs, &strs);       //Subscribe to interested Topics
+	pp_th_advertise();                  //Advertise Topics
 
 	//**POLL FOR CHANGES IN SUBSCRIBED TOPICS
     struct pollfd fds[] = {			 // Polling Management
@@ -250,6 +250,7 @@ int pp_thread_main(int argc, char *argv[]) {
 				warnx("POLL ERR %d, %d", poll_return, errno);
 				continue;
 			} else {
+
 				//Everything is OK and new Data is available
                 if(fds[0].revents & POLLIN){
                     //update pp_communication_buffer with this information
@@ -305,8 +306,9 @@ int pp_thread_main(int argc, char *argv[]) {
                 	orb_copy(ORB_ID(mission_planning), subs.mission_planning, &(strs.mission_planning));
 
                 	//Set the new value for the mission
-                	mission_update(strs.mission_planning);
+                	mission_update(&(strs.mission_planning));
                 }
+
 			}
 		}
 
@@ -317,24 +319,20 @@ int pp_thread_main(int argc, char *argv[]) {
         nav_navigator();
 		#endif
 
-
         // Communicate with the Sensorboard
 		#if LDEBUG_SENSORBOARD == 0
 		sb_handler();
 		#endif
-
 
         // Call the Failsafe state-machine
 		#if USE_FAILSAFE == 1
         fs_state_machine();
 		#endif
 
-
         // Call the Kalman Tracker Update-Function
 		#if LDEBUG_KALMANTRACKER == 1
         tr_handler();
 		#endif
-
 
         // Warning: path_planning and mi_ack topic should be published only ONCE for every loop iteration.
         // Use pp_communication_buffer to change topic's values.

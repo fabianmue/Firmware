@@ -86,7 +86,7 @@ void nav_heading_update(void);
 void yaw_update(struct pp_structs_topics_s *strs);
 
 /** @brief update mission */
-void mission_update(struct mission_planning_s mp);
+void mission_update(struct mission_planning_s *mp);
 
 /** @brief Set Obstacles */
 extern void nav_set_obstacle(uint8_t ObstNumber, PointE7 ObstPos);

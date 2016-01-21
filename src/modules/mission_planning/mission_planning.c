@@ -178,7 +178,7 @@ int mp_thread_main(int argc, char *argv[]) {
 	struct mp_subscribtion_fd_s subs;   // file-descriptors of subscribed topics
 	struct mp_structs_topics_s strs;    // struct of Interested Topics
 
-    mp_th_subscribe(&subs, &strs);      // subscribe to interested topics
+    mp_th_subscribe(&subs);      // subscribe to interested topics
     mp_th_advertise();                  // advertise topics
 
 	// poll for changes in subscribed topics
@@ -232,7 +232,7 @@ int mp_thread_main(int argc, char *argv[]) {
                 orb_copy(ORB_ID(mi_ack), subs.mi_ack, &(strs.mi_ack));
 
                 // update mission transfer
-                mp_mission_update(strs.mi_ack.wp_ack, strs.mi_ack.ob_ack);
+                mp_mission_update(&(strs.mi_ack));
             }
 		}
 

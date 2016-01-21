@@ -66,7 +66,11 @@ struct mp_published_fd_s *mp_pubs;
 
 void mp_mi_handler(int id, int wp_ack, int ob_ack) {
 
-	if (selected_mission == NULL && id != sel_id) {
+	if (MI_SEL_DEBUG != 0) {
+		id = 1;
+	}
+
+	if (selected_mission == NULL | id != sel_id) {
 
 		// try to get selected mission from list
 		selected_mission = mp_get_mission_by_id(id);
@@ -78,7 +82,11 @@ void mp_mi_handler(int id, int wp_ack, int ob_ack) {
 		}
 
 		// new id selected
-		sel_id = mp_cb_new_mission_id(selected_mission->id);;
+		sprintf(buffer_mi, "mission with id %d found\n", id);
+		printf(buffer_mi);
+		mp_send_log_info(buffer_mi);
+
+		sel_id = selected_mission->id;
 		mp_cb_new_mission_id(sel_id);
 		tf_done = 0;
 		mp_param_QGC_set(tf_done);
@@ -99,12 +107,20 @@ void mp_mi_handler(int id, int wp_ack, int ob_ack) {
 		if (wp_ack != 0 & wp_tf_count < selected_mission->waypoint_count) {
 			mp_cb_new_waypoint(selected_mission->waypoints[wp_tf_count].latitude, selected_mission->waypoints[wp_tf_count].longitude);
 			wp_tf_count++;
+
+			sprintf(buffer_mi, "new wp sent to cb (lat = %3.8f, lon = %3.8f)", selected_mission->waypoints[wp_tf_count].latitude, selected_mission->waypoints[wp_tf_count].longitude);
+			printf(buffer_mi);
+			mp_send_log_info(buffer_mi);
 		}
 
 		// transfer next obstacle
 		if (ob_ack != 0 & ob_tf_count < selected_mission->obstacle_count) {
 			mp_cb_new_obstacle(selected_mission->obstacles[ob_tf_count].center.latitude, selected_mission->obstacles[ob_tf_count].center.longitude, selected_mission->obstacles[ob_tf_count].radius);
 			ob_tf_count++;
+
+			sprintf(buffer_mi, "new ob sent to cb (lat = %3.8f, lon = %3.8f)", selected_mission->obstacles[ob_tf_count].center.latitude, selected_mission->obstacles[ob_tf_count].center.longitude);
+			printf(buffer_mi);
+			mp_send_log_info(buffer_mi);
 		}
 	}
 }

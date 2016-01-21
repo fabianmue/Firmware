@@ -46,10 +46,9 @@
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
-static const float E7 = 10000000.0f;
-
-int cur_mi_id = -1;
-int wp_ack = 0, ob_ack = 0;
+int cur_mi_id = 0;
+float cur_wp_lat = 0, cur_wp_lon = 0, cur_ob_lat = 0, cur_ob_lon = 0;
+// struct mission_planning_s mp_copy;
 
 /** Struct holding the main configuration variables of the navigator */
 static struct {
@@ -605,49 +604,70 @@ void yaw_update(struct pp_structs_topics_s *strs) {
 
 }
 
-void mission_update(struct mission_planning_s mp) {
+void mission_update(struct mission_planning_s *mp) {
 
-	wp_ack = 0;
-	ob_ack = 0;
-	cb_new_wp_ack(wp_ack);
-	cb_new_ob_ack(ob_ack);
-	pp_param_QGC_set_wp_ack(wp_ack);
-	pp_param_QGC_set_ob_ack(ob_ack);
 
-	if (cur_mi_id != mp.mi_id) {
+
+	if (cur_mi_id != mp->mi_id) {
 
 		// new mission, reset navigation queue
-		cur_mi_id = mp.mi_id;
-		nav_queue_init();
+		cur_mi_id = mp->mi_id;
 		cb_new_mission(cur_mi_id);
-		wp_ack = 1;
-		ob_ack = 1;
-		cb_new_wp_ack(wp_ack);
-		cb_new_ob_ack(ob_ack);
-		pp_param_QGC_set_wp_ack(wp_ack);
-		pp_param_QGC_set_ob_ack(ob_ack);
+		pp_param_QGC_set_mi(cur_mi_id);
+
+		// reset navigation queue
+		nav_queue_init();
+
+		cur_wp_lat = cur_wp_lon = cur_ob_lat = cur_ob_lon = 0;
+
+		cb_new_wp_ack(1);
+		cb_new_ob_ack(1);
+		pp_param_QGC_set_wp_ack(1);
+		pp_param_QGC_set_ob_ack(1);
 		return;
 	}
 
-	// new target
-	PointE7 cur_tar_E7;
-	cur_tar_E7.lat = (int32_t)(mp.wp_lat*E7);
-	cur_tar_E7.lon = (int32_t)(mp.wp_lon*E7);
-	cur_tar_E7.alt = 0;
-	nav_set_target((uint8_t)mp.wp_count, cur_tar_E7);
-	wp_ack = 1;
-	cb_new_wp_ack(wp_ack);
-	pp_param_QGC_set_wp_ack(wp_ack);
+	if (mp->wp_lat != cur_wp_lat | mp->wp_lon != cur_wp_lon) {
 
-	// new obstacle
-	PointE7 cur_ob_E7;
-	cur_ob_E7.lat = (int32_t)(mp.ob_lat*E7);
-	cur_ob_E7.lon = (int32_t)(mp.ob_lon*E7);
-	cur_ob_E7.alt = 0;
-	nav_set_obstacle((uint8_t)mp.ob_count, cur_ob_E7);
-	ob_ack = 1;
-	cb_new_ob_ack(ob_ack);
-	pp_param_QGC_set_ob_ack(ob_ack);
+		// new waypoint
+		cb_new_wp_ack(0);
+		pp_param_QGC_set_wp_ack(0);
+
+		cur_wp_lat = mp->wp_lat;
+		cur_wp_lon = mp->wp_lon;
+
+		Point tar;
+		tar.lat = mp->wp_lat;
+		tar.lon = mp->wp_lon;
+		tar.alt = 0;
+		NEDpoint tar_ned = nh_geo2ned(tar);
+		nav_set_target_ned(tar_ned);
+		pp_param_QGC_set_wp(tar.lat, tar.lon);
+
+		cb_new_wp_ack(1);
+		pp_param_QGC_set_wp_ack(1);
+	}
+
+	if (mp->ob_lat != cur_ob_lat | mp->ob_lon != cur_ob_lon) {
+
+		// new waypoint
+		cb_new_ob_ack(0);
+		pp_param_QGC_set_ob_ack(0);
+
+		cur_ob_lat = mp->ob_lat;
+		cur_ob_lon = mp->ob_lon;
+
+		Point obs;
+		obs.lat = mp->ob_lat;
+		obs.lon = mp->ob_lon;
+		obs.alt = 0;
+		NEDpoint obs_ned = nh_geo2ned(obs);
+		nav_set_obstacle_ned((uint8_t)mp->ob_count, obs_ned);
+		pp_param_QGC_set_ob(obs.lat, obs.lon, 1);
+
+		cb_new_ob_ack(0);
+		pp_param_QGC_set_ob_ack(0);
+	}
 }
 
 
@@ -943,8 +963,6 @@ void nav_set_targetnumber(uint8_t tar_num) {
 
 		last_tar_num = tar_num;
 	}
-
-
 }
 
 

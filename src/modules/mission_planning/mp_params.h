@@ -14,12 +14,15 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <uORB/topics/mi_ack.h>
+
 #define MAX_CHAR_LINE 50
 #define MAX_NUM_BU 4
 #define MAX_NUM_WP 20
 #define MAX_NUM_OB 10
 
 #define SD_DEBUG 0
+#define MI_DEBUG 0
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
@@ -101,7 +104,7 @@ void mp_param_QGC_get(void);
 void mp_param_QGC_set(int done);
 
 // @brief update transfer to path_planning module
-void mp_mission_update(int wp_ack, int ob_ack);
+void mp_mission_update(struct mi_ack_s *mi_ack);
 
 /* @brief get parameters from SD card */
 void mp_get_mission_from_SD(char file_path[]);

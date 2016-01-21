@@ -63,16 +63,21 @@ PARAM_DEFINE_INT32(ASP_DO_MANEUV, 0);
  *
  * @min -900000000
  * @max 900000000
+ *
+ * lake zurich: 473494820
+ *
  */
-PARAM_DEFINE_INT32(ASP_R_LAT0_E7, 473494820);
+PARAM_DEFINE_INT32(ASP_R_LAT0_E7, 476779010);
 
 /**
  * Longitude of the origin of the NED system, in degrees * E7.
  *
  * @min -1800000000
  * @max 1800000000
+ *
+ * lake zurich: 85605120
  */
-PARAM_DEFINE_INT32(ASP_R_LON0_E7, 85605120);
+PARAM_DEFINE_INT32(ASP_R_LON0_E7, 87081670);
 
 /**
  * Altitude of origin of NED system, in millimeters.
@@ -87,16 +92,20 @@ PARAM_DEFINE_INT32(ASP_R_ALT0_E3, 406000);
  *
  * @min -900000000
  * @max 900000000
+ *
+ * lake zurich: 473459370
  */
-PARAM_DEFINE_INT32(ASP_T_LAT_E7, 473459370);
+PARAM_DEFINE_INT32(ASP_T_LAT_E7, 476780510);
 
 /**
  * Longitude of the top mark, in degrees * E7.
  *
  * @min -1800000000
  * @max 1800000000
+ *
+ * lake zurich: 85547940
  */
-PARAM_DEFINE_INT32(ASP_T_LON_E7, 85547940);
+PARAM_DEFINE_INT32(ASP_T_LON_E7, 87082070);
 
 /**
  * Altitude of the top mark, in millimeters.
@@ -384,11 +393,9 @@ PARAM_DEFINE_FLOAT(KT_PERIOD,2);
 PARAM_DEFINE_INT32(PP_TF_MI_ID, 0);
 PARAM_DEFINE_FLOAT(PP_TF_MI_WP_LAT, 0.0f);
 PARAM_DEFINE_FLOAT(PP_TF_MI_WP_LON, 0.0f);
-PARAM_DEFINE_INT32(PP_TF_MI_WP_NUM, 0);
 PARAM_DEFINE_FLOAT(PP_TF_MI_OB_LAT, 0.0f);
 PARAM_DEFINE_FLOAT(PP_TF_MI_OB_LON, 0.0f);
 PARAM_DEFINE_FLOAT(PP_TF_MI_OB_RAD, 0.0f);
-PARAM_DEFINE_INT32(PP_TF_MI_OB_NUM, 0);
 PARAM_DEFINE_INT32(PP_TF_WP_ACK, 0);
 PARAM_DEFINE_INT32(PP_TF_OB_ACK, 0);
 
@@ -497,11 +504,9 @@ static struct pointers_pp_param_qgc_s {
 	param_t tf_mi_id;
 	param_t tf_mi_wp_lat;
 	param_t tf_mi_wp_lon;
-	param_t tf_mi_wp_num;
 	param_t tf_mi_ob_lat;
 	param_t tf_mi_ob_lon;
 	param_t tf_mi_ob_rad;
-	param_t tf_mi_ob_num;
 
 	param_t tf_wp_ack;
 	param_t tf_ob_ack;
@@ -624,11 +629,9 @@ void pp_param_QGC_init(void){
     pointers_pp_param_qgc.tf_mi_id = param_find("PP_TF_MI_ID");
     pointers_pp_param_qgc.tf_mi_wp_lat = param_find("PP_TF_MI_WP_LAT");
     pointers_pp_param_qgc.tf_mi_wp_lon = param_find("PP_TF_MI_WP_LON");
-    pointers_pp_param_qgc.tf_mi_wp_num = param_find("PP_TF_MI_WP_NUM");
     pointers_pp_param_qgc.tf_mi_ob_lat = param_find("PP_TF_MI_OB_LAT");
     pointers_pp_param_qgc.tf_mi_ob_lon = param_find("PP_TF_MI_OB_LON");
     pointers_pp_param_qgc.tf_mi_ob_lon = param_find("PP_TF_MI_OB_RAD");
-    pointers_pp_param_qgc.tf_mi_ob_num = param_find("PP_TF_MI_OB_NUM");
 
     pointers_pp_param_qgc.tf_wp_ack = param_find("PP_TF_WP_ACK");
     pointers_pp_param_qgc.tf_ob_ack = param_find("PP_TF_OB_ACK");
@@ -945,17 +948,15 @@ void pp_param_QGC_set_mi(int id) {
 	param_set(pointers_pp_param_qgc.tf_mi_id, &id);
 }
 
-void pp_param_QGC_set_wp(float lat, float lon, int num) {
+void pp_param_QGC_set_wp(float lat, float lon) {
 	param_set(pointers_pp_param_qgc.tf_mi_wp_lat, &lat);
 	param_set(pointers_pp_param_qgc.tf_mi_wp_lon, &lon);
-	param_set(pointers_pp_param_qgc.tf_mi_wp_num, &num);
 }
 
-void pp_param_QGC_set_ob(float lat, float lon, float rad, int num) {
+void pp_param_QGC_set_ob(float lat, float lon, float rad) {
 	param_set(pointers_pp_param_qgc.tf_mi_ob_lat, &lat);
 	param_set(pointers_pp_param_qgc.tf_mi_ob_lon, &lon);
 	param_set(pointers_pp_param_qgc.tf_mi_ob_rad, &rad);
-	param_set(pointers_pp_param_qgc.tf_mi_ob_num, &num);
 }
 
 void pp_param_QGC_set_wp_ack(int ack) {

@@ -382,7 +382,7 @@ void pp_cb_init(void){
     //Added 19.06.15, commented 02.09.2015
     pp_updated = true;
     mi_ack_updated = true;
-    pp_cb_publish_if_updated();
+    // pp_cb_publish_if_updated();
 }
 
 /**

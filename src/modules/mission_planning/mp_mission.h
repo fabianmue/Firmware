@@ -14,11 +14,12 @@
 #include <stdbool.h>
 
 #include "mp_params.h"
-
 #include "mp_topics_handler.h"
 
 #define MAX_NUM_FR 5
 #define MAX_NUM_MI 5
+
+#define MI_SEL_DEBUG 0
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/

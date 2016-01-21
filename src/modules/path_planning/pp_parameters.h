@@ -29,10 +29,10 @@ void pp_param_QGC_get(bool update_path_param);
 void pp_param_QGC_set_mi(int id);
 
 /* @brief get new target paramater values in QGC */
-void pp_param_QGC_set_wp(float lat, float lon, int num);
+void pp_param_QGC_set_wp(float lat, float lon);
 
 /* @brief get new obstacle paramater values in QGC */
-void pp_param_QGC_set_ob(float lat, float lon, float rad, int num);
+void pp_param_QGC_set_ob(float lat, float lon, float rad);
 
 /* @brief get new waypoint ack paramater in QGC */
 void pp_param_QGC_set_wp_ack(int ack);
