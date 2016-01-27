@@ -519,12 +519,10 @@ struct log_PP_s{
     float    heading_ref;
     float 	 pos_n;	//North position of the boat
     float    pos_e; //East position of the boat
-    float    tar_lat;	//Target position
-    float    tar_lon;
-    float	 tar_num;
-    float    obs_lat; 	//Obstacle position
-    float    obs_lon;
-    float 	 obs_num;
+    float    tar_n;	//Target position
+    float    tar_e;
+    float    obst_n; //Obstacle position
+    float    obst_e;
     float    wind;   //Log Wind direction
     float    head; 	 //Log the heading calculated from alpha and true wind
 };

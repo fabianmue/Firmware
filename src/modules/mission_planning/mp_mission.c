@@ -64,65 +64,73 @@ struct mp_published_fd_s *mp_pubs;
 /*****  F U N C T I O N   D E F I N I T I O N S  ***********************************/
 /***********************************************************************************/
 
-void mp_mi_handler(int id, int wp_ack, int ob_ack) {
+int mp_new_mission_id(int id) {
 
-	if (MI_SEL_DEBUG != 0) {
-		id = 1;
-	}
+	// try to get selected mission from list
+	selected_mission = mp_get_mission_by_id(id);
+	if (selected_mission == NULL) {
 
-	if (selected_mission == NULL | id != sel_id) {
-
-		// try to get selected mission from list
-		selected_mission = mp_get_mission_by_id(id);
-		if (selected_mission == NULL) {
-			sprintf(buffer_mi, "mission with id %d not found\n", id);
-			printf(buffer_mi);
-			mp_send_log_info(buffer_mi);
-			return;
-		}
-
-		// new id selected
-		sprintf(buffer_mi, "mission with id %d found\n", id);
+		// notify failure
+		sprintf(buffer_mi, "mission with id %d not found\n", id);
 		printf(buffer_mi);
-		mp_send_log_info(buffer_mi);
 
-		sel_id = selected_mission->id;
-		mp_cb_new_mission_id(sel_id);
-		tf_done = 0;
-		mp_param_QGC_set(tf_done);
-		wp_tf_count = 0;
-		ob_tf_count = 0;
+		// return 0
+		return 0;
 	}
 
-	if (id == sel_id & selected_mission != NULL) {
+	// notify success
+	sprintf(buffer_mi, "mission with id %d found\n", selected_mission->id);
+	printf(buffer_mi);
 
-		// check if all waypoints have been transfered
-		if (wp_tf_count >= selected_mission->waypoint_count & ob_tf_count >= selected_mission->obstacle_count) {
-			tf_done = 1;
-			mp_param_QGC_set(tf_done);
-			return;
-		}
+	// send new id to cb
+	mp_cb_new_mission_id(selected_mission->id);
 
-		// transfer next waypoint
-		if (wp_ack != 0 & wp_tf_count < selected_mission->waypoint_count) {
-			mp_cb_new_waypoint(selected_mission->waypoints[wp_tf_count].latitude, selected_mission->waypoints[wp_tf_count].longitude);
-			wp_tf_count++;
+	// reset counters
+	wp_tf_count = 0;
+	ob_tf_count = 0;
 
-			sprintf(buffer_mi, "new wp sent to cb (lat = %3.8f, lon = %3.8f)", selected_mission->waypoints[wp_tf_count].latitude, selected_mission->waypoints[wp_tf_count].longitude);
-			printf(buffer_mi);
-			mp_send_log_info(buffer_mi);
-		}
+	// return 1
+	return 1;
+}
 
-		// transfer next obstacle
-		if (ob_ack != 0 & ob_tf_count < selected_mission->obstacle_count) {
-			mp_cb_new_obstacle(selected_mission->obstacles[ob_tf_count].center.latitude, selected_mission->obstacles[ob_tf_count].center.longitude, selected_mission->obstacles[ob_tf_count].radius);
-			ob_tf_count++;
+int mp_new_mission_data(int wp_ack, int ob_ack) {
 
-			sprintf(buffer_mi, "new ob sent to cb (lat = %3.8f, lon = %3.8f)", selected_mission->obstacles[ob_tf_count].center.latitude, selected_mission->obstacles[ob_tf_count].center.longitude);
-			printf(buffer_mi);
-			mp_send_log_info(buffer_mi);
-		}
+	if (selected_mission == NULL) {
+		return 0;
 	}
+
+	// check if all waypoints have been transfered
+	if (wp_tf_count >= selected_mission->waypoint_count & ob_tf_count >= selected_mission->obstacle_count) {
+		return 1;
+	}
+
+	// transfer next waypoint
+	if (wp_ack != 0 & wp_tf_count < selected_mission->waypoint_count) {
+
+		// send new waypoint to cb
+		mp_cb_new_waypoint(selected_mission->waypoints[wp_tf_count].latitude, selected_mission->waypoints[wp_tf_count].longitude);
+
+		// notify
+		sprintf(buffer_mi, "new wp sent to cb: lat = %3.9f, lon = %3.9f\n", (double)selected_mission->waypoints[wp_tf_count].latitude, (double)selected_mission->waypoints[wp_tf_count].longitude);
+		printf(buffer_mi);
+
+		wp_tf_count++;
+	}
+
+	// transfer next obstacle
+	if (ob_ack != 0 & ob_tf_count < selected_mission->obstacle_count) {
+
+		// send new obstacle to cb
+		mp_cb_new_obstacle(selected_mission->obstacles[ob_tf_count].center.latitude, selected_mission->obstacles[ob_tf_count].center.longitude, selected_mission->obstacles[ob_tf_count].radius);
+
+		// notify
+		sprintf(buffer_mi, "new ob sent to cb: lat = %3.9f, lon = %3.9f\n", (double)selected_mission->obstacles[ob_tf_count].center.latitude, (double)selected_mission->obstacles[ob_tf_count].center.longitude);
+		printf(buffer_mi);
+
+		ob_tf_count++;
+	}
+
+	return 0;
 }
 
 // @brief: reset frame and mission list
@@ -224,8 +232,8 @@ frame* mp_get_frame_by_id(int id) {
 mission* mp_get_mission_by_id(int id) {
 
 	for (int i = 0; i < mi_list.size; i++) {
-		if (mi_list.list[i].id == id) {
-			return &mi_list.list[i];
+		if (mi_list.list[i].id == id && id != 0) {
+			return &(mi_list.list[i]);
 		}
 	}
 	return NULL;
@@ -240,12 +248,10 @@ int mp_add_fr_to_list(frame fr) {
 		fr_list.size++;
 		sprintf(buffer_mi, "added frame to list (id = %d)\n", fr.id);
 		printf(buffer_mi);
-		mp_send_log_info(buffer_mi);
 		return 1;
 	}
 	sprintf(buffer_mi, "failed to add frame to list (id = %d, max list size reached)\n", fr.id);
 	printf(buffer_mi);
-	mp_send_log_info(buffer_mi);
 	return 0;
 }
 
@@ -253,16 +259,14 @@ int mp_add_fr_to_list(frame fr) {
 int mp_add_mi_to_list(mission mi) {
 
 	// check if frame list is full
-	if (mi_list.size < MAX_NUM_MI) {
+	if (mi_list.size < MAX_NUM_MI - 1) {
 		mi_list.list[mi_list.size] = mi;
 		mi_list.size++;
 		sprintf(buffer_mi, "added mission to list (id = %d)\n", mi.id);
 		printf(buffer_mi);
-		mp_send_log_info(buffer_mi);
 		return 1;
 	}
 	sprintf(buffer_mi, "failed to add mission to list (id = %d, max list size reached)\n", mi.id);
 	printf(buffer_mi);
-	mp_send_log_info(buffer_mi);
 	return 0;
 }

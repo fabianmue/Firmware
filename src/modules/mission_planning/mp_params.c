@@ -27,10 +27,9 @@ char file_path[] = "/fs/microsd/mission_data/mission_data.txt";
 char buffer_pa[60];
 
 // file variables
-int32_t init = 0, mi_select = 0, sd_read = 0, data_src = 0;
+int32_t init = 0, mi_select = 0, sd_read = 0;
 
 // variables received from QGC
-PARAM_DEFINE_INT32(MP_DATA_SRC, 0);		// data source, 0 = telemetry, 1 = SD card
 PARAM_DEFINE_INT32(MP_MI_SELECT, 0);	// mission selected
 
 // variables sent to QGC
@@ -40,7 +39,6 @@ PARAM_DEFINE_INT32(MP_TF_DONE, 0);
 static struct pointers_mp_param_qgc_s {
 
 	// from QGC
-	param_t mp_data_src;
 	param_t mp_mi_select;
 
 	// to QGC
@@ -56,7 +54,6 @@ static struct pointers_mp_param_qgc_s {
 void mp_param_QGC_init(void) {
 
 	// from QGC
-    pointers_mp_param_qgc.mp_data_src = param_find("MP_DATA_SRC");
     pointers_mp_param_qgc.mp_mi_select = param_find("MP_MI_SELECT");
 
     // to QGC
@@ -64,7 +61,6 @@ void mp_param_QGC_init(void) {
     pointers_mp_param_qgc.mp_tf_done = param_find("MP_TF_DONE");
 
     // set default values
-    param_set(pointers_mp_param_qgc.mp_data_src, &init);
     param_set(pointers_mp_param_qgc.mp_mi_select, &init);
     param_set(pointers_mp_param_qgc.mp_tf_done, &init);
     param_set(pointers_mp_param_qgc.mp_sd_read, &init);
@@ -72,8 +68,7 @@ void mp_param_QGC_init(void) {
 
 void mp_param_QGC_get(void) {
 
-	param_get(pointers_mp_param_qgc.mp_data_src, &data_src);
-	if ((data_src == 1 | SD_DEBUG == 1) & sd_read != 1) {
+	if (sd_read == 0) {
 
 		// read parameters from SD card
 		mp_get_mission_from_SD(file_path);
@@ -83,39 +78,42 @@ void mp_param_QGC_get(void) {
 		param_set(pointers_mp_param_qgc.mp_sd_read, &sd_read);
 	}
 
-	param_get(pointers_mp_param_qgc.mp_mi_select, &mi_select);
-	if ((mi_select_prev != mi_select | MI_DEBUG == 1)& sd_read != 0) {
-		mi_select_prev = mi_select;
-		mp_mi_handler(mi_select, 1, 1);
+	if (MI_DEBUG != 0) {
+		mi_select = MI_DEBUG;
+	} else {
+		param_get(pointers_mp_param_qgc.mp_mi_select, &mi_select);
 	}
-}
 
-void mp_param_QGC_set(int done) {
+	if (mi_select_prev != mi_select & sd_read != 0) {
 
-	param_set(pointers_mp_param_qgc.mp_tf_done, &done);
+		mp_new_mission_id(mi_select);
+		mi_select_prev = mi_select;
+	}
 }
 
 void mp_mission_update(struct mi_ack_s *mi_ack) {
 
+	sprintf(buffer_pa, "new mi_ack, wp_ack: %d, ob_ack: %d\n", mi_ack->wp_ack, mi_ack->ob_ack);
+	printf(buffer_pa);
+
 	if (sd_read != 0) {
-		if (mi_ack->wp_ack != 0 | mi_ack->ob_ack != 0) {
-			mp_mi_handler(mi_select, (int)mi_ack->wp_ack, (int)mi_ack->ob_ack);
-		}
+
+		int done = mp_new_mission_data(mi_ack->wp_ack, mi_ack->ob_ack);
+		param_set(pointers_mp_param_qgc.mp_tf_done, &done);
 	}
 }
 
 // @brief read parameters from SD card
 void mp_get_mission_from_SD(char *file_path) {
+
 	// open file
 	int fd = open(file_path, O_RDONLY);
 	if (fd < 0 | fd == NULL) {
 		sprintf(buffer_pa, "unable to open file %s \n", file_path);
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 	} else {
 		sprintf(buffer_pa, "parameter file found at %s\n", file_path);
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		mp_list_reset();
 		char *line;
 		do {
@@ -127,11 +125,9 @@ void mp_get_mission_from_SD(char *file_path) {
 				if (rd_fr == NULL) {
 					sprintf(buffer_pa, "error reading frame\n");
 					printf(buffer_pa);
-					mp_send_log_info(buffer_pa);
 				} else {
 					sprintf(buffer_pa, "successfully read frame\n");	// advertise
 					printf(buffer_pa);
-					mp_send_log_info(buffer_pa);
 					mp_fr_convert(rd_fr);
 				}
 				free(rd_fr);
@@ -143,18 +139,15 @@ void mp_get_mission_from_SD(char *file_path) {
 				if (rd_mi_base == NULL) {
 					sprintf(buffer_pa, "error reading mission\n");
 					printf(buffer_pa);
-					mp_send_log_info(buffer_pa);
 				} else {
 					if (rd_mi_base->type == 0) {
 						rd_mission_uc *rd_mi_uc = read_mission_uc(fd, rd_mi_base);
 						if (rd_mi_uc == NULL) {
 							sprintf(buffer_pa, "error reading unconstrained mission\n");
 							printf(buffer_pa);
-							mp_send_log_info(buffer_pa);
 						} else {
 							sprintf(buffer_pa, "successfully read unconstrained mission\n");
 							printf(buffer_pa);
-							mp_send_log_info(buffer_pa);
 							mp_mi_uc_convert(rd_mi_uc);
 						}
 						free(rd_mi_uc);
@@ -164,11 +157,9 @@ void mp_get_mission_from_SD(char *file_path) {
 						if (rd_mi_tr == NULL) {
 							sprintf(buffer_pa, "error reading triangular mission\n");
 							printf(buffer_pa);
-							mp_send_log_info(buffer_pa);
 						} else {
 							sprintf(buffer_pa, "successfully read triangular mission\n");
 							printf(buffer_pa);
-							mp_send_log_info(buffer_pa);
 							//
 						}
 						free(rd_mi_tr);
@@ -178,11 +169,9 @@ void mp_get_mission_from_SD(char *file_path) {
 						if (rd_mi_sk == NULL) {
 							sprintf(buffer_pa, "error reading station keeping mission\n");
 							printf(buffer_pa);
-							mp_send_log_info(buffer_pa);
 						} else {
 							sprintf(buffer_pa, "successfully read station keeping mission\n");
 							printf(buffer_pa);
-							mp_send_log_info(buffer_pa);
 							//
 						}
 						free(rd_mi_sk);
@@ -192,11 +181,9 @@ void mp_get_mission_from_SD(char *file_path) {
 						if (rd_mi_as == NULL) {
 							sprintf(buffer_pa, "error reading area scanning mission\n");
 							printf(buffer_pa);
-							mp_send_log_info(buffer_pa);
 						} else {
 							sprintf(buffer_pa, "successfully read area scanning mission\n");
 							printf(buffer_pa);
-							mp_send_log_info(buffer_pa);
 							//
 						}
 						free(rd_mi_as);
@@ -222,7 +209,6 @@ rd_waypoint* read_wp(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading waypoint");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_wp);
 		free(line);
 		return NULL;
@@ -236,7 +222,6 @@ rd_waypoint* read_wp(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading waypoint");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_wp);
 		free(line);
 		return NULL;
@@ -250,7 +235,6 @@ rd_waypoint* read_wp(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading waypoint");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_wp);
 		free(line);
 		return NULL;
@@ -264,7 +248,6 @@ rd_waypoint* read_wp(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading waypoint");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_wp);
 		free(line);
 		return NULL;
@@ -290,7 +273,6 @@ rd_obstacle* read_ob(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading waypoint");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_ob);
 		free(line);
 		return NULL;
@@ -304,7 +286,6 @@ rd_obstacle* read_ob(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading obstacle");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_ob);
 		free(line);
 		return NULL;
@@ -328,7 +309,6 @@ rd_obstacle* read_ob(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading obstacle");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_ob);
 		free(line);
 		return NULL;
@@ -342,7 +322,6 @@ rd_obstacle* read_ob(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading obstacle");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_ob);
 		free(line);
 		return NULL;
@@ -368,7 +347,6 @@ rd_buoy* read_bu(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading waypoint");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(bu);
 		free(line);
 		return NULL;
@@ -382,7 +360,6 @@ rd_buoy* read_bu(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading buoy");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(bu);
 		free(line);
 		return NULL;
@@ -406,7 +383,6 @@ rd_buoy* read_bu(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading buoy");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(bu);
 		free(line);
 		return NULL;
@@ -420,7 +396,6 @@ rd_buoy* read_bu(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading buoy");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(bu);
 		free(line);
 		return NULL;
@@ -447,7 +422,6 @@ rd_frame* read_frame(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading frame");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_fr);
 		free(line);
 		return NULL;
@@ -461,7 +435,6 @@ rd_frame* read_frame(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading frame");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_fr);
 		free(line);
 		return NULL;
@@ -476,7 +449,6 @@ rd_frame* read_frame(int fd) {
 		if (line == NULL) {
 			sprintf(buffer_pa, "error reading frame");
 			printf(buffer_pa);
-			mp_send_log_info(buffer_pa);
 			free(rd_fr);
 			free(line);
 			return NULL;
@@ -501,7 +473,6 @@ rd_frame* read_frame(int fd) {
 			} else {
 				sprintf(buffer_pa, "maximum number of buoys in frame reached\n");
 				printf(buffer_pa);
-				mp_send_log_info(buffer_pa);
 			}
 			free(rd_bu);
 		}
@@ -522,7 +493,6 @@ rd_mission_base* read_mission_base(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_mi_base);
 		free(line);
 		return NULL;
@@ -536,7 +506,6 @@ rd_mission_base* read_mission_base(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_mi_base);
 		free(line);
 		return NULL;
@@ -550,7 +519,6 @@ rd_mission_base* read_mission_base(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_mi_base);
 		free(line);
 		return NULL;
@@ -564,7 +532,6 @@ rd_mission_base* read_mission_base(int fd) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_mi_base);
 		free(line);
 		return NULL;
@@ -595,9 +562,8 @@ rd_mission_uc* read_mission_uc(int fd, rd_mission_base *rd_mi_base) {
 	do {
 		line = read_line(fd, MAX_CHAR_LINE);
 		if (line == NULL) {
-			sprintf(buffer_pa, "error reading unconstrained mission");
+			sprintf(buffer_pa, "error reading unconstrained mission\n");
 			printf(buffer_pa);
-			mp_send_log_info(buffer_pa);
 			free(rd_mi_uc);
 			free(line);
 			return NULL;
@@ -608,7 +574,7 @@ rd_mission_uc* read_mission_uc(int fd, rd_mission_base *rd_mi_base) {
 		}
 		if (strstr(line, "<waypoint>") != NULL) {
 			rd_wp = read_wp(fd);
-			if (rd_mi_uc->waypoint_count < MAX_NUM_WP) {
+			if (rd_mi_uc->waypoint_count < MAX_NUM_WP - 1) {
 				if (rd_wp == NULL) {
 					free(rd_wp);
 					free(rd_mi_uc);
@@ -621,13 +587,12 @@ rd_mission_uc* read_mission_uc(int fd, rd_mission_base *rd_mi_base) {
 			} else {
 				sprintf(buffer_pa, "maximum number of waypoints in unconstrained mission reached\n");
 				printf(buffer_pa);
-				mp_send_log_info(buffer_pa);
 			}
 			free(rd_wp);
 		}
 		if (strstr(line, "<obstacle>") != NULL) {
 			rd_ob = read_ob(fd);
-			if (rd_mi_uc->obstacle_count < MAX_NUM_OB) {
+			if (rd_mi_uc->obstacle_count < MAX_NUM_OB - 1) {
 				if (rd_ob == NULL) {
 					free(rd_ob);
 					free(rd_mi_uc);
@@ -640,7 +605,6 @@ rd_mission_uc* read_mission_uc(int fd, rd_mission_base *rd_mi_base) {
 			} else {
 				sprintf(buffer_pa, "maximum number of obstacles in unconstrained mission reached\n");
 				printf(buffer_pa);
-				mp_send_log_info(buffer_pa);
 			}
 			free(rd_ob);
 		}
@@ -667,7 +631,6 @@ rd_mission_tr* read_mission_tr(int fd, rd_mission_base *rd_mi_base) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading triangular mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_bu);
 		free(rd_mi_tr);
 		free(line);
@@ -686,7 +649,6 @@ rd_mission_tr* read_mission_tr(int fd, rd_mission_base *rd_mi_base) {
 	} else {
 		sprintf(buffer_pa, "error reading triangular mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_bu);
 		free(rd_mi_tr);
 		free(line);
@@ -698,7 +660,6 @@ rd_mission_tr* read_mission_tr(int fd, rd_mission_base *rd_mi_base) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading triangular mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_bu);
 		free(rd_mi_tr);
 		free(line);
@@ -717,7 +678,6 @@ rd_mission_tr* read_mission_tr(int fd, rd_mission_base *rd_mi_base) {
 	} else {
 		sprintf(buffer_pa, "error reading triangular mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_bu);
 		free(rd_mi_tr);
 		free(line);
@@ -729,7 +689,6 @@ rd_mission_tr* read_mission_tr(int fd, rd_mission_base *rd_mi_base) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading triangular mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_bu);
 		free(rd_mi_tr);
 		free(line);
@@ -748,7 +707,6 @@ rd_mission_tr* read_mission_tr(int fd, rd_mission_base *rd_mi_base) {
 	} else {
 		sprintf(buffer_pa, "error reading triangular mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_bu);
 		free(rd_mi_tr);
 		free(line);
@@ -760,7 +718,6 @@ rd_mission_tr* read_mission_tr(int fd, rd_mission_base *rd_mi_base) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading triangular mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_bu);
 		free(rd_mi_tr);
 		free(line);
@@ -779,7 +736,6 @@ rd_mission_tr* read_mission_tr(int fd, rd_mission_base *rd_mi_base) {
 	} else {
 		sprintf(buffer_pa, "error reading triangular mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_bu);
 		free(rd_mi_tr);
 		free(line);
@@ -791,7 +747,6 @@ rd_mission_tr* read_mission_tr(int fd, rd_mission_base *rd_mi_base) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading triangular mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_bu);
 		free(rd_mi_tr);
 		free(line);
@@ -810,7 +765,6 @@ rd_mission_tr* read_mission_tr(int fd, rd_mission_base *rd_mi_base) {
 	} else {
 		sprintf(buffer_pa, "error reading triangular mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_bu);
 		free(rd_mi_tr);
 		free(line);
@@ -822,7 +776,6 @@ rd_mission_tr* read_mission_tr(int fd, rd_mission_base *rd_mi_base) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading triangular mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_bu);
 		free(rd_mi_tr);
 		free(line);
@@ -841,7 +794,6 @@ rd_mission_tr* read_mission_tr(int fd, rd_mission_base *rd_mi_base) {
 	} else {
 		sprintf(buffer_pa, "error reading triangular mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_bu);
 		free(rd_mi_tr);
 		free(line);
@@ -853,7 +805,6 @@ rd_mission_tr* read_mission_tr(int fd, rd_mission_base *rd_mi_base) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading triangular mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_bu);
 		free(rd_mi_tr);
 		free(line);
@@ -886,7 +837,6 @@ rd_mission_sk* read_mission_sk(int fd, rd_mission_base *rd_mi_base) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading station keeping mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_mi_sk);
 		free(line);
 		return NULL;
@@ -900,7 +850,6 @@ rd_mission_sk* read_mission_sk(int fd, rd_mission_base *rd_mi_base) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading station keeping mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_mi_sk);
 		free(line);
 		return NULL;
@@ -914,7 +863,6 @@ rd_mission_sk* read_mission_sk(int fd, rd_mission_base *rd_mi_base) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading station keeping mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_mi_sk);
 		free(line);
 		return NULL;
@@ -944,7 +892,6 @@ rd_mission_as* read_mission_as(int fd, rd_mission_base *rd_mi_base) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading area scanning mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_mi_as);
 		free(line);
 		return NULL;
@@ -958,7 +905,6 @@ rd_mission_as* read_mission_as(int fd, rd_mission_base *rd_mi_base) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading area scanning mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_mi_as);
 		free(line);
 		return NULL;
@@ -972,7 +918,6 @@ rd_mission_as* read_mission_as(int fd, rd_mission_base *rd_mi_base) {
 	if (line == NULL) {
 		sprintf(buffer_pa, "error reading area scanning mission");
 		printf(buffer_pa);
-		mp_send_log_info(buffer_pa);
 		free(rd_mi_as);
 		free(line);
 		return NULL;

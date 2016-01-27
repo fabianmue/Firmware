@@ -17,22 +17,20 @@
 #include "mp_topics_handler.h"
 
 #define MAX_NUM_FR 5
-#define MAX_NUM_MI 5
-
-#define MI_SEL_DEBUG 0
+#define MAX_NUM_MI 10
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
 /***********************************************************************************/
 
 typedef struct waypoint_s {
-	double latitude;
-	double longitude;
+	float latitude;
+	float longitude;
 } waypoint;
 
 typedef struct obstacle_s {
 	waypoint center;
-	double radius;
+	float radius;
 } obstacle;
 
 typedef struct buoy_s {
@@ -58,7 +56,9 @@ typedef struct mission_s {
 /*****  F U N C T I O N   D E C L A R A T I O N S  *********************************/
 /***********************************************************************************/
 
-void mp_mi_handler(int id, int wp_ack, int ob_ack);
+int mp_new_mission_id(int id);
+
+int mp_new_mission_data(int wp_ack, int ob_ack);
 
 void mp_list_reset(void);
 

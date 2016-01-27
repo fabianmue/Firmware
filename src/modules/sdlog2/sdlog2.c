@@ -1787,11 +1787,9 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_BOAT_WEATHER_STATION.acc_x_g = buf.boat_weather_station.acc_x_g;
             log_msg.body.log_BOAT_WEATHER_STATION.acc_y_g = buf.boat_weather_station.acc_y_g;
             log_msg.body.log_BOAT_WEATHER_STATION.acc_z_g = buf.boat_weather_station.acc_z_g;
-
             log_msg.body.log_BOAT_WEATHER_STATION.roll_r = buf.boat_weather_station.roll_r;
             log_msg.body.log_BOAT_WEATHER_STATION.pitch_r = buf.boat_weather_station.pitch_r;
             log_msg.body.log_BOAT_WEATHER_STATION.heading_tn = buf.boat_weather_station.heading_tn;
-
             log_msg.body.log_BOAT_WEATHER_STATION.roll_rate_r_s = buf.boat_weather_station.roll_rate_r_s;
             log_msg.body.log_BOAT_WEATHER_STATION.pitch_rate_r_s = buf.boat_weather_station.pitch_rate_r_s;
             log_msg.body.log_BOAT_WEATHER_STATION.yaw_rate_r_s = buf.boat_weather_station.yaw_rate_r_s;
@@ -1934,12 +1932,10 @@ int sdlog2_thread_main(int argc, char *argv[])
             log_msg.body.log_PP.heading_ref = buf.path_planning.ref_heading;
             log_msg.body.log_PP.pos_n = buf.path_planning.ned_north;
             log_msg.body.log_PP.pos_e = buf.path_planning.ned_east;
-            log_msg.body.log_PP.tar_lat = buf.path_planning.tar_lat;
-            log_msg.body.log_PP.tar_lon = buf.path_planning.tar_lon;
-            log_msg.body.log_PP.tar_num = buf.path_planning.tar_num;
-            log_msg.body.log_PP.obs_lat = buf.path_planning.obs_lat;
-            log_msg.body.log_PP.obs_lon = buf.path_planning.obs_lon;
-            log_msg.body.log_PP.obs_num = buf.path_planning.obs_num;
+            log_msg.body.log_PP.tar_n = buf.path_planning.target_north;
+            log_msg.body.log_PP.tar_e = buf.path_planning.target_east;
+            log_msg.body.log_PP.obst_n = buf.path_planning.obst_north;
+            log_msg.body.log_PP.obst_e = buf.path_planning.obst_east;
             log_msg.body.log_PP.wind = buf.path_planning.wind;
             log_msg.body.log_PP.head = buf.path_planning.heading;
             LOGBUFFER_WRITE_AND_COUNT(PP);

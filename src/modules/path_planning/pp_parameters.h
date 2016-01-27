@@ -34,10 +34,7 @@ void pp_param_QGC_set_wp(float lat, float lon);
 /* @brief get new obstacle paramater values in QGC */
 void pp_param_QGC_set_ob(float lat, float lon, float rad);
 
-/* @brief get new waypoint ack paramater in QGC */
-void pp_param_QGC_set_wp_ack(int ack);
-
-/* @brief get new obstacle ack paramater in QGC */
-void pp_param_QGC_set_ob_ack(int ack);
+/* @brief get new mi_ack paramater in QGC */
+void pp_param_QGC_set_mi_ack(int wp_ack, int ob_ack);
 
 #endif /* PP_PARAMETERS_H_ */

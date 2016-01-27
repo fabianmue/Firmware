@@ -959,10 +959,7 @@ void pp_param_QGC_set_ob(float lat, float lon, float rad) {
 	param_set(pointers_pp_param_qgc.tf_mi_ob_rad, &rad);
 }
 
-void pp_param_QGC_set_wp_ack(int ack) {
-	param_set(pointers_pp_param_qgc.tf_wp_ack, &ack);
-}
-
-void pp_param_QGC_set_ob_ack(int ack) {
-	param_set(pointers_pp_param_qgc.tf_ob_ack, &ack);
+void pp_param_QGC_set_mi_ack(int wp_ack, int ob_ack) {
+	param_set(pointers_pp_param_qgc.tf_wp_ack, &wp_ack);
+	param_set(pointers_pp_param_qgc.tf_ob_ack, &ob_ack);
 }

@@ -83,16 +83,16 @@ bool cb_new_wind(float wind);
 bool cb_new_mission(int id);
 
 /* @brief send new target position */
-bool cb_new_target(Point tar);
+bool cb_new_target(float north, float east);
+
+
+bool cb_new_targetnum(uint8_t tar_num);
 
 /* @brief increase obstacle number */
-bool cb_new_obstacle(Point obs);
+bool cb_new_obstacle(float o_north, float o_east);
 
 //
-bool cb_new_ob_ack(int ack);
-
-//
-bool cb_new_wp_ack(int ack);
+void cb_new_mi_ack(int wp_ack, int ob_ack);
 
 /** @brief command a tack or a jybe */
 bool cb_do_maneuver(float new_alpha_star);

@@ -175,45 +175,54 @@ bool cb_new_wind(float wind) {
 	return true;
 }
 
-/* @brief send new mission_id */
-bool cb_new_mission(int id) {
-
-	pp.mi_id = id;
+/**
+ * Send an Int-Value for Debug purposes to QGround Control
+ *
+ * @param int-value
+ */
+bool cb_new_target(float north, float east) {
+	pp.target_north = north;
+	pp.target_east = east;
 
 	pp_updated = true;
+
 	return true;
 }
 
-/* @brief send new target position */
-bool cb_new_target(Point tar) {
 
-	pp.tar_lat = tar.lat;
-	pp.tar_lon = tar.lon;
-	pp.tar_num++;
+/**
+ * Send the current Target Number that is set as the next Waypoint ot QGround Control
+ *
+ * @param tar_num: Number of the next Waypoint
+ */
+bool cb_new_targetnum(uint8_t tar_num) {
+	pp.target_num = tar_num;
 
 	pp_updated = true;
+
 	return true;
 }
 
-/* @brief increase obstacle number */
-bool cb_new_obstacle(Point obs) {
-	pp.obs_lat = obs.lat;
-	pp.obs_lon = obs.lon;
-	pp.obs_num++;
+/**
+ * Store the current Position of the obstacle in Pathplanning Topic
+ * => This is used for debugging in QGround Control! (Added by Jonas Wirz)
+ *
+ * @param obst_pos: position of the obstacle (NED) [m]
+ */
+bool cb_new_obstacle(float o_north, float o_east) {
+	pp.obst_north = o_north;
+	pp.obst_east = o_east;
+
 	pp_updated = true;
+
 	return true;
 }
 
-bool cb_new_ob_ack(int ack) {
-	mi_ack.ob_ack = ack;
+void cb_new_mi_ack(int wp_ack, int ob_ack) {
+
+	mi_ack.wp_ack = wp_ack;
+	mi_ack.ob_ack = ob_ack;
 	mi_ack_updated = true;
-	return true;
-}
-
-bool cb_new_wp_ack(int ack) {
-	mi_ack.wp_ack = ack;
-	mi_ack_updated = true;
-	return true;
 }
 
 /**

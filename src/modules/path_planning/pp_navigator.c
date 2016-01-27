@@ -27,6 +27,7 @@
 #include "pp_navigator.h"
 #include "pp_cost_method.h"
 #include "pp_potentialfield_method.h"
+#include "pp_parameters.h"
 
 #include "kalman_tracker/kt_tracker.h"
 #include "kalman_tracker/kt_track_list.h"
@@ -49,6 +50,9 @@
 int cur_mi_id = 0;
 float cur_wp_lat = 0, cur_wp_lon = 0, cur_ob_lat = 0, cur_ob_lon = 0;
 // struct mission_planning_s mp_copy;
+int wp_ack = 0, ob_ack = 0;
+
+char buffer_mi[60];
 
 /** Struct holding the main configuration variables of the navigator */
 static struct {
@@ -103,7 +107,7 @@ static float dbg_alpha = 0;
 static bool dbg_alpha_status = false;
 static bool dbg_alpha_minus = false;
 
-// static uint8_t qground_obstnum = 0; //number, auto increasing in every step. It is used to store all obstacles in the SD-Log
+static uint8_t qground_obstnum = 0; //number, auto increasing in every step. It is used to store all obstacles in the SD-Log
 
 /***********************************************************************************/
 /*****  P U B L I C    F U N C T I O N S  ******************************************/
@@ -349,6 +353,40 @@ void nav_navigator(void) {
 
 		//**We do NO pathplanning during maneuvers
 		if(state.maneuver == false) {
+
+
+			//**
+			#if LDEBUG_MISSIONHANDLER == 1
+
+			// mi_isinside(state.position);
+
+			#endif
+
+
+
+			//****SEND THE DATA USED FOR PATHPLANNING TO QGROUND CONTROL
+			NEDpoint act_wp;
+			nav_queue_read(&act_wp);
+
+			sprintf(buffer_mi, "pp nav: wp read: %3.8f, %3.8f\n", (double)act_wp.northx, (double)act_wp.easty);
+			printf(buffer_mi);
+
+			cb_new_target(act_wp.northx, act_wp.easty);
+
+			/*cb_new_obstacle(field.obstacles[qground_obstnum].northx, field.obstacles[qground_obstnum].easty);
+			qground_obstnum++;
+			if(qground_obstnum>field.NumberOfObstacles) {
+				qground_obstnum = 0;
+			}*/
+
+			//Log the Sensor-Obstacles
+			cb_new_obstacle(field.sensorobstacles[qground_obstnum].northx,field.sensorobstacles[qground_obstnum].easty);
+			qground_obstnum++;
+			if(qground_obstnum>field.NumberOfSensorobstacles) {
+				qground_obstnum = 0;
+			}
+
+			cb_new_targetnum(state.targetNum);
 
 			/****FIND A NEW REFERENCE HEADING
 			 * Different algorithms can be used. */
@@ -606,36 +644,27 @@ void yaw_update(struct pp_structs_topics_s *strs) {
 
 void mission_update(struct mission_planning_s *mp) {
 
-
-
 	if (cur_mi_id != mp->mi_id) {
 
 		// new mission, reset navigation queue
 		cur_mi_id = mp->mi_id;
-		cb_new_mission(cur_mi_id);
 		pp_param_QGC_set_mi(cur_mi_id);
 
 		// reset navigation queue
 		nav_queue_init();
 
-		cur_wp_lat = cur_wp_lon = cur_ob_lat = cur_ob_lon = 0;
+		sprintf(buffer_mi, "new mission, navigation queue reset\n");
+		printf(buffer_mi);
 
-		cb_new_wp_ack(1);
-		cb_new_ob_ack(1);
-		pp_param_QGC_set_wp_ack(1);
-		pp_param_QGC_set_ob_ack(1);
-		return;
+		cur_wp_lat = cur_wp_lon = cur_ob_lat = cur_ob_lon = 0;
+		wp_ack = ob_ack = 1;
 	}
 
 	if (mp->wp_lat != cur_wp_lat | mp->wp_lon != cur_wp_lon) {
 
-		// new waypoint
-		cb_new_wp_ack(0);
-		pp_param_QGC_set_wp_ack(0);
+		wp_ack = 0;
 
-		cur_wp_lat = mp->wp_lat;
-		cur_wp_lon = mp->wp_lon;
-
+		// add to queue
 		Point tar;
 		tar.lat = mp->wp_lat;
 		tar.lon = mp->wp_lon;
@@ -644,19 +673,23 @@ void mission_update(struct mission_planning_s *mp) {
 		nav_set_target_ned(tar_ned);
 		pp_param_QGC_set_wp(tar.lat, tar.lon);
 
-		cb_new_wp_ack(1);
-		pp_param_QGC_set_wp_ack(1);
+		// set to current
+		cur_wp_lat = mp->wp_lat;
+		cur_wp_lon = mp->wp_lon;
+
+		// notify
+		sprintf(buffer_mi, "pp_mission_update: wp_lat = %3.8f, wp_lon = %3.8f\n", (double)mp->wp_lat, (double)mp->wp_lon);
+		printf(buffer_mi);
+
+		// set ack
+		wp_ack = 1;
 	}
 
 	if (mp->ob_lat != cur_ob_lat | mp->ob_lon != cur_ob_lon) {
 
-		// new waypoint
-		cb_new_ob_ack(0);
-		pp_param_QGC_set_ob_ack(0);
+		ob_ack = 0;
 
-		cur_ob_lat = mp->ob_lat;
-		cur_ob_lon = mp->ob_lon;
-
+		// add to list
 		Point obs;
 		obs.lat = mp->ob_lat;
 		obs.lon = mp->ob_lon;
@@ -665,9 +698,20 @@ void mission_update(struct mission_planning_s *mp) {
 		nav_set_obstacle_ned((uint8_t)mp->ob_count, obs_ned);
 		pp_param_QGC_set_ob(obs.lat, obs.lon, 1);
 
-		cb_new_ob_ack(0);
-		pp_param_QGC_set_ob_ack(0);
+		// set to current
+		cur_ob_lat = mp->ob_lat;
+		cur_ob_lon = mp->ob_lon;
+
+		// notify
+		sprintf(buffer_mi, "pp_mission_update: ob_lat = %3.8f, ob_lon = %3.8f\n", (double)mp->ob_lat, (double)mp->ob_lon);
+		printf(buffer_mi);
+
+		// set ack
+		ob_ack = 1;
 	}
+
+	cb_new_mi_ack(wp_ack, ob_ack);
+	pp_param_QGC_set_mi_ack(wp_ack, ob_ack);
 }
 
 
