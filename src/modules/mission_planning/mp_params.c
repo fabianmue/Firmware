@@ -16,6 +16,7 @@
 #include <fcntl.h>
 
 #include "mp_params.h"
+#include "mp_mission.h"
 
 /***********************************************************************************/
 /*****  V A R I A B L E S  *********************************************************/
@@ -27,22 +28,24 @@ char file_path[] = "/fs/microsd/mission_data/mission_data.txt";
 char buffer_pa[60];
 
 // file variables
-int32_t init = 0, mi_select = 0, sd_read = 0;
+int32_t init = 0, mi_select = 0, sd_read = 0, read_now = 0, tf_done = 0;
 
 // variables received from QGC
-PARAM_DEFINE_INT32(MP_MI_SELECT, 0);	// mission selected
+PARAM_DEFINE_INT32(MP_READ_NOW, 0);		// change from 0 to any number to read the sd card
+PARAM_DEFINE_INT32(MP_MI_SELECT, 0);	// mission select
 
 // variables sent to QGC
-PARAM_DEFINE_INT32(MP_SD_READ, 0);
+PARAM_DEFINE_INT32(MP_READING_DONE, 0);
 PARAM_DEFINE_INT32(MP_TF_DONE, 0);
 
 static struct pointers_mp_param_qgc_s {
 
 	// from QGC
+	param_t mp_read_now;
 	param_t mp_mi_select;
 
 	// to QGC
-	param_t mp_sd_read;
+	param_t mp_reading_done;
 	param_t mp_tf_done;
 
 } pointers_mp_param_qgc;
@@ -54,28 +57,41 @@ static struct pointers_mp_param_qgc_s {
 void mp_param_QGC_init(void) {
 
 	// from QGC
+	pointers_mp_param_qgc.mp_read_now = param_find("MP_READ_NOW");
     pointers_mp_param_qgc.mp_mi_select = param_find("MP_MI_SELECT");
 
     // to QGC
-    pointers_mp_param_qgc.mp_sd_read = param_find("MP_SD_READ");
+    pointers_mp_param_qgc.mp_reading_done = param_find("MP_READING_DONE");
     pointers_mp_param_qgc.mp_tf_done = param_find("MP_TF_DONE");
-
-    // set default values
-    param_set(pointers_mp_param_qgc.mp_mi_select, &init);
-    param_set(pointers_mp_param_qgc.mp_tf_done, &init);
-    param_set(pointers_mp_param_qgc.mp_sd_read, &init);
 };
 
 void mp_param_QGC_get(void) {
 
-	if (sd_read == 0) {
+
+	if (SD_DEBUG != 0) {
+		read_now = 1;
+	} else {
+		param_get(pointers_mp_param_qgc.mp_read_now, &read_now);
+	}
+
+	if (read_now == 0 & sd_read != 0) {
+
+		// reset frame and mission list
+		mp_list_reset();
+
+		// set parameter in QGC
+		sd_read = 0;
+		param_set(pointers_mp_param_qgc.mp_reading_done, &sd_read);
+	}
+
+	if (read_now == 1 & sd_read == 0) {
 
 		// read parameters from SD card
 		mp_get_mission_from_SD(file_path);
 
 		// set parameter in QGC
 		sd_read = 1;
-		param_set(pointers_mp_param_qgc.mp_sd_read, &sd_read);
+		param_set(pointers_mp_param_qgc.mp_reading_done, &sd_read);
 	}
 
 	if (MI_DEBUG != 0) {
@@ -88,6 +104,9 @@ void mp_param_QGC_get(void) {
 
 		mp_new_mission_id(mi_select);
 		mi_select_prev = mi_select;
+
+		tf_done = 0;
+		param_set(pointers_mp_param_qgc.mp_tf_done, &tf_done);
 	}
 }
 
@@ -98,8 +117,11 @@ void mp_mission_update(struct mi_ack_s *mi_ack) {
 
 	if (sd_read != 0) {
 
-		int done = mp_new_mission_data(mi_ack->wp_ack, mi_ack->ob_ack);
-		param_set(pointers_mp_param_qgc.mp_tf_done, &done);
+		tf_done = mp_new_mission_data(mi_ack->wp_ack, mi_ack->ob_ack);
+		param_set(pointers_mp_param_qgc.mp_tf_done, &tf_done);
+
+		sprintf(buffer_pa, "tf done: %d\n", tf_done);
+		printf(buffer_pa);
 	}
 }
 

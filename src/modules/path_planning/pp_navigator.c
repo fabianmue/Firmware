@@ -48,7 +48,7 @@
 /***********************************************************************************/
 
 int cur_mi_id = 0;
-float cur_wp_lat = 0, cur_wp_lon = 0, cur_ob_lat = 0, cur_ob_lon = 0;
+float cur_wp_lat = 0.0f, cur_wp_lon = 0.0f, cur_ob_lat = 0.0f, cur_ob_lon = 0.0f;
 // struct mission_planning_s mp_copy;
 int wp_ack = 0, ob_ack = 0;
 
@@ -368,9 +368,6 @@ void nav_navigator(void) {
 			NEDpoint act_wp;
 			nav_queue_read(&act_wp);
 
-			sprintf(buffer_mi, "pp nav: wp read: %3.8f, %3.8f\n", (double)act_wp.northx, (double)act_wp.easty);
-			printf(buffer_mi);
-
 			cb_new_target(act_wp.northx, act_wp.easty);
 
 			/*cb_new_obstacle(field.obstacles[qground_obstnum].northx, field.obstacles[qground_obstnum].easty);
@@ -660,7 +657,7 @@ void mission_update(struct mission_planning_s *mp) {
 		wp_ack = ob_ack = 1;
 	}
 
-	if (mp->wp_lat != cur_wp_lat | mp->wp_lon != cur_wp_lon) {
+	if (fabs(mp->wp_lat - cur_wp_lat) > 0.00000005 | fabs(mp->wp_lon - cur_wp_lon) > 0.00000005) {
 
 		wp_ack = 0;
 
@@ -678,14 +675,14 @@ void mission_update(struct mission_planning_s *mp) {
 		cur_wp_lon = mp->wp_lon;
 
 		// notify
-		sprintf(buffer_mi, "pp_mission_update: wp_lat = %3.8f, wp_lon = %3.8f\n", (double)mp->wp_lat, (double)mp->wp_lon);
+		sprintf(buffer_mi, "set target: lat = %3.8f, lon = %3.8f\n", (double)tar.lat, (double)tar.lon);
 		printf(buffer_mi);
 
 		// set ack
 		wp_ack = 1;
 	}
 
-	if (mp->ob_lat != cur_ob_lat | mp->ob_lon != cur_ob_lon) {
+	if (fabs(mp->ob_lat - cur_ob_lat) > 0.00000005 | fabs(mp->ob_lon - cur_ob_lon) > 0.00000005) {
 
 		ob_ack = 0;
 
@@ -703,7 +700,7 @@ void mission_update(struct mission_planning_s *mp) {
 		cur_ob_lon = mp->ob_lon;
 
 		// notify
-		sprintf(buffer_mi, "pp_mission_update: ob_lat = %3.8f, ob_lon = %3.8f\n", (double)mp->ob_lat, (double)mp->ob_lon);
+		sprintf(buffer_mi, "set obstacle: lat = %3.8f, lon = %3.8f\n", (double)obs.lat, (double)obs.lon);
 		printf(buffer_mi);
 
 		// set ack
